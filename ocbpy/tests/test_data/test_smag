@@ -1,0 +1,51 @@
+ 
+File is based on SuperMAG data file, which contains N, E, Z from individual
+ground magnetometer stations. The coordinate system is defined as:
+N is positive in the direction of local magnetic north; E is positive in the
+local magnetic east direction; and Z is positive vertical down.
+ 
+*******************************************************
+*              THESE ARE NOT REAL DATA                *
+* THESE DATA HAVE BEEN MADE UP TO PROVIDE A TEST CASE *
+*******************************************************
+
+Data formatting information:
+
+The file is broken into records, one record per minute. The record
+consists of a header and a body. The format for the header is:
+
+<yr> <mo> <dy> <hr> <mt> <sc> <stnum>
+
+Where yr,mo,dy,hr,mt and sc give the UTC timestamp for this record. The
+final number stnum, gives the number of stations in the record body
+
+The record body consists of one line per station:
+
+<stid> <N> <E> <Z> <MLT> <MLAT> <DEC> <SZA>
+
+Where stid is the stations IAGA code and N,E,Z represent the component of 
+the magnetic field.
+        
+Data gap identifier is 999999.
+  
+SML and SMU indices are included after the date and before the stations
+
+Comments, questions or suggestions about SuperMAG data should be directed to:
+    Dr. Jesper W. Gjerloev
+    Johns Hopkins University
+    Applied Physics Laboratory
+    11100 Johns Hopkins Road
+    Laurel, Maryland 20723
+    (+1) 240-228-5410
+    Jesper.Gjerloev@jhuapl.edu
+
+Data downloads are available from http://supermag.jhuapl.edu/mag/
+
+Selected parameters:
+ -format ascii -delta none -baseline all -index -mlt -sza -decl  -sd 20000505 -st 00:00 -ex 23:59 -s ALE,THL
+============================================================
+2000	05	05	13	40	30	2
+SML -195
+SMU 124
+ALE	113.7	-1.6	15.7	15.32	69.53	24.24	71.53
+THL	-23.6	-6.0	-25.2	15.86	77.22	17.13	76.97
