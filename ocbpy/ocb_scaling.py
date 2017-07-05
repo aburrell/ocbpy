@@ -2,39 +2,37 @@
 # Copyright (C) 2017, AGB & GC
 # Full license can be found in License.md
 #-----------------------------------------------------------------------------
-'''Scale data affected by magnetic field direction or electric field
+"""Scale data affected by magnetic field direction or electric field
 
 Routines
 -------------------------------------------------------------------------------
-normal_evar             Normalise a variable proportaional to the electric
-                        field (such as velocity)
-normal_curl_evar        Normalise a variable proportional to the curl of the
-                        electric field (such as vorticity)
--------------------------------------------------------------------------------
+normal_evar(evar, aacgm_lat, ocb_lat)
+    Normalise a variable proportaional to the electric field (such as velocity)
+normal_curl_evar(curl_evar, aacgm_lat, ocb_lat)
+    Normalise a variable proportional to the curl of the electric field (such
+    as vorticity)
 
 Classes
 -------------------------------------------------------------------------------
-VectorData    Holds vector data in AACGM N-E-Z coordinates along with location
-              information.  Converts vector from AACGM to OCB coordinates.
--------------------------------------------------------------------------------
+VectorData(object)
+    Holds vector data in AACGM N-E-Z coordinates along with location
+    information.  Converts vector from AACGM to OCB coordinates.
 
 Moduleauthor
 -------------------------------------------------------------------------------
 Angeline G. Burrell (AGB), 12 May 2017, University of Texas, Dallas (UTDallas)
--------------------------------------------------------------------------------
 
 References
 -------------------------------------------------------------------------------
-Chisham, G. (2016), A new methodology for the development of high-latitude
+Chisham, G. (2017), A new methodology for the development of high-latitude
  ionospheric climatologies and empirical models, Journal of Geophysical
  Research: Space Physics, 122, doi:10.1002/2016JA023235.
--------------------------------------------------------------------------------
-'''
+"""
 import logging
 import numpy as np
 
 def normal_evar(evar, aacgm_lat, ocb_lat):
-    ''' Normalise a variable proportional to the electric field
+    """ Normalise a variable proportional to the electric field
 
     Parameters
     -----------
@@ -63,7 +61,7 @@ def normal_evar(evar, aacgm_lat, ocb_lat):
     Chisham, G. (2017), A new methodology for the development of high‐latitude
     ionospheric climatologies and empirical models, Journal of Geophysical
     Research: Space Physics, doi:10.1002/2016JA023235.
-    '''
+    """
 
     numerator = 90.0 - aacgm_lat
     denominator = 90.0 - ocb_lat
@@ -72,7 +70,7 @@ def normal_evar(evar, aacgm_lat, ocb_lat):
     return nvar
 
 def normal_curl_evar(curl_evar, aacgm_lat, ocb_lat):
-    ''' Normalise a variable proportional to the curl of the electric field
+    """ Normalise a variable proportional to the curl of the electric field
 
     Parameters
     -----------
@@ -101,7 +99,7 @@ def normal_curl_evar(curl_evar, aacgm_lat, ocb_lat):
     Chisham, G. (2017), A new methodology for the development of high‐latitude
     ionospheric climatologies and empirical models, Journal of Geophysical
     Research: Space Physics, doi:10.1002/2016JA023235.
-    '''
+    """
 
     numerator = (90.0 - aacgm_lat)**2
     denominator = (90.0 - ocb_lat)**2
@@ -137,17 +135,13 @@ class VectorData(object):
         Vector magnitude (default=np.nan)
     scale_func : (function)
         Function for scaling AACGM magnitude with arguements:
-            measurement value, mesurement AACGM latitude (degrees),
-            mesurement OCB latitude (degrees)
+        [measurement value, mesurement AACGM latitude (degrees),
+        mesurement OCB latitude (degrees)]
         (default=None)
     dat_name : (str)
         Data name (default=None)
     dat_units : (str)
         Data units (default=None)
-
-    Returns
-    --------
-    self : VectorData class object with original and scaled vector values
 
     Attributes
     ------------
@@ -200,14 +194,20 @@ class VectorData(object):
         Funciton that scales the magnitude of the data vector from AACGM
         polar cap coverage to OCB polar cap coverage
 
-    Functions
+    Methods
     -----------
-    set_ocb : Set the ocb coordinates and vector values
-    define_quadrants : Define the OCB pole and vector AACGM quadrant
-    scale_vector : Scale the data vector into OCB coordinates
-    calc_ocb_polar_angle : calculate the OCB north azimuth angle
-    calc_ocb_vec_sign : calculate the signs of the OCB scaled vector components
-    calc_vec_pole_angle : calc. the vector angle of the vector-poles triangle
+    set_ocb(ocb, scale_func=None)
+        Set the ocb coordinates and vector values
+    define_quadrants()
+        Define the OCB pole and vector AACGM quadrant
+    scale_vector()
+        Scale the data vector into OCB coordinates
+    calc_ocb_polar_angle()
+        calculate the OCB north azimuth angle
+    calc_ocb_vec_sign(north=False, east=False, quads=dict())
+        calculate the signs of the OCB scaled vector components
+    calc_vec_pole_angle(angular_res=1.0e-3)
+        calculate the vector angle of the vector-poles triangle
     """
 
     def __init__(self, dat_ind, ocb_ind, aacgm_lat, aacgm_mlt, ocb_lat=np.nan,
@@ -245,8 +245,8 @@ class VectorData(object):
             Data units (default=None)
         scale_func : (function)
             Function for scaling AACGM magnitude with arguements:
-                measurement value, mesurement AACGM latitude (degrees),
-                mesurement OCB latitude (degrees)
+            [measurement value, mesurement AACGM latitude (degrees),
+            mesurement OCB latitude (degrees)]
             Not necessary if no magnitude scaling is needed. (default=None)
 
         Returns
@@ -349,8 +349,8 @@ class VectorData(object):
             Open Closed Boundary class object
         scale_func : (function)
             Function for scaling AACGM magnitude with arguements:
-                measurement value, mesurement AACGM latitude (degrees),
-                mesurement OCB latitude (degrees)
+            [measurement value, mesurement AACGM latitude (degrees),
+            mesurement OCB latitude (degrees)]
             Not necessary if defined earlier or no scaling is needed.
             (default=None)
 
@@ -383,8 +383,8 @@ class VectorData(object):
             AACGM MLT of the OCB pole (hours)
         self.scale_func : (function)
             Function for scaling AACGM magnitude with arguements:
-                measurement value, mesurement AACGM latitude (degrees),
-                mesurement OCB latitude (degrees)
+            [measurement value, mesurement AACGM latitude (degrees),
+            mesurement OCB latitude (degrees)]
             Not necessary if defined earlier or if no scaling is needed.
         """
 
@@ -434,10 +434,7 @@ class VectorData(object):
         ------
         North (N) and East (E) are defined by the AACGM directions centred on
         the data vector location, assuming vertical is positive downwards
-        Quadrants: 1 [N, E]
-                   2 [N, W]
-                   3 [S, W]
-                   4 [S, E]
+        Quadrants: 1 [N, E]; 2 [N, W]; 3 [S, W]; 4 [S, E]
         """
 
         # Test input
@@ -550,13 +547,13 @@ class VectorData(object):
         return
 
     def calc_ocb_polar_angle(self):
-        ''' Calculate the OCB north azimuth angle
+        """ Calculate the OCB north azimuth angle
 
         Returns
         --------
         ocb_naz : (float)
             Angle between measurement vector and OCB pole in degrees
-        '''
+        """
         quad_range = np.arange(1, 5)
 
         assert self.ocb_quad in quad_range, \

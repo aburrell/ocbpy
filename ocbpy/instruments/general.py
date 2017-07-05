@@ -1,11 +1,12 @@
 #!/usr/bin/env python
 ''' General loading routines for data files
 
-Routines
+Functions
 -------------------------------------------------------------------------------
-test_file          test to see whether file exists and is small enough to load
-load_ascii_data    load time-sorted ascii data file
--------------------------------------------------------------------------------
+test_file(filename)
+    Test to see whether file exists and is small enough to load
+load_ascii_data(filename, hlines, kwargs)
+    Load time-sorted ascii data file
 '''
 import numpy as np
 import logging

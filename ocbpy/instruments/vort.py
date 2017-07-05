@@ -6,15 +6,15 @@
 
 Functions
 ----------------------------------------------------------------------------
-vort2ascii_ocb               Write and ASCII file with SuperMAG data and the
-                             OCB coordinates for each data point
-load_vorticity_ascii_data    Load vorticity block ASCII data files
-----------------------------------------------------------------------------
+vort2ascii_ocb(vortfile, outfile, kwargs)
+    Write and ASCII file with SuperMAG data and the OCB coordinates for each
+    data point
+load_vorticity_ascii_data(filename, save_all=False)
+    Load vorticity block ASCII data files
 
 Data
 ----------------------------------------------------------------------------
 Specialised SuperDARN data product, available from: gchi@bas.ac.uk
-----------------------------------------------------------------------------
 """
 import logging
 import numpy as np
@@ -46,9 +46,9 @@ def vort2ascii_ocb(vortfile, outfile, ocb=None, ocbfile=None, max_sdiff=600,
         Minimum number of MLT sectors required for good OCB. (default=7)
     rcent_dev : (float)
         Maximum number of degrees between the new centre and the AACGM pole
-        (default=8.0)
+        (default=8.0).
     max_r : (float)
-         Maximum radius for open-closed field line boundary in degrees.
+        Maximum radius for open-closed field line boundary in degrees.
         (default=23.0)
     min_r : (float)
         Minimum radius for open-closed field line boundary in degrees
