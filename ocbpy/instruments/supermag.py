@@ -1,20 +1,20 @@
 # -*- coding: utf-8 -*-
 # Copyright (C) 2017
 # Full license can be found in LICENSE.txt
-''' Perform OCB gridding for SuperMAG data
+""" Perform OCB gridding for SuperMAG data
 
 Functions
 ----------------------------------------------------------------------------
-supermag2ascii_ocb          Write and ASCII file with SuperMAG data and the
-                            OCB coordinates for each data point
-load_supermag_ascii_data    Load SuperMAG ASCII data files
-----------------------------------------------------------------------------
+supermag2ascii_ocb(smagfile, outfile, kwargs)
+     Write and ASCII file with SuperMAG data and the OCB coordinates for each
+     data point
+load_supermag_ascii_data(filename)
+     Load SuperMAG ASCII data files
 
 Data
 ----------------------------------------------------------------------------
 SuperMAG data available at: http://supermag.jhuapl.edu/
-----------------------------------------------------------------------------
-'''
+"""
 
 import logging
 import numpy as np
@@ -22,7 +22,7 @@ import numpy as np
 def supermag2ascii_ocb(smagfile, outfile, ocb=None, ocbfile=None,
                        max_sdiff=600, min_sectors=7, rcent_dev=8.0, max_r=23.0,
                        min_r=10.0):
-    ''' Coverts the location of SuperMAG data into a frame that is relative to
+    """ Coverts the location of SuperMAG data into a frame that is relative to
     the open-closed field-line boundary (OCB) as determined  from a circle fit
     to the poleward boundary of the auroral oval
 
@@ -41,21 +41,21 @@ def supermag2ascii_ocb(smagfile, outfile, ocb=None, ocbfile=None,
     max_sdiff : (int)
         maximum seconds between OCB and data record in sec (default=600)
     min_sectors : (int)
-        Minimum number of MLT sectors required for good OCB. (default=7)
+        Minimum number of MLT sectors required for good OCB (default=7).
     rcent_dev : (float)
         Maximum number of degrees between the new centre and the AACGM pole
-        (default=8.0)
+        (default=8.0).
     max_r : (float)
-         Maximum radius for open-closed field line boundary in degrees.
-        (default=23.0)
+        Maximum radius for open-closed field line boundary in degrees
+        default=23.0).
     min_r : (float)
         Minimum radius for open-closed field line boundary in degrees
-        (default=10.0)
+        (default=10.0).
 
     Returns
     ---------
     Void
-    '''
+    """
     import ocbpy
     import ocbpy.ocb_scaling as ocbscal
     import datetime as dt
@@ -170,7 +170,7 @@ def supermag2ascii_ocb(smagfile, outfile, ocb=None, ocbfile=None,
 # load_supermag_ascii_data: A routine to open a supermag ascii file
 
 def load_supermag_ascii_data(filename):
-    '''Open a SuperMAG ASCII data file and load it into a dictionary of nparrays
+    """Open a SuperMAG ASCII data file and load it into a dictionary of nparrays
 
     Parameters
     ------------
@@ -182,7 +182,7 @@ def load_supermag_ascii_data(filename):
     out : (dict of numpy.arrays)
         The dict keys are specified by the header data line, the data
         for each key are stored in the numpy array
-    '''
+    """
     from ocbpy.instruments import test_file
     import datetime as dt
     

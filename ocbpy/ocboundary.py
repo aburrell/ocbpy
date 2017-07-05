@@ -5,30 +5,28 @@
 #-----------------------------------------------------------------------------
 """Hold, manipulate, and load the open-closed field line boundary data
 
-Routines
+Functions
 -------------------------------------------------------------------------------
-year_soy_to_datetime    Converts from seconds of year to datetime
-match_data_ocb          Match data with open-closed field line boundaries
--------------------------------------------------------------------------------
+year_soy_to_datetime(yyyy, soy)
+    Converts from seconds of year to datetime
+match_data_ocb(ocb, dat_dtime, kwargs)
+    Match data with open-closed field line boundaries
 
 Classes
 -------------------------------------------------------------------------------
 OCBoundary    Loads, holds, and cycles the open-closed field line boundary data.
               Calculates magnetic coordinates relative to OCB (setting OCB at
               74 degrees latitude) given an AACGM location.
--------------------------------------------------------------------------------
 
 Moduleauthor
 -------------------------------------------------------------------------------
 Angeline G. Burrell (AGB), 15 April 2017, University of Texas, Dallas (UTDallas)
--------------------------------------------------------------------------------
 
 References
 -------------------------------------------------------------------------------
-Chisham, G. (2016), A new methodology for the development of high-latitude
+Chisham, G. (2017), A new methodology for the development of high-latitude
  ionospheric climatologies and empirical models, Journal of Geophysical
  Research: Space Physics, 122, doi:10.1002/2016JA023235.
--------------------------------------------------------------------------------
 """
 import logging
 import numpy as np
@@ -75,11 +73,14 @@ class OCBoundary(object):
        Numpy array of floats that give the area of the circle defined by
        the OCBoundary in degrees (default=None)
 
-    Functions
+    Methods
     ----------
-    load : Load the data from the OCB file specified by self.filename
-    get_next_good_ocb_ind : Cycle to the next good OCB index
-    normal_coord : Calculate the OCB coordinates of an AACGM location
+    load(ocb_cols='YEAR SOY NB PHICENT RCENT R A R_ERR', hlines=0)
+        Load the data from the OCB file specified by self.filename
+    get_next_good_ocb_ind(min_sectors=7, rcent_dev=8.0, max_r=23.0, min_r=10.0)
+        Cycle to the next good OCB index
+    normal_coord(aacgm_lat, aacgm_mlt)
+        Calculate the OCB coordinates of an AACGM location
     """
 
     def __init__(self, filename=None):
@@ -390,7 +391,7 @@ def match_data_ocb(ocb, dat_dtime, idat=0, max_tol=600, min_sectors=7,
         Maximum number of degrees between the new centre and the AACGM pole
         (default=8.0)
     max_r : (float)
-         Maximum radius for open-closed field line boundary in degrees.
+        Maximum radius for open-closed field line boundary in degrees.
         (default=23.0)
     min_r : (float)
         Minimum radius for open-closed field line boundary in degrees
