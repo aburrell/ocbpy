@@ -1,3 +1,5 @@
+[![Documentation Status](https://readthedocs.org/projects/ocbpy/badge/?version=latest)](http://ocbpy.readthedocs.io/en/latest/?badge=latest)
+
 # Overview
 
 ocbpy is a Python module that converts between AACGM coordinates and a magnetic
@@ -10,6 +12,8 @@ and polar cap measurements.  This coordinate system is described in:
   * Chisham, G. (2017), A new methodology for the development of high‐latitude
     ionospheric climatologies and empirical models, Journal of Geophysical
     Research: Space Physics, doi:10.1002/2016JA023235.
+
+  * Full [documentation](http://ocbpy.rtfd.io/)
 
 OCBs must be obtained from observations for this coordinate transformation.
 Data from three auroral instruments provide northern hemisphere OCB locations
