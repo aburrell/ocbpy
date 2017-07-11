@@ -18,9 +18,8 @@ def ocb_test_suite():
     import unittest
 
     test_loader = unittest.TestLoader()
-    test_suite = test_loader.discover(path.join(path.dirname(__file__),
-                                                '/ocbpy/tests'),
-                                      pattern='test_*.py')
+    test_path = path.join(path.dirname(__file__), 'ocbpy/tests')
+    test_suite = test_loader.discover(test_path, pattern='test_*.py')
     return test_suite
 
 # Run setup

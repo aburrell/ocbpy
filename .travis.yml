@@ -7,13 +7,13 @@ python:
     - "3.5"
     - "3.6"
 sudo: false
-
 install:
     - source activate test-environment
     - pip install coveralls
     - "python setup.py install"
-
-# Command to run tests not sorted yet.  Will be in section starting "script:"
-
-after_success:
-    coveralls
+script:
+    - pip install unittest
+    - pip install filecmp
+    - pip install logging
+    - "python setup.py test"
+after_success: coveralls
