@@ -13,8 +13,7 @@ install:
     - pip install coveralls
     - "python setup.py install"
 
-# Command to run tests not sorted yet
-#script:
-#    - unittests --with-coverage --cover-package=ocbpy
+# Command to run tests not sorted yet.  Will be in section starting "script:"
+
 after_success:
     coveralls
