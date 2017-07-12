@@ -45,5 +45,3 @@ setup(name='ocbpy',
       zip_safe=False,
       test_suite='setup.ocb_test_suite',
 )
-
-print "ocbpy setup complete"
