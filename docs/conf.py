@@ -22,7 +22,8 @@
 
 import mock
 
-MOCK_MODULES = ['datetime', 'numpy', 'logging', 'os']
+MOCK_MODULES = ['datetime', 'numpy', 'logging', 'os', 'setuptools',
+                '__future__', 'filecmp', 'unittest']
 for mod_name in MOCK_MODULES:
     sys.modules[mod_name] = mock.Mock()
 
