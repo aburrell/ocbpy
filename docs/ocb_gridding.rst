@@ -28,6 +28,7 @@ OCBoundary
 .. automodule:: ocbpy.ocboundary
     :members:
 
+.. _OCBScaling:
 OCB Scaling
 -----------
 .. automodule:: ocbpy.ocb_scaling

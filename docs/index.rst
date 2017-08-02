@@ -16,6 +16,7 @@ process and provides examples for usage.
    ocb_datasets.rst
    ocb_gridding.rst
    supported_datasets.rst
+   example.rst
 
 
 
