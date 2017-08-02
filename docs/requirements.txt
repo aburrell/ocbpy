@@ -2,6 +2,5 @@ numpydoc
 numpy
 datetime
 logging
-setuptools
 unittest
 filecmp
