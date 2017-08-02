@@ -82,25 +82,27 @@ print ocb
 
 The output should be as follows:
 
-> Open-Closed Boundary file: /Users/ab763/Programs/Git/ocbpy/ocbpy/boundaries/si13_north_circle
->
-> 219927 records from 2000-05-05 11:35:27 to 2002-08-22 00:01:28
->
-> YYYY-MM-DD HH:MM:SS NumSectors Phi_Centre R_Centre R  R_Err Area
-> -----------------------------------------------------------------------------
-> 2000-05-05 11:35:27 4 356.93 8.74 9.69 0.14 3.642e+06
-> 2000-05-05 11:37:23 5 202.97 13.23 22.23 0.77 1.896e+07
-> 2002-08-21 23:55:20 8 322.60 5.49 15.36 0.61 9.107e+06
-> 2002-08-22 00:01:28 7 179.02 2.32 19.52 0.89 1.466e+07
+```
+Open-Closed Boundary file: /Users/ab763/Programs/Git/ocbpy/ocbpy/boundaries/si13_north_circle
+
+219927 records from 2000-05-05 11:35:27 to 2002-08-22 00:01:28
+
+YYYY-MM-DD HH:MM:SS NumSectors Phi_Centre R_Centre R  R_Err Area
+-----------------------------------------------------------------------------
+2000-05-05 11:35:27 4 356.93 8.74 9.69 0.14 3.642e+06
+2000-05-05 11:37:23 5 202.97 13.23 22.23 0.77 1.896e+07
+2002-08-21 23:55:20 8 322.60 5.49 15.36 0.61 9.107e+06
+2002-08-22 00:01:28 7 179.02 2.32 19.52 0.89 1.466e+07
+```
 
 Get the first good OCB record, which will be record index 27.
 
 ```
 ocb.get_next_good_ocb_ind()
 print ocb.rec_ind
-```
 
-> 27
+27
+```
 
 Now plot the location of the OCB
 
@@ -151,7 +153,12 @@ ax.plot([ocb_mlt * np.pi / 12.0], [90.0 - ocb_lat], "mo", label="OCB Point")
 ax.legend(loc=2, fontsize="medium", bbox_to_anchor=(-0.4,1.15), title="{:}".format(ocb.dtime[ocb.rec_ind]))
 ```
 
-The figure should now look like: [logo]: https://github.com/aburrell/ocbpy/blob/master/docs/example_ocb_location.png "OCB "
+The figure should now look like:
+<div align="center">
+        <img height="0" width="0px">
+        <img width="80%" src="/docs/example_ocb_location.png" alt="OCB Example" title="OCB Example"</img>
+</div>
+
 
 # Uninstallation 
 
