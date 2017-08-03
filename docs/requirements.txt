@@ -1,6 +1,4 @@
-numpydoc
 numpy
 datetime
 logging
-unittest
 filecmp
