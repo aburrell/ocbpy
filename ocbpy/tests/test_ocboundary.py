@@ -48,6 +48,17 @@ class TestOCBoundaryMethods(unittest.TestCase):
         self.assertAlmostEquals(ocb_lat, 86.8658623137)
         self.assertAlmostEquals(ocb_mlt, 17.832)
 
+    def test_revert_coord(self):
+        """ Test to see that the reversion to AACGM coordinates is performed
+        properly
+        """
+        self.ocb.rec_ind = 27
+        
+        ocb_lat, ocb_mlt = self.ocb.normal_coord(80.0, 0.0)
+        aacgm_lat, aacgm_mlt = self.ocb.revert_coord(ocb_lat, ocb_mlt)
+        self.assertAlmostEquals(aacgm_lat, 80.0)
+        self.assertAlmostEquals(aacgm_mlt, 0.0)
+
     def test_year_soy_to_datetime(self):
         """ Test to see that the seconds of year conversion works
         """

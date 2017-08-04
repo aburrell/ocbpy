@@ -81,6 +81,8 @@ class OCBoundary(object):
         Cycle to the next good OCB index
     normal_coord(aacgm_lat, aacgm_mlt)
         Calculate the OCB coordinates of an AACGM location
+    revert_coord(ocb_lat, ocb_mlt)
+        Calculate the AACGM location of OCB coordinates for this OCB
     """
 
     def __init__(self, filename=None):
@@ -314,10 +316,9 @@ class OCBoundary(object):
         if self.rec_ind < 0 or self.rec_ind >= self.records:
             return np.nan, np.nan
 
-        xc = self.r_cent[self.rec_ind] * \
-             np.cos(np.radians(self.phi_cent[self.rec_ind]))
-        yc = self.r_cent[self.rec_ind] * \
-             np.sin(np.radians(self.phi_cent[self.rec_ind]))
+        phi_cent_rad = np.radians(self.phi_cent[self.rec_ind])
+        xc = self.r_cent[self.rec_ind] * np.cos(phi_cent_rad)
+        yc = self.r_cent[self.rec_ind] * np.sin(phi_cent_rad)
 
         xp = (90.0 - aacgm_lat) * np.cos(np.radians(aacgm_mlt * 15.0))
         yp = (90.0 - aacgm_lat) * np.sin(np.radians(aacgm_mlt * 15.0))
@@ -332,6 +333,52 @@ class OCBoundary(object):
             ocb_mlt += 24.0
 
         return ocb_lat, ocb_mlt
+
+    def revert_coord(self, ocb_lat, ocb_mlt):
+        """converts the position of a measurement in normalised co-ordinates
+        relative to the OCB into AACGM co-ordinates
+
+        Parameters
+        -----------
+        ocb_lat : (float)
+            Input OCB latitude (degrees)
+        ocb_mlt : (float)
+            Input OCB local time (hours)
+
+        Returns
+        --------
+        aacgm_lat : (float)
+            AACGM latitude (degrees)
+        aacgm_mlt : (float)
+            AACGM magnetic local time (hours)
+ 
+        Comments
+        ---------
+        Approximation - Conversion assumes a planar surface
+        """
+        if self.rec_ind < 0 or self.rec_ind >= self.records:
+            return np.nan, np.nan
+
+        phi_cent_rad = np.radians(self.phi_cent[self.rec_ind])
+        xc = self.r_cent[self.rec_ind] * np.cos(phi_cent_rad)
+        yc = self.r_cent[self.rec_ind] * np.sin(phi_cent_rad)
+
+        rn = 90.0 - ocb_lat
+        thetan = ocb_mlt * np.pi / 12.0
+        xn = rn * np.cos(thetan)
+        yn = rn * np.sin(thetan)
+
+        scale_ocb = self.r[self.rec_ind] / 16.0
+        xp = xn * scale_ocb + xc
+        yp = yn * scale_ocb + yc
+
+        aacgm_lat = 90.0 - np.sqrt(xp**2 + yp**2)
+        aacgm_mlt = np.degrees(np.arctan2(yp, xp)) / 15.0
+
+        if aacgm_mlt < 0.0:
+            aacgm_mlt += 24.0
+
+        return aacgm_lat, aacgm_mlt
 
 def year_soy_to_datetime(yyyy, soy):
     """Converts year and soy to datetime
