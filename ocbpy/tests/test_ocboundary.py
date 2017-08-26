@@ -26,9 +26,28 @@ class TestOCBoundaryMethods(unittest.TestCase):
         del self.ocb
 
     def test_load(self):
-        """ Ensure that records from the default file were loaded
+        """ Ensure that records from the default file were loaded and the
+        default latitude boundary was set
         """
         self.assertGreater(self.ocb.records, 0)
+        self.assertEquals(self.ocb.boundary_lat, 74.0)
+
+    def test_partial_load(self):
+        """ Ensure limited sections of a file can be loaded
+        """
+        import datetime as dt
+
+        stime = self.ocb.dtime[0] + dt.timedelta(seconds=1)
+        etime = self.ocb.dtime[-1] - dt.timedelta(seconds=1)
+
+        # Load all but the first and last records
+        part_ocb = ocbpy.ocboundary.OCBoundary(filename=self.ocb.filename,
+                                               stime=stime, etime=etime,
+                                               boundary_lat=75.0)
+
+        self.assertEquals(self.ocb.records, part_ocb.records + 2)
+        self.assertEquals(part_ocb.boundary_lat, 75.0)
+        del part_ocb
 
     def test_first_good(self):
         """ Test to see that we can find the first good point
@@ -56,6 +75,25 @@ class TestOCBoundaryMethods(unittest.TestCase):
         self.assertEquals(ocbpy.ocboundary.year_soy_to_datetime(2001, 0),
                           dt.datetime(2001,1,1))
 
+    def test_convert_time(self):
+        """ Test to see that the datetime construction works
+        """
+        import datetime as dt
+
+        # Test the default date implimentation
+        self.assertEquals(ocbpy.ocboundary.convert_time(date="2001-01-01",
+                                                        tod="00:00:00"),
+                          dt.datetime(2001,1,1))
+
+        # Test the custom date implimentation
+        self.assertEquals(ocbpy.ocboundary.convert_time(date="2001-01-01", \
+                            tod="00-00-00", datetime_fmt="%Y-%m-%d %H-%M-%S"),
+                          dt.datetime(2001,1,1))
+
+        # Test the year-soy implimentation
+        self.assertEquals(ocbpy.ocboundary.convert_time(year=2001, soy=0),
+                          dt.datetime(2001,1,1))
+        
     def test_match(self):
         """ Test to see that the data matching works properly
         """

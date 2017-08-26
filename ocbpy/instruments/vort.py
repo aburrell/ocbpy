@@ -71,14 +71,6 @@ def vort2ascii_ocb(vortfile, outfile, ocb=None, ocbfile=None, max_sdiff=600,
     assert isinstance(outfile, str), \
         logging.error("output filename is not a string [{:}]".format(outfile))
 
-    # Load the OCB data
-    if ocb is None or not isinstance(ocb, ocbpy.ocboundary.OCBoundary):
-        ocb = ocbpy.ocboundary.OCBoundary(ocbfile)
-
-    if ocb.filename is None or ocb.records == 0:
-        logging.error("no data in OCB file {:s}".format(ocb.filename))
-        return
-    
     # Read the vorticity data
     vdata = load_vorticity_ascii_data(vortfile, save_all=save_all)
 
@@ -88,6 +80,16 @@ def vort2ascii_ocb(vortfile, outfile, ocb=None, ocbfile=None, max_sdiff=600,
         logging.error(estr)
         return
 
+    # Load the OCB data
+    if ocb is None or not isinstance(ocb, ocbpy.ocboundary.OCBoundary):
+        vstart = vdata['DATETIME'][0] - dt.timedelta(seconds=max_sdiff+1)
+        vend = vdata['DATETIME'][-1] + dt.timedelta(seconds=max_sdiff+1)
+        ocb = ocbpy.ocboundary.OCBoundary(ocbfile, stime=vstart, etime=vend)
+
+    if ocb.filename is None or ocb.records == 0:
+        logging.error("no data in OCB file {:s} ".format(ocb.filename))
+        return
+    
     # Open and test the file to ensure it can be written
     try:
         fout = open(outfile, 'w')

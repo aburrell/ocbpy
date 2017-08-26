@@ -9,6 +9,7 @@
 import ocbpy.instruments.vort as ocb_ivort
 import unittest
 import numpy as np
+import datetime as dt
 
 class TestVortMethods(unittest.TestCase):
 
@@ -28,6 +29,9 @@ class TestVortMethods(unittest.TestCase):
                                               "tests/test_data/out_vort")
         self.temp_output = "{:s}/{:s}".format("/".join(ocb_dir[:-1]),
                                               "tests/test_data/temp_vort")
+        self.test_vals = {'CENTRE_MLAT':67.27, 'DAY':5, 'MLT':3.127,
+                          'UTH':13.65, 'VORTICITY':0.0020967, 'YEAR':2000,
+                          'DATETIME':dt.datetime(2000,5,5,13,39,00), 'MONTH':5}
         self.assertTrue(isfile(self.test_file))
 
     def tearDown(self):
@@ -41,8 +45,6 @@ class TestVortMethods(unittest.TestCase):
     def test_load_vort_data(self):
         """ Test the routine to load the SuperDARN vorticity data
         """
-        import datetime as dt
-
         data = ocb_ivort.load_vorticity_ascii_data(self.test_file)
 
         # Test to see that the data keys are all in the header
@@ -54,11 +56,23 @@ class TestVortMethods(unittest.TestCase):
         self.assertEqual(data['UTH'].shape[0], 5)
 
         # Test the values of the last data line
-        test_vals = {'CENTRE_MLAT':67.27, 'DAY':5, 'MLT':3.127, 'UTH':13.65,
-                     'DATETIME':dt.datetime(2000,5,5,13,39,00), 'MONTH':5,
-                     'VORTICITY':0.0020967, 'YEAR':2000}
-        for kk in test_vals.keys():
-            self.assertEqual(data[kk][-1], test_vals[kk])
+        for kk in self.test_vals.keys():
+            self.assertEqual(data[kk][-1], self.test_vals[kk])
+
+    def test_load_all_vort_data(self):
+        """ Test the routine to load the SuperDARN vorticity data, loading
+        all of the possible data values
+        """
+        data = ocb_ivort.load_vorticity_ascii_data(self.test_file,
+                                                   save_all=True)
+
+        # Test to see that the right number of keys were retrieved
+        self.assertEqual(len(data.keys()), 32)
+
+        # Test the values of the last data line, using only the data keys
+        # needed for the OCB calculation
+        for kk in self.test_vals.keys():
+            self.assertEqual(data[kk][-1], self.test_vals[kk])
 
     def test_vort2ascii_ocb(self):
         """ Test the conversion of vorticity data from AACGM coordinates into

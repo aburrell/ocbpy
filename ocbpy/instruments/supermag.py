@@ -65,15 +65,6 @@ def supermag2ascii_ocb(smagfile, outfile, ocb=None, ocbfile=None,
     assert isinstance(outfile, str), \
         logging.error("output filename is not a string [{:}]".format(outfile))
 
-    # Load the OCB data
-    if ocb is None or not isinstance(ocb, ocbpy.ocboundary.OCBoundary):
-        ocb = ocbpy.OCBoundary(ocbfile)
-
-    # Test the OCB data
-    if ocb.filename is None or ocb.records == 0:
-        logging.error("no data in OCB file {:s}".format(ocb.filename))
-        return
-
     # Read the superMAG data and calculate the magnetic field magnitude
     header, mdata = load_supermag_ascii_data(smagfile)
 
@@ -84,6 +75,17 @@ def supermag2ascii_ocb(smagfile, outfile, ocb=None, ocbfile=None,
 
     for k in mdata.keys():
         mdata[k] = mdata[k][igood]
+
+    # Load the OCB data for the SuperMAG data period
+    if ocb is None or not isinstance(ocb, ocbpy.ocboundary.OCBoundary):
+        mstart = mdata['DATETIME'][0] - dt.timedelta(seconds=max_sdiff+1)
+        mend = mdata['DATETIME'][-1] + dt.timedelta(seconds=max_sdiff+1)
+        ocb = ocbpy.OCBoundary(ocbfile, stime=mstart, etime=mend)
+
+    # Test the OCB data
+    if ocb.filename is None or ocb.records == 0:
+        logging.error("no data in OCB file {:s}".format(ocb.filename))
+        return
 
     # Open and test the file to ensure it can be written
     try:

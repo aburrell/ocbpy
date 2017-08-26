@@ -9,6 +9,8 @@ Functions
 -------------------------------------------------------------------------------
 year_soy_to_datetime(yyyy, soy)
     Converts from seconds of year to datetime
+convert_time(kwargs)
+    Constructs a datetime object from multiple input options
 match_data_ocb(ocb, dat_dtime, kwargs)
     Match data with open-closed field line boundaries
 
@@ -48,6 +50,8 @@ class OCBoundary(object):
     -----------
     filename : (str or NoneType)
         OCBoundary filename or None, if problem loading default
+    boundary_lat : (float)
+        Typical OCBoundary latitude in AACGM coordinates (default=74.0)
     records : (int)
         Number of OCB records (default=0)
     rec_ind : (int)
@@ -75,7 +79,8 @@ class OCBoundary(object):
 
     Methods
     ----------
-    load(ocb_cols='YEAR SOY NB PHICENT RCENT R A R_ERR', hlines=0)
+    load(ocb_cols='YEAR SOY NB PHICENT RCENT R A R_ERR', hlines=0, stime=None,
+         etime=None)
         Load the data from the OCB file specified by self.filename
     get_next_good_ocb_ind(min_sectors=7, rcent_dev=8.0, max_r=23.0, min_r=10.0)
         Cycle to the next good OCB index
@@ -83,13 +88,20 @@ class OCBoundary(object):
         Calculate the OCB coordinates of an AACGM location
     """
 
-    def __init__(self, filename=None):
+    def __init__(self, filename=None, boundary_lat=74.0, stime=None,
+                 etime=None):
         """Object containing OCB data
 
         Parameters
         ----------
         filename : (str or NoneType)
             file containing OCB data
+        boundary_lat : (float)
+            Typical AACGM latitude of the OCBoundary (default=74.0)
+        stime : (datetime or NoneType)
+            First time to load data or beginning of file (default=None)
+        etime : (datetime or NoneType)
+            Last time to load data or ending of file (default=None)
         """
         import ocbpy
 
@@ -112,6 +124,7 @@ class OCBoundary(object):
                 logging.warning("problem with default OC Boundary file")
                 self.filename = None
 
+        self.boundary_lat = boundary_lat
         self.records = 0
         self.rec_ind = 0
         self.dtime = None
@@ -123,7 +136,7 @@ class OCBoundary(object):
         self.area = None
 
         if self.filename is not None:
-            self.load()
+            self.load(stime=stime, etime=etime)
 
         return
 
@@ -134,7 +147,9 @@ class OCBoundary(object):
         if self.filename is None:
             out = "No Open-Closed Boundary file specified\n"
         else:
-            out = "Open-Closed Boundary file: {:s}\n\n".format(self.filename)
+            out = "Open-Closed Boundary file: {:s}\n".format(self.filename)
+            out = "{:s}Open-Closed Boundary reference latitude: ".format(out)
+            out = "{:s}{:.1f} degrees\n\n".format(out, self.boundary_lat)
 
             if self.records == 0:
                 out = "{:s}No data loaded\n".format(out)
@@ -167,7 +182,8 @@ class OCBoundary(object):
         out = self.__repr__()
         return out
 
-    def load(self, ocb_cols="YEAR SOY NB PHICENT RCENT R A R_ERR", hlines=0):
+    def load(self, ocb_cols="YEAR SOY NB PHICENT RCENT R A R_ERR", hlines=0,
+             stime=None, etime=None):
         """Load the data from the specified Open-Closed Boundary file
 
         Parameters
@@ -180,13 +196,19 @@ class OCBoundary(object):
             (default="YEAR SOY NB PHICENT RCENT R A R_ERR")
         hlines : (int)
             Number of header lines preceeding data in the OCB file (default=0)
+        stime : (datetime or NoneType)
+            Time to start loading data or None to start at beginning of file.
+            (default=None)
+        etime : (datetime or NoneType)
+            Time to stop loading data or None to end at the end of the file.
+            (default=None)
 
         Returns
         --------
         self
         """
         import datetime as dt
-
+        
         cols = ocb_cols.split()
         dflag = -1
         ldtype = [(k,float) if k != "NB" else (k,int) for k in cols]
@@ -202,42 +224,43 @@ class OCBoundary(object):
         if dflag < 0:
             logging.error("missing time columns in [{:s}]".format(ocb_cols))
             return
-
+        
         # Read the OCB data
         odata = np.genfromtxt(self.filename, skip_header=hlines, dtype=ldtype)
 
         # Load the data into the OCBoundary object
-        self.records = odata.shape[0]
         self.rec_ind = -1
 
         dt_list = list()
-        for i in range(self.records):
-            try:
-                if dflag == 0:
-                    dtime = year_soy_to_datetime(odata['YEAR'][i],
-                                                 odata['SOY'][i])
+        if stime is None and etime is None:
+            itime = np.arange(0, odata.shape[0], 1)
+        else:
+            itime = list()
 
-                else:
-                    stime = "{:} {:}".format(odata['DATE'][i], odata['TIME'][i])
-                    dtime = dt.datetime.strptime(stime, "%Y-%m-%d %H:%M:%S")
+        for i in range(odata.shape[0]):
+            year = odata['YEAR'][i] if dflag == 0 else None
+            soy = odata['SOY'][i] if dflag == 0 else None
+            date = None if dflag == 0 else odata['DATE'][i]
+            tod = None if dflag == 0 else odata['TIME'][i]
+                
+            dtime = convert_time(year=year, soy=soy, date=date, tod=tod,
+                                 datetime_fmt="%Y-%m-%d %H:%M:%S")
 
+            if stime is None and etime is None:
                 dt_list.append(dtime)
-            except ValueError as v:
-                if(len(v.args) > 0 and
-                   v.args[0].startswith('unconverted data remains: ')):
-                    vsplit = v.args[0].split(" ")
-                    dtime = dt.datetime.strptime(dtstring[:-(len(vsplit[-1]))],
-                                                 "%Y-%m-%d %H:%M:%S")
-                else:
-                    raise v
+            elif((stime is None or stime <= dtime) and
+                 (etime is None or etime >= dtime)):
+                dt_list.append(dtime)
+                itime.append(i)
 
+        self.records = len(dt_list)
         self.dtime = np.array(dt_list)
-        self.num_sectors = odata['NB']
-        self.phi_cent = odata['PHICENT']
-        self.r_cent = odata['RCENT']
-        self.r = odata['R']
-        self.r_err = odata['R_ERR']
-        self.area = odata['A']
+        self.num_sectors = odata['NB'][itime]
+        self.phi_cent = odata['PHICENT'][itime]
+        self.r_cent = odata['RCENT'][itime]
+        self.r = odata['R'][itime]
+        self.r_err = odata['R_ERR'][itime]
+        self.area = odata['A'][itime]
 
         return
 
@@ -322,8 +345,9 @@ class OCBoundary(object):
         xp = (90.0 - aacgm_lat) * np.cos(np.radians(aacgm_mlt * 15.0))
         yp = (90.0 - aacgm_lat) * np.sin(np.radians(aacgm_mlt * 15.0))
 
-        xn = (xp - xc) * (16.0 / self.r[self.rec_ind])
-        yn = (yp - yc) * (16.0 / self.r[self.rec_ind])
+        scalen = (90.0 - abs(self.boundary_lat)) / self.r[self.rec_ind]
+        xn = (xp - xc) * scalen
+        yn = (yp - yc) * scalen
 
         ocb_lat = 90.0 - np.sqrt(xn**2 + yn**2)
         ocb_mlt = np.degrees(np.arctan2(yn, xn)) / 15.0
@@ -367,6 +391,49 @@ def year_soy_to_datetime(yyyy, soy):
 
     # Convert to datetime
     dtime = dt.datetime.strptime(stime, "%Y-%j-%H-%M-%S")
+
+    return dtime
+
+def convert_time(year=None, soy=None, date=None, tod=None,
+                 datetime_fmt="%Y-%m-%d %H:%M:%S"):
+    """ Convert to datetime from multiple time formats
+
+    Parameters
+    ----------
+    year : (int or NoneType)
+        Year or None if not in year-soy format (default=None)
+    soy : (int or NoneType)
+        Seconds of year or None if not in year-soy format (default=None)
+    date : (str or NoneType)
+        String containing date information or None if not in date-time format
+        (default=None)
+    tod : (str or NoneType)
+        String containing time of day information or None if not in date-time
+        format (default=None)
+    datetime_fmt : (str)
+        String with the date-time format.  (default='%Y-%m-%d %H:%M:%S')
+
+    Returns
+    --------
+    dtime : (datetime)
+        Datetime object
+    """
+    import datetime as dt
+
+    try:
+        if year is not None and soy is not None:
+            dtime = year_soy_to_datetime(year, soy)
+        else:
+            str_time = "{:} {:}".format(date, tod)
+            dtime = dt.datetime.strptime(str_time, datetime_fmt)
+    except ValueError as v:
+        if(len(v.args) > 0 and
+           v.args[0].startswith('unconverted data remains: ')):
+            vsplit = v.args[0].split(" ")
+            dtime = dt.datetime.strptime(str_time[:-(len(vsplit[-1]))],
+                                         datetime_fmt)
+        else:
+            raise v
 
     return dtime
 
