@@ -13,3 +13,10 @@ The three auroral instruments are the IMAGE FUV
 `Wideband Imaging Camera (WIC) <https://link.springer.com/chapter/10.1007/978-94-011-4233-5_9>`_,.
 
 The OCB datasets can be found in ``ocbpy/boundaries``.
+
+OCB datasets can also be obtained from AMPERE (Active Magnetosphere and
+Planetary Electrodynamics Response Experiment) data.  This data is not currently
+publically available, but may be in the near future.  One benefit of this
+dataset is that OCBs can be obtained for both hemispheres.  More information
+about the method behind the identification of these boundaries can be found in
+`Milan et al. (2015) <http://doi.wiley.com/10.1002/2015JA021680>`_,.

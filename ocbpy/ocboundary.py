@@ -9,6 +9,8 @@ Functions
 -------------------------------------------------------------------------------
 year_soy_to_datetime(yyyy, soy)
     Converts from seconds of year to datetime
+convert_time(kwargs)
+    Constructs a datetime object from multiple input options
 match_data_ocb(ocb, dat_dtime, kwargs)
     Match data with open-closed field line boundaries
 
@@ -37,8 +39,20 @@ class OCBoundary(object):
     Parameters
     ----------
     filename : (str or NoneType)
-        file containing the required open-closed circle boundary data sorted by
-        time.  If NoneType, the recommended default file is used (if available)
+        File containing the required open-closed circle boundary data sorted by
+        time.  If NoneType, no file is loaded.  If 'default', the
+        default IMAGE FUV file is loaded (if available). (default='default')
+    instrument : (str)
+        Instrument providing the OCBoundaries (default='image')
+    hemisphere : (int)
+        Integer (+/- 1) denoting northern/southern hemisphere (default=1)
+    boundary_lat : (float)
+        Typical AACGM latitude of the OCBoundary or None to use
+        instrument defaults (default=None)
+    stime : (datetime or NoneType)
+        First time to load data or beginning of file (default=None)
+    etime : (datetime or NoneType)
+        Last time to load data or ending of file (default=None)
 
     Returns
     ---------
@@ -48,15 +62,17 @@ class OCBoundary(object):
     -----------
     filename : (str or NoneType)
         OCBoundary filename or None, if problem loading default
+    boundary_lat : (float)
+        Typical OCBoundary latitude in AACGM coordinates.  Hemisphere will
+        give this boundary the desired sign.  (default=74.0)
+    hemisphere : (int)
+        Integer (+/- 1) denoting northern/southern hemisphere (default=1)
     records : (int)
         Number of OCB records (default=0)
     rec_ind : (int)
         Current OCB record index (default=0; initialised=-1)
     dtime : (numpy.ndarray or NoneType)
         Numpy array of OCB datetimes (default=None)
-    num_sectors : (numpy.ndarray or NoneType)
-        Numpy array of int indicating number of MLT sectors used to find
-        the OCB for each record (default=None)
     phi_cent : (numpy.ndarray or NoneType)
         Numpy array of floats that give the angle from AACGM midnight
         of the OCB pole in degrees (default=None)
@@ -66,18 +82,20 @@ class OCBoundary(object):
     r : (numpy.ndarray or NoneType)
         Numpy array of floats that give the radius of the OCBoundary
         in degrees (default=None)
-    r_err : (numpy.ndarray or NoneType)
-        Numpy array of floats that give the error of the OCBoundary
-        radius in degrees (default=None)
-    area : (numpy.ndarray or NoneType)
-       Numpy array of floats that give the area of the circle defined by
-       the OCBoundary in degrees (default=None)
+    (more) : (numpy.ndarray or NoneType)
+        Numpy array of floats that hold the remaining values in input file
 
     Methods
-    ----------
-    load(ocb_cols='YEAR SOY NB PHICENT RCENT R A R_ERR', hlines=0)
+    ---------- 
+    inst_defaults()
+        Get the information needed to load an OCB file using instrument
+        specific formatting, and update the boundary latitude for a given
+        instrument type.
+    load(hlines=0, ocb_cols='year soy num_sectors phi_cent r_cent r a r_err',
+         datetime_fmt='', stime=None, etime=None)
         Load the data from the OCB file specified by self.filename
-    get_next_good_ocb_ind(min_sectors=7, rcent_dev=8.0, max_r=23.0, min_r=10.0)
+    get_next_good_ocb_ind(min_sectors=7, rcent_dev=8.0, max_r=23.0, min_r=10.0,
+                          min_j=0.15)
         Cycle to the next good OCB index
     normal_coord(aacgm_lat, aacgm_mlt)
         Calculate the OCB coordinates of an AACGM location
@@ -85,47 +103,81 @@ class OCBoundary(object):
         Calculate the AACGM location of OCB coordinates for this OCB
     """
 
-    def __init__(self, filename=None):
+    def __init__(self, filename="default", instrument="image", hemisphere=1,
+                 boundary_lat=None, stime=None, etime=None):
         """Object containing OCB data
 
         Parameters
         ----------
         filename : (str or NoneType)
-            file containing OCB data
+            File containing OCB data.  If None class structure will be
+            initialised, but no file will be loaded.  If 'default', the
+            default file will be loaded.
+        instrument : (str)
+            Instrument providing the OCBoundaries (default='image')
+        hemisphere : (int)
+            Integer (+/- 1) denoting northern/southern hemisphere (default=1)
+        boundary_lat : (float)
+            Typical AACGM latitude of the OCBoundary or None to use
+            instrument defaults (default=None)
+        stime : (datetime or NoneType)
+            First time to load data or beginning of file (default=None)
+        etime : (datetime or NoneType)
+            Last time to load data or ending of file (default=None)
         """
         import ocbpy
 
-        if filename is None:
+        if not isinstance(instrument, str):
+            estr = "OCB instrument must be a string [{:s}]".format(instrument)
+            logging.error(estr)
             self.filename = None
-        elif not isinstance(filename, str):
-            logging.warning("OCB file is not a string [{:s}]".format(filename))
-            self.filename = None
-        elif not ocbpy.instruments.test_file(filename):
-            logging.warning("cannot open OCB file [{:s}]".format(filename))
-            self.filename = None
+            self.instrument = None
         else:
-            self.filename = filename
+            self.instrument = instrument.lower()
 
-        if self.filename is None:
-            ocb_dir = ocbpy.__file__.split("/")
-            self.filename = "{:s}/{:s}".format("/".join(ocb_dir[:-1]),
-                                              ocbpy.__default_file__)
-            if not ocbpy.instruments.test_file(self.filename):
-                logging.warning("problem with default OC Boundary file")
+            if filename is None:
                 self.filename = None
+            elif not isinstance(filename, str):
+                logging.warning("file is not a string [{:s}]".format(filename))
+                self.filename = None
+            elif filename.lower() == "default":
+                if instrument.lower() == "image":
+                    ocb_dir = ocbpy.__file__.split("/")
+                    self.filename = "{:s}/{:s}".format("/".join(ocb_dir[:-1]),
+                                                       ocbpy.__default_file__)
+                    if not ocbpy.instruments.test_file(self.filename):
+                        logging.warning("problem with default OC Boundary file")
+                        self.filename = None
+                else:
+                    logging.warning("default OC Boundary file uses IMAGE data")
+                    self.filename = None
+            elif not ocbpy.instruments.test_file(filename):
+                logging.warning("cannot open OCB file [{:s}]".format(filename))
+                self.filename = None
+            else:
+                self.filename = filename
 
+        self.hemisphere = hemisphere
         self.records = 0
         self.rec_ind = 0
         self.dtime = None
-        self.num_sectors = None
         self.phi_cent = None
         self.r_cent = None
         self.r = None
-        self.r_err = None
-        self.area = None
 
+        # Get the instrument defaults
+        hlines, ocb_cols, datetime_fmt = self.inst_defaults()
+
+        if boundary_lat is not None:
+            self.boundary_lat = hemisphere * boundary_lat
+
+        # If possible, load the data
         if self.filename is not None:
-            self.load()
+            if len(ocb_cols) > 0:
+                self.load(hlines=hlines, ocb_cols=ocb_cols,
+                          datetime_fmt=datetime_fmt, stime=stime, etime=etime)
+            else:
+                self.load(stime=stime, etime=etime)
 
         return
 
@@ -136,7 +188,11 @@ class OCBoundary(object):
         if self.filename is None:
             out = "No Open-Closed Boundary file specified\n"
         else:
-            out = "Open-Closed Boundary file: {:s}\n\n".format(self.filename)
+            out = "Open-Closed Boundary file: {:s}\n".format(self.filename)
+            out = "{:s}Source instrument: ".format(out)
+            out = "{:s}{:s}\n".format(out, self.instrument.upper())
+            out = "{:s}Open-Closed Boundary reference latitude: ".format(out)
+            out = "{:s}{:.1f} degrees\n\n".format(out, self.boundary_lat)
 
             if self.records == 0:
                 out = "{:s}No data loaded\n".format(out)
@@ -149,16 +205,13 @@ class OCBoundary(object):
                 while irep[0] < 0:
                     irep.pop(0)
 
-                head = "YYYY-MM-DD HH:MM:SS NumSectors Phi_Centre R_Centre R "
-                out = "{:s}{:s} R_Err Area\n{:-<77s}\n".format(out, head, "")
+                head = "YYYY-MM-DD HH:MM:SS Phi_Centre R_Centre R"
+                out = "{:s}{:s}\n{:-<77s}\n".format(out, head, "")
                 for i in irep:
-                    out = "{:s}{:} {:d} ".format(out, self.dtime[i],
-                                                 self.num_sectors[i])
-                    out = "{:s}{:.2f} {:.2f} ".format(out, self.phi_cent[i],
-                                                      self.r_cent[i])
-                    out = "{:s}{:.2f} {:.2f} {:.4g}\n".format(out, self.r[i],
-                                                              self.r_err[i],
-                                                              self.area[i])
+                    out = "{:s}{:} {:.2f}".format(out, self.dtime[i],
+                                                  self.phi_cent[i])
+                    out = "{:s} {:.2f} {:.2f}\n".format(out, self.r_cent[i],
+                                                        self.r[i])
 
         return out
 
@@ -169,7 +222,41 @@ class OCBoundary(object):
         out = self.__repr__()
         return out
 
-    def load(self, ocb_cols="YEAR SOY NB PHICENT RCENT R A R_ERR", hlines=0):
+    def inst_defaults(self):
+        """ Get the information needed to load an OCB file using instrument
+        specific formatting, also update the boundary latitude for a given
+        instrument type.
+
+        Returns
+        -------
+        hlines : (int)
+            Number of header lines
+        ocb_cols : (str)
+            String containing the names for each data column
+        datetime_fmt : (str)
+            String containing the datetime format
+        """
+
+        if self.instrument == "image":
+            hlines = 0
+            ocb_cols = "year soy num_sectors phi_cent r_cent r a r_err"
+            datetime_fmt = ""
+            self.boundary_lat = self.hemisphere * 74.0
+        elif self.instrument == "ampere":
+            hlines = 0
+            ocb_cols = "date time r x y j_mag"
+            datetime_fmt = "%Y%m%d %H:%M"
+            self.boundary_lat = self.hemisphere * 72.0
+        else:
+            hlines = 0
+            ocb_cols = ""
+            datetime_fmt = ""
+
+        return hlines, ocb_cols, datetime_fmt
+
+    def load(self, hlines=0,
+             ocb_cols="year soy num_sectors phi_cent r_cent r a r_err",
+             datetime_fmt="", stime=None, etime=None):
         """Load the data from the specified Open-Closed Boundary file
 
         Parameters
@@ -177,75 +264,106 @@ class OCBoundary(object):
         ocb_cols : (str)
             String specifying format of OCB file.  All but the first two 
             columns must be included in the string, additional data values will
-            be ignored.  If "YEAR SOY" aren't used, expects
-            "DATE TIME" in "YYYY-MM-DD HH:MM:SS" format.
-            (default="YEAR SOY NB PHICENT RCENT R A R_ERR")
+            be ignored.  If 'year soy' aren't used, expects
+            'date time' in 'YYYY-MM-DD HH:MM:SS' format.
+            (default='year soy num_sectors phi_cent r_cent r a r_err')
         hlines : (int)
             Number of header lines preceeding data in the OCB file (default=0)
+        datetime_fmt : (str)
+            A string used to read in 'date time' data.  Not used if 'year soy'
+            is specified. (default='')
+        stime : (datetime or NoneType)
+            Time to start loading data or None to start at beginning of file.
+            (default=None)
+        etime : (datetime or NoneType)
+            Time to stop loading data or None to end at the end of the file.
+            (default=None)
 
         Returns
         --------
         self
         """
         import datetime as dt
-
+        
         cols = ocb_cols.split()
         dflag = -1
-        ldtype = [(k,float) if k != "NB" else (k,int) for k in cols]
+        ldtype = [(k,float) if k != "num_sectors" else (k,int) for k in cols]
         
-        if "SOY" in cols and "YEAR" in cols:
+        if "soy" in cols and "year" in cols:
             dflag = 0
-            ldtype[cols.index('YEAR')] = ('YEAR',int)
-        elif "DATE" in cols and "TIME" in cols:
+            ldtype[cols.index('year')] = ('year',int)
+        elif "date" in cols and "time" in cols:
             dflag = 1
-            ldtype[cols.index('DATE')] = ('DATE','|S50')
-            ldtype[cols.index('TIME')] = ('TIME','|S50')
+            ldtype[cols.index('date')] = ('date','|S50')
+            ldtype[cols.index('time')] = ('time','|S50')
 
         if dflag < 0:
             logging.error("missing time columns in [{:s}]".format(ocb_cols))
             return
-
+        
         # Read the OCB data
-        odata = np.genfromtxt(self.filename, skip_header=hlines, dtype=ldtype)
+        odata = np.rec.array(np.genfromtxt(self.filename, skip_header=hlines,
+                                           dtype=ldtype))
+        oname = list(odata.dtype.names)
 
         # Load the data into the OCBoundary object
-        self.records = odata.shape[0]
+        #
+        # Start by getting the time and location in the desired format
         self.rec_ind = -1
 
         dt_list = list()
-        for i in range(self.records):
-            try:
-                if dflag == 0:
-                    dtime = year_soy_to_datetime(odata['YEAR'][i],
-                                                 odata['SOY'][i])
+        if stime is None and etime is None:
+            itime = np.arange(0, odata.shape[0], 1)
+        else:
+            itime = list()
 
-                else:
-                    stime = "{:} {:}".format(odata['DATE'][i], odata['TIME'][i])
-                    dtime = dt.datetime.strptime(stime, "%Y-%m-%d %H:%M:%S")
+        for i in range(odata.shape[0]):
+            year = odata.year[i] if dflag == 0 else None
+            soy = odata.soy[i] if dflag == 0 else None
+            date = None if dflag == 0 else odata.date[i]
+            tod = None if dflag == 0 else odata.time[i]
+                
+            dtime = convert_time(year=year, soy=soy, date=date, tod=tod,
+                                 datetime_fmt=datetime_fmt)
 
+            if stime is None and etime is None:
                 dt_list.append(dtime)
-            except ValueError as v:
-                if(len(v.args) > 0 and
-                   v.args[0].startswith('unconverted data remains: ')):
-                    vsplit = v.args[0].split(" ")
-                    dtime = dt.datetime.strptime(dtstring[:-(len(vsplit[-1]))],
-                                                 "%Y-%m-%d %H:%M:%S")
-                else:
-                    raise v
+            elif((stime is None or stime <= dtime) and
+                 (etime is None or etime >= dtime)):
+                dt_list.append(dtime)
+                itime.append(i)
 
+        if hasattr(odata, 'x') and hasattr(odata, 'y'):
+            # Location is given by x-y coordinates where the origin lies
+            # on the magnetic pole, the x-axis follows the dusk-dawn
+            # meridian (positive towards dawn), and the y-axis follows the
+            # midnight-noon meridian (positive towards noon)
+
+            # Calculate the polar coordinates from the x-y coordinates
+            odata.r_cent = np.sqrt(odata.x**2 + odata.y**2)
+            oname.append("r_cent")
+
+            # phi_cent is zero at magnetic midnight rather than dawn, so we
+            # need to add 90.0 degrees from the arctangent.  Then convert all
+            # degrees to their positive angles.
+            odata.phi_cent = np.degrees(np.arctan2(odata.y, odata.x)) + 90.0
+            odata.phi_cent[odata.phi_cent < 0.0] += 360.0
+            oname.append("phi_cent")
+
+        # Load the required information not contained in odata
+        self.records = len(dt_list)
         self.dtime = np.array(dt_list)
-        self.num_sectors = odata['NB']
-        self.phi_cent = odata['PHICENT']
-        self.r_cent = odata['RCENT']
-        self.r = odata['R']
-        self.r_err = odata['R_ERR']
-        self.area = odata['A']
+
+        # Load the attributes saved in odata
+        for nn in oname:
+            setattr(self, nn, getattr(odata, nn)[itime])
 
         return
 
     def get_next_good_ocb_ind(self, min_sectors=7, rcent_dev=8.0, max_r=23.0,
-                              min_r=10.0):
-        """read in the next usuable OCB record from the data file
+                              min_r=10.0, min_j=0.15):
+        """read in the next usuable OCB record from the data file.  Only uses
+        the available parameters.
 
         Parameters
         -----------
@@ -260,6 +378,8 @@ class OCBoundary(object):
         min_r : (float)
             Minimum radius for open-closed field line boundary in degrees
             (default=10.0)
+        min_j : (float)
+            Minimum unitless current magnitude scale difference (default=0.15)
 
         Returns
         ---------
@@ -280,12 +400,21 @@ class OCBoundary(object):
         self.rec_ind += 1
         
         while self.rec_ind < self.records:
-            # Evaluate current boundary for quality
-            if(self.num_sectors[self.rec_ind] >= min_sectors and
-               self.r_cent[self.rec_ind] <= rcent_dev and
+            # Evaluate the current boundary for quality, using optional
+            # parameters
+            good = True
+            if(hasattr(self, "num_sectors") and
+               self.num_sectors[self.rec_ind] < min_sectors):
+                good = False
+            elif hasattr(self, "j_mag") and self.j_mag[self.rec_ind] < min_j:
+                good = False
+
+            # Evaluate the current boundary for quality, using non-optional
+            # parameters
+            if(good and self.r_cent[self.rec_ind] <= rcent_dev and
                self.r[self.rec_ind] >= min_r and self.r[self.rec_ind] <= max_r):
                 return
-            
+
             # Cycle to next boundary
             self.rec_ind += 1
 
@@ -316,17 +445,22 @@ class OCBoundary(object):
         if self.rec_ind < 0 or self.rec_ind >= self.records:
             return np.nan, np.nan
 
+        if np.sign(aacgm_lat) != self.hemisphere:
+            return np.nan, np.nan
+
         phi_cent_rad = np.radians(self.phi_cent[self.rec_ind])
         xc = self.r_cent[self.rec_ind] * np.cos(phi_cent_rad)
         yc = self.r_cent[self.rec_ind] * np.sin(phi_cent_rad)
 
-        xp = (90.0 - aacgm_lat) * np.cos(np.radians(aacgm_mlt * 15.0))
-        yp = (90.0 - aacgm_lat) * np.sin(np.radians(aacgm_mlt * 15.0))
+        scalep = 90.0 - self.hemisphere * aacgm_lat
+        xp = scalep * np.cos(np.radians(aacgm_mlt * 15.0))
+        yp = scalep * np.sin(np.radians(aacgm_mlt * 15.0))
 
-        xn = (xp - xc) * (16.0 / self.r[self.rec_ind])
-        yn = (yp - yc) * (16.0 / self.r[self.rec_ind])
+        scalen = (90.0 - abs(self.boundary_lat)) / self.r[self.rec_ind]
+        xn = (xp - xc) * scalen
+        yn = (yp - yc) * scalen
 
-        ocb_lat = 90.0 - np.sqrt(xn**2 + yn**2)
+        ocb_lat = self.hemisphere * (90.0 - np.sqrt(xn**2 + yn**2))
         ocb_mlt = np.degrees(np.arctan2(yn, xn)) / 15.0
 
         if ocb_mlt < 0.0:
@@ -335,7 +469,7 @@ class OCBoundary(object):
         return ocb_lat, ocb_mlt
 
     def revert_coord(self, ocb_lat, ocb_mlt):
-        """converts the position of a measurement in normalised co-ordinates
+        """Converts the position of a measurement in normalised co-ordinates
         relative to the OCB into AACGM co-ordinates
 
         Parameters
@@ -359,20 +493,25 @@ class OCBoundary(object):
         if self.rec_ind < 0 or self.rec_ind >= self.records:
             return np.nan, np.nan
 
+        if np.sign(ocb_lat) != self.hemisphere:
+            return np.nan, np.nan
+
         phi_cent_rad = np.radians(self.phi_cent[self.rec_ind])
         xc = self.r_cent[self.rec_ind] * np.cos(phi_cent_rad)
         yc = self.r_cent[self.rec_ind] * np.sin(phi_cent_rad)
 
-        rn = 90.0 - ocb_lat
+        rn = 90.0 - self.hemisphere * ocb_lat
+
         thetan = ocb_mlt * np.pi / 12.0
         xn = rn * np.cos(thetan)
         yn = rn * np.sin(thetan)
 
-        scale_ocb = self.r[self.rec_ind] / 16.0
+        scale_ocb = self.r[self.rec_ind] / (90.0 - self.hemisphere *
+                                            self.boundary_lat)
         xp = xn * scale_ocb + xc
         yp = yn * scale_ocb + yc
 
-        aacgm_lat = 90.0 - np.sqrt(xp**2 + yp**2)
+        aacgm_lat = self.hemisphere * (90.0 - np.sqrt(xp**2 + yp**2))
         aacgm_mlt = np.degrees(np.arctan2(yp, xp)) / 15.0
 
         if aacgm_mlt < 0.0:
@@ -417,8 +556,51 @@ def year_soy_to_datetime(yyyy, soy):
 
     return dtime
 
+def convert_time(year=None, soy=None, date=None, tod=None,
+                 datetime_fmt="%Y-%m-%d %H:%M:%S"):
+    """ Convert to datetime from multiple time formats
+
+    Parameters
+    ----------
+    year : (int or NoneType)
+        Year or None if not in year-soy format (default=None)
+    soy : (int or NoneType)
+        Seconds of year or None if not in year-soy format (default=None)
+    date : (str or NoneType)
+        String containing date information or None if not in date-time format
+        (default=None)
+    tod : (str or NoneType)
+        String containing time of day information or None if not in date-time
+        format (default=None)
+    datetime_fmt : (str)
+        String with the date-time format.  (default='%Y-%m-%d %H:%M:%S')
+
+    Returns
+    --------
+    dtime : (datetime)
+        Datetime object
+    """
+    import datetime as dt
+
+    try:
+        if year is not None and soy is not None:
+            dtime = year_soy_to_datetime(year, soy)
+        else:
+            str_time = "{:} {:}".format(date, tod)
+            dtime = dt.datetime.strptime(str_time, datetime_fmt)
+    except ValueError as v:
+        if(len(v.args) > 0 and
+           v.args[0].startswith('unconverted data remains: ')):
+            vsplit = v.args[0].split(" ")
+            dtime = dt.datetime.strptime(str_time[:-(len(vsplit[-1]))],
+                                         datetime_fmt)
+        else:
+            raise v
+
+    return dtime
+
 def match_data_ocb(ocb, dat_dtime, idat=0, max_tol=600, min_sectors=7,
-                   rcent_dev=8.0, max_r=23.0, min_r=10.0):
+                   rcent_dev=8.0, max_r=23.0, min_r=10.0, min_j=0.15):
     """Matches data records with OCB records, locating the closest values
     within a specified tolerance
 
@@ -443,6 +625,8 @@ def match_data_ocb(ocb, dat_dtime, idat=0, max_tol=600, min_sectors=7,
     min_r : (float)
         Minimum radius for open-closed field line boundary in degrees
         (default=10.0)
+    min_j : (float)
+        Minimum unitless current magnitude scale difference (default=0.15)
 
     Returns
     ---------
@@ -468,7 +652,7 @@ def match_data_ocb(ocb, dat_dtime, idat=0, max_tol=600, min_sectors=7,
     # Get the first reliable circle boundary estimate if none was provided
     if ocb.rec_ind < 0:
         ocb.get_next_good_ocb_ind(min_sectors=min_sectors, rcent_dev=rcent_dev,
-                                  max_r=max_r, min_r=min_r)
+                                  max_r=max_r, min_r=min_r, min_j=min_j)
         if ocb.rec_ind >= ocb.records:
             estr = "unable to find a good OCB record in "
             estr = "{:s}{:s}".format(estr, ocb.filename)
@@ -502,7 +686,7 @@ def match_data_ocb(ocb, dat_dtime, idat=0, max_tol=600, min_sectors=7,
             # is in the future
             ocb.get_next_good_ocb_ind(min_sectors=min_sectors,
                                       rcent_dev=rcent_dev, max_r=max_r,
-                                      min_r=min_r)
+                                      min_r=min_r, min_j=min_j)
         elif sdiff > max_tol:
             # Cycle to the next vorticity value if no OCB values were close
             # enough to grid this one
@@ -517,7 +701,7 @@ def match_data_ocb(ocb, dat_dtime, idat=0, max_tol=600, min_sectors=7,
             last_iocb = ocb.rec_ind
             ocb.get_next_good_ocb_ind(min_sectors=min_sectors,
                                       rcent_dev=rcent_dev, max_r=max_r,
-                                      min_r=min_r)
+                                      min_r=min_r, min_j=min_j)
 
             if ocb.rec_ind < ocb.records:
                 sdiff = (ocb.dtime[ocb.rec_ind] -
@@ -528,7 +712,7 @@ def match_data_ocb(ocb, dat_dtime, idat=0, max_tol=600, min_sectors=7,
                     last_iocb = ocb.rec_ind
                     ocb.get_next_good_ocb_ind(min_sectors=min_sectors,
                                               rcent_dev=rcent_dev, max_r=max_r,
-                                              min_r=min_r)
+                                              min_r=min_r, min_j=min_j)
                     if ocb.rec_ind < ocb.records:
                         sdiff = (ocb.dtime[ocb.rec_ind] -
                                  dat_dtime[idat]).total_seconds()
