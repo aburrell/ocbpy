@@ -445,11 +445,10 @@ class OCBoundary(object):
 
         if np.sign(aacgm_lat) != self.hemisphere:
             return np.nan, np.nan
-        
-        xc = self.r_cent[self.rec_ind] * \
-             np.cos(np.radians(self.phi_cent[self.rec_ind]))
-        yc = self.r_cent[self.rec_ind] * \
-             np.sin(np.radians(self.phi_cent[self.rec_ind]))
+
+        phi_cent_rad = np.radians(self.phi_cent[self.rec_ind])
+        xc = self.r_cent[self.rec_ind] * np.cos(phi_cent_rad)
+        yc = self.r_cent[self.rec_ind] * np.sin(phi_cent_rad)
 
         scalep = 90.0 - self.hemisphere * aacgm_lat
         xp = scalep * np.cos(np.radians(aacgm_mlt * 15.0))
