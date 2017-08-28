@@ -106,6 +106,7 @@ class TestOCBoundaryMethods(unittest.TestCase):
         self.assertAlmostEquals(ocb_mlt, 17.832)
 
     def test_revert_coord_north(self):
+
         """ Test to see that the reversion to AACGM coordinates is performed
         properly
         """

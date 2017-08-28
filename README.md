@@ -116,14 +116,7 @@ ax.xaxis.set_ticks([0, 0.5*np.pi, np.pi, 1.5*np.pi])
 ax.xaxis.set_ticklabels(["00:00", "06:00", "12:00 MLT", "18:00"])
 ax.set_rlim(0,25)
 ax.set_rticks([5,10,15,20])
-ax.yaxis.set_ticklabels(["85$^\circ$", "80$^\circ$", "75$^\circ$", "70$^\circ$"]
-```
-
-Mark the location of the reference OCB, set at 74 degrees
-```
-lon = np.arange(0.0, 2.0 * np.pi + 0.1, 0.1)
-ref_lat = np.ones(shape=lon.shape) * 16.0
-ax.plot(lon, ref_lat, "--", linewidth=2, color="0.6", label="Reference OCB")
+ax.yaxis.set_ticklabels(["85$^\circ$","80$^\circ$","75$^\circ$","70$^\circ$"])
 ```
 
 Mark the location of the circle centre in AACGM coordinates
@@ -134,24 +127,44 @@ ax.plot([phi_cent_rad], [ocb.r_cent[ocb.rec_ind]], "mx", ms=10, label="OCB Pole"
 
 Calculate at plot the location of the OCB in AACGM coordinates
 ```
+lon = np.arange(0.0, 2.0 * np.pi + 0.1, 0.1)
 del_lon = lon - phi_cent_rad
+lat = ocb.r_cent[ocb.rec_ind] * np.cos(del_lon) + np.sqrt(ocb.r[ocb.rec_ind]**2 - (ocb.r_cent[ocb.rec_ind] * np.sin(del_lon))**2)
 ax.plot(lon, lat, "m-", linewidth=2, label="OCB")
+ax.text(lon[35], lat[35]+1.5, "74$^\circ$", fontsize="medium", color="m")
 ```
 
-Now add the location of a point in AACGM coordinates
+Add reference labels for OCB coordinates
+```
+lon_clock = list()
+lat_clock = list()
+
+for ocb_mlt in np.arange(0.0, 24.0, 6.0):
+    aa,oo = ocb.revert_coord(74.0, ocb_mlt)
+    lon_clock.append(oo * np.pi / 12.0)
+    lat_clock.append(90.0 - aa)
+
+ax.plot(lon_clock, lat_clock, "m+")
+ax.plot([lon_clock[0], lon_clock[2]], [lat_clock[0], lat_clock[2]], "-", color="lightpink", zorder=1)
+ax.plot([lon_clock[1], lon_clock[3]], [lat_clock[1], lat_clock[3]], "-", color="lightpink", zorder=1)
+ax.text(lon_clock[2]+.2, lat_clock[2]+1.0, "12:00",fontsize="medium",color="m")
+ax.text(lon[35], olat[35]+1.5, "82$^\circ$", fontsize="medium", color="m")
+
+```
+
+Now add the location of a point in AACGM coordinates, calculate the
+location relative to the OCB, and output both coordinates in the legend
 ```
 aacgm_lat = 85.0
 aacgm_lon = np.pi
-
-ax.plot([aacgm_lon], [90.0-aacgm_lat], "ko", ms=5, label="AACGM Point")
-```
-
-Find the location relative to the current OCB and add a legend
-```
 ocb_lat, ocb_mlt = ocb.normal_coord(aacgm_lat, aacgm_lon * 12.0 / np.pi)
-ax.plot([ocb_mlt * np.pi / 12.0], [90.0 - ocb_lat], "mo", label="OCB Point")
-ax.legend(loc=2, fontsize="medium", bbox_to_anchor=(-0.4,1.15), title="{:}".format(ocb.dtime[ocb.rec_ind]))
+plabel = "Point (MLT, lat)\nAACGM (12:00,85.0$^\circ$)\nOCB ({:.0f}:{:.0f},{:.1f}$^\circ$)".format(np.floor(ocb_mlt), (ocb_mlt - np.floor(ocb_mlt))*60.0, ocb_lat)
+
+ax.plot([aacgm_lon], [90.0-aacgm_lat], "ko", ms=5, label=plabel)
+
+ax.legend(loc=2, fontsize="small", title="{:}".format(ocb.dtime[ocb.rec_ind]), bbox_to_anchor=(-0.4,1.15))
 ```
+
 
 The figure should now look like:
 <div align="center">

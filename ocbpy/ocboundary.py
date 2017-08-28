@@ -471,12 +471,14 @@ class OCBoundary(object):
     def revert_coord(self, ocb_lat, ocb_mlt):
         """Converts the position of a measurement in normalised co-ordinates
         relative to the OCB into AACGM co-ordinates
+
         Parameters
         -----------
         ocb_lat : (float)
             Input OCB latitude (degrees)
         ocb_mlt : (float)
             Input OCB local time (hours)
+
         Returns
         --------
         aacgm_lat : (float)
@@ -499,6 +501,7 @@ class OCBoundary(object):
         yc = self.r_cent[self.rec_ind] * np.sin(phi_cent_rad)
 
         rn = 90.0 - self.hemisphere * ocb_lat
+
         thetan = ocb_mlt * np.pi / 12.0
         xn = rn * np.cos(thetan)
         yn = rn * np.sin(thetan)
