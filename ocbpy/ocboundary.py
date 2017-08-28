@@ -507,7 +507,7 @@ class OCBoundary(object):
         yn = rn * np.sin(thetan)
 
         scale_ocb = self.r[self.rec_ind] / (90.0 - self.hemisphere *
-                                            self.reference_lat)
+                                            self.boundary_lat)
         xp = xn * scale_ocb + xc
         yp = yn * scale_ocb + yc
 
