@@ -1,4 +1,4 @@
-[![Build Status](https://www.travis-ci.org/aburrell/ocbpy.svg?branch=master)](https://www.travis-ci.org/aburrell/ocbpy?ts=1)	[![Coverage Status](https://coveralls.io/repos/github/aburrell/ocbpy/badge.svg)](https://coveralls.io/github/aburrell/ocbpy?ts=1)	[![Documentation Status](https://readthedocs.org/projects/ocbpy/badge/?version=latest)](http://ocbpy.readthedocs.io/en/latest/?badge=latest)
+[![Build Status](https://www.travis-ci.org/aburrell/ocbpy.svg?branch=master)](https://www.travis-ci.org/aburrell/ocbpy)	[![Coverage Status](https://coveralls.io/repos/github/aburrell/ocbpy/badge.svg?branch=master)](https://coveralls.io/github/aburrell/ocbpy?branch=master)	[![Documentation Status](https://readthedocs.org/projects/ocbpy/badge/?version=latest)](http://ocbpy.readthedocs.io/en/latest/?badge=latest)
 
 # Overview
 
