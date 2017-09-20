@@ -21,7 +21,7 @@ import numpy as np
 
 def vort2ascii_ocb(vortfile, outfile, ocb=None, ocbfile=None, max_sdiff=600,
                    save_all=False, min_sectors=7, rcent_dev=8.0, max_r=23.0,
-                   min_r=10.0):
+                   min_r=10.0, min_j=0.15):
     """ Coverts the location of vorticity data in AACGM coordinates into a frame
     that is relative to the open-closed field-line boundary (OCB) as determined
     from a circle fit to the poleward boundary of the auroral oval
@@ -53,6 +53,8 @@ def vort2ascii_ocb(vortfile, outfile, ocb=None, ocbfile=None, max_sdiff=600,
     min_r : (float)
         Minimum radius for open-closed field line boundary in degrees
         (default=10.0)
+    min_j : (float)
+        Minimum unitless current magnitude scale difference (default=0.15)
 
     Returns
     ---------
@@ -71,14 +73,6 @@ def vort2ascii_ocb(vortfile, outfile, ocb=None, ocbfile=None, max_sdiff=600,
     assert isinstance(outfile, str), \
         logging.error("output filename is not a string [{:}]".format(outfile))
 
-    # Load the OCB data
-    if ocb is None or not isinstance(ocb, ocbpy.ocboundary.OCBoundary):
-        ocb = ocbpy.ocboundary.OCBoundary(ocbfile)
-
-    if ocb.filename is None or ocb.records == 0:
-        logging.error("no data in OCB file {:s}".format(ocb.filename))
-        return
-    
     # Read the vorticity data
     vdata = load_vorticity_ascii_data(vortfile, save_all=save_all)
 
@@ -88,6 +82,16 @@ def vort2ascii_ocb(vortfile, outfile, ocb=None, ocbfile=None, max_sdiff=600,
         logging.error(estr)
         return
 
+    # Load the OCB data
+    if ocb is None or not isinstance(ocb, ocbpy.ocboundary.OCBoundary):
+        vstart = vdata['DATETIME'][0] - dt.timedelta(seconds=max_sdiff+1)
+        vend = vdata['DATETIME'][-1] + dt.timedelta(seconds=max_sdiff+1)
+        ocb = ocbpy.ocboundary.OCBoundary(ocbfile, stime=vstart, etime=vend)
+
+    if ocb.filename is None or ocb.records == 0:
+        logging.error("no data in OCB file {:s} ".format(ocb.filename))
+        return
+    
     # Open and test the file to ensure it can be written
     try:
         fout = open(outfile, 'w')
@@ -122,7 +126,7 @@ def vort2ascii_ocb(vortfile, outfile, ocb=None, ocbfile=None, max_sdiff=600,
         ivort = ocbpy.match_data_ocb(ocb, vdata['DATETIME'], idat=ivort,
                                      max_tol=max_sdiff, min_sectors=min_sectors,
                                      rcent_dev=rcent_dev, max_r=max_r,
-                                     min_r=min_r)
+                                     min_r=min_r, min_j=min_j)
         
         if ivort < num_vort and ocb.rec_ind < ocb.records:
             # Use the indexed OCB to convert the AACGM grid coordinate to one
