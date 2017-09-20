@@ -126,33 +126,6 @@ class TestOCBoundaryMethods(unittest.TestCase):
         ocb_lat, ocb_mlt = self.ocb_south.normal_coord(-90.0, 0.0)
         self.assertAlmostEquals(ocb_lat, -86.4)
         self.assertAlmostEquals(ocb_mlt, 6.0)
-
-    def test_year_soy_to_datetime(self):
-        """ Test to see that the seconds of year conversion works
-        """
-        import datetime as dt
-
-        self.assertEquals(ocbpy.ocboundary.year_soy_to_datetime(2001, 0),
-                          dt.datetime(2001,1,1))
-
-    def test_convert_time(self):
-        """ Test to see that the datetime construction works
-        """
-        import datetime as dt
-
-        # Test the default date implimentation
-        self.assertEquals(ocbpy.ocboundary.convert_time(date="2001-01-01",
-                                                        tod="00:00:00"),
-                          dt.datetime(2001,1,1))
-
-        # Test the custom date implimentation
-        self.assertEquals(ocbpy.ocboundary.convert_time(date="2001-01-01", \
-                            tod="00-00-00", datetime_fmt="%Y-%m-%d %H-%M-%S"),
-                          dt.datetime(2001,1,1))
-
-        # Test the year-soy implimentation
-        self.assertEquals(ocbpy.ocboundary.convert_time(year=2001, soy=0),
-                          dt.datetime(2001,1,1))
         
     def test_match(self):
         """ Test to see that the data matching works properly

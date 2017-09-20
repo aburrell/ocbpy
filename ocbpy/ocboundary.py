@@ -7,10 +7,6 @@
 
 Functions
 -------------------------------------------------------------------------------
-year_soy_to_datetime(yyyy, soy)
-    Converts from seconds of year to datetime
-convert_time(kwargs)
-    Constructs a datetime object from multiple input options
 match_data_ocb(ocb, dat_dtime, kwargs)
     Match data with open-closed field line boundaries
 
@@ -284,6 +280,7 @@ class OCBoundary(object):
         self
         """
         import datetime as dt
+        import ocb_time as ocbt
         
         cols = ocb_cols.split()
         dflag = -1
@@ -323,8 +320,8 @@ class OCBoundary(object):
             date = None if dflag == 0 else odata.date[i]
             tod = None if dflag == 0 else odata.time[i]
                 
-            dtime = convert_time(year=year, soy=soy, date=date, tod=tod,
-                                 datetime_fmt=datetime_fmt)
+            dtime = ocbt.convert_time(year=year, soy=soy, date=date, tod=tod,
+                                      datetime_fmt=datetime_fmt)
 
             if stime is None and etime is None:
                 dt_list.append(dtime)
@@ -518,86 +515,6 @@ class OCBoundary(object):
             aacgm_mlt += 24.0
 
         return aacgm_lat, aacgm_mlt
-
-def year_soy_to_datetime(yyyy, soy):
-    """Converts year and soy to datetime
-
-    Parameters
-    -----------
-    yyyy : (int)
-        4 digit year
-    soy : (float)
-        seconds of year
-
-    Returns
-    ---------
-    dtime : (dt.datetime)
-        datetime object
-    """
-    import datetime as dt
-                
-    # Calcuate doy, hour, min, seconds of day
-    ss = soy / 86400.0
-    ddd = np.floor(ss)
-
-    ss = (soy - ddd * 86400.0) / 3600.0
-    hh = np.floor(ss)
-
-    ss = (soy - ddd * 86400.0 - hh * 3600.0) / 60.0
-    mm = np.floor(ss)
-
-    ss = soy - ddd * 86400.0 - hh * 3600.0 - mm * 60.0
-    
-    # Define format
-    stime = "{:d}-{:.0f}-{:.0f}-{:.0f}-{:.0f}".format(yyyy, ddd + 1, hh, mm, ss)
-
-    # Convert to datetime
-    dtime = dt.datetime.strptime(stime, "%Y-%j-%H-%M-%S")
-
-    return dtime
-
-def convert_time(year=None, soy=None, date=None, tod=None,
-                 datetime_fmt="%Y-%m-%d %H:%M:%S"):
-    """ Convert to datetime from multiple time formats
-
-    Parameters
-    ----------
-    year : (int or NoneType)
-        Year or None if not in year-soy format (default=None)
-    soy : (int or NoneType)
-        Seconds of year or None if not in year-soy format (default=None)
-    date : (str or NoneType)
-        String containing date information or None if not in date-time format
-        (default=None)
-    tod : (str or NoneType)
-        String containing time of day information or None if not in date-time
-        format (default=None)
-    datetime_fmt : (str)
-        String with the date-time format.  (default='%Y-%m-%d %H:%M:%S')
-
-    Returns
-    --------
-    dtime : (datetime)
-        Datetime object
-    """
-    import datetime as dt
-
-    try:
-        if year is not None and soy is not None:
-            dtime = year_soy_to_datetime(year, soy)
-        else:
-            str_time = "{:} {:}".format(date, tod)
-            dtime = dt.datetime.strptime(str_time, datetime_fmt)
-    except ValueError as v:
-        if(len(v.args) > 0 and
-           v.args[0].startswith('unconverted data remains: ')):
-            vsplit = v.args[0].split(" ")
-            dtime = dt.datetime.strptime(str_time[:-(len(vsplit[-1]))],
-                                         datetime_fmt)
-        else:
-            raise v
-
-    return dtime
 
 def match_data_ocb(ocb, dat_dtime, idat=0, max_tol=600, min_sectors=7,
                    rcent_dev=8.0, max_r=23.0, min_r=10.0, min_j=0.15):

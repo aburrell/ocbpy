@@ -20,11 +20,13 @@ normal_curl_evar    Normalise a variable proportional to the curl of the
 Classes
 ---------------------------------------------------------------------------
 OCBoundary    OCB data for different times
+VectorData    Vector data point
 ---------------------------------------------------------------------------
 
 Modules
 ---------------------------------------------------------------------------
 instruments    Instrument-specific OCB gridding functions
+ocb_time       Time manipulation routines
 ---------------------------------------------------------------------------
 """
 from __future__ import (absolute_import, unicode_literals)
@@ -37,7 +39,7 @@ __default_file__ = "boundaries/si13_north_circle"
 #---------------------------------------------------------------------
 
 try:
-    from ocbpy import (ocboundary, ocb_scaling)
+    from ocbpy import (ocboundary, ocb_scaling, ocb_time)
     from ocbpy.ocboundary import (OCBoundary, match_data_ocb)
 except ImportError as e:
     logging.exception('problem importing ocboundary: ' + str(e))
