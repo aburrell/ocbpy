@@ -128,17 +128,23 @@ def convert_time(year=None, soy=None, yyddd=None, sod=None, date=None, tod=None,
 
                 # Ensure that the datetime format contains current date format
                 if datetime_fmt.find("%Y-%m-%d") < 0:
-                    datetime_fmt = "%Y-%m-%d {:s}".format(datetime_fmt)
-            
+                    ifmt = datetime_fmt.upper().find("YYDDD")
+                    if ifmt >= 0:
+                        old_fmt = datetime_fmt[ifmt:ifmt+5]
+                        datetime_fmt = datetime_fmt.replace(old_fmt, "%Y-%m-%d")
+                    else:
+                        datetime_fmt = "%Y-%m-%d {:s}".format(datetime_fmt)
             if tod is None:
                 str_time = "{:}".format(date)
 
                 # Ensure that the datetime format does not contain time
-                time_loc = datetime_fmt.find(" %H:%M:%S")
-                if time_loc > 0:
-                    datetime_fmt = datetime_fmt[:time_loc]
+                for time_fmt in [" %H:%M:%S", " SOD"]:
+                    time_loc = datetime_fmt.upper().find(time_fmt)
+                    if time_loc > 0:
+                        datetime_fmt = datetime_fmt[:time_loc]
             else:
                 str_time = "{:} {:}".format(date, tod)
+                
             dtime = dt.datetime.strptime(str_time, datetime_fmt)
 
             if sod is not None:

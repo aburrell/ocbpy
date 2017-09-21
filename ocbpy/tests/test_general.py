@@ -57,6 +57,35 @@ class TestGeneralMethods(unittest.TestCase):
         for kk in test_vals.keys():
             self.assertEqual(data[kk][-1], test_vals[kk])
 
+    def test_load_ascii_data_w_datetime(self):
+        """ Test the general routine to load ASCII data
+        """
+        import datetime as dt
+
+        hh = ["YEAR SOY NB PHICENT RCENT R A RERR"]
+        header, data = ocb_igen.load_ascii_data(self.test_file, 0,
+                                                datetime_cols=[0,1],
+                                                datetime_fmt="YEAR SOY",
+                                                header=hh)
+
+        # Test to ensure the output header equals the input header
+        self.assertListEqual(header, hh)
+
+        # Test to see that the data keys are all in the header
+        ktest = hh[0].split()
+        ktest.append("datetime")
+        self.assertListEqual(sorted(ktest), sorted(data.keys()))
+
+        # Test the length of the data file
+        self.assertEqual(data['A'].shape[0], 75)
+
+        # Test the values of the last data line
+        test_vals = {"YEAR":2000, "SOY":11187202, "NB":9.0, "A":1.302e+07,
+                     "PHICENT":315.29, "RCENT":2.67, "R":18.38, "RERR":0.47,
+                     "datetime":dt.datetime(2000,5,9,11,33,22)}
+        for kk in test_vals.keys():
+            self.assertEqual(data[kk][-1], test_vals[kk])
+
 if __name__ == '__main__':
     unittest.main()
 

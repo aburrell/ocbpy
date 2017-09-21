@@ -56,6 +56,22 @@ class TestOCBTimeMethods(unittest.TestCase):
         self.assertEquals(ocbpy.ocb_time.convert_time(yyddd="101001", sod=0),
                           dt.datetime(2001,1,1))
 
+    def test_convert_time_dict_input(self):
+        """ Test to see that the datetime construction works
+        """
+        # Test dictionary input implimentation
+        input_dict = {"year":None, "soy":None, "yyddd":None, "sod":None,
+                      "date":"2001-01-01", "tod":"000000",
+                      "datetime_fmt":"%Y-%m-%d %H%M%S"}
+        self.assertEquals(ocbpy.ocb_time.convert_time(**input_dict),
+                          dt.datetime(2001,1,1))
+
+        # Test dictionary input implimentation
+        input_dict = {"year":None, "soy":None, "yyddd":None, "sod":0.0,
+                      "date":"2001-01-01", "tod":None}
+        self.assertEquals(ocbpy.ocb_time.convert_time(**input_dict),
+                          dt.datetime(2001,1,1))
+        
     def test_yyddd_to_date(self):
         """ Test to see that the datetime construction works
         """
