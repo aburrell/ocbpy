@@ -55,9 +55,9 @@ def load_ascii_data(filename, hlines, miss=None, fill=np.nan, hsplit=None,
         data file name
     hlines : (int)
         number of lines in header.  If zero, must include header.
-    miss : (str or list)
+    miss : (str, sequence, or dict)
         Denotes missing value options (default=None)
-    fill : (any non-list)
+    fill : (value, sequence, or dict)
         fill value (default=NaN)
     hsplit : (str, NoneType)
         character seperating data labels in header.  None splits on all
