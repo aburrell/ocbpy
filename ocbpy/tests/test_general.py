@@ -44,9 +44,9 @@ class TestGeneralMethods(unittest.TestCase):
         """
         header, data = ocb_igen.load_ascii_data("/", 0)
         self.assertIsInstance(header, list)
-        self.assertEquals(len(header), 0)
+        self.assertEqual(len(header), 0)
         self.assertIsInstance(data, dict)
-        self.assertEquals(len(data.keys()), 0)
+        self.assertEqual(len(data.keys()), 0)
         print("Testing for warning above stating 'name provided is not a file'")
 
     def test_load_ascii_data_standard(self):

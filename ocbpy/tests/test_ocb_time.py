@@ -15,46 +15,46 @@ class TestOCBTimeMethods(unittest.TestCase):
     def test_year_soy_to_datetime(self):
         """ Test to see that the seconds of year conversion works
         """
-        self.assertEquals(ocbpy.ocb_time.year_soy_to_datetime(2001, 0),
-                          dt.datetime(2001,1,1))
+        self.assertEqual(ocbpy.ocb_time.year_soy_to_datetime(2001, 0),
+                         dt.datetime(2001,1,1))
 
     def test_convert_time_date_tod(self):
         """ Test to see that the datetime construction works
         """
         # Test the default date implimentation
-        self.assertEquals(ocbpy.ocb_time.convert_time(date="2001-01-01",
-                                                      tod="00:00:00"),
-                          dt.datetime(2001,1,1))
+        self.assertEqual(ocbpy.ocb_time.convert_time(date="2001-01-01",
+                                                     tod="00:00:00"),
+                         dt.datetime(2001,1,1))
 
     def test_convert_time_date_tod_fmt(self):
         """ Test to see that the datetime construction works
         """
         # Test the custom date implimentation
-        self.assertEquals(ocbpy.ocb_time.convert_time(date="2001-01-01", \
+        self.assertEqual(ocbpy.ocb_time.convert_time(date="2001-01-01", \
                             tod="00-00-00", datetime_fmt="%Y-%m-%d %H-%M-%S"),
-                          dt.datetime(2001,1,1))
+                         dt.datetime(2001,1,1))
 
     def test_convert_time_year_soy(self):
         """ Test to see that the datetime construction works
         """
         # Test the year-soy implimentation
-        self.assertEquals(ocbpy.ocb_time.convert_time(year=2001, soy=0),
-                          dt.datetime(2001,1,1))
+        self.assertEqual(ocbpy.ocb_time.convert_time(year=2001, soy=0),
+                         dt.datetime(2001,1,1))
 
     def test_convert_time_yyddd_tod(self):
         """ Test to see that the datetime construction works
         """
         # Test the year-soy implimentation
-        self.assertEquals(ocbpy.ocb_time.convert_time(yyddd="101001",
-                                                      tod="00:00:00"),
-                          dt.datetime(2001,1,1))
+        self.assertEqual(ocbpy.ocb_time.convert_time(yyddd="101001",
+                                                     tod="00:00:00"),
+                         dt.datetime(2001,1,1))
 
     def test_convert_time_yyddd_sod(self):
         """ Test to see that the datetime construction works
         """
         # Test the year-soy implimentation
-        self.assertEquals(ocbpy.ocb_time.convert_time(yyddd="101001", sod=0),
-                          dt.datetime(2001,1,1))
+        self.assertEqual(ocbpy.ocb_time.convert_time(yyddd="101001", sod=0),
+                         dt.datetime(2001,1,1))
 
     def test_convert_time_dict_input(self):
         """ Test to see that the datetime construction works
@@ -63,23 +63,23 @@ class TestOCBTimeMethods(unittest.TestCase):
         input_dict = {"year":None, "soy":None, "yyddd":None, "sod":None,
                       "date":"2001-01-01", "tod":"000000",
                       "datetime_fmt":"%Y-%m-%d %H%M%S"}
-        self.assertEquals(ocbpy.ocb_time.convert_time(**input_dict),
-                          dt.datetime(2001,1,1))
+        self.assertEqual(ocbpy.ocb_time.convert_time(**input_dict),
+                         dt.datetime(2001,1,1))
 
         # Test dictionary input implimentation
         input_dict = {"year":None, "soy":None, "yyddd":None, "sod":0.0,
                       "date":"2001-01-01", "tod":None}
-        self.assertEquals(ocbpy.ocb_time.convert_time(**input_dict),
-                          dt.datetime(2001,1,1))
+        self.assertEqual(ocbpy.ocb_time.convert_time(**input_dict),
+                         dt.datetime(2001,1,1))
         
     def test_yyddd_to_date(self):
         """ Test to see that the datetime construction works
         """
         # Test the year-soy implimentation for 2001 and 1901
-        self.assertEquals(ocbpy.ocb_time.yyddd_to_date(yyddd="101001"),
-                          dt.datetime(2001,1,1))
-        self.assertEquals(ocbpy.ocb_time.yyddd_to_date(yyddd="01001"),
-                          dt.datetime(1901,1,1))
+        self.assertEqual(ocbpy.ocb_time.yyddd_to_date(yyddd="101001"),
+                         dt.datetime(2001,1,1))
+        self.assertEqual(ocbpy.ocb_time.yyddd_to_date(yyddd="01001"),
+                         dt.datetime(1901,1,1))
 
 if __name__ == '__main__':
     unittest.main()

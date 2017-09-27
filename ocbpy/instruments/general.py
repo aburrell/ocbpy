@@ -29,16 +29,16 @@ def test_file(filename):
     from os import path
 
     if not path.isfile(filename):
-        logging.warn("name provided is not a file")
+        logging.warning("name provided is not a file")
         return False
     
     fsize = path.getsize(filename)
 
     if(fsize > 2.0e9):
-        logging.warn("File size [{:.2f} GB > 2 GB]".format(fsize*1e-9))
+        logging.warning("File size [{:.2f} GB > 2 GB]".format(fsize*1e-9))
         return False
     elif(fsize == 0):
-        logging.warn("empty file [{:s}]".format(filename))
+        logging.warning("empty file [{:s}]".format(filename))
         return False
 
     return True
