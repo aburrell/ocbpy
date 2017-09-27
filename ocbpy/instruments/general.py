@@ -29,16 +29,16 @@ def test_file(filename):
     from os import path
 
     if not path.isfile(filename):
-        logging.warn("name provided is not a file")
+        logging.warning("name provided is not a file")
         return False
     
     fsize = path.getsize(filename)
 
     if(fsize > 2.0e9):
-        logging.warn("File size [{:.2f} GB > 2 GB]".format(fsize*1e-9))
+        logging.warning("File size [{:.2f} GB > 2 GB]".format(fsize*1e-9))
         return False
     elif(fsize == 0):
-        logging.warn("empty file [{:s}]".format(filename))
+        logging.warning("empty file [{:s}]".format(filename))
         return False
 
     return True
@@ -186,14 +186,14 @@ def load_ascii_data(filename, hlines, miss=None, fill=np.nan, hsplit=None,
         ldtype[icol] = int
 
     for icol in str_cols:
-        ldtype[icol] = '|S{:d}'.format(max_str_length)
+        ldtype[icol] = '|U{:d}'.format(max_str_length)
     
     #---------------------------------------------------------------------
     # Build and add the datetime objects to the output dictionary
     dt_keys = ['datetime', 'DATETIME', 'DT', 'dt']
     if len(datetime_cols) > 0 and datetime_fmt is not None:
         idt = 0
-        while out.has_key(dt_keys[idt]): idt += 1
+        while dt_keys[idt] in out.keys(): idt += 1
 
         if idt < len(dt_keys):
             keylist.append(dt_keys[idt])
@@ -204,7 +204,7 @@ def load_ascii_data(filename, hlines, miss=None, fill=np.nan, hsplit=None,
         for icol in datetime_cols:
             if(not icol in int_cols and
                dfmt_parts[icol].upper().find("SOD") < 0):
-                ldtype[icol] = '|S{:d}'.format(max_str_length)
+                ldtype[icol] = '|U{:d}'.format(max_str_length)
     else:
         idt = len(dt_keys)
 
@@ -216,7 +216,6 @@ def load_ascii_data(filename, hlines, miss=None, fill=np.nan, hsplit=None,
                              invalid_raise=False, dtype=ldtype)
     except:
         logging.error("unable to read data in file [{:s}]".format(filename))
-        print ldtype
         return header, out
 
     if len(temp) > 0:

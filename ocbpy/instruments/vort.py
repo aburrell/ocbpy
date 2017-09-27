@@ -75,9 +75,9 @@ def vort2ascii_ocb(vortfile, outfile, ocb=None, ocbfile=None, max_sdiff=600,
 
     # Read the vorticity data
     vdata = load_vorticity_ascii_data(vortfile, save_all=save_all)
-
-    if(not (vdata.has_key("VORTICITY") and vdata.has_key("CENTRE_MLAT") and
-            vdata.has_key("MLT") and vdata.has_key("DATETIME"))):
+    need_keys = ["VORTICITY", "CENTRE_MLAT", "DATETIME", "MLT"]
+    
+    if not all([kk in vdata.keys() for kk in need_keys]):
         estr = "unable to load necessary data from [{:s}]".format(vortfile)
         logging.error(estr)
         return

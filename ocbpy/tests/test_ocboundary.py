@@ -58,10 +58,10 @@ class TestOCBoundaryMethods(unittest.TestCase):
         default latitude boundary was set
         """
         self.assertGreater(self.ocb.records, 0)
-        self.assertEquals(self.ocb.boundary_lat, 74.0)
+        self.assertEqual(self.ocb.boundary_lat, 74.0)
 
         self.assertGreater(self.ocb_south.records, 0)
-        self.assertEquals(self.ocb_south.boundary_lat, -72.0)
+        self.assertEqual(self.ocb_south.boundary_lat, -72.0)
 
     def test_partial_load(self):
         """ Ensure limited sections of a file can be loaded
@@ -76,8 +76,8 @@ class TestOCBoundaryMethods(unittest.TestCase):
                                                stime=stime, etime=etime,
                                                boundary_lat=75.0)
 
-        self.assertEquals(self.ocb.records, part_ocb.records + 2)
-        self.assertEquals(part_ocb.boundary_lat, 75.0)
+        self.assertEqual(self.ocb.records, part_ocb.records + 2)
+        self.assertEqual(part_ocb.boundary_lat, 75.0)
         del part_ocb
 
     def test_first_good(self):
@@ -102,8 +102,8 @@ class TestOCBoundaryMethods(unittest.TestCase):
         self.ocb.rec_ind = 27
         
         ocb_lat, ocb_mlt = self.ocb.normal_coord(90.0, 0.0)
-        self.assertAlmostEquals(ocb_lat, 86.8658623137)
-        self.assertAlmostEquals(ocb_mlt, 17.832)
+        self.assertAlmostEqual(ocb_lat, 86.8658623137)
+        self.assertAlmostEqual(ocb_mlt, 17.832)
 
     def test_revert_coord_north(self):
 
@@ -114,8 +114,8 @@ class TestOCBoundaryMethods(unittest.TestCase):
         
         ocb_lat, ocb_mlt = self.ocb.normal_coord(80.0, 0.0)
         aacgm_lat, aacgm_mlt = self.ocb.revert_coord(ocb_lat, ocb_mlt)
-        self.assertAlmostEquals(aacgm_lat, 80.0)
-        self.assertAlmostEquals(aacgm_mlt, 0.0)
+        self.assertAlmostEqual(aacgm_lat, 80.0)
+        self.assertAlmostEqual(aacgm_mlt, 0.0)
 
     def test_normal_coord_south(self):
         """ Test to see that the normalisation is performed properly in the
@@ -124,8 +124,8 @@ class TestOCBoundaryMethods(unittest.TestCase):
         self.ocb_south.rec_ind = 8
         
         ocb_lat, ocb_mlt = self.ocb_south.normal_coord(-90.0, 0.0)
-        self.assertAlmostEquals(ocb_lat, -86.4)
-        self.assertAlmostEquals(ocb_mlt, 6.0)
+        self.assertAlmostEqual(ocb_lat, -86.4)
+        self.assertAlmostEqual(ocb_mlt, 6.0)
         
     def test_match(self):
         """ Test to see that the data matching works properly
@@ -141,14 +141,14 @@ class TestOCBoundaryMethods(unittest.TestCase):
 
         # Because the array starts at the first good OCB, will return zero
         idat = ocbpy.ocboundary.match_data_ocb(self.ocb, test_times, idat=0)
-        self.assertEquals(idat, 0)
-        self.assertEquals(self.ocb.rec_ind, 27)
+        self.assertEqual(idat, 0)
+        self.assertEqual(self.ocb.rec_ind, 27)
 
         # The next test time will cause the OCB to cycle forward to a new
         # record
         idat = ocbpy.ocboundary.match_data_ocb(self.ocb, test_times, idat=1)
-        self.assertEquals(idat, 1)
-        self.assertEquals(self.ocb.rec_ind, 31)
+        self.assertEqual(idat, 1)
+        self.assertEqual(self.ocb.rec_ind, 31)
         self.assertLess(abs((test_times[idat] -
                              self.ocb.dtime[self.ocb.rec_ind]).total_seconds()),
                         600.0)

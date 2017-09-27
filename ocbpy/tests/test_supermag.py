@@ -5,7 +5,6 @@
 #-----------------------------------------------------------------------------
 """ Tests the ocb_scaling class and functions
 """
-
 import ocbpy.instruments.supermag as ocb_ismag
 import unittest
 import numpy as np

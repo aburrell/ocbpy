@@ -6,6 +6,7 @@
 """ Tests the ocb_scaling class and functions
 """
 
+from __future__ import (print_function)
 import ocbpy.instruments.general as ocb_igen
 import unittest
 import numpy as np
@@ -36,17 +37,17 @@ class TestGeneralMethods(unittest.TestCase):
         """ Test the general file testing routine with a bad filename
         """
         self.assertFalse(ocb_igen.test_file("/"))
-        print "Testing for warning above stating 'name provided is not a file'"
+        print("Testing for warning above stating 'name provided is not a file'")
 
     def test_load_ascii_data_badfile(self):
         """ Test the general loading routine for ASCII data with bad input
         """
         header, data = ocb_igen.load_ascii_data("/", 0)
         self.assertIsInstance(header, list)
-        self.assertEquals(len(header), 0)
+        self.assertEqual(len(header), 0)
         self.assertIsInstance(data, dict)
-        self.assertEquals(len(data.keys()), 0)
-        print "Testing for warning above stating 'name provided is not a file'"
+        self.assertEqual(len(data.keys()), 0)
+        print("Testing for warning above stating 'name provided is not a file'")
 
     def test_load_ascii_data_standard(self):
         """ Test the general routine to load ASCII data
@@ -99,7 +100,7 @@ class TestGeneralMethods(unittest.TestCase):
             self.assertEqual(data[kk][-1], test_vals[kk])
 
             if kk in int_keys:
-                self.assertIsInstance(data[kk][-1], int)
+                self.assertIsInstance(data[kk][-1], np.int64)
             else:
                 self.assertIsInstance(data[kk][-1], float)
 
@@ -131,7 +132,10 @@ class TestGeneralMethods(unittest.TestCase):
             self.assertEqual(data[kk][-1], test_vals[kk])
 
             if kk in str_keys:
-                self.assertIsInstance(data[kk][-1], str)
+                try:
+                    self.assertIsInstance(data[kk][-1], str)
+                except:
+                    self.assertIsInstance(data[kk][-1], unicode)
             else:
                 self.assertIsInstance(data[kk][-1], float)
 

@@ -280,7 +280,7 @@ class OCBoundary(object):
         self
         """
         import datetime as dt
-        import ocb_time as ocbt
+        import ocbpy.ocb_time as ocbt
         
         cols = ocb_cols.split()
         dflag = -1
@@ -291,8 +291,8 @@ class OCBoundary(object):
             ldtype[cols.index('year')] = ('year',int)
         elif "date" in cols and "time" in cols:
             dflag = 1
-            ldtype[cols.index('date')] = ('date','|S50')
-            ldtype[cols.index('time')] = ('time','|S50')
+            ldtype[cols.index('date')] = ('date','|U50')
+            ldtype[cols.index('time')] = ('time','|U50')
 
         if dflag < 0:
             logging.error("missing time columns in [{:s}]".format(ocb_cols))
