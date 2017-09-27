@@ -15,7 +15,6 @@ Data
 ----------------------------------------------------------------------------
 SuperMAG data available at: http://supermag.jhuapl.edu/
 """
-
 import logging
 import numpy as np
 

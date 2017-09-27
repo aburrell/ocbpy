@@ -1,7 +1,7 @@
 # -*- coding: utf-8 -*-
 # Copyright (C) 2017
 # Full license can be found in LICENSE.txt
-'''Instrument specific Open-Closed field line Boundary (OCB) magnetic gridding
+"""Instrument specific Open-Closed field line Boundary (OCB) magnetic gridding
 
 Contains
 ---------------------------------------------------------------------------
@@ -9,10 +9,7 @@ supermag    SuperMAG data available at: http://supermag.jhuapl.edu/
 vort        SuperDARN vorticity data may be obtained from: gchi@bas.ac.uk
 general     General file loading and testing routines
 ---------------------------------------------------------------------------
-'''
-
-from __future__ import (absolute_import, unicode_literals)
-
+"""
 import logging
 
 # Imports

@@ -29,7 +29,6 @@ instruments    Instrument-specific OCB gridding functions
 ocb_time       Time manipulation routines
 ---------------------------------------------------------------------------
 """
-from __future__ import (absolute_import, unicode_literals)
 import logging
 
 __version__ = str('0.1a1')
@@ -45,6 +44,6 @@ except ImportError as e:
     logging.exception('problem importing ocboundary: ' + str(e))
 
 try:
-    from ocbpy import instruments
+    from ocbpy import (instruments)
 except ImportError as e:
     logging.exception('problem importing instruments: ' + str(e))
