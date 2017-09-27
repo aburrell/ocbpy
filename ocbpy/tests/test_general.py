@@ -6,6 +6,7 @@
 """ Tests the ocb_scaling class and functions
 """
 
+from __future__ import (print, unicode_literals)
 import ocbpy.instruments.general as ocb_igen
 import unittest
 import numpy as np
@@ -36,7 +37,7 @@ class TestGeneralMethods(unittest.TestCase):
         """ Test the general file testing routine with a bad filename
         """
         self.assertFalse(ocb_igen.test_file("/"))
-        print "Testing for warning above stating 'name provided is not a file'"
+        print("Testing for warning above stating 'name provided is not a file'")
 
     def test_load_ascii_data_badfile(self):
         """ Test the general loading routine for ASCII data with bad input
@@ -46,7 +47,7 @@ class TestGeneralMethods(unittest.TestCase):
         self.assertEquals(len(header), 0)
         self.assertIsInstance(data, dict)
         self.assertEquals(len(data.keys()), 0)
-        print "Testing for warning above stating 'name provided is not a file'"
+        print("Testing for warning above stating 'name provided is not a file'")
 
     def test_load_ascii_data_standard(self):
         """ Test the general routine to load ASCII data

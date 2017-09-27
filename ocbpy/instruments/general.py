@@ -216,7 +216,6 @@ def load_ascii_data(filename, hlines, miss=None, fill=np.nan, hsplit=None,
                              invalid_raise=False, dtype=ldtype)
     except:
         logging.error("unable to read data in file [{:s}]".format(filename))
-        print ldtype
         return header, out
 
     if len(temp) > 0:
