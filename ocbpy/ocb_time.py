@@ -143,7 +143,7 @@ def convert_time(year=None, soy=None, yyddd=None, sod=None, date=None, tod=None,
                     if time_loc > 0:
                         datetime_fmt = datetime_fmt[:time_loc]
             else:
-                str_time = "{:} {:}".format(date, tod)
+                str_time = "{:s} {:s}".format(date, tod)
                 
             dtime = dt.datetime.strptime(str_time, datetime_fmt)
 

@@ -186,7 +186,7 @@ def load_ascii_data(filename, hlines, miss=None, fill=np.nan, hsplit=None,
         ldtype[icol] = int
 
     for icol in str_cols:
-        ldtype[icol] = '|S{:d}'.format(max_str_length)
+        ldtype[icol] = '|U{:d}'.format(max_str_length)
     
     #---------------------------------------------------------------------
     # Build and add the datetime objects to the output dictionary
@@ -204,7 +204,7 @@ def load_ascii_data(filename, hlines, miss=None, fill=np.nan, hsplit=None,
         for icol in datetime_cols:
             if(not icol in int_cols and
                dfmt_parts[icol].upper().find("SOD") < 0):
-                ldtype[icol] = '|S{:d}'.format(max_str_length)
+                ldtype[icol] = '|U{:d}'.format(max_str_length)
     else:
         idt = len(dt_keys)
 

@@ -6,7 +6,7 @@
 """ Tests the ocb_scaling class and functions
 """
 
-from __future__ import (print_function, unicode_literals)
+from __future__ import (print_function)
 import ocbpy.instruments.general as ocb_igen
 import unittest
 import numpy as np
@@ -100,7 +100,7 @@ class TestGeneralMethods(unittest.TestCase):
             self.assertEqual(data[kk][-1], test_vals[kk])
 
             if kk in int_keys:
-                self.assertIsInstance(data[kk][-1], int)
+                self.assertIsInstance(data[kk][-1], np.int64)
             else:
                 self.assertIsInstance(data[kk][-1], float)
 
@@ -132,7 +132,10 @@ class TestGeneralMethods(unittest.TestCase):
             self.assertEqual(data[kk][-1], test_vals[kk])
 
             if kk in str_keys:
-                self.assertIsInstance(data[kk][-1], str)
+                try:
+                    self.assertIsInstance(data[kk][-1], str)
+                except:
+                    self.assertIsInstance(data[kk][-1], unicode)
             else:
                 self.assertIsInstance(data[kk][-1], float)
 
