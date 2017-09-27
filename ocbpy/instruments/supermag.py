@@ -100,7 +100,7 @@ def supermag2ascii_ocb(smagfile, outfile, ocb=None, ocbfile=None,
     outline = "#DATE TIME NST STID "
     optional_keys = ["SML", "SMU", "SZA"]
     for okey in optional_keys:
-        if mdata.has_key(okey):
+        if okey in mdata.keys():
             outline = "{:s}{:s} ".format(outline, okey)
 
     outline = "{:s}MLAT MLT BMAG BN BE BZ OCB_MLAT OCB_MLT ".format(outline)

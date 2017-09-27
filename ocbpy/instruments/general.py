@@ -193,7 +193,7 @@ def load_ascii_data(filename, hlines, miss=None, fill=np.nan, hsplit=None,
     dt_keys = ['datetime', 'DATETIME', 'DT', 'dt']
     if len(datetime_cols) > 0 and datetime_fmt is not None:
         idt = 0
-        while out.has_key(dt_keys[idt]): idt += 1
+        while dt_keys[idt] in out.keys(): idt += 1
 
         if idt < len(dt_keys):
             keylist.append(dt_keys[idt])
