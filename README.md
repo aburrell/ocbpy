@@ -30,7 +30,7 @@ These routines may be used as a guide to write routines for other datasets.
 
 # Python versions
 
-This module has been tested on python version 2.7.13, 3.3, 3.4, and 3.5
+This module has been tested on python version 2.7, 3.3 - 3.6
 
 # Dependencies
 
