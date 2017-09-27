@@ -6,7 +6,7 @@
 """ Tests the ocb_scaling class and functions
 """
 
-from __future__ import (print, unicode_literals)
+from __future__ import (print_function, unicode_literals)
 import ocbpy.instruments.general as ocb_igen
 import unittest
 import numpy as np
