@@ -46,9 +46,13 @@ class OCBoundary(object):
         Typical AACGM latitude of the OCBoundary or None to use
         instrument defaults (default=None)
     stime : (datetime or NoneType)
-        First time to load data or beginning of file (default=None)
+        First time to load data or beginning of file.  If specifying time, be
+        sure to start before the time of the data to allow the best match within
+        the allowable time tolerance to be found. (default=None)
     etime : (datetime or NoneType)
-        Last time to load data or ending of file (default=None)
+        Last time to load data or ending of file.  If specifying time, be sure
+        to end after the last data point you wish to match to, to ensure the
+        best match within the allowable time tolerance is made. (default=None)
 
     Returns
     ---------
