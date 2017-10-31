@@ -63,8 +63,8 @@ def normal_evar(evar, aacgm_lat, ocb_lat):
     Research: Space Physics, doi:10.1002/2016JA023235.
     """
 
-    numerator = 90.0 - aacgm_lat
-    denominator = 90.0 - ocb_lat
+    numerator = 90.0 - abs(aacgm_lat)
+    denominator = 90.0 - abs(ocb_lat)
     nvar = evar * numerator / denominator
 
     return nvar
@@ -101,8 +101,8 @@ def normal_curl_evar(curl_evar, aacgm_lat, ocb_lat):
     Research: Space Physics, doi:10.1002/2016JA023235.
     """
 
-    numerator = (90.0 - aacgm_lat)**2
-    denominator = (90.0 - ocb_lat)**2
+    numerator = (90.0 - abs(aacgm_lat))**2
+    denominator = (90.0 - abs(ocb_lat))**2
     nvar = curl_evar * numerator / denominator
 
     return nvar
