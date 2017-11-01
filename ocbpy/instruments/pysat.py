@@ -19,7 +19,7 @@ import numpy as np
 
 try:
     import pysat
-    import pandas
+    import pandas as pds
 except:
     err = 'unable to load pysat and/or pandas modules; pysat is available at:\n'
     err += 'https://github.com/rstoneback/pysat'
@@ -94,14 +94,16 @@ def add_ocb_series(pysat_data, mlat_attr, mlt_attr, evar_attrs=list(),
     import ocbpy.ocb_scaling as ocbscal
     import datetime as dt
 
-    assert isinstance(pysat_data, pandas.core.frame.DataFrame), \
+    assert isinstance(pysat_data, pds.core.frame.DataFrame), \
         logging.error("unexpected class for pysat data")
     assert hasattr(pysat_data, mlat_attr), \
         logging.error("unknown mag lat attribute [{:}]".format(mlat_attr))
     assert hasattr(pysat_data, mlt_attr), \
         logging.error("unknown MLT attribute [{:}]".format(mlt_attr))
 
-    ocb_attrs = ["{:s}_ocb".format(eattr) for eattr in [mlat_attr, mlt_attr]]
+    olat_attr = "{:s}_ocb".format(mlat_attr)
+    omlt_attr = "{:s}_ocb".format(mlt_attr)
+    ocb_attrs = [olat_attr, omlt_attr]
 
     for eattr in evar_attrs:
         assert hasattr(pysat_data, eattr), \
@@ -115,11 +117,11 @@ def add_ocb_series(pysat_data, mlat_attr, mlt_attr, evar_attrs=list(),
 
     # Test the vector attributes to ensure that enough information
     # was provided and that it exists in the DataFrame
-    untested_attrs = vector_attrs.keys()
-    if len(untested_attrs) > 0:
+    nvect = len(vector_attrs.keys())
+    if nvect > 0:
         vector_reqs = ["aacgm_n", "aacgm_e", "aacgm_z"]
 
-        if eattr in untested_attrs:
+        for eattr in vector_attrs.keys():
             vdim = 0
             vfunc = False
             for vinit in vector_attrs[eattr].keys():
@@ -155,14 +157,18 @@ def add_ocb_series(pysat_data, mlat_attr, mlt_attr, evar_attrs=list(),
         logging.error("no data in OCB file {:s}".format(ocb.filename))
         return
 
-    # Initialise the OCB Series, if needed
-    for eattr in ocb_attrs:
-        empty_series = pandas.Series(np.empty(shape=aacgm_lat.shape,
-                                              dtype=float) * np.nan,
-                                     index=pysat_data.index)
-        
-        if not hasattr(pysat_data, eattr):
-            setattr(pysat_data, eattr, empty_series)
+    # Initialise the OCB Series
+    ocb_series = dict()
+    for oattr in ocb_attrs:
+        eattr = oattr[:-4]
+        if eattr in vector_attr.keys():
+            ocb_series[oattr] = pds.Series(np.empty(shape=aacgm_lat.shape,
+                                                    dtype=ocbscal.VectorData),
+                                           index=pysat_data.index)
+        else:
+            ocb_series[oattr] = pds.Series(np.empty(shape=aacgm_lat.shape,
+                                                    dtype=float) * np.nan,
+                                           index=pysat_data.index)
 
     # Cycle through the data, matching data and OCB records
     idat = 0
@@ -174,15 +180,28 @@ def add_ocb_series(pysat_data, mlat_attr, mlt_attr, evar_attrs=list(),
                                     min_r=min_r, min_j=min_j)
         
         if idat < ndat and ocb.rec_ind < ocb.records:
-            # Set this value's AACGM vector values
             iser = dat_ind[idat]
-            # HERE
-            vdata = ocbscal.VectorData(idat, ocb.rec_ind, mdata['MLAT'][idat],
-                                       mdata['MLT'][idat],
-                                       aacgm_n=mdata['BN'][idat],
-                                       aacgm_e=mdata['BE'][idat],
-                                       aacgm_z=mdata['BZ'][idat],
-                                       scale_func=ocbscal.normal_curl_evar)
+
+            # Get the OCB coordinates
+            (ocb_series[olat_attr][iser],
+             ocb_series[omlt_attr][iser]) = ocb.normal_coord(aacgm_lat[iser],
+                                                             aacgm_mlt[iser])
+
+            if nvect > 0:
+                # Set this value's AACGM vector values
+                vector_default = {"ocb_lat":ocb_series[olat_attr][iser],
+                                  "ocb_mlt":ocb_series[omlt_attr][iser],
+                                  "aacgm_n":0.0, "aacgm_e":0.0, "aacgm_z":0.0,
+                                  "aacgm_mag":np.nan, dat_name:None,
+                                  dat_units:None, "scale_func":None}
+                vector_init = dict(vector_default)
+
+                for eattr in vector_attrs.keys():
+                    for ikey
+                    
+                    ocb_data[eattr][iser] = ocbscal.VectorData(idat, \
+                        ocb.rec_ind, aacgm_lat[iser], aacgm_mlt[iser], \
+                                                    **vector_attrs[eattr])
             
             vdata.set_ocb(ocb)
 
