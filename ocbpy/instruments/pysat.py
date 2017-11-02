@@ -8,11 +8,11 @@ Functions
 add_ocb_series()
     Add OCB coordinates to the pysat Instrument.DataFrame object
 add_ocb_metadata()
-    Add OCB metadata to the pysat Instrument object
+    Add OCB metadata to the pysat Instrument object (NEEDED)
 
-Data
+Module
 ----------------------------------------------------------------------------
-SuperMAG data available at: http://supermag.jhuapl.edu/
+pysat is available at: http://github.com/rstoneback/pysat
 """
 import logging
 import numpy as np
@@ -51,7 +51,7 @@ def add_ocb_series(pysat_data, mlat_attr, mlt_attr, evar_attrs=list(),
         Dict of DataFrame attribute pointing to Series of measurements that
         are vectors that are proportional to either E or the curl of E. The
         key should correspond to one of the values in the evar_attrs or
-        cur_evar_attrs list.  If this is not done, a scaling function must be
+        curl_evar_attrs list.  If this is not done, a scaling function must be
         provided.  The value corresponding to each key must be a dict that
         indicates the attributes holding data needed to initialise the
         ocbpy.ocb_scaling.VectorData object. (default={})
@@ -106,14 +106,14 @@ def add_ocb_series(pysat_data, mlat_attr, mlt_attr, evar_attrs=list(),
     ocb_attrs = [olat_attr, omlt_attr]
 
     for eattr in evar_attrs:
-        assert hasattr(pysat_data, eattr), \
-            logging.error("unknown E field attribute [{:}]").format(eattr)
-        ocb_attrs.append("{:s}_ocb".format(eattr)
+        assert hasattr(pysat_data, eattr) or eattr in vector_attrs.keys(), \
+            logging.error("unknown E field attribute [{:}]".format(eattr))
+        ocb_attrs.append("{:s}_ocb".format(eattr))
 
     for eattr in curl_evar_attrs:
-        assert hasattr(pysat_data, eattr), \
+        assert hasattr(pysat_data, eattr) or eattr in vector_attrs.keys(), \
             logging.error("unknown curl E field attribute [{:}]").format(eattr)
-        ocb_attrs.append("{:s}_ocb").format(eattr)
+        ocb_attrs.append("{:s}_ocb".format(eattr))
 
     # Test the vector attributes to ensure that enough information
     # was provided and that it exists in the DataFrame
@@ -124,19 +124,26 @@ def add_ocb_series(pysat_data, mlat_attr, mlt_attr, evar_attrs=list(),
         for eattr in vector_attrs.keys():
             vdim = 0
             vfunc = False
+
+            if eattr in evar_attrs:
+                vector_attrs[eattr]["scale_func"] = ocbscal.normal_evar
+                evar_attrs.pop(evar_attrs.index(eattr))
+            elif eattr in curl_evar_attrs:
+                vector_attrs[eattr]["scale_func"] = ocbscal.normal_curl_evar
+                curl_evar_attrs.pop(curl_evar_attrs.index(eattr))
+            else:
+                assert "scale_func" in vector_attrs[eattr], \
+            logging.error("missing scaling function for [{:}]".format(eattr))
+
+            oattr = "{:s}_ocb".format(eattr)
+            if not oattr in ocb_attrs:
+                ocb_attrs.append(oattr)
+            
             for vinit in vector_attrs[eattr].keys():
                 if vinit in vector_reqs:
-                    assert hasattr(pysat_data, vinit), \
-                logging.error("unknown vector attribute [{:}]").format(vinit))
+                    assert hasattr(pysat_data, vector_attrs[eattr][vinit]), \
+                        logging.error("unknown vector attribute [{:}]".format(vector_attrs[eattr][vinit]))
                     vdim += 1
-
-                if vinit in evar_attrs:
-                    vector_attrs[eattr]["scale_func"] = ocbscal.normal_evar
-                elif vinit in curl_evar_attrs:
-                    vector_attrs[eattr]["scale_func"] = ocbscal.normal_curl_evar
-                else:
-                    assert "scale_func" in vector_attrs[eattr], \
-            logging.error("missing scaling function for [{:}]").format(eattr))
 
     # Extract the AACGM locations
     aacgm_lat = getattr(pysat_data, mlat_attr)
@@ -161,7 +168,7 @@ def add_ocb_series(pysat_data, mlat_attr, mlt_attr, evar_attrs=list(),
     ocb_series = dict()
     for oattr in ocb_attrs:
         eattr = oattr[:-4]
-        if eattr in vector_attr.keys():
+        if eattr in vector_attrs.keys():
             ocb_series[oattr] = pds.Series(np.empty(shape=aacgm_lat.shape,
                                                     dtype=ocbscal.VectorData),
                                            index=pysat_data.index)
@@ -192,158 +199,40 @@ def add_ocb_series(pysat_data, mlat_attr, mlt_attr, evar_attrs=list(),
                 vector_default = {"ocb_lat":ocb_series[olat_attr][iser],
                                   "ocb_mlt":ocb_series[omlt_attr][iser],
                                   "aacgm_n":0.0, "aacgm_e":0.0, "aacgm_z":0.0,
-                                  "aacgm_mag":np.nan, dat_name:None,
-                                  dat_units:None, "scale_func":None}
+                                  "aacgm_mag":np.nan, "dat_name":None,
+                                  "dat_units":None, "scale_func":None}
                 vector_init = dict(vector_default)
 
                 for eattr in vector_attrs.keys():
-                    for ikey
+                    oattr = "{:s}_ocb".format(eattr)
+                    for ikey in vector_attrs[eattr].keys():
+                        try:
+                            vector_init[ikey] = getattr(pysat_data, vector_attrs[eattr][ikey])[iser]
+                        except:
+                            # Not all vector attributes are DataFrame attributes
+                            vector_init[ikey] = vector_attrs[eattr][ikey]
                     
-                    ocb_data[eattr][iser] = ocbscal.VectorData(idat, \
-                        ocb.rec_ind, aacgm_lat[iser], aacgm_mlt[iser], \
-                                                    **vector_attrs[eattr])
-            
-            vdata.set_ocb(ocb)
+                    ocb_series[oattr][iser] = ocbscal.VectorData(iser, \
+                ocb.rec_ind, aacgm_lat[iser], aacgm_mlt[iser], **vector_init)
+                    ocb_series[oattr][iser].set_ocb(ocb)
+                    
+                for eattr in evar_attrs:
+                    oattr = "{:s}_ocb".format(eattr)
+                    evar = getattr(pysat_data, eattr)[iser]
+                    ocb_series[oattr][iser] = ocbscal.normal_evar(evar, \
+                                aacgm_lat[iser], ocb_series[olat_attr][iser])
+                for eattr in curl_evar_attrs:
+                    oattr = "{:s}_ocb".format(eattr)
+                    evar = getattr(pysat_data, eattr)[iser]
+                    ocb_series[oattr][iser] = ocbscal.normal_curl_evar(evar, \
+                                aacgm_lat[iser], ocb_series[olat_attr][iser])
 
-            # Format the output line
-            #    DATE TIME NST [SML SMU] STID [SZA] MLAT MLT BMAG BN BE BZ
-            #    OCB_MLAT OCB_MLT OCB_BMAG OCB_BN OCB_BE OCB_BZ
-            outline = "{:} {:d} {:s} ".format(mdata['DATETIME'][idat],
-                                              mdata['NST'][idat],
-                                              mdata['STID'][idat])
-
-            for okey in optional_keys:
-                if okey == "SZA":
-                    outline = "{:s}{:.2f} ".format(outline, mdata[okey][idat])
-                else:
-                    outline = "{:s}{:d} ".format(outline, mdata[okey][idat])
-            
-            outline = "{:s}{:.2f} {:.2f} {:.2f} {:.2f} ".format(outline, \
-            vdata.aacgm_lat, vdata.aacgm_mlt, vdata.aacgm_mag, vdata.aacgm_n)
-            outline = "{:s}{:.2f} {:.2f} {:.2f} {:.2f} ".format(outline, \
-                    vdata.aacgm_e, vdata.aacgm_z, vdata.ocb_lat, vdata.ocb_mlt)
-            outline = "{:s}{:.2f} {:.2f} {:.2f} {:.2f}\n".format(outline, \
-                    vdata.ocb_mag, vdata.ocb_n, vdata.ocb_e, vdata.ocb_z)
-            try:
-                fout.write(outline)
-            except e:
-                estr = "unable to write [{:s}] ".format(outline)
-                estr = "{:s}because of error [{:}]".format(estr, e)
-                logging.error(estr)
-                return
             
             # Move to next line
             idat += 1
 
-    # Close output file
-    fout.close()
-        
-    return
+    # Update DataFrame
+    for oattr in ocb_series:
+        setattr(pysat_data, oattr, ocb_series[oattr])
 
-#---------------------------------------------------------------------------
-# load_supermag_ascii_data: A routine to open a supermag ascii file
-
-def load_supermag_ascii_data(filename):
-    """Open a SuperMAG ASCII data file and load it into a dictionary of nparrays
-
-    Parameters
-    ------------
-    filename : (str)
-        SuperMAG ASCI data file name
-
-    Returns
-    ----------
-    out : (dict of numpy.arrays)
-        The dict keys are specified by the header data line, the data
-        for each key are stored in the numpy array
-    """
-    from ocbpy.instruments import test_file
-    import datetime as dt
-    
-    fill_val = 999999
-    header = list()
-    ind = {"SMU":fill_val, "SML":fill_val}
-    out = {"YEAR":list(), "MONTH":list(), "DAY":list(), "HOUR":list(),
-           "MIN":list(), "SEC":list(), "DATETIME":list(), "NST":list(),
-           "SML":list(), "SMU":list(), "STID":list(), "BN":list(), "BE":list(),
-           "BZ":list(), "MLT":list(), "MLAT":list(), "DEC":list(), "SZA":list()}
-    
-    if not test_file(filename):
-        return header, dict()
-    
-    #----------------------------------------------
-    # Open the datafile and read the data
-    f = open(filename, "r")
-
-    if not f:
-        logging.error("unable to open input file [{:s}]".format(filename))
-        return header, dict()
-
-    hflag = True
-    n = -1
-    for line in f.readlines():
-        if hflag:
-            # Fill the header list
-            header.append(line)
-            if line.find("=========================================") >= 0:
-                hflag = False
-                dflag = True
-        else:
-            # Fill the output dictionary
-            if n < 0:
-                # This is a date line
-                n = 0
-                lsplit = np.array(line.split(), dtype=int)
-                dtime = dt.datetime(lsplit[0], lsplit[1], lsplit[2], lsplit[3],
-                                    lsplit[4], lsplit[5])
-                snum = lsplit[-1]
-            else:
-                lsplit = line.split()
-
-                if len(lsplit) == 2:
-                    # This is an index line
-                    ind[lsplit[0]] = int(lsplit[1])
-                else:
-                    # This is a station data line
-                    out['YEAR'].append(dtime.year)
-                    out['MONTH'].append(dtime.month)
-                    out['DAY'].append(dtime.day)
-                    out['HOUR'].append(dtime.hour)
-                    out['MIN'].append(dtime.minute)
-                    out['SEC'].append(dtime.second)
-                    out['DATETIME'].append(dtime)
-                    out['NST'].append(snum)
-
-                    for k in ind.keys():
-                        out[k].append(ind[k])
-                        
-                    out['STID'].append(lsplit[0])
-                    out['BN'].append(float(lsplit[1]))
-                    out['BE'].append(float(lsplit[2]))
-                    out['BZ'].append(float(lsplit[3]))
-                    out['MLT'].append(float(lsplit[4]))
-                    out['MLAT'].append(float(lsplit[5]))
-                    out['DEC'].append(float(lsplit[6]))
-                    out['SZA'].append(float(lsplit[7]))
-
-                    n += 1
-
-                    if n == snum:
-                        n = -1
-                        ind = {"SMU":fill_val, "SML":fill_val}
-
-    f.close()
-
-    # Recast data as numpy arrays and replace fill value with np.nan
-    for k in out:
-        if k == "STID":
-            out[k] = np.array(out[k], dtype=str)
-        else:
-            out[k] = np.array(out[k])
-
-            if k in ['BE', 'BN', 'DEC', 'SZA', 'MLT', 'BZ']:
-                out[k][out[k] == fill_val] = np.nan
-    
-    return header, out
-
-# End load_supermag_ascii_data
+    return ocb_series.keys()
