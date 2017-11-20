@@ -63,8 +63,8 @@ def normal_evar(evar, aacgm_lat, ocb_lat):
     Research: Space Physics, doi:10.1002/2016JA023235.
     """
 
-    numerator = 90.0 - aacgm_lat
-    denominator = 90.0 - ocb_lat
+    numerator = 90.0 - abs(aacgm_lat)
+    denominator = 90.0 - abs(ocb_lat)
     nvar = evar * numerator / denominator
 
     return nvar
@@ -101,8 +101,8 @@ def normal_curl_evar(curl_evar, aacgm_lat, ocb_lat):
     Research: Space Physics, doi:10.1002/2016JA023235.
     """
 
-    numerator = (90.0 - aacgm_lat)**2
-    denominator = (90.0 - ocb_lat)**2
+    numerator = (90.0 - abs(aacgm_lat))**2
+    denominator = (90.0 - abs(ocb_lat))**2
     nvar = curl_evar * numerator / denominator
 
     return nvar
@@ -402,21 +402,21 @@ class VectorData(object):
         self.calc_vec_pole_angle()
 
         # Set the OCB and Vector quadrants
-        self.define_quadrants()
+        if not np.isnan(self.pole_angle):
+            self.define_quadrants()
         
-        # Set the scaling function
-        if self.scale_func is None:
-            if scale_func is None:
-                # This is not necessarily a bad thing, if the value does not
-                # need to be scaled.
-                logging.info("no scaling function provided")
-            else:
-                self.scale_func = scale_func
+            # Set the scaling function
+            if self.scale_func is None:
+                if scale_func is None:
+                    # This is not necessarily a bad thing, if the value does not
+                    # need to be scaled.
+                    logging.info("no scaling function provided")
+                else:
+                    self.scale_func = scale_func
 
-        # Assign the OCB vector default values and location.  Will also update
-        # the AACGM north azimuth of the vector.
-        self.scale_vector()
-
+            # Assign the OCB vector default values and location.  Will also
+            # update the AACGM north azimuth of the vector.
+            self.scale_vector()
         return
 
     def define_quadrants(self):
@@ -497,7 +497,11 @@ class VectorData(object):
             self.ocb_z = self.scale_func(self.aacgm_z, self.aacgm_lat,
                                          self.ocb_lat)
 
-        if self.pole_angle == 0.0 or self.pole_angle == 180.0:
+        if self.aacgm_n == 0.0 and self.aacgm_e == 0.0:
+            # There's no magnitude, so nothing to adjust
+            self.ocb_n = 0.0
+            self.ocb_e = 0.0
+        elif self.pole_angle == 0.0 or self.pole_angle == 180.0:
             # The measurement is aligned with the AACGM and OCB poles
             if self.scale_func is None:
                 self.ocb_n = self.aacgm_n
@@ -755,6 +759,12 @@ class VectorData(object):
             return
 
         sin_pole_angle = del_pole * np.sin(mao) / del_lat
-        self.pole_angle = np.degrees(np.arcsin(sin_pole_angle))
+        if abs(sin_pole_angle) > 1.0:
+            # The pole angle is greater than 90 degrees
+            del_alat = hemisphere * (hemisphere * 90.0 - self.aacgm_lat)
+            aom = np.arcsin(del_alat * np.sin(mao) / del_lat)
+            self.pole_angle = np.degrees(np.pi - aom - mao)
+        else:
+            self.pole_angle = np.degrees(np.arcsin(sin_pole_angle))
 
         return
