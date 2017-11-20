@@ -28,15 +28,33 @@ class TestOCBScalingMethods(unittest.TestCase):
                                                   aacgm_e=86.5, aacgm_z=5.0,
                                                   dat_name="Test",
                                                   dat_units="$m s^{-1}$")
+        self.zdata = ocbpy.ocb_scaling.VectorData(0, self.ocb.rec_ind, 87.2,
+                                                  21.22, aacgm_n=0.0,
+                                                  aacgm_e=0.0,
+                                                  dat_name="Test Zero",
+                                                  dat_units="$m s^{-1}$")
 
     def tearDown(self):
-        del self.ocb, self.vdata
+        del self.ocb, self.vdata, self.zdata
 
     def test_init(self):
         """ Test the initialisation of the VectorData object
         """
         self.assertAlmostEqual(self.vdata.aacgm_mag, 100.036243432)
+        self.assertAlmostEqual(self.zdata.aacgm_mag, 0.0)
+        
+    def test_calc_large_pole_angle(self):
+        """ Test to see that the OCB polar angle calculation is performed
+        properly when the angle is greater than 90 degrees
+        """
+        self.zdata.ocb_aacgm_mlt = 1.260677777
+        self.zdata.ocb_aacgm_lat = 83.99
+        self.zdata.ocb_lat = 84.838777192
+        self.zdata.ocb_mlt = 15.1110383783
 
+        self.zdata.calc_vec_pole_angle()
+        self.assertAlmostEqual(self.zdata.pole_angle, 91.1809809465)
+        
     def test_calc_vec_pole_angle(self):
         """ Test to see that the polar angle calculation is performed properly
         """
@@ -145,7 +163,16 @@ class TestOCBScalingMethods(unittest.TestCase):
         self.assertEqual(self.vdata.aacgm_mag, self.vdata.ocb_mag)
         self.assertEqual(self.vdata.ocb_z, self.vdata.aacgm_z)
 
-    def test_set_ocb(self):
+    def test_set_ocb_zero(self):
+        """ Test setting of OCB values for the VectorData object without any
+        magnitude
+        """
+        # Set the OCB values without any E-field scaling, test to see that the
+        # AACGM and OCB vector magnitudes are the same
+        self.zdata.set_ocb(self.ocb)
+        self.assertEqual(self.zdata.ocb_mag, 0.0)
+
+    def test_set_ocb_none(self):
         """ Test setting of OCB values for the VectorData object
         """
 
@@ -154,16 +181,24 @@ class TestOCBScalingMethods(unittest.TestCase):
         self.vdata.set_ocb(self.ocb)
         self.assertEqual(self.vdata.aacgm_mag, self.vdata.ocb_mag)
 
+    def test_set_ocb_evar(self):
+        """ Test setting of OCB values for the VectorData object
+        """
+
         # Set the OCB values with scaling for a variable proportional to
         # the electric field
         self.vdata.set_ocb(self.ocb, scale_func=ocbpy.ocb_scaling.normal_evar)
         self.assertAlmostEqual(self.vdata.ocb_mag, 80.3516453163)
+        
+    def test_set_ocb_curl_evar(self):
+        """ Test setting of OCB values for the VectorData object
+        """
 
         # Set the OCB values with scaling for a variable proportional to
         # the curl of the electric field
         self.vdata.set_ocb(self.ocb,
                            scale_func=ocbpy.ocb_scaling.normal_curl_evar)
-        self.assertAlmostEqual(self.vdata.ocb_mag, 80.3516453163)
+        self.assertAlmostEqual(self.vdata.ocb_mag, 64.56491844)
         
 if __name__ == '__main__':
     unittest.main()
