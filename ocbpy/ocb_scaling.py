@@ -402,26 +402,35 @@ class VectorData(object):
         self.calc_vec_pole_angle()
 
         # Set the OCB and Vector quadrants
-        self.define_quadrants()
+        if not np.isnan(self.pole_angle):
+            self.define_quadrants()
         
-        # Set the scaling function
-        if self.scale_func is None:
-            if scale_func is None:
-                # This is not necessarily a bad thing, if the value does not
-                # need to be scaled.
-                logging.info("no scaling function provided")
-            else:
-                self.scale_func = scale_func
+            # Set the scaling function
+            if self.scale_func is None:
+                if scale_func is None:
+                    # This is not necessarily a bad thing, if the value does not
+                    # need to be scaled.
+                    logging.info("no scaling function provided")
+                else:
+                    self.scale_func = scale_func
 
-        # Assign the OCB vector default values and location.  Will also update
-        # the AACGM north azimuth of the vector.
-        self.scale_vector()
-
+            # Assign the OCB vector default values and location.  Will also
+            # update the AACGM north azimuth of the vector.
+            self.scale_vector()
         return
 
     def define_quadrants(self):
         """ Determine which quadrants (in AACGM coordinates) the OCB pole
         and data vector lie in
+
+        Requires
+        ---------
+        self.ocb_aacgm_mlt : (float)
+            OCB pole MLT in AACGM coordinates in hours
+        self.aacgm_mlt : (float)
+            Vector AACGM MLT in hours
+        self.pole_angle : (float)
+            vector angle in poles-vector triangle in degrees
 
         Updates
         --------
@@ -470,6 +479,17 @@ class VectorData(object):
     def scale_vector(self):
         """ Normalise a variable proportional to the curl of the electric field.
 
+        Requires
+        ---------
+        self.ocb_lat : (float)
+            OCB latitude in degrees
+        self.ocb_mlt : (float)
+            OCB MLT in hours
+        self.ocb_aacgm_mlt : (float)
+            OCB pole MLT in AACGM coordinates in hours
+        self.pole_angle : (float)
+            vector angle in poles-vector triangle
+
         Updates
         --------
         ocb_n : (float)
@@ -489,7 +509,7 @@ class VectorData(object):
             logging.error("OCB pole location required")
         assert(not np.isnan(self.pole_angle)), \
             logging.error("vector angle in poles-vector triangle required")
-        
+
         # Scale vertical component
         if self.scale_func is None or self.aacgm_z != 0.0:
             self.ocb_z = self.aacgm_z
@@ -497,7 +517,11 @@ class VectorData(object):
             self.ocb_z = self.scale_func(self.aacgm_z, self.aacgm_lat,
                                          self.ocb_lat)
 
-        if self.pole_angle == 0.0 or self.pole_angle == 180.0:
+        if self.aacgm_n == 0.0 and self.aacgm_e == 0.0:
+            # There's no magnitude, so nothing to adjust
+            self.ocb_n = 0.0
+            self.ocb_e = 0.0
+        elif self.pole_angle == 0.0 or self.pole_angle == 180.0:
             # The measurement is aligned with the AACGM and OCB poles
             if self.scale_func is None:
                 self.ocb_n = self.aacgm_n
@@ -548,6 +572,17 @@ class VectorData(object):
 
     def calc_ocb_polar_angle(self):
         """ Calculate the OCB north azimuth angle
+
+        Requires
+        ---------
+        self.ocb_quad : (int)
+            OCB quadrant
+        self.vec_quad : (int)
+            Vector quadrant
+        self.aacgm_naz : (float)
+            AACGM polar angle
+        self.pole_angle : (float)
+            Vector angle between AACGM pole, vector origin, and OCB pole
 
         Returns
         --------
@@ -612,6 +647,17 @@ class VectorData(object):
             Dictionary of boolian values for OCB and Vector quadrants
             (default=dict())
 
+        Requires
+        ----------
+        self.ocb_quad : (int)
+            OCB pole quadrant
+        self.vec_quad : (int)
+            Vector quadrant
+        self.aacgm_naz : (float)
+            AACGM polar angle in degrees
+        self.pole_angle : (float)
+            Vector angle in degrees
+
         Returns
         ---------
         vsigns : (dict)
@@ -619,7 +665,7 @@ class VectorData(object):
         """
         quad_range = np.arange(1, 5)
 
-        # Test inp[ut
+        # Test input
         assert north or east, logging.warning("must set at least one direction")
         assert self.ocb_quad in quad_range, \
             logging.error("OCB quadrant undefined")
@@ -682,19 +728,20 @@ class VectorData(object):
 
         return vsigns
 
-    def calc_vec_pole_angle(self, angular_res=1.0e-3):
+    def calc_vec_pole_angle(self):
         """calculates the angle between the AACGM pole, a measurement, and the
-        OCB pole
+        OCB pole using spherical triginometry
 
-        Parameters
-        -----------
-        ocb : (OCBoundary)
-            Class object containing open closed boundary locations
-        angular_res : (float)
-            Because method uses law of sines, it will fail when the measurement,
-            OCB north, and AACGM north are aligned.  This paramenter defines
-            the tolerance in radians for a straight line.
-            (default=1.0e-3 ~ 0.06 degrees)
+        Requires
+        ---------
+        self.aacgm_mlt : (float)
+            AACGM MLT of vector origin in hours
+        self.aacgm_lat : (float)
+            AACGM latitude of vector origin in degrees
+        self.ocb_aacgm_mlt : (float)
+            AACGM MLT of the OCB pole in hours
+        self.ocb_aacgm_lat : (float)
+            AACGM latitude of the OCB pole in degrees
 
         Updates
         --------
@@ -706,55 +753,78 @@ class VectorData(object):
             logging.error("AACGM MLT of Vector undefinded")
         assert(not np.isnan(self.ocb_aacgm_mlt)), \
             logging.error("AACGM MLT of OCB pole is undefined")
-        assert(not np.isnan(self.ocb_lat)), \
-            logging.error("OCB latitude of Vector undefined")
+        assert(not np.isnan(self.ocb_aacgm_lat)), \
+            logging.error("AACGM latitude of OCB pole is undefined")
+        assert(not np.isnan(self.aacgm_lat)), \
+            logging.error("AACGM latitude of Vector undefined")
 
-        # Convert the AACGM MLT of the observation and OCB pole to radians
-        aacgm_t = self.aacgm_mlt * np.pi / 12.0
-        ocb_t = self.ocb_aacgm_mlt * np.pi / 12.0
+        # Convert the AACGM MLT of the observation and OCB pole to radians,
+        # then calculate the difference between them.
+        del_long = (self.ocb_aacgm_mlt - self.aacgm_mlt) * np.pi / 12.0
 
-        # Find the distance in degrees between the two poles
-        hemisphere = np.sign(self.ocb_aacgm_lat)
-        del_pole = hemisphere * (hemisphere * 90.0 - self.ocb_aacgm_lat)
+        if del_long < 0.0:
+            del_long += 2.0 * np.pi
 
-        # Get the distance in degrees between the OCB pole and the data point
-        del_lat = hemisphere * (hemisphere * 90.0 - self.ocb_lat)
-
-        # Determine the dawn,dusk locations of OCB north in AACGM coordinates
-        # (unit cirlce quandrants 1,2 are dawn, while quandrants 3,4 are dusk)
-        dawn = True if self.ocb_aacgm_mlt < 12.0 else False
-        
-        # Calculate the angle MAO where M is the measurement, A is AACGM north
-        # and O is OCB north
-        mao = np.nan
-
-        if abs(aacgm_t - ocb_t) < angular_res:
+        if del_long == 0.0:
             self.pole_angle = 0.0
             return
-        elif abs(abs(aacgm_t - ocb_t) - np.pi) < angular_res:
+
+        if del_long == np.pi:
             self.pole_angle = 180.0
             return
-        elif(aacgm_t < ocb_t and
-             (dawn or (not dawn and ocb_t - aacgm_t < np.pi))):
-            mao = ocb_t - aacgm_t
-        elif((dawn and aacgm_t < ocb_t + np.pi) or
-             (not dawn and aacgm_t > ocb_t)):
-            mao = aacgm_t - ocb_t
-        elif dawn and aacgm_t > ocb_t and aacgm_t > ocb_t + np.pi:
-            mao = 2.0 * np.pi + ocb_t - aacgm_t
-        elif not dawn and aacgm_t < ocb_t and ocb_t - aacgm_t > np.pi:
-            mao = 2.0 * np.pi - ocb_t + aacgm_t
 
-        if np.isnan(mao):
-            logging.critical("problem with quandrant logic")
-            self.pole_angle = np.nan
-            return
-        elif del_pole == del_lat:
-            # This is an iscosolese triangle
-            self.pole_angle = np.degrees(mao)
-            return
+        # Find the distance in radians between the two poles
+        hemisphere = np.sign(self.ocb_aacgm_lat)
+        rad_pole = hemisphere * np.pi * 0.5
+        del_pole = hemisphere * (rad_pole - np.radians(self.ocb_aacgm_lat))
 
-        sin_pole_angle = del_pole * np.sin(mao) / del_lat
-        self.pole_angle = np.degrees(np.arcsin(sin_pole_angle))
+        # Get the distance in radians between the AACGM pole and the data point
+        del_vect = hemisphere * (rad_pole - np.radians(self.aacgm_lat))
+
+        # Use the law of haversines, which goes to the spherical trigonometric
+        # cosine rule for sides at large angles, but is more robust at small
+        # angles, to find the length of the last side of the spherical triangle.
+        del_ocb = archav(hav(del_pole - del_vect) +
+                         np.sin(del_pole) * np.sin(del_vect) * hav(del_long))
+
+        # Again use law of haversines, this time to find the polar angle
+        hav_pole_angle = (hav(del_pole) - hav(del_vect - del_ocb)) \
+                         / (np.sin(del_vect) * np.sin(del_ocb))
+
+        self.pole_angle = np.degrees(archav(hav_pole_angle))
 
         return
+
+def hav(alpha):
+    """ Formula for haversine
+
+    Parameters
+    ----------
+    alpha : (float)
+        Angle in radians
+
+    Returns
+    --------
+    hav_alpha : (float)
+        Haversine of alpha, equal to the square of the sine of half-alpha
+    """
+    hav_alpha = np.sin(alpha * 0.5)**2
+
+    return hav_alpha
+
+def archav(hav):
+    """ Formula for the inverse haversine
+
+    Parameters
+    -----------
+    hav : (float)
+        Haversine of an angle
+
+    Returns
+    ---------
+    alpha : (float)
+        Angle in radians
+    """
+    alpha = 2.0 * np.arcsin(np.sqrt(hav))
+
+    return alpha

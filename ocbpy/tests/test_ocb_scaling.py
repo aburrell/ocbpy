@@ -28,15 +28,48 @@ class TestOCBScalingMethods(unittest.TestCase):
                                                   aacgm_e=86.5, aacgm_z=5.0,
                                                   dat_name="Test",
                                                   dat_units="$m s^{-1}$")
+        self.zdata = ocbpy.ocb_scaling.VectorData(0, self.ocb.rec_ind, 87.2,
+                                                  21.22, aacgm_n=0.0,
+                                                  aacgm_e=0.0,
+                                                  dat_name="Test Zero",
+                                                  dat_units="$m s^{-1}$")
 
     def tearDown(self):
-        del self.ocb, self.vdata
+        del self.ocb, self.vdata, self.zdata
 
     def test_init(self):
         """ Test the initialisation of the VectorData object
         """
         self.assertAlmostEqual(self.vdata.aacgm_mag, 100.036243432)
+        self.assertAlmostEqual(self.zdata.aacgm_mag, 0.0)
 
+    def test_haversine(self):
+        """ Test implimentation of the haversine
+        """
+        self.assertEqual(ocbpy.ocb_scaling.hav(0.0), 0.0)
+        self.assertEqual(ocbpy.ocb_scaling.hav(np.pi), 1.0)
+        self.assertEqual(ocbpy.ocb_scaling.hav(-np.pi), 1.0)
+        self.assertAlmostEqual(ocbpy.ocb_scaling.hav(2.0 * np.pi), 0.0)
+        self.assertAlmostEqual(ocbpy.ocb_scaling.hav(-2.0 * np.pi), 0.0)
+
+    def test_inverse_haversine(self):
+        """ Test implimentation of the inverse haversine
+        """
+        self.assertEqual(ocbpy.ocb_scaling.archav(0.0), 0.0)
+        self.assertEqual(ocbpy.ocb_scaling.archav(1.0), np.pi)
+        
+    def test_calc_large_pole_angle(self):
+        """ Test to see that the OCB polar angle calculation is performed
+        properly when the angle is greater than 90 degrees
+        """
+        self.zdata.ocb_aacgm_mlt = 1.260677777
+        self.zdata.ocb_aacgm_lat = 83.99
+        self.zdata.ocb_lat = 84.838777192
+        self.zdata.ocb_mlt = 15.1110383783
+
+        self.zdata.calc_vec_pole_angle()
+        self.assertAlmostEqual(self.zdata.pole_angle, 91.72024697182087)
+        
     def test_calc_vec_pole_angle(self):
         """ Test to see that the polar angle calculation is performed properly
         """
@@ -48,7 +81,7 @@ class TestOCBScalingMethods(unittest.TestCase):
 
         # Test the calculation of the test pole angle
         self.vdata.calc_vec_pole_angle()
-        self.assertAlmostEqual(self.vdata.pole_angle, 7.52899382202)
+        self.assertAlmostEqual(self.vdata.pole_angle, 8.67527923044)
         
         # If the measurement has the same MLT as the OCB pole, the angle is
         # zero.  This includes the AACGM pole and the OCB pole.
@@ -64,19 +97,12 @@ class TestOCBScalingMethods(unittest.TestCase):
 
         # Set the distance between the data point and the OCB is equal to the
         # distance between the AACGM pole and the OCB so that the triangles
-        # we're examining are isosceles triangles
-        
-        # When the MLT is 00:00 the calculated angle is equal to the OCB MLT
+        # we're examining are isosceles triangles.  If the triangles were flat,
+        # the angle would be 46.26 degrees
         self.vdata.aacgm_mlt = 0.0
-        self.vdata.ocb_lat = self.vdata.ocb_aacgm_lat
+        self.vdata.aacgm_lat = self.vdata.ocb_aacgm_lat
         self.vdata.calc_vec_pole_angle()
-        self.assertEqual(self.vdata.pole_angle, self.vdata.ocb_aacgm_mlt * 15.0)
-
-        # When the MLT is 06:00 the calculated angle equals 90 - the OCB MLT
-        self.vdata.aacgm_mlt = 6.0
-        self.vdata.calc_vec_pole_angle()
-        self.assertEqual(self.vdata.pole_angle + self.vdata.ocb_aacgm_mlt
-                         * 15.0, 90.0)
+        self.assertAlmostEqual(self.vdata.pole_angle, 46.2932179019)
 
         # Return to the default AACGM MLT value
         self.vdata.aacgm_mlt = 22.0
@@ -138,14 +164,23 @@ class TestOCBScalingMethods(unittest.TestCase):
         self.vdata.scale_vector()
 
         # Test the North and East components
-        self.assertAlmostEqual(self.vdata.ocb_n, 60.9028461225)
-        self.assertAlmostEqual(self.vdata.ocb_e, 79.2028619065)
+        self.assertAlmostEqual(self.vdata.ocb_n, 62.4751208491)
+        self.assertAlmostEqual(self.vdata.ocb_e, 77.9686428950)
         
         # Test to see that the magnitudes and z-components are the same
         self.assertEqual(self.vdata.aacgm_mag, self.vdata.ocb_mag)
         self.assertEqual(self.vdata.ocb_z, self.vdata.aacgm_z)
 
-    def test_set_ocb(self):
+    def test_set_ocb_zero(self):
+        """ Test setting of OCB values for the VectorData object without any
+        magnitude
+        """
+        # Set the OCB values without any E-field scaling, test to see that the
+        # AACGM and OCB vector magnitudes are the same
+        self.zdata.set_ocb(self.ocb)
+        self.assertEqual(self.zdata.ocb_mag, 0.0)
+
+    def test_set_ocb_none(self):
         """ Test setting of OCB values for the VectorData object
         """
 
@@ -154,16 +189,24 @@ class TestOCBScalingMethods(unittest.TestCase):
         self.vdata.set_ocb(self.ocb)
         self.assertEqual(self.vdata.aacgm_mag, self.vdata.ocb_mag)
 
+    def test_set_ocb_evar(self):
+        """ Test setting of OCB values for the VectorData object
+        """
+
         # Set the OCB values with scaling for a variable proportional to
         # the electric field
         self.vdata.set_ocb(self.ocb, scale_func=ocbpy.ocb_scaling.normal_evar)
         self.assertAlmostEqual(self.vdata.ocb_mag, 80.3516453163)
+        
+    def test_set_ocb_curl_evar(self):
+        """ Test setting of OCB values for the VectorData object
+        """
 
         # Set the OCB values with scaling for a variable proportional to
         # the curl of the electric field
         self.vdata.set_ocb(self.ocb,
                            scale_func=ocbpy.ocb_scaling.normal_curl_evar)
-        self.assertAlmostEqual(self.vdata.ocb_mag, 80.3516453163)
+        self.assertAlmostEqual(self.vdata.ocb_mag, 64.56491844)
         
 if __name__ == '__main__':
     unittest.main()
