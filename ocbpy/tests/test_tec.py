@@ -9,7 +9,7 @@ import ocbpy.instruments.tec as ocb_tec
 import unittest
 import numpy as np
 
-class TestVortMethods(unittest.TestCase):
+class TestTECMethods(unittest.TestCase):
 
     def setUp(self):
         """ Initialize the OCBoundary object using the test file

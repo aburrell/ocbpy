@@ -9,7 +9,7 @@ import ocbpy.instruments.supermag as ocb_ismag
 import unittest
 import numpy as np
 
-class TestVortMethods(unittest.TestCase):
+class TestSuperMAGMethods(unittest.TestCase):
 
     def setUp(self):
         """ Initialize the OCBoundary object using the test file, as well as
@@ -48,7 +48,7 @@ class TestVortMethods(unittest.TestCase):
         ktest = ['BE', 'BN', 'BZ', 'DATETIME', 'DAY', 'DEC', 'HOUR', 'MIN',
                  'MLAT', 'MLT', 'MONTH', 'NST', 'SEC', 'SML', 'SMU', 'STID',
                  'SZA', 'YEAR']
-        self.assertListEqual(ktest, sorted(data.keys()))
+        self.assertListEqual(ktest, sorted(list(data.keys())))
 
         # Test the length of the data file
         self.assertEqual(data['MLT'].shape[0], 2)
@@ -71,7 +71,7 @@ class TestVortMethods(unittest.TestCase):
 
         # Test to see that the data keys are all in the header
         self.assertListEqual(header, [])
-        self.assertListEqual(data.keys(), [])
+        self.assertListEqual(list(data.keys()), [])
 
     def test_supermag2ascii_ocb(self):
         """ Test the conversion of SuperMAG data from AACGM coordinates into
