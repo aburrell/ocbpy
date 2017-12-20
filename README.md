@@ -47,6 +47,7 @@ The listed dependecies were tested with the following versions:
   * logging (0.5.1.2)
   * os 
   * setuptools (36.0.1)
+  * h5py
 
 Some routines require additional programs, which are tricker to install and
 so not required:
