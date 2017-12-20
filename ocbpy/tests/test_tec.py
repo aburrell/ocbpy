@@ -48,7 +48,7 @@ class TestTECMethods(unittest.TestCase):
         # Test to see that the data keys are all in the header
         ktest = ['datetime', 'day', 'dtec', 'gdlat', 'glon', 'hour', 'min',
                  'month', 'recno', 'sec', 'tec', 'ut1_unix', 'ut2_unix', 'year']
-        self.assertListEqual(ktest, sorted(data.keys()))
+        self.assertListEqual(ktest, sorted(list(data.keys())))
 
         # Test the length of the data file
         self.assertEqual(data['tec'].shape[0], 2)
@@ -69,7 +69,7 @@ class TestTECMethods(unittest.TestCase):
         self.assertIsNone(data)
 
     def test_load_bad_file(self):
-        """ Test the routine to load the Madrigal TEC data
+        """ Test the routine to load a non-Madrigal TEC file
         """
 
         data = ocb_tec.load_madrigal_hdf5_tec(self.bad_file)
