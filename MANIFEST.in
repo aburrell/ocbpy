@@ -9,6 +9,7 @@ include ocbpy/tests/test_data/test_south_circle
 include ocbpy/tests/test_data/test_smag
 include ocbpy/tests/test_data/test_vort
 include ocbpy/tests/test_data/test_tec
+include ocbpy/tests/test_data/test_tec_bad
 include ocbpy/tests/test_data/out_smag
 include ocbpy/tests/test_data/out_vort
 include ocbpy/tests/test_data/out_tec

@@ -85,6 +85,30 @@ class TestSuperMAGMethods(unittest.TestCase):
         # Compare created file to stored test file
         self.assertTrue(filecmp.cmp(self.test_output, self.temp_output,
                                     shallow=False))
+
+    def test_supermag2ascii_ocb_bad_output(self):
+        """ Test the conversion of SuperMAG data from AACGM coordinates into
+        OCB coordinates
+        """
+        from ocbpy.instruments.general import test_file
+
+        try:
+            ocb_ismag.supermag2ascii_ocb(self.test_file, "/",
+                                         ocbfile=self.test_ocb)
+        except:
+            pass
+
+    def test_supermag2ascii_ocb_bad_ocb(self):
+        """ Test the conversion of SuperMAG data from AACGM coordinates into
+        OCB coordinates
+        """
+        from ocbpy.instruments.general import test_file
+
+        ocb_ismag.supermag2ascii_ocb(self.test_file, "fake_out",
+                                     ocbfile="fake_ocb")
+
+        # Compare created file to stored test file
+        self.assertFalse(test_file("fake_out"))
         
 
 if __name__ == '__main__':

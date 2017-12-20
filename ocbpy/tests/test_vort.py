@@ -65,6 +65,13 @@ class TestVortMethods(unittest.TestCase):
 
         self.assertIsNone(data)
 
+    def test_wrong_load(self):
+        """ Test the routine to load the SuperDARN vorticity data
+        """
+        data = ocb_ivort.load_vorticity_ascii_data("test_data/test_smag")
+
+        self.assertIsNone(data)
+
     def test_load_all_vort_data(self):
         """ Test the routine to load the SuperDARN vorticity data, loading
         all of the possible data values
@@ -92,7 +99,46 @@ class TestVortMethods(unittest.TestCase):
         # Compare created file to stored test file
         self.assertTrue(filecmp.cmp(self.test_output, self.temp_output,
                                     shallow=False))
-        
+
+    def test_vort2ascii_ocb_load_failure(self):
+        """ Test the conversion of vorticity data from AACGM coordinates into
+        OCB coordinates with a bad vorticity file
+        """
+        import filecmp
+        from ocbpy.instruments.general import test_file
+
+        try:
+            ocb_ivort.vort2ascii_ocb("fake_file", "fake_out",
+                                     ocbfile=self.test_ocb)
+
+            # Compare created file to stored test file
+            self.assertFalse(test_file("fake_out"))
+        except:
+            pass
+
+    def test_vort2ascii_ocb_no_ocb(self):
+        """ Test the conversion of vorticity data from AACGM coordinates into
+        OCB coordinates
+        """
+        import filecmp
+        from ocbpy.instruments.general import test_file
+
+        ocb_ivort.vort2ascii_ocb(self.test_file, "fake_out", ocbfile="fake_ocb")
+
+        # Compare created file to stored test file
+        self.assertFalse(test_file("fake_out"))
+
+    def test_vort2ascii_ocb_output_failure(self):
+        """ Test the conversion of vorticity data from AACGM coordinates into
+        OCB coordinates
+        """
+        import filecmp
+        from ocbpy.instruments.general import test_file
+
+        ocb_ivort.vort2ascii_ocb(self.test_file, "/", ocbfile=self.test_ocb)
+
+        # Compare created file to stored test file
+        self.assertFalse(test_file("/"))
 
 if __name__ == '__main__':
     unittest.main()
