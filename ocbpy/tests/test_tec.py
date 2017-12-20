@@ -64,7 +64,7 @@ class TestVortMethods(unittest.TestCase):
         """
 
         data = ocb_tec.load_madrigal_hdf5_tec("fake_file")
-        self.assertIsNone(out)
+        self.assertIsNone(data)
 
     def test_tec2ascii_ocb(self):
         """ Test the conversion of Madrigal TEC data from geographic coordinates
