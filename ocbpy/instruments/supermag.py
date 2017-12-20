@@ -85,7 +85,10 @@ def supermag2ascii_ocb(smagfile, outfile, ocb=None, ocbfile=None,
 
     # Test the OCB data
     if ocb.filename is None or ocb.records == 0:
-        logging.error("no data in OCB file {:s}".format(ocb.filename))
+        try:
+            logging.error("no data in OCB file {:s}".format(ocb.filename))
+        except:
+            logging.error("bad OCB file specified")
         return
 
     # Open and test the file to ensure it can be written

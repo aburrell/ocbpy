@@ -101,7 +101,10 @@ def madrigal_tec2ascii_ocb(tecfile, outfile, ocb=None, ocbfile=None,
 
     # Test the OCB data
     if ocb.filename is None or ocb.records == 0:
-        logging.error("no data in OCB file {:s}".format(ocb.filename))
+        try:
+            logging.error("no data in OCB file {:s}".format(ocb.filename))
+        except:
+            logging.error("bad OCB file specified")
         return
 
     # Remove the data from the opposite hemisphere

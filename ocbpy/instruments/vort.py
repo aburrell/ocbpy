@@ -89,7 +89,10 @@ def vort2ascii_ocb(vortfile, outfile, ocb=None, ocbfile=None, max_sdiff=600,
         ocb = ocbpy.ocboundary.OCBoundary(ocbfile, stime=vstart, etime=vend)
 
     if ocb.filename is None or ocb.records == 0:
-        logging.error("no data in OCB file {:s} ".format(ocb.filename))
+        try:
+            logging.error("no data in OCB file {:s} ".format(ocb.filename))
+        except:
+            logging.error("bad OCB file specified")
         return
     
     # Open and test the file to ensure it can be written
