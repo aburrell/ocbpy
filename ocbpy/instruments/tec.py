@@ -13,12 +13,24 @@ load_madrigal_hdf5_tec(filename)
 
 Data
 ----------------------------------------------------------------------------
-Madrigal data available at: http://madrigal.haystack.mit.edu/madrigal/
+Madrigal data available at: http://cedar.openmadrigal.org/
+The Madrigal python API is available at:
+ http://cedar.openmadrigal.org/docs/name/rt_python.html
 
 Note
 ----------------------------------------------------------------------------
 Requires AACGM model, which is run through davitpy:
  https://github.com/vtsuperdarn/davitpy
+
+It's never a bad idea to test this implimentation of the model against the
+official online calculator at:
+ http://sdnet.thayer.dartmouth.edu/aacgm/aacgm_calc.php
+
+References
+----------------------------------------------------------------------------
+Shepherd, S. G. (2014), Altitude‐adjusted corrected geomagnetic coordinates:
+ Definition and functional approximations, Journal of Geophysical Research:
+ Space Physics, 119, 7501–7521, doi:10.1002/2014JA020264.
 """
 import logging
 import numpy as np
@@ -26,14 +38,14 @@ import numpy as np
 def madrigal_tec2ascii_ocb(tecfile, outfile, ocb=None, ocbfile=None,
                            eq_boundary=45.0, max_sdiff=600, min_sectors=7,
                            rcent_dev=8.0, max_r=23.0, min_r=10.0, min_j=0.15):
-    """ Coverts the location of SuperMAG data into a frame that is relative to
-    the open-closed field-line boundary (OCB) as determined  from a circle fit
-    to the poleward boundary of the auroral oval
+    """ Coverts the location of Madrigal Vertical TEC data into a frame that is
+    relative to the open-closed field-line boundary (OCB) as determined  from a
+    circle fit to the poleward boundary of the auroral oval
 
     Parameters
     ----------
     tecfile : (str)
-        file containing the required vorticity file sorted by time
+        file containing the required TEC file sorted by time
     outfile : (str)
         filename for the output data
     ocb : (OCBoundary or NoneType)
@@ -72,14 +84,14 @@ def madrigal_tec2ascii_ocb(tecfile, outfile, ocb=None, ocbfile=None,
         from davitpy.models import aacgm
     except:
         estr = "Unable to compute OCB without AACGM coordinates\n"
-        estr += "Currently using davitpy to impliment AACGM V2"
+        estr += "Currently using davitpy to impliment AACGM-V2"
         logging.error(estr)
         return
 
     assert isinstance(outfile, str), \
         logging.error("output filename is not a string [{:}]".format(outfile))
 
-    # Read the superMAG data and calculate the magnetic field magnitude
+    # Read the Madrigal TEC data and calculate the magnetic field magnitude
     tdata = load_madrigal_hdf5_tec(tecfile)
 
     # Remove the data from the opposite hemisphere
@@ -89,7 +101,7 @@ def madrigal_tec2ascii_ocb(tecfile, outfile, ocb=None, ocbfile=None,
     for k in tdata.keys():
         tdata[k] = tdata[k][igood]
 
-    # Load the OCB data for the SuperMAG data period
+    # Load the OCB data for the Madrigal TEC data period
     if ocb is None or not isinstance(ocb, ocbpy.ocboundary.OCBoundary):
         tstart = tdata['datetime'][0] - dt.timedelta(seconds=max_sdiff+1)
         tend = tdata['datetime'][-1] + dt.timedelta(seconds=max_sdiff+1)
@@ -118,11 +130,11 @@ def madrigal_tec2ascii_ocb(tecfile, outfile, ocb=None, ocbfile=None,
         logging.error(estr)
         return
     
-    # Initialise the ocb and vorticity indices
+    # Initialise the ocb and TEC indices
     itec = 0
     ntec = tdata['datetime'].shape[0]
     
-    # Cycle through the data, matching vorticity and OCB records
+    # Cycle through the data, matching TEC and OCB records
     while itec < ntec and ocb.rec_ind < ocb.records:
         itec = ocbpy.match_data_ocb(ocb, tdata['datetime'], idat=itec,
                                     max_tol=max_sdiff, min_sectors=min_sectors,
