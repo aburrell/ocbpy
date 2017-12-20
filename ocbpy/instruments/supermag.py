@@ -202,9 +202,9 @@ def load_supermag_ascii_data(filename):
     
     #----------------------------------------------
     # Open the datafile and read the data
-    f = open(filename, "r")
-
-    if not f:
+    try:
+        f = open(filename, "r")
+    except:
         logging.error("unable to open input file [{:s}]".format(filename))
         return header, dict()
 

@@ -62,6 +62,17 @@ class TestVortMethods(unittest.TestCase):
         for kk in test_vals.keys():
             self.assertEqual(data[kk][-1], test_vals[kk])
 
+    def test_load_failure(self):
+        """ Test the routine to load the SuperMAG data
+        """
+        import datetime as dt
+
+        header, data = ocb_ismag.load_supermag_ascii_data("fake_file")
+
+        # Test to see that the data keys are all in the header
+        self.assertListEqual(header, [])
+        self.assertListEqual(data.keys(), [])
+
     def test_supermag2ascii_ocb(self):
         """ Test the conversion of SuperMAG data from AACGM coordinates into
         OCB coordinates

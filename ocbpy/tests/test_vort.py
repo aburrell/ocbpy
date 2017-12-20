@@ -58,6 +58,13 @@ class TestVortMethods(unittest.TestCase):
         for kk in self.test_vals.keys():
             self.assertEqual(data[kk][-1], self.test_vals[kk])
 
+    def test_load_failure(self):
+        """ Test the routine to load the SuperDARN vorticity data
+        """
+        data = ocb_ivort.load_vorticity_ascii_data("fake_file")
+
+        self.assertIsNone(data)
+
     def test_load_all_vort_data(self):
         """ Test the routine to load the SuperDARN vorticity data, loading
         all of the possible data values
