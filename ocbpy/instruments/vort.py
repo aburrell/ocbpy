@@ -7,7 +7,7 @@
 Functions
 ----------------------------------------------------------------------------
 vort2ascii_ocb(vortfile, outfile, kwargs)
-    Write and ASCII file with SuperMAG data and the OCB coordinates for each
+    Write and ASCII file with SuperDARN data and the OCB coordinates for each
     data point
 load_vorticity_ascii_data(filename, save_all=False)
     Load vorticity block ASCII data files
