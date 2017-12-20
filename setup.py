@@ -48,4 +48,6 @@ setup(name='ocbpy',
       include_package_data=True,
       zip_safe=False,
       test_suite='setup.ocb_test_suite',
+      install_requires=['h5py'],
+      extras_require={'davitpy':['https://github.com/vtsuperdarn/davitpy.git'],}
 )
