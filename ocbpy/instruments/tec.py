@@ -85,21 +85,13 @@ def madrigal_tec2ascii_ocb(tecfile, outfile, ocb=None, ocbfile=None,
     except:
         estr = "Unable to compute OCB without AACGM coordinates\n"
         estr += "Currently using davitpy to impliment AACGM-V2"
-        logging.error(estr)
-        return
+        raise ImportError(estr)
 
     assert isinstance(outfile, str), \
         logging.error("output filename is not a string [{:}]".format(outfile))
 
     # Read the Madrigal TEC data and calculate the magnetic field magnitude
     tdata = load_madrigal_hdf5_tec(tecfile)
-
-    # Remove the data from the opposite hemisphere
-    igood = [i for i, lat in enumerate(tdata['gdlat'])
-             if np.sign(lat) == ocb.hemisphere and abs(lat) > eq_boundary]
-
-    for k in tdata.keys():
-        tdata[k] = tdata[k][igood]
 
     # Load the OCB data for the Madrigal TEC data period
     if ocb is None or not isinstance(ocb, ocbpy.ocboundary.OCBoundary):
@@ -111,6 +103,13 @@ def madrigal_tec2ascii_ocb(tecfile, outfile, ocb=None, ocbfile=None,
     if ocb.filename is None or ocb.records == 0:
         logging.error("no data in OCB file {:s}".format(ocb.filename))
         return
+
+    # Remove the data from the opposite hemisphere
+    igood = [i for i, lat in enumerate(tdata['gdlat'])
+             if np.sign(lat) == ocb.hemisphere and abs(lat) > eq_boundary]
+
+    for k in tdata.keys():
+        tdata[k] = tdata[k][igood]
 
     # Open and test the file to ensure it can be written
     try:
