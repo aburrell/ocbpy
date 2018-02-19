@@ -5,9 +5,11 @@
 #-----------------------------------------------------------------------------
 """ Tests the ocb_scaling class and functions
 """
+from __future__ import print_function
 import ocbpy.instruments.tec as ocb_tec
 import unittest
 import numpy as np
+import sys
 
 class TestTECMethods(unittest.TestCase):
 
@@ -75,6 +77,7 @@ class TestTECMethods(unittest.TestCase):
         data = ocb_tec.load_madrigal_hdf5_tec(self.bad_file)
         self.assertIsNone(data)
 
+    @unittest.skipIf(sys.version_info[0] != 2, "AACGM requires version 2")
     def test_tec2ascii_ocb(self):
         """ Test the conversion of Madrigal TEC data from geographic coordinates
         into OCB coordinates
@@ -88,9 +91,10 @@ class TestTECMethods(unittest.TestCase):
             # Compare created file to stored test file
             self.assertTrue(filecmp.cmp(self.test_output, self.temp_output,
                                         shallow=False))
-        except ImportError:
-            pass
+        except ImportError as ierr:
+            print("Cannot test madrigal_Tec2ascii_ocb: {:s}".format(ierr))
 
+    @unittest.skipIf(sys.version_info[0] != 2, "AACGM requires version 2")
     def test_tec2ascii_ocb_bad_infile(self):
         """ Test the conversion of Madrigal TEC data from geographic coordinates
         into OCB coordinates
@@ -102,9 +106,10 @@ class TestTECMethods(unittest.TestCase):
                                            ocbfile=self.test_ocb)
             self.assertFalse(filecmp.cmp(self.test_output, self.temp_output,
                                          shallow=False))
-        except:
-            pass
+        except ImportError as ierr:
+            print("Cannot test madrigal_Tec2ascii_ocb: {:s}".format(ierr))
 
+    @unittest.skipIf(sys.version_info[0] != 2, "AACGM requires version 2")
     def test_tec2ascii_ocb_bad_ocb(self):
         """ Test the conversion of Madrigal TEC data from geographic coordinates
         into OCB coordinates
@@ -115,9 +120,11 @@ class TestTECMethods(unittest.TestCase):
             ocb_tec.madrigal_tec2ascii_ocb(self.test_file, self.temp_output,
                                            ocbfile="fake_ocb")
             self.assertFalse(test_file(self.temp_output))
-        except:
-            pass
-                
+        except ImportError as ierr:
+            print("Cannot test madrigal_Tec2ascii_ocb: {:s}".format(ierr))
+
+    
+    @unittest.skipIf(sys.version_info[0] != 2, "AACGM requires version 2")
     def test_tec2ascii_ocb_bad_output(self):
         """ Test the conversion of Madrigal TEC data from geographic coordinates
         into OCB coordinates
@@ -128,8 +135,8 @@ class TestTECMethods(unittest.TestCase):
             ocb_tec.madrigal_tec2ascii_ocb(self.test_file, "/",
                                            ocbfile=self.test_ocb)
             self.assertFalse(test_file("/"))
-        except:
-            pass
+        except ImportError as ierr:
+            print("Cannot test madrigal_Tec2ascii_ocb: {:s}".format(ierr))
                 
 if __name__ == '__main__':
     unittest.main()
