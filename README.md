@@ -15,6 +15,12 @@ and polar cap measurements.  This coordinate system is described in:
 
   * Full [documentation](http://ocbpy.rtfd.io/)
 
+The AACGM coordinate system is described in:
+
+  * Shepherd, S. G. (2014), Altitude‐adjusted corrected geomagnetic coordinates:
+    Definition and functional approximations, Journal of Geophysical Research:
+    Space Physics, 119, 7501–7521, doi:10.1002/2014JA020264.
+
 OCBs must be obtained from observations for this coordinate transformation.
 Data from three auroral instruments provide northern hemisphere OCB locations
 for 3 May 2000 03:01:42 UT - 22 Aug 2002 00:01:28, though not all of the times
@@ -25,6 +31,7 @@ Currently, support is included for files from the following datasets:
 
   * SuperMAG (available at http://supermag.jhuapl.edu)
   * SuperDARN Vorticity (contact GC at gchi@bas.ac.uk)
+  * Total Electron Content (available at http://cedar.openmadrigal.org/)
 
 These routines may be used as a guide to write routines for other datasets.
 
@@ -40,6 +47,11 @@ The listed dependecies were tested with the following versions:
   * logging (0.5.1.2)
   * os 
   * setuptools (36.0.1)
+  * h5py
+
+Some routines require additional programs, which are tricker to install and
+so not required:
+  * davitpy
 
 These additional packages are needed to perform unit tests
   * unittest
