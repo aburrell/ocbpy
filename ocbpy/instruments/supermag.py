@@ -28,7 +28,7 @@ def supermag2ascii_ocb(smagfile, outfile, ocb=None, ocbfile=None,
     Parameters
     ----------
     smagfile : (str)
-        file containing the required vorticity file sorted by time
+        file containing the required SuperMAG file sorted by time
     outfile : (str)
         filename for the output data
     ocb : (OCBoundary or NoneType)
@@ -85,7 +85,10 @@ def supermag2ascii_ocb(smagfile, outfile, ocb=None, ocbfile=None,
 
     # Test the OCB data
     if ocb.filename is None or ocb.records == 0:
-        logging.error("no data in OCB file {:s}".format(ocb.filename))
+        try:
+            logging.error("no data in OCB file {:s}".format(ocb.filename))
+        except:
+            logging.error("bad OCB file specified")
         return
 
     # Open and test the file to ensure it can be written
@@ -112,11 +115,11 @@ def supermag2ascii_ocb(smagfile, outfile, ocb=None, ocbfile=None,
         logging.error(estr)
         return
     
-    # Initialise the ocb and vorticity indices
+    # Initialise the ocb and SuperMAG indices
     imag = 0
     nmag = mdata['DATETIME'].shape[0]
     
-    # Cycle through the data, matching vorticity and OCB records
+    # Cycle through the data, matching SuperMAG and OCB records
     while imag < nmag and ocb.rec_ind < ocb.records:
         imag = ocbpy.match_data_ocb(ocb, mdata['DATETIME'], idat=imag,
                                     max_tol=max_sdiff, min_sectors=min_sectors,
@@ -202,9 +205,9 @@ def load_supermag_ascii_data(filename):
     
     #----------------------------------------------
     # Open the datafile and read the data
-    f = open(filename, "r")
-
-    if not f:
+    try:
+        f = open(filename, "r")
+    except:
         logging.error("unable to open input file [{:s}]".format(filename))
         return header, dict()
 
