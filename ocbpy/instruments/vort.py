@@ -7,7 +7,7 @@
 Functions
 ----------------------------------------------------------------------------
 vort2ascii_ocb(vortfile, outfile, kwargs)
-    Write and ASCII file with SuperMAG data and the OCB coordinates for each
+    Write and ASCII file with SuperDARN data and the OCB coordinates for each
     data point
 load_vorticity_ascii_data(filename, save_all=False)
     Load vorticity block ASCII data files
@@ -77,7 +77,7 @@ def vort2ascii_ocb(vortfile, outfile, ocb=None, ocbfile=None, max_sdiff=600,
     vdata = load_vorticity_ascii_data(vortfile, save_all=save_all)
     need_keys = ["VORTICITY", "CENTRE_MLAT", "DATETIME", "MLT"]
     
-    if not all([kk in vdata.keys() for kk in need_keys]):
+    if vdata is None or not all([kk in vdata.keys() for kk in need_keys]):
         estr = "unable to load necessary data from [{:s}]".format(vortfile)
         logging.error(estr)
         return
@@ -89,7 +89,10 @@ def vort2ascii_ocb(vortfile, outfile, ocb=None, ocbfile=None, max_sdiff=600,
         ocb = ocbpy.ocboundary.OCBoundary(ocbfile, stime=vstart, etime=vend)
 
     if ocb.filename is None or ocb.records == 0:
-        logging.error("no data in OCB file {:s} ".format(ocb.filename))
+        try:
+            logging.error("no data in OCB file {:s} ".format(ocb.filename))
+        except:
+            logging.error("bad OCB file specified")
         return
     
     # Open and test the file to ensure it can be written
@@ -179,14 +182,18 @@ def load_vorticity_ascii_data(vortfile, save_all=False):
     vdata : (dict)
         Dictionary of numpy arrays
     """
+    from ocbpy.instruments import test_file
     import datetime as dt
 
-    # Open the data file
-    fvort = open(vortfile, "r")
+    if not test_file(vortfile):
+        return None
 
-    if not fvort:
+    # Open the data file
+    try:
+        fvort = open(vortfile, "r")
+    except:
         logging.error("unable to open vorticity file [{:s}]".format(vortfile))
-        return dict()
+        return None
 
     # Initialise the output dictionary
     vkeys = ["YEAR", "MONTH", "DAY", "UTH", "VORTICITY", "MLT", "CENTRE_MLAT",
@@ -221,7 +228,7 @@ def load_vorticity_ascii_data(vortfile, save_all=False):
                 estr = "{:s}expected [{:s}]".format(estr, vline)
                 logging.error(estr)
                 fvort.close()
-                return dict()
+                return None
 
             # Save the data in the format desired for the output dict
             yy = int(vsplit[0])
@@ -241,7 +248,7 @@ def load_vorticity_ascii_data(vortfile, save_all=False):
                 estr = "{:s}line expected [{:s}]".format(estr, vline)
                 logging.error(estr)
                 fvort.close()
-                return dict()
+                return None
 
             # Save the number of entries
             nentries = int(vsplit[0])
@@ -264,7 +271,7 @@ def load_vorticity_ascii_data(vortfile, save_all=False):
                         estr = "{:s}[{:s}]".format(estr, vline)
                         logging.error(estr)
                         fvort.close()
-                        return dict()
+                        return None
 
                     # Save all desired keys
                     gkeys = list(vkeys.intersection(bklist))
