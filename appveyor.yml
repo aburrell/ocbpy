@@ -42,7 +42,7 @@ build: off
 configuration: Release
 
 install:
-  - '%PYTHON%\\python.exe pip install logging filecmp unittest wheel numpy setuptools'
+  - '%PYTHON%\\python.exe -m pip install logging filecmp unittest wheel numpy setuptools'
 
 #deploy_script:
   # if tagged commit, build/upload wheel
