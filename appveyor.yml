@@ -9,8 +9,7 @@ version: '{branch}-{build}'
 branches:
   # whitelist (include under only:)
   # blacklist
-  except:
-    sphinx_docs
+  except: sphinx_docs
 
 # Do not build on tags
 skip_tags: true
