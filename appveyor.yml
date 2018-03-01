@@ -42,13 +42,7 @@ build: off
 configuration: Release
 
 install:
-  - '%MINICONDA_HOME%\Scripts\conda config --set always_yes yes'
-  - '%MINICONDA_HOME%\Scripts\conda update -q conda'
-  - '%MINICONDA_HOME%\Scripts\conda create -q -p C:\pythontest python=%PYTHON_VERSION% %INSTALL_LIBPYTHON% numpy setuptools'
-  - '%MINICONDA_HOME%\Scripts\activate C:\pythontest'
-  - where python
-  - where pip
-  - 'pip install logging filecmp unittest wheel'
+  - '%PYTHON%\\python.exe pip install logging filecmp unittest wheel numpy setuptools'
 
 #deploy_script:
   # if tagged commit, build/upload wheel
