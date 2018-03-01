@@ -1,0 +1,116 @@
+#---------------------------------#
+#      general configuration      #
+#---------------------------------#
+
+# version format
+version: '{branch}-{build}'
+
+# branches
+branches:
+  # whitelist (include under only:)
+  # blacklist
+  except:
+    sphinx_docs
+
+# Do not build on tags
+skip_tags: true
+
+# Masimum number of concurrent jobs for the project
+max_jobs: 2
+
+#---------------------------------#
+#    environment configuration    #
+#---------------------------------#
+
+init:
+  - ps: echo $env:TESTENV
+
+environment:
+  global:
+    WITH_COMPILER: 'cmd /E:ON /V:ON /C .\ci\appveyor-with-compiler.cmd'
+  matrix:
+    - TESTENV: '2.7-nocover-64'
+      INSTALL_LIBPYTHON: libpython
+      PYTHON_VERSION: '2.7'
+      MINICONDA_HOME: C:\Miniconda-x64
+      TESTSCRIPT: 'python setup.py test'
+
+    - TESTENV: '2.7-nocover-32'
+      INSTALL_LIBPYTHON: libpython
+      PYTHON_VERSION: '2.7'
+      MINICONDA_HOME: C:\Miniconda
+      TESTSCRIPT: 'python setup.py test'
+
+    - TESTENV: '3.4-nocover-64'
+      INSTALL_LIBPYTHON: libpython
+      PYTHON_VERSION: '3.4'
+      MINICONDA_HOME: C:\Miniconda-x64
+      TESTSCRIPT: 'python setup.py test'
+
+    - TESTENV: '3.4-nocover-32'
+      INSTALL_LIBPYTHON: libpython
+      PYTHON_VERSION: '3.4'
+      MINICONDA_HOME: C:\Miniconda
+      TESTSCRIPT: 'python setup.py test'
+
+    - TESTENV: '3.5-nocover-64'
+      PYTHON_VERSION: '3.5'
+      MINICONDA_HOME: C:\Miniconda-x64
+      TESTSCRIPT: 'python setup.py test'
+
+    - TESTENV: '3.5-nocover-32'
+      PYTHON_VERSION: '3.5'
+      MINICONDA_HOME: C:\Miniconda
+      TESTSCRIPT: 'python setup.py test'
+
+    - TESTENV: '3.6-nocover-64'
+      PYTHON_VERSION: '3.5'
+      MINICONDA_HOME: C:\Miniconda-x64
+      TESTSCRIPT: 'python setup.py test'
+
+    - TESTENV: '3.6-nocover-32'
+      PYTHON_VERSION: '3.5'
+      MINICONDA_HOME: C:\Miniconda
+      TESTSCRIPT: 'python setup.py test'
+
+    - TESTENV: 'check'
+      INSTALL_LIBPYTHON: libpython
+      PYTHON_VERSION: '2.7'
+      MINICONDA_HOME: 'C:\Miniconda'
+      TESTSCRIPT: 'python setup.py test'
+
+build: off
+configuration: Release
+
+install:
+  - set PATH=%PATH%;C:\msys64\mingw64\bin
+  - '%MINICONDA_HOME%\Scripts\conda config --set always_yes yes'
+  - '%MINICONDA_HOME%\Scripts\conda update -q conda'
+  - '%MINICONDA_HOME%\Scripts\conda create -q -p C:\pythontest python=%PYTHON_VERSION% %INSTALL_LIBPYTHON% datetime numpy logging setuptools unittest filecmp'
+  - '%MINICONDA_HOME%\Scripts\activate C:\pythontest'
+  - where python
+  - where pip
+  - python setup.py clean
+  - python setup.py develop
+test_script:
+  - '%TESTSCRIPT%'
+
+#deploy_script:
+  # if tagged commit, build/upload wheel
+#  - python setup.py bdist_wheel
+#  - IF "%TESTENV%"=="2.7-nocover-64" (
+#      python setup.py sdist
+#    )
+#  - IF "%APPVEYOR_REPO_TAG%"=="true" IF NOT "%TESTENV%"=="check" (
+#      pip install twine &&
+#      twine upload -u %PYPI_USER% -p %PYPI_PASS% dist/*
+#    )
+
+#artifacts:
+#  - path: dist\*
+#matrix:
+#  allow_failures:
+#    - PYTHON_VERSION: '3.5'
+### To enable remote debugging uncomment this:
+#  - ps: $blockRdp = $true; iex ((new-object net.webclient).DownloadString('https://raw.githubusercontent.com/appveyor/ci/master/scripts/enable-rdp.ps1'))
+
