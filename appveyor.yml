@@ -71,6 +71,7 @@ environment:
       PYTHON_VERSION: '2.7'
       MINICONDA_HOME: 'C:\Miniconda'
       TESTSCRIPT: 'python setup.py test'
+      INSTALL_EXTRA_DEPS: 'pip install logging filecmp unittest'
 
 build: off
 configuration: Release
@@ -79,10 +80,11 @@ install:
   - set PATH=%PATH%;C:\msys64\mingw64\bin
   - '%MINICONDA_HOME%\Scripts\conda config --set always_yes yes'
   - '%MINICONDA_HOME%\Scripts\conda update -q conda'
-  - '%MINICONDA_HOME%\Scripts\conda create -q -p C:\pythontest python=%PYTHON_VERSION% %INSTALL_LIBPYTHON% datetime numpy logging setuptools unittest filecmp'
+  - '%MINICONDA_HOME%\Scripts\conda create -q -p C:\pythontest python=%PYTHON_VERSION% %INSTALL_LIBPYTHON% numpy setuptools'
   - '%MINICONDA_HOME%\Scripts\activate C:\pythontest'
   - where python
   - where pip
+  - '%INSTALL_EXTRA_DEPS%'
   - python setup.py clean
   - python setup.py develop
 test_script:
