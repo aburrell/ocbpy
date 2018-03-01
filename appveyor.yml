@@ -5,12 +5,6 @@
 # version format
 version: '{branch}-{build}'
 
-# branches
-branches:
-  # whitelist (include under only:)
-  # blacklist
-  except: sphinx_docs
-
 # Do not build on tags
 skip_tags: true
 
