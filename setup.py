@@ -47,6 +47,12 @@ setup(name='ocbpy',
           "Operating System :: Microsoft :: Windows",
           "Operating System :: POSIX",
       ],
+      install_requires=[
+          'numpy',
+          'logging'
+      ],
+      extras_require={'test':['unittest']
+      },
       include_package_data=True,
       zip_safe=False,
       test_suite='setup.ocb_test_suite',
