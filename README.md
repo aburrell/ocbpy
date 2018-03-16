@@ -36,14 +36,13 @@ This module has been tested on python version 2.7, 3.3 - 3.6
 
 The listed dependecies were tested with the following versions:
   * datetime 
-  * numpy (1.12.1)
+  * numpy (1.12.1, 1.14.1)
   * logging (0.5.1.2)
   * os 
   * setuptools (36.0.1)
 
 These additional packages are needed to perform unit tests
   * unittest
-  * filecmp
 
 # Installation
 
