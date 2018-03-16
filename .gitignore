@@ -4,6 +4,9 @@
 # Compiled python modules.
 *.pyc
 
+# Test directories
+/build/
+
 # Setuptools distribution folder.
 /dist/
 
