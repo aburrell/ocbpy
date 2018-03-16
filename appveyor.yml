@@ -42,7 +42,7 @@ build: off
 configuration: Release
 
 install:
-  - '%PYTHON%\\python.exe -m pip install logging unittest wheel numpy setuptools'
+  - '%PYTHON%\\python.exe -m pip install logging wheel numpy setuptools'
 
 #deploy_script:
   # if tagged commit, build/upload wheel

@@ -41,8 +41,7 @@ The listed dependecies were tested with the following versions:
   * os 
   * setuptools (36.0.1)
 
-These additional packages are needed to perform unit tests
-  * unittest
+Testing is performed using the python module, unittest
 
 # Installation
 
