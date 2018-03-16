@@ -15,7 +15,7 @@ Data
 ----------------------------------------------------------------------------
 SuperMAG data available at: http://supermag.jhuapl.edu/
 """
-import logging
+import logbook as logging
 import numpy as np
 
 def supermag2ascii_ocb(smagfile, outfile, ocb=None, ocbfile=None,

@@ -49,7 +49,7 @@ setup(name='ocbpy',
       ],
       install_requires=[
           'numpy',
-          'logging'
+          'logbook'
       ],
       include_package_data=True,
       zip_safe=False,

@@ -16,7 +16,7 @@ Data
 ----------------------------------------------------------------------------
 Specialised SuperDARN data product, available from: gchi@bas.ac.uk
 """
-import logging
+import logbook as logging
 import numpy as np
 
 def vort2ascii_ocb(vortfile, outfile, ocb=None, ocbfile=None, max_sdiff=600,

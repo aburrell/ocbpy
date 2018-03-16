@@ -9,7 +9,7 @@ load_ascii_data(filename, hlines, kwargs)
     Load time-sorted ascii data file
 """
 import numpy as np
-import logging
+import logbook as logging
 import datetime as dt
 
 def test_file(filename):

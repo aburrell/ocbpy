@@ -29,7 +29,7 @@ instruments    Instrument-specific OCB gridding functions
 ocb_time       Time manipulation routines
 ---------------------------------------------------------------------------
 """
-import logging
+import logbook as logging
 
 __version__ = str('0.1a1')
 __default_file__ = "boundaries/si13_north_circle"
