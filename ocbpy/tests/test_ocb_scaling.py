@@ -15,12 +15,12 @@ class TestOCBScalingMethods(unittest.TestCase):
         """ Initialize the OCBoundary object using the test file, as well as
         the VectorData object
         """
-        from os.path import isfile
+        from os import path
 
-        ocb_dir = ocbpy.__file__.split("/")
-        test_file = "{:s}/{:s}".format("/".join(ocb_dir[:-1]),
-                                       "tests/test_data/test_north_circle")
-        self.assertTrue(isfile(test_file))
+        ocb_dir = path.split(ocbpy.__file__)
+        test_file = path.join(ocb_dir[0], "tests", "test_data",
+                              "test_north_circle")
+        self.assertTrue(path.isfile(test_file))
         self.ocb = ocbpy.ocboundary.OCBoundary(filename=test_file)
         self.ocb.rec_ind = 27
         self.vdata = ocbpy.ocb_scaling.VectorData(0, self.ocb.rec_ind, 75.0,

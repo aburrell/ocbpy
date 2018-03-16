@@ -16,22 +16,23 @@ class TestVortMethods(unittest.TestCase):
         """ Initialize the OCBoundary object using the test file, as well as
         the VectorData object
         """
-        from os.path import isfile
+        from os import path
         import ocbpy
         
-        ocb_dir = ocbpy.__file__.split("/")
-        self.test_ocb = "{:s}/{:s}".format("/".join(ocb_dir[:-1]),
-                                            "tests/test_data/test_north_circle")
-        self.test_file = "{:s}/{:s}".format("/".join(ocb_dir[:-1]),
-                                            "tests/test_data/test_vort")
-        self.test_output = "{:s}/{:s}".format("/".join(ocb_dir[:-1]),
-                                              "tests/test_data/out_vort")
-        self.temp_output = "{:s}/{:s}".format("/".join(ocb_dir[:-1]),
-                                              "tests/test_data/temp_vort")
+        ocb_dir = path.split(ocbpy.__file__)
+        self.ocb_dir = ocb_dir[0] 
+        self.test_ocb = path.join(self.ocb_dir, "tests", "test_data",
+                                  "test_north_circle")
+        self.test_file = path.join(self.ocb_dir, "tests", "test_data",
+                                   "test_vort")
+        self.test_output = path.join(self.ocb_dir, "tests", "test_data",
+                                     "out_vort")
+        self.temp_output = path.join(self.ocb_dir, "tests", "test_data",
+                                     "temp_vort")
         self.test_vals = {'CENTRE_MLAT':67.27, 'DAY':5, 'MLT':3.127,
                           'UTH':13.65, 'VORTICITY':0.0020967, 'YEAR':2000,
                           'DATETIME':dt.datetime(2000,5,5,13,39,00), 'MONTH':5}
-        self.assertTrue(isfile(self.test_file))
+        self.assertTrue(path.isfile(self.test_file))
 
     def tearDown(self):
         import os
@@ -68,6 +69,8 @@ class TestVortMethods(unittest.TestCase):
     def test_wrong_load(self):
         """ Test the routine to load the SuperDARN vorticity data
         """
+        from os.path import join
+        bad_file = join(self.ocb_dir, "test", "test_data", "test_smag")
         data = ocb_ivort.load_vorticity_ascii_data("test_data/test_smag")
 
         self.assertIsNone(data)

@@ -15,19 +15,19 @@ class TestSuperMAGMethods(unittest.TestCase):
         """ Initialize the OCBoundary object using the test file, as well as
         the VectorData object
         """
-        from os.path import isfile
+        from os import path
         import ocbpy
         
-        ocb_dir = ocbpy.__file__.split("/")
-        self.test_ocb = "{:s}/{:s}".format("/".join(ocb_dir[:-1]),
-                                            "tests/test_data/test_north_circle")
-        self.test_file = "{:s}/{:s}".format("/".join(ocb_dir[:-1]),
-                                            "tests/test_data/test_smag")
-        self.test_output = "{:s}/{:s}".format("/".join(ocb_dir[:-1]),
-                                              "tests/test_data/out_smag")
-        self.temp_output = "{:s}/{:s}".format("/".join(ocb_dir[:-1]),
-                                              "tests/test_data/temp_smag")
-        self.assertTrue(isfile(self.test_file))
+        ocb_dir = path.split(ocbpy.__file__)
+        self.test_ocb = path.join(ocb_dir[0], "tests", "test_data",
+                                  "test_north_circle")
+        self.test_file = path.join(ocb_dir[0], "tests", "test_data",
+                                   "test_smag")
+        self.test_output = path.join(ocb_dir[0], "tests", "test_data",
+                                     "out_smag")
+        self.temp_output = path.join(ocb_dir[0], "tests", "test_data",
+                                     "temp_smag")
+        self.assertTrue(path.isfile(self.test_file))
 
     def tearDown(self):
         import os

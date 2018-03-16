@@ -14,15 +14,15 @@ class TestOCBoundaryMethods(unittest.TestCase):
     def setUp(self):
         """ Initialize the OCBoundary object using the test file
         """
-        from os.path import isfile
+        from os import path
 
-        ocb_dir = ocbpy.__file__.split("/")
-        test_north = "{:s}/{:s}".format("/".join(ocb_dir[:-1]),
-                                       "tests/test_data/test_north_circle")
-        test_south = "{:s}/{:s}".format("/".join(ocb_dir[:-1]),
-                                       "tests/test_data/test_south_circle")
-        self.assertTrue(isfile(test_north))
-        self.assertTrue(isfile(test_south))
+        ocb_dir = path.split(ocbpy.__file__)
+        test_north = path.join(ocb_dir[0], "tests", "test_data",
+                               "test_north_circle")
+        test_south = path.join(ocb_dir[0], "tests", "test_data",
+                               "test_south_circle")
+        self.assertTrue(path.isfile(test_north))
+        self.assertTrue(path.isfile(test_south))
         self.ocb = ocbpy.ocboundary.OCBoundary(filename=test_north)
         self.ocb_south = ocbpy.ocboundary.OCBoundary(filename=test_south,
                                                      instrument="Ampere",
