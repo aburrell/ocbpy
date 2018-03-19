@@ -5,6 +5,7 @@
 #-----------------------------------------------------------------------------
 """ Tests the ocb_scaling class and functions
 """
+from __future__ import print_function
 import ocbpy.instruments.vort as ocb_ivort
 import unittest
 import numpy as np
@@ -115,6 +116,9 @@ class TestVortMethods(unittest.TestCase):
 
             # Test the headers
             self.assertListEqual(test_out[0], temp_out[0])
+
+            print("TEST", self.test_output, test_out[1].keys())
+            print("TEMP", self.temp_output, temp_out[1].keys())
 
             # Test the data keys
             self.assertListEqual(test_out[1].keys(), temp_out[1].keys())
