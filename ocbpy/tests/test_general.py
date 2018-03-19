@@ -72,6 +72,8 @@ class TestGeneralMethods(unittest.TestCase):
         for kk in test_vals.keys():
             self.assertEqual(data[kk][-1], test_vals[kk])
 
+        del hh, header, data, ktest, test_vals
+
     def test_load_ascii_data_int_cols(self):
         """ Test the general routine to load ASCII data assigning some
         columns as integers
@@ -104,8 +106,12 @@ class TestGeneralMethods(unittest.TestCase):
                          isinstance(data[kk][-1], np.int32) or
                          isinstance(data[kk][-1], int))
                 self.assertTrue(isint)
+
+                del isint
             else:
                 self.assertIsInstance(data[kk][-1], float)
+
+        del hh, int_cols, int_keys, header, data, ktest, test_vals
 
     def test_load_ascii_data_str_cols(self):
         """ Test the general routine to load ASCII data assigning some
@@ -142,6 +148,8 @@ class TestGeneralMethods(unittest.TestCase):
             else:
                 self.assertIsInstance(data[kk][-1], float)
 
+        del hh, str_cols, str_keys, ktest, test_vals, header, data
+
     def test_load_ascii_data_w_datetime(self):
         """ Test the general routine to load ASCII data
         """
@@ -170,6 +178,8 @@ class TestGeneralMethods(unittest.TestCase):
                      "datetime":dt.datetime(2000,5,9,11,33,22)}
         for kk in test_vals.keys():
             self.assertEqual(data[kk][-1], test_vals[kk])
+
+        del hh, header, data, ktest, test_vals
 
 if __name__ == '__main__':
     unittest.main()

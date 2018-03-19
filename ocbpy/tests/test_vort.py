@@ -5,7 +5,6 @@
 #-----------------------------------------------------------------------------
 """ Tests the ocb_scaling class and functions
 """
-from __future__ import print_function
 import ocbpy.instruments.vort as ocb_ivort
 import unittest
 import numpy as np
@@ -60,12 +59,15 @@ class TestVortMethods(unittest.TestCase):
         for kk in self.test_vals.keys():
             self.assertEqual(data[kk][-1], self.test_vals[kk])
 
+        del data, ktest
+
     def test_load_failure(self):
         """ Test the routine to load the SuperDARN vorticity data
         """
         data = ocb_ivort.load_vorticity_ascii_data("fake_file")
 
         self.assertIsNone(data)
+        del data
 
     def test_wrong_load(self):
         """ Test the routine to load the SuperDARN vorticity data
@@ -75,6 +77,7 @@ class TestVortMethods(unittest.TestCase):
         data = ocb_ivort.load_vorticity_ascii_data("test_data/test_smag")
 
         self.assertIsNone(data)
+        del bad_file, data
 
     def test_load_all_vort_data(self):
         """ Test the routine to load the SuperDARN vorticity data, loading
@@ -91,6 +94,8 @@ class TestVortMethods(unittest.TestCase):
         for kk in self.test_vals.keys():
             self.assertEqual(data[kk][-1], self.test_vals[kk])
 
+        del data
+
     def test_vort2ascii_ocb(self):
         """ Test the conversion of vorticity data from AACGM coordinates into
         OCB coordinates
@@ -104,8 +109,6 @@ class TestVortMethods(unittest.TestCase):
             # filecmp doesn't work on windows
             from ocbpy.instruments import general
 
-            print("TEST", self.test_output, self.temp_output, self.test_file)
-            
             kwout = {"datetime_cols":[0, 1], "datetime_fmt":"%Y-%m-%d %H:%M:%S"}
             test_out = general.load_ascii_data(self.test_output, 1, **kwout)
             temp_out = general.load_ascii_data(self.temp_output, 1, **kwout)
@@ -115,6 +118,8 @@ class TestVortMethods(unittest.TestCase):
 
             # Test the data
             self.assertDictEqual(test_out[1], temp_out[1])
+
+            del kwout, test_out, temp_out
         else:
             import filecmp
             # Compare created file to stored test file

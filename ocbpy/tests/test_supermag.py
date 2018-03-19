@@ -62,6 +62,8 @@ class TestSuperMAGMethods(unittest.TestCase):
         for kk in test_vals.keys():
             self.assertEqual(data[kk][-1], test_vals[kk])
 
+        del header, data, ktest, test_vals
+
     def test_load_failure(self):
         """ Test the routine to load the SuperMAG data
         """
@@ -72,6 +74,8 @@ class TestSuperMAGMethods(unittest.TestCase):
         # Test to see that the data keys are all in the header
         self.assertListEqual(header, [])
         self.assertListEqual(list(data.keys()), [])
+
+        del header, data
 
     def test_supermag2ascii_ocb(self):
         """ Test the conversion of SuperMAG data from AACGM coordinates into
@@ -95,6 +99,7 @@ class TestSuperMAGMethods(unittest.TestCase):
 
             # Test the data
             self.assertDictEqual(test_out[1], temp_out[1])
+            del kwout, test_out, temp_out
         else:
             import filecmp
             # Compare created file to stored test file

@@ -143,6 +143,8 @@ class TestOCBScalingMethods(unittest.TestCase):
         vsigns = self.vdata.calc_ocb_vec_sign(north=True, east=True)
         self.assertTrue(vsigns['north'])
         self.assertTrue(vsigns['east'])
+
+        del vmag, vsigns
         
     def test_scale_vec(self):
         """ Test the calculation of the OCB vector signs
@@ -170,6 +172,8 @@ class TestOCBScalingMethods(unittest.TestCase):
         # Test to see that the magnitudes and z-components are the same
         self.assertEqual(self.vdata.aacgm_mag, self.vdata.ocb_mag)
         self.assertEqual(self.vdata.ocb_z, self.vdata.aacgm_z)
+
+        del vmag
 
     def test_set_ocb_zero(self):
         """ Test setting of OCB values for the VectorData object without any

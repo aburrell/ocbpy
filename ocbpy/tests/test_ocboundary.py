@@ -104,6 +104,7 @@ class TestOCBoundaryMethods(unittest.TestCase):
         ocb_lat, ocb_mlt = self.ocb.normal_coord(90.0, 0.0)
         self.assertAlmostEqual(ocb_lat, 86.8658623137)
         self.assertAlmostEqual(ocb_mlt, 17.832)
+        del ocb_lat, ocb_mlt
 
     def test_revert_coord_north(self):
 
@@ -116,6 +117,7 @@ class TestOCBoundaryMethods(unittest.TestCase):
         aacgm_lat, aacgm_mlt = self.ocb.revert_coord(ocb_lat, ocb_mlt)
         self.assertAlmostEqual(aacgm_lat, 80.0)
         self.assertAlmostEqual(aacgm_mlt, 0.0)
+        del ocb_lat, ocb_mlt, aacgm_lat, aacgm_mlt
 
     def test_normal_coord_south(self):
         """ Test to see that the normalisation is performed properly in the
@@ -126,6 +128,7 @@ class TestOCBoundaryMethods(unittest.TestCase):
         ocb_lat, ocb_mlt = self.ocb_south.normal_coord(-90.0, 0.0)
         self.assertAlmostEqual(ocb_lat, -86.4)
         self.assertAlmostEqual(ocb_mlt, 6.0)
+        del ocb_lat, ocb_mlt
         
     def test_match(self):
         """ Test to see that the data matching works properly
@@ -152,6 +155,7 @@ class TestOCBoundaryMethods(unittest.TestCase):
         self.assertLess(abs((test_times[idat] -
                              self.ocb.dtime[self.ocb.rec_ind]).total_seconds()),
                         600.0)
+        del test_times, idat
 
 if __name__ == '__main__':
     unittest.main()
