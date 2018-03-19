@@ -77,14 +77,29 @@ class TestSuperMAGMethods(unittest.TestCase):
         """ Test the conversion of SuperMAG data from AACGM coordinates into
         OCB coordinates
         """
-        import filecmp
+        import platform
 
         ocb_ismag.supermag2ascii_ocb(self.test_file, self.temp_output,
                                      ocbfile=self.test_ocb)
 
-        # Compare created file to stored test file
-        self.assertTrue(filecmp.cmp(self.test_output, self.temp_output,
-                                    shallow=True))
+        if platform.system().lower() == "windows":
+            # filecmp doesn't work on windows
+            from ocbpy.instruments import general
+            kwout = {"datetime_cols":[0, 1], "datetime_fmt":"%Y-%m-%d %H:%M:%S",
+                     "str_cols":[3]}
+            test_out = general.load_ascii_data(self.test_output, 1, **kwout)
+            temp_out = general.load_ascii_data(self.temp_output, 1, **kwout)
+
+            # Test the headers
+            self.assertListEqual(test_out[0], temp_out[0])
+
+            # Test the data
+            self.assertDictEqual(test_out[1], temp_out[1])
+        else:
+            import filecmp
+            # Compare created file to stored test file
+            self.assertTrue(filecmp.cmp(self.test_output, self.temp_output,
+                                        shallow=False))
 
     def test_supermag2ascii_ocb_bad_output(self):
         """ Test the conversion of SuperMAG data from AACGM coordinates into
