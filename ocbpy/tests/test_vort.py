@@ -101,7 +101,7 @@ class TestVortMethods(unittest.TestCase):
 
         # Compare created file to stored test file
         self.assertTrue(filecmp.cmp(self.test_output, self.temp_output,
-                                    shallow=False))
+                                    shallow=True))
 
     def test_vort2ascii_ocb_load_failure(self):
         """ Test the conversion of vorticity data from AACGM coordinates into

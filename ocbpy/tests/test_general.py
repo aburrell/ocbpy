@@ -100,7 +100,10 @@ class TestGeneralMethods(unittest.TestCase):
             self.assertEqual(data[kk][-1], test_vals[kk])
 
             if kk in int_keys:
-                self.assertIsInstance(data[kk][-1], np.int64)
+                isint = (isinstance(data[kk][-1], np.int64) or
+                         isinstance(data[kk][-1], np.int32) or
+                         isinstance(data[kk][-1], int))
+                self.assertTrue(isint)
             else:
                 self.assertIsInstance(data[kk][-1], float)
 

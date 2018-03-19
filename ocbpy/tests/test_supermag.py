@@ -84,7 +84,7 @@ class TestSuperMAGMethods(unittest.TestCase):
 
         # Compare created file to stored test file
         self.assertTrue(filecmp.cmp(self.test_output, self.temp_output,
-                                    shallow=False))
+                                    shallow=True))
 
     def test_supermag2ascii_ocb_bad_output(self):
         """ Test the conversion of SuperMAG data from AACGM coordinates into
