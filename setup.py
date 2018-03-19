@@ -17,7 +17,7 @@ def read(fname, fkwargs=dict()):
 # Define default kwargs for python2/3
 read_kwargs = dict()
 if version_info.major == 3:
-    read_kwargs = {"encoding", "utf8"}
+    read_kwargs = {"encoding":"utf8"}
 
 # Define a test suite
 
