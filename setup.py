@@ -11,8 +11,7 @@ from setuptools import setup, find_packages
 # Define a read function for using README for long_description
 
 def read(fname, **kwargs):
-    return open(path.join(path.dirname(__file__), fname),
-                encoding=kwargs.get('encoding', 'utf8')).read()
+    return open(path.join(path.dirname(__file__), fname), **kwargs).read()
 
 # Define a test suite
 
