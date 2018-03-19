@@ -5,6 +5,7 @@
 #-----------------------------------------------------------------------------
 """ Tests the ocb_scaling class and functions
 """
+from __future__ import print_function
 import ocbpy.instruments.vort as ocb_ivort
 import unittest
 import numpy as np
@@ -102,7 +103,7 @@ class TestVortMethods(unittest.TestCase):
         if platform.system().lower() == "windows":
             # filecmp doesn't work on windows
             from ocbpy.instruments import general
-            from __future__ import print_function
+
             print("TEST", self.test_output, self.temp_output, self.test_file)
             
             kwout = {"datetime_cols":[0, 1], "datetime_fmt":"%Y-%m-%d %H:%M:%S"}

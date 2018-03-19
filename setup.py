@@ -11,13 +11,13 @@ from sys import version_info
 
 # Define a read function for using README for long_description
 
-def read(fname, **kwargs):
-    return open(path.join(path.dirname(__file__), fname), **kwargs).read()
+def read(fname, fkwargs=dict()):
+    return open(path.join(path.dirname(__file__), fname), **fkwargs).read()
 
 # Define default kwargs for python2/3
 read_kwargs = dict()
 if version_info.major == 3:
-    read_kwargs = {"encoding", "utf8"} 
+    read_kwargs = {"encoding", "utf8"}
 
 # Define a test suite
 
