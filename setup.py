@@ -37,7 +37,7 @@ setup(name='ocbpy',
       author='Angeline G. Burrell',
       author_email='agb073000@utdallas.edu',
       description='Location relative to open/closed field line boundary',
-      long_description=read('README.md', read_kwargs),
+      long_description=read('README.md', **read_kwargs),
       packages=find_packages(),
       classifiers=[
           "Development Status :: 3 - Alpha",
