@@ -4,13 +4,15 @@
 # Full license can be found in License.md
 #-----------------------------------------------------------------------------
 
+from __future__ import absolute_import
 from os import path
 from setuptools import setup, find_packages
 
 # Define a read function for using README for long_description
 
-def read(fname):
-    return open(path.join(path.dirname(__file__), fname)).read()
+def read(fname, **kwargs):
+    return open(path.join(path.dirname(__file__), fname),
+                encoding=kwargs.get('encoding', 'utf8')).read()
 
 # Define a test suite
 
