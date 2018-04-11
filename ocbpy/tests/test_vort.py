@@ -5,7 +5,6 @@
 #-----------------------------------------------------------------------------
 """ Tests the ocb_scaling class and functions
 """
-from __future__ import print_function
 import ocbpy.instruments.vort as ocb_ivort
 import unittest
 import numpy as np

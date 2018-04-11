@@ -6,10 +6,10 @@
 """ Tests the ocb_scaling class and functions
 """
 
-from __future__ import (print_function)
 import ocbpy.instruments.general as ocb_igen
 import unittest
 import numpy as np
+import logbook
 
 class TestGeneralMethods(unittest.TestCase):
 
@@ -20,24 +20,49 @@ class TestGeneralMethods(unittest.TestCase):
         from os import path
         import ocbpy
         
-        ocb_dir = path.split(ocbpy.__file__)
-        self.test_file = path.join(ocb_dir[0], "tests", "test_data",
+        ocb_dir = path.split(ocbpy.__file__)[0]
+        self.test_file = path.join(ocb_dir, "tests", "test_data",
                                    "test_north_circle")
         self.assertTrue(path.isfile(self.test_file))
+        self.temp_output = path.join(ocb_dir, "tests", "test_data",
+                                     "temp_gen")
+        self.log_handler = logbook.TestHandler()
+        self.log_handler.push_thread()
 
     def tearDown(self):
-        del self.test_file
+        import os
+
+        if os.path.isfile(self.temp_output):
+            os.remove(self.temp_output)
+
+        self.log_handler.pop_thread()
+        del self.test_file, self.log_handler
 
     def test_file_test_true(self):
         """ Test the general file testing routine with a good file
         """
         self.assertTrue(ocb_igen.test_file(self.test_file))
 
-    def test_file_test_false(self):
+    def test_file_test_not_file(self):
         """ Test the general file testing routine with a bad filename
         """
         self.assertFalse(ocb_igen.test_file("/"))
-        print("Testing for warning above stating 'name provided is not a file'")
+
+        self.assertEqual(len(self.log_handler.formatted_records), 1)
+        self.assertTrue(self.log_handler.formatted_records[0].find( \
+                                            'name provided is not a file') > 0)
+
+    def test_file_test_empty_file(self):
+        """ Test the general file testing routine with a bad filename
+        """
+        # Create an empty file
+        open(self.temp_output, 'a').close()
+
+        self.assertFalse(ocb_igen.test_file(self.temp_output))
+
+        self.assertEqual(len(self.log_handler.formatted_records), 1)
+        self.assertTrue(self.log_handler.formatted_records[0].find('empty file')
+                        > 0)
 
     def test_load_ascii_data_badfile(self):
         """ Test the general loading routine for ASCII data with bad input
@@ -47,7 +72,10 @@ class TestGeneralMethods(unittest.TestCase):
         self.assertEqual(len(header), 0)
         self.assertIsInstance(data, dict)
         self.assertEqual(len(data.keys()), 0)
-        print("Testing for warning above stating 'name provided is not a file'")
+
+        self.assertEqual(len(self.log_handler.formatted_records), 1)
+        self.assertTrue(self.log_handler.formatted_records[0].find( \
+                                            'name provided is not a file') > 0)
 
     def test_load_ascii_data_standard(self):
         """ Test the general routine to load ASCII data
