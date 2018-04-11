@@ -51,7 +51,7 @@ class TestVortMethods(unittest.TestCase):
         # Test to see that the data keys are all in the header
         ktest = ['CENTRE_MLAT', 'DATETIME', 'DAY', 'MLT', 'MONTH', 'UTH',
                  'VORTICITY', 'YEAR']
-        self.assertListEqual(ktest, sorted(data.keys()))
+        self.assertListEqual(ktest, sorted(list(data.keys())))
 
         # Test the length of the data file
         self.assertEqual(data['UTH'].shape[0], 5)
@@ -121,7 +121,8 @@ class TestVortMethods(unittest.TestCase):
             print("TEMP", self.temp_output, temp_out[1].keys())
 
             # Test the data keys
-            self.assertListEqual(test_out[1].keys(), temp_out[1].keys())
+            self.assertListEqual(list(test_out[1].keys()),
+                                 list(temp_out[1].keys()))
 
             # Test the data in each key
             for kk in test_out[1].keys():

@@ -98,7 +98,8 @@ class TestSuperMAGMethods(unittest.TestCase):
             self.assertListEqual(test_out[0], temp_out[0])
 
             # Test the data keys
-            self.assertListEqual(test_out[1].keys(), temp_out[1].keys())
+            self.assertListEqual(list(test_out[1].keys()),
+                                 list(temp_out[1].keys()))
 
             # Test the data in each key
             for kk in test_out[1].keys():

@@ -61,7 +61,7 @@ class TestGeneralMethods(unittest.TestCase):
 
         # Test to see that the data keys are all in the header
         ktest = sorted(hh[0].split())
-        self.assertListEqual(ktest, sorted(data.keys()))
+        self.assertListEqual(ktest, sorted(list(data.keys())))
 
         # Test the length of the data file
         self.assertEqual(data['A'].shape[0], 75)
@@ -90,7 +90,7 @@ class TestGeneralMethods(unittest.TestCase):
 
         # Test to see that the data keys are all in the header
         ktest = sorted(hh[0].split())
-        self.assertListEqual(ktest, sorted(data.keys()))
+        self.assertListEqual(ktest, sorted(list(data.keys())))
 
         # Test the length of the data file
         self.assertEqual(data['A'].shape[0], 75)
@@ -129,7 +129,7 @@ class TestGeneralMethods(unittest.TestCase):
 
         # Test to see that the data keys are all in the header
         ktest = sorted(hh[0].split())
-        self.assertListEqual(ktest, sorted(data.keys()))
+        self.assertListEqual(ktest, sorted(list(data.keys())))
 
         # Test the length of the data file
         self.assertEqual(data['A'].shape[0], 75)
@@ -167,7 +167,7 @@ class TestGeneralMethods(unittest.TestCase):
         # Test to see that the data keys are all in the header
         ktest = hh[0].split()
         ktest.append("datetime")
-        self.assertListEqual(sorted(ktest), sorted(data.keys()))
+        self.assertListEqual(sorted(ktest), sorted(list(data.keys())))
 
         # Test the length of the data file
         self.assertEqual(data['A'].shape[0], 75)
