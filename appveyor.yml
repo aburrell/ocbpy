@@ -31,9 +31,6 @@ environment:
     - PYTHON: "C:\\Python35-x64"
     - PYTHON: "C:\\Python36-x64"
 
-before_test:
-  - cmd: type c:\projects\ocbpy\ocbpy\tests\test_data\out_vort
-
 test_script:
   - "%PYTHON%\\python.exe setup.py test"
 
@@ -45,17 +42,6 @@ configuration: Release
 
 install:
   - '%PYTHON%\\python.exe -m pip install logbook wheel numpy setuptools'
-
-#deploy_script:
-  # if tagged commit, build/upload wheel
-#  - python setup.py bdist_wheel
-#  - IF "%TESTENV%"=="2.7-nocover-64" (
-#      python setup.py sdist
-#    )
-#  - IF "%APPVEYOR_REPO_TAG%"=="true" IF NOT "%TESTENV%"=="check" (
-#      pip install twine &&
-#      twine upload -u %PYPI_USER% -p %PYPI_PASS% dist/*
-#    )
 
 artifacts:
   - path: dist/*
