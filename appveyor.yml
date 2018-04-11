@@ -32,7 +32,6 @@ environment:
     - PYTHON: "C:\\Python36-x64"
 
 test_script:
-  - "type c:\projects\ocbpy\ocbpy\tests\test_data\out_vort"
   - "%PYTHON%\\python.exe setup.py test"
 
 after_test:
@@ -56,11 +55,10 @@ install:
 #    )
 
 artifacts:
-  - path: dist\*
+  - path: dist/*
+  - path: ocbpy/tests/test_data/out_vort
 
 #matrix:
 #  allow_failures:
 #    - PYTHON_VERSION: '3.5'
-### To enable remote debugging uncomment this:
-#  - ps: $blockRdp = $true; iex ((new-object net.webclient).DownloadString('https://raw.githubusercontent.com/appveyor/ci/master/scripts/enable-rdp.ps1'))
 
