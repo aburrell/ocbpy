@@ -32,6 +32,7 @@ environment:
     - PYTHON: "C:\\Python36-x64"
 
 test_script:
+  - "type c:\projects\ocbpy\ocbpy\tests\test_data\out_vort"
   - "%PYTHON%\\python.exe setup.py test"
 
 after_test:
