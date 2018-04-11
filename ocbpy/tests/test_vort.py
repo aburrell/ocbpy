@@ -117,8 +117,8 @@ class TestVortMethods(unittest.TestCase):
             # Test the headers
             self.assertListEqual(test_out[0], temp_out[0])
 
-            print("TEST", self.test_output, test_out[1].keys())
-            print("TEMP", self.temp_output, temp_out[1].keys())
+            print("TEST", self.test_output, test_out[0], test_out[1].keys())
+            print("TEMP", self.temp_output, temp_out[0], temp_out[1].keys())
 
             # Test the data keys
             self.assertListEqual(list(test_out[1].keys()),

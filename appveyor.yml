@@ -31,6 +31,9 @@ environment:
     - PYTHON: "C:\\Python35-x64"
     - PYTHON: "C:\\Python36-x64"
 
+before_test:
+  - cmd: type c:\projects\ocbpy\ocbpy\tests\test_data\out_vort
+
 test_script:
   - "%PYTHON%\\python.exe setup.py test"
 
@@ -56,7 +59,6 @@ install:
 
 artifacts:
   - path: dist/*
-  - path: ocbpy/tests/test_data/out_vort
 
 #matrix:
 #  allow_failures:
