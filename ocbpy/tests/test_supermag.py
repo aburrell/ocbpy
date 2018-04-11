@@ -18,14 +18,14 @@ class TestSuperMAGMethods(unittest.TestCase):
         from os import path
         import ocbpy
         
-        ocb_dir = path.split(ocbpy.__file__)
-        self.test_ocb = path.join(ocb_dir[0], "tests", "test_data",
+        self.ocb_dir = path.split(ocbpy.__file__)[0]
+        self.test_ocb = path.join(self.ocb_dir, "tests", "test_data",
                                   "test_north_circle")
-        self.test_file = path.join(ocb_dir[0], "tests", "test_data",
+        self.test_file = path.join(self.ocb_dir, "tests", "test_data",
                                    "test_smag")
-        self.test_output = path.join(ocb_dir[0], "tests", "test_data",
+        self.test_output = path.join(self.ocb_dir, "tests", "test_data",
                                      "out_smag")
-        self.temp_output = path.join(ocb_dir[0], "tests", "test_data",
+        self.temp_output = path.join(self.ocb_dir, "tests", "test_data",
                                      "temp_smag")
         self.assertTrue(path.isfile(self.test_file))
 
@@ -77,6 +77,17 @@ class TestSuperMAGMethods(unittest.TestCase):
 
         del header, data
 
+    def test_wrong_load(self):
+        """ Test the routine to load the SuperMAG data
+        """
+        from os.path import join
+        bad_file = join(self.ocb_dir, "test", "test_data", "test_vort")
+        header, data = ocb_ismag.load_supermag_ascii_data(bad_file)
+
+        self.assertListEqual(header, list())
+        self.assertDictEqual(data, dict())
+        del bad_file, data, header
+
     def test_supermag2ascii_ocb(self):
         """ Test the conversion of SuperMAG data from AACGM coordinates into
         OCB coordinates
@@ -88,25 +99,21 @@ class TestSuperMAGMethods(unittest.TestCase):
 
         if platform.system().lower() == "windows":
             # filecmp doesn't work on windows
-            from ocbpy.instruments import general
-            kwout = {"datetime_cols":[0, 1], "datetime_fmt":"%Y-%m-%d %H:%M:%S",
-                     "str_cols":[3]}
-            test_out = general.load_ascii_data(self.test_output, 1, **kwout)
-            temp_out = general.load_ascii_data(self.temp_output, 1, **kwout)
 
-            # Test the headers
-            self.assertListEqual(test_out[0], temp_out[0])
+            ldtype = ['|U50' if i < 2 or i == 3 else float for i in range(19)]
+            test_out = np.genfromtxt(self.test_output, skip_header=1,
+                                     dtype=ldtype)
+            temp_out = np.genfromtxt(self.temp_output, skip_header=1,
+                                     dtype=ldtype)
 
-            # Test the data keys
-            self.assertListEqual(list(test_out[1].keys()),
-                                 list(temp_out[1].keys()))
+            # Test the number of rows and columns
+            self.assertTupleEqual(test_out.shape, temp_out.shape)
 
-            # Test the data in each key
-            for kk in test_out[1].keys():
-                self.assertListEqual(list(test_out[1][kk]),
-                                     list(temp_out[1][kk]))
+            # Test the data in each row
+            for i,test_row in enumerate(test_out):
+                self.assertListEqual(list(test_row), list(temp_out[i]))
 
-            del kwout, test_out, temp_out
+            del ldtype, test_out, temp_out
         else:
             import filecmp
             # Compare created file to stored test file
@@ -117,13 +124,36 @@ class TestSuperMAGMethods(unittest.TestCase):
         """ Test the conversion of SuperMAG data from AACGM coordinates into
         OCB coordinates
         """
+        import logbook
+
+        log_handler = logbook.TestHandler()
+        log_handler.push_thread()
+
+        # Run command that will fail to output a file
+        ocb_ismag.supermag2ascii_ocb(self.test_file, "/", ocbfile=self.test_ocb)
+
+        log_rec = log_handler.formatted_records
+        # Test logging error message
+        self.assertEqual(len(log_rec), 1)
+        self.assertTrue(log_rec[0].find("unable to create output file") > 0)
+
+        log_handler.pop_thread()
+        del log_rec, log_handler
+
+    def test_supermag2ascii_ocb_bad_input(self):
+        """ Test the conversion of SuperMAG data from AACGM coordinates into
+        OCB coordinates
+        """
         from ocbpy.instruments.general import test_file
 
         try:
-            ocb_ismag.supermag2ascii_ocb(self.test_file, "/",
+            ocb_ismag.supermag2ascii_ocb("fake_file", "fake_out",
                                          ocbfile=self.test_ocb)
-        except:
-            pass
+
+            # Compare created file to stored test file
+            self.assertFalse(test_file("fake_out"))
+        except AssertionError:
+            self.assertTrue(True)
 
     def test_supermag2ascii_ocb_bad_ocb(self):
         """ Test the conversion of SuperMAG data from AACGM coordinates into
