@@ -20,8 +20,7 @@ class TestVortMethods(unittest.TestCase):
         from os import path
         import ocbpy
         
-        ocb_dir = path.split(ocbpy.__file__)
-        self.ocb_dir = ocb_dir[0] 
+        self.ocb_dir = path.split(ocbpy.__file__)[0] 
         self.test_ocb = path.join(self.ocb_dir, "tests", "test_data",
                                   "test_north_circle")
         self.test_file = path.join(self.ocb_dir, "tests", "test_data",
@@ -75,7 +74,7 @@ class TestVortMethods(unittest.TestCase):
         """
         from os.path import join
         bad_file = join(self.ocb_dir, "test", "test_data", "test_smag")
-        data = ocb_ivort.load_vorticity_ascii_data("test_data/test_smag")
+        data = ocb_ivort.load_vorticity_ascii_data(bad_file)
 
         self.assertIsNone(data)
         del bad_file, data
@@ -108,16 +107,12 @@ class TestVortMethods(unittest.TestCase):
 
         if platform.system().lower() == "windows":
             # filecmp doesn't work on windows
-            from ocbpy.instruments import general
 
             ldtype = ['|U50' if i < 2 else float for i in range(5)]
             test_out = np.genfromtxt(self.test_output, skip_header=1,
                                      dtype=ldtype)
             temp_out = np.genfromtxt(self.temp_output, skip_header=1,
                                      dtype=ldtype)
-
-            print("TEST", self.test_output, test_out)
-            print("TEMP", self.temp_output, temp_out)
 
             # Test the number of rows and columns
             self.assertTupleEqual(test_out.shape, temp_out.shape)
@@ -137,7 +132,6 @@ class TestVortMethods(unittest.TestCase):
         """ Test the conversion of vorticity data from AACGM coordinates into
         OCB coordinates with a bad vorticity file
         """
-        import filecmp
         from ocbpy.instruments.general import test_file
 
         try:
@@ -146,14 +140,13 @@ class TestVortMethods(unittest.TestCase):
 
             # Compare created file to stored test file
             self.assertFalse(test_file("fake_out"))
-        except:
-            pass
+        except AssertionError:
+            self.assertTrue(True)
 
     def test_vort2ascii_ocb_no_ocb(self):
         """ Test the conversion of vorticity data from AACGM coordinates into
         OCB coordinates
         """
-        import filecmp
         from ocbpy.instruments.general import test_file
 
         ocb_ivort.vort2ascii_ocb(self.test_file, "fake_out", ocbfile="fake_ocb")
@@ -165,13 +158,20 @@ class TestVortMethods(unittest.TestCase):
         """ Test the conversion of vorticity data from AACGM coordinates into
         OCB coordinates
         """
-        import filecmp
-        from ocbpy.instruments.general import test_file
+        import logbook
 
+        log_handler = logbook.TestHandler()
+        log_handler.push_thread()
+        
         ocb_ivort.vort2ascii_ocb(self.test_file, "/", ocbfile=self.test_ocb)
 
-        # Compare created file to stored test file
-        self.assertFalse(test_file("/"))
+        log_rec = log_handler.formatted_records
+        # Test logging error message
+        self.assertEqual(len(log_rec), 1)
+        self.assertTrue(log_rec[0].find("unable to create output file") > 0)
+
+        log_handler.pop_thread()
+        del log_rec, log_handler
 
 if __name__ == '__main__':
     unittest.main()
