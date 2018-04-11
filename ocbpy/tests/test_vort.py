@@ -110,26 +110,23 @@ class TestVortMethods(unittest.TestCase):
             # filecmp doesn't work on windows
             from ocbpy.instruments import general
 
-            kwout = {"datetime_cols":[0, 1], "datetime_fmt":"%Y-%m-%d %H:%M:%S"}
-            test_out = general.load_ascii_data(self.test_output, 1, **kwout)
-            temp_out = general.load_ascii_data(self.temp_output, 1, **kwout)
+            ldtype = ['|U50' if i < 2 else float for i in range(5)]
+            test_out = np.genfromtxt(self.test_output, skip_header=1,
+                                     dtype=ldtype)
+            temp_out = np.genfromtxt(self.temp_output, skip_header=1,
+                                     dtype=ldtype)
 
-            # Test the headers
-            self.assertListEqual(test_out[0], temp_out[0])
+            print("TEST", self.test_output, test_out)
+            print("TEMP", self.temp_output, temp_out)
 
-            print("TEST", self.test_output, test_out[0], test_out[1].keys())
-            print("TEMP", self.temp_output, temp_out[0], temp_out[1].keys())
+            # Test the number of rows and columns
+            self.assertTupleEqual(test_out.shape, temp_out.shape)
 
-            # Test the data keys
-            self.assertListEqual(list(test_out[1].keys()),
-                                 list(temp_out[1].keys()))
+            # Test the data in each row
+            for i,test_row in enumerate(test_out):
+                self.assertListEqual(list(test_row), list(temp_out[i]))
 
-            # Test the data in each key
-            for kk in test_out[1].keys():
-                self.assertListEqual(list(test_out[1][kk]),
-                                     list(temp_out[1][kk]))
-
-            del kwout, test_out, temp_out
+            del ldtype, test_out, temp_out
         else:
             import filecmp
             # Compare created file to stored test file
