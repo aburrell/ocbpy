@@ -32,7 +32,7 @@ def ocb_test_suite():
 # Run setup
 
 setup(name='ocbpy',
-      version='0.1a1',
+      version='0.2b1',
       url='github.com/aburrell/ocbpy',
       author='Angeline G. Burrell',
       author_email='agb073000@utdallas.edu',
@@ -40,13 +40,12 @@ setup(name='ocbpy',
       long_description=read('README.md', read_kwargs),
       packages=find_packages(),
       classifiers=[
-          "Development Status :: 3 - Alpha",
+          "Development Status :: 4 - Beta",
           "Topic :: Scientific/Engineering :: Physics",
           "Intended Audience :: Science/Research",
           "License :: BSD",
           "Natural Language :: English",
           "Programming Language :: Python :: 2.7",
-          "Programming Language :: Python :: 3.3",
           "Programming Language :: Python :: 3.4",
           "Programming Language :: Python :: 3.5",
           "Programming Language :: Python :: 3.6",
