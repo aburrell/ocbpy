@@ -39,14 +39,19 @@ The listed dependecies were tested with the following versions:
   * datetime 
   * numpy (1.11.3, 1.12.1, 1.14.1)
   * logbook
-  * os
   * setuptools (36.0.1)
 
 Testing is performed using the python module, unittest
 
 # Installation
 
-First, checkout the repository:
+Installation is now available through pypi
+
+```
+    $ pip install ocbpy
+```
+
+You may also checkout the repository and install it yourself:
 
 ```
     $ git clone git://github.com/aburrell/ocbpy.git;
@@ -86,7 +91,9 @@ print ocb
 The output should be as follows:
 
 ```
-Open-Closed Boundary file: /Users/ab763/Programs/Git/ocbpy/ocbpy/boundaries/si13_north_circle
+Open-Closed Boundary file: ~/ocbpy/ocbpy/boundaries/si13_north_circle
+Source instrument: IMAGE
+Open-Closed Boundary reference latitude: 74.0 degrees
 
 219927 records from 2000-05-05 11:35:27 to 2002-08-22 00:01:28
 
@@ -174,11 +181,3 @@ The figure should now look like:
         <img height="0" width="0px">
         <img width="80%" src="/docs/example_ocb_location.png" alt="OCB Example" title="OCB Example"</img>
 </div>
-
-
-# Uninstallation 
-
-1. The install directory for pyglow is outputted when you run the
-   `python ./setup.py install` command.  For example, for macs this is usually
-    `/Library/Frameworks/Python.framework/Versions/2.7/lib/python2.7/site-packages`.
-2.  Remove the `ocbpy` folder from this directory.
