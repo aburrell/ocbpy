@@ -33,7 +33,7 @@ def ocb_test_suite():
 
 setup(name='ocbpy',
       version='0.2b1',
-      url='github.com/aburrell/ocbpy',
+      url='https://github.com/aburrell/ocbpy',
       author='Angeline G. Burrell',
       author_email='agb073000@utdallas.edu',
       description='Location relative to open/closed field line boundary',
