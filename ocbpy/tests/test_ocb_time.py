@@ -71,6 +71,8 @@ class TestOCBTimeMethods(unittest.TestCase):
                       "date":"2001-01-01", "tod":None}
         self.assertEqual(ocbpy.ocb_time.convert_time(**input_dict),
                          dt.datetime(2001,1,1))
+
+        del input_dict
         
     def test_yyddd_to_date(self):
         """ Test to see that the datetime construction works

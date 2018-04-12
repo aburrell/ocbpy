@@ -1,0 +1,52 @@
+#---------------------------------#
+#      general configuration      #
+#---------------------------------#
+
+# version format
+version: '{branch}-{build}'
+
+# Do not build on tags
+skip_tags: true
+
+# Masimum number of concurrent jobs for the project
+max_jobs: 2
+
+#---------------------------------#
+#    environment configuration    #
+#---------------------------------#
+
+init:
+  - ps: echo $env:TESTENV
+
+environment:
+  matrix:
+    - PYTHON: "C:\\Python27"
+    - PYTHON: "C:\\Python34"
+    - PYTHON: "C:\\Python35"
+    - PYTHON: "C:\\Python36"
+    - PYTHON: "C:\\Python27-x64"
+      DISTUTILS_USE_SDK: "1"
+    - PYTHON: "C:\\Python34-x64"
+      DISTUTILS_USE_SDK: "1"
+    - PYTHON: "C:\\Python35-x64"
+    - PYTHON: "C:\\Python36-x64"
+
+test_script:
+  - "%PYTHON%\\python.exe setup.py test"
+
+after_test:
+  - "%PYTHON%\\python.exe setup.py bdist_wheel"
+
+build: off
+configuration: Release
+
+install:
+  - '%PYTHON%\\python.exe -m pip install logbook wheel numpy setuptools'
+
+artifacts:
+  - path: dist/*
+
+#matrix:
+#  allow_failures:
+#    - PYTHON_VERSION: '3.5'
+

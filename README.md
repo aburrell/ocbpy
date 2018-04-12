@@ -30,20 +30,19 @@ These routines may be used as a guide to write routines for other datasets.
 
 # Python versions
 
-This module has been tested on python version 2.7, 3.3 - 3.6
+This module has been tested on python version 2.7, 3.4 - 3.6.  Local testing on
+3.3 was also performed, but may not be supported in the next version.
 
 # Dependencies
 
 The listed dependecies were tested with the following versions:
   * datetime 
-  * numpy (1.12.1)
-  * logging (0.5.1.2)
-  * os 
+  * numpy (1.11.3, 1.12.1, 1.14.1)
+  * logbook
+  * os
   * setuptools (36.0.1)
 
-These additional packages are needed to perform unit tests
-  * unittest
-  * filecmp
+Testing is performed using the python module, unittest
 
 # Installation
 

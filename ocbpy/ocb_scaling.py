@@ -28,7 +28,7 @@ Chisham, G. (2017), A new methodology for the development of high-latitude
  ionospheric climatologies and empirical models, Journal of Geophysical
  Research: Space Physics, 122, doi:10.1002/2016JA023235.
 """
-import logging
+import logbook as logging
 import numpy as np
 
 def normal_evar(evar, aacgm_lat, ocb_lat):
