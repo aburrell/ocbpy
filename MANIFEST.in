@@ -3,3 +3,6 @@ graft ocbpy/boundaries
 
 include README.md
 include License.md
+include setup.cfg
+include CODE_OF_CONDUCT.md
+include CONTRIBUTING.rst
