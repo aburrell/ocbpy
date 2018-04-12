@@ -45,7 +45,7 @@ Testing is performed using the python module, unittest
 
 # Installation
 
-Installation is now available through pypi
+Installation is now available through pypi [![PyPI version](https://badge.fury.io/py/ocbpy.svg)](https://badge.fury.io/py/ocbpy)
 
 ```
     $ pip install ocbpy

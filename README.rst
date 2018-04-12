@@ -132,6 +132,6 @@ available in the full documentation.
     :target: http://ocbpy.readthedocs.io/en/latest/?badge=latest
     :alt: Documentation Status
 
-.. |version| image:: https://img.shields.io/pypi/pyversions/ocbpy.svg?style=flat
+.. |version| image:: https://badge.fury.io/py/ocbpy.svg
     :alt: PyPi Package download
     :target: https://pypi.python.org/pypi/ocbpy  
