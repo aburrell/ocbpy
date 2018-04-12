@@ -18,15 +18,15 @@ import logging
 try:
     from ocbpy.instruments import (general)
     from ocbpy.instruments.general import (test_file)
-except ImportError as e:
-    logging.exception('problem importing general: ' + str(e))
+except ImportError as err:
+    logging.exception('problem importing general: ' + str(err))
 
 try:
     from ocbpy.instruments import (supermag)
-except ImportError as e:
-    logging.exception('problem importing supermag: ' + str(e))
+except ImportError as err:
+    logging.exception('problem importing supermag: ' + str(err))
 
 try:
     from ocbpy.instruments import (vort)
-except ImportError as e:
-    logging.exception('problem importing vort: ' + str(e))
+except ImportError as err:
+    logging.exception('problem importing vort: ' + str(err))
