@@ -6,9 +6,9 @@
 
 Routines
 -------------------------------------------------------------------------------
-normal_evar(evar, aacgm_lat, ocb_lat)
+normal_evar(evar, unscaled_r, scaled_r)
     Normalise a variable proportaional to the electric field (such as velocity)
-normal_curl_evar(curl_evar, aacgm_lat, ocb_lat)
+normal_curl_evar(curl_evar, unscaled_r, scaled_r)
     Normalise a variable proportional to the curl of the electric field (such
     as vorticity)
 
