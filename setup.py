@@ -32,12 +32,13 @@ def ocb_test_suite():
 # Run setup
 
 setup(name='ocbpy',
-      version='0.2b1',
+      version='0.2b2',
       url='https://github.com/aburrell/ocbpy',
       author='Angeline G. Burrell',
       author_email='agb073000@utdallas.edu',
       description='Location relative to open/closed field line boundary',
       long_description=read('README.md', read_kwargs),
+      long_description_content_type="text/markdown",
       packages=find_packages(),
       classifiers=[
           "Development Status :: 4 - Beta",

@@ -31,7 +31,7 @@ ocb_time       Time manipulation routines
 """
 import logbook as logging
 
-__version__ = str('0.2b1')
+__version__ = str('0.2b2')
 __default_file__ = "boundaries/si13_north_circle"
 
 # Imports
