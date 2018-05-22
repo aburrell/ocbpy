@@ -11,12 +11,14 @@ and polar cap measurements.  This coordinate system is described in:
 
   * Chisham, G. (2017), A new methodology for the development of high‐latitude
     ionospheric climatologies and empirical models, Journal of Geophysical
-    Research: Space Physics, doi:10.1002/2016JA023235.
+    Research: Space Physics,
+    [doi:10.1002/2016JA023235.](https://doi.org/10.1002/2016JA023235)
 
   * Full [documentation](http://ocbpy.rtfd.io/)
 
 OCBs must be obtained from observations for this coordinate transformation.
-Data from three auroral instruments provide northern hemisphere OCB locations
+In the British Antarctic Survey's [IMAGE Auroral Boundary data project](https://www.bas.ac.uk/project/image-auroral-boundary-data/)
+from three auroral instruments provide northern hemisphere OCB locations
 for 3 May 2000 03:01:42 UT - 22 Aug 2002 00:01:28, though not all of the times
 included in these files contain high-quality estimations of the OCB.
 Recommended selection criteria are included as defaults in the OCBoundary class.
