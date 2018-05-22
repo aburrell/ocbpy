@@ -6,9 +6,9 @@
 
 Routines
 -------------------------------------------------------------------------------
-normal_evar(evar, aacgm_lat, ocb_lat)
+normal_evar(evar, unscaled_r, scaled_r)
     Normalise a variable proportaional to the electric field (such as velocity)
-normal_curl_evar(curl_evar, aacgm_lat, ocb_lat)
+normal_curl_evar(curl_evar, unscaled_r, scaled_r)
     Normalise a variable proportional to the curl of the electric field (such
     as vorticity)
 
@@ -31,17 +31,17 @@ Chisham, G. (2017), A new methodology for the development of high-latitude
 import logbook as logging
 import numpy as np
 
-def normal_evar(evar, aacgm_lat, ocb_lat):
+def normal_evar(evar, unscaled_r, scaled_r):
     """ Normalise a variable proportional to the electric field
 
     Parameters
     -----------
     evar : (float)
         Variable related to electric field (e.g. velocity)
-    aacgm_lat : (float)
-        AACGM magnetic latitude
-    ocb_lat : (float)
-        OCB normalised magnetic latitude
+    unscaled_r : (float)
+        Radius of polar cap in degrees
+    scaled_r : (float)
+        Radius of normalised OCB polar cap in degrees
 
     Returns
     --------
@@ -63,23 +63,21 @@ def normal_evar(evar, aacgm_lat, ocb_lat):
     Research: Space Physics, doi:10.1002/2016JA023235.
     """
 
-    numerator = 90.0 - abs(aacgm_lat)
-    denominator = 90.0 - abs(ocb_lat)
-    nvar = evar * numerator / denominator
+    nvar = evar * unscaled_r / scaled_r
 
     return nvar
 
-def normal_curl_evar(curl_evar, aacgm_lat, ocb_lat):
+def normal_curl_evar(curl_evar, unscaled_r, scaled_r):
     """ Normalise a variable proportional to the curl of the electric field
 
     Parameters
     -----------
     curl_evar : (float)
         Variable related to electric field (e.g. vorticity)
-    aacgm_lat : (float)
-        AACGM magnetic latitude
-    ocb_lat : (float)
-        OCB normalised magnetic latitude
+    unscaled_r : (float)
+        Radius of polar cap in degrees
+    scaled_r : (float)
+        Radius of normalised OCB polar cap in degrees
 
     Returns
     --------
@@ -101,9 +99,7 @@ def normal_curl_evar(curl_evar, aacgm_lat, ocb_lat):
     Research: Space Physics, doi:10.1002/2016JA023235.
     """
 
-    numerator = (90.0 - abs(aacgm_lat))**2
-    denominator = (90.0 - abs(ocb_lat))**2
-    nvar = curl_evar * numerator / denominator
+    nvar = curl_evar * (unscaled_r / scaled_r)**2
 
     return nvar
 
@@ -153,6 +149,10 @@ class VectorData(object):
         Vector data index in external data array
     ocb_ind : (int)
         OCBoundary rec_ind value that matches dat_ind
+    unscaled_r : (float)
+        Radius of polar cap in degrees
+    scaled_r : (float)
+        Radius of normalised OCB polar cap in degrees
     aacgm_n : (float)
         AACGM north component of data vector (default=0.0)
     aacgm_e : (float)
@@ -356,6 +356,10 @@ class VectorData(object):
 
         Updates
         ---------
+        self.unscaled_r : (float)
+            Radius of polar cap in degrees
+        self.scaled_r : (float)
+            Radius of normalised OCB polar cap in degrees
         self.ocb_n : (float)
             Vector OCB North component
         self.ocb_e : (float)
@@ -383,12 +387,14 @@ class VectorData(object):
             AACGM MLT of the OCB pole (hours)
         self.scale_func : (function)
             Function for scaling AACGM magnitude with arguements:
-            [measurement value, mesurement AACGM latitude (degrees),
-            mesurement OCB latitude (degrees)]
+            [measurement value, unscaled polar cap radius (degrees),
+            scaled polar cap radius (degrees)]
             Not necessary if defined earlier or if no scaling is needed.
         """
 
         # Set the AACGM coordinates of the OCB pole
+        self.unscaled_r = ocb.r[self.ocb_ind]
+        self.scaled_r = 90.0 - abs(ocb.boundary_lat)
         self.ocb_aacgm_mlt = ocb.phi_cent[self.ocb_ind] / 15.0
         self.ocb_aacgm_lat = 90.0 - ocb.r_cent[self.ocb_ind]
 
@@ -514,8 +520,8 @@ class VectorData(object):
         if self.scale_func is None or self.aacgm_z != 0.0:
             self.ocb_z = self.aacgm_z
         else:
-            self.ocb_z = self.scale_func(self.aacgm_z, self.aacgm_lat,
-                                         self.ocb_lat)
+            self.ocb_z = self.scale_func(self.aacgm_z, self.unscaled_r,
+                                         self.scaled_r)
 
         if self.aacgm_n == 0.0 and self.aacgm_e == 0.0:
             # There's no magnitude, so nothing to adjust
@@ -527,10 +533,10 @@ class VectorData(object):
                 self.ocb_n = self.aacgm_n
                 self.ocb_e = self.aacgm_e
             else:
-                self.ocb_n = self.scale_func(self.aacgm_n, self.aacgm_lat,
-                                             self.ocb_lat)
-                self.ocb_e = self.scale_func(self.aacgm_e, self.aacgm_lat,
-                                             self.ocb_lat)
+                self.ocb_n = self.scale_func(self.aacgm_n, self.unscaled_r,
+                                             self.scaled_r)
+                self.ocb_e = self.scale_func(self.aacgm_e, self.unscaled_r,
+                                             self.scaled_r)
         
             if self.pole_angle == 0.0 and self.aacgm_lat >= self.ocb_aacgm_lat:
                 # The measurement is on or between the poles
@@ -560,7 +566,7 @@ class VectorData(object):
             # Scale the vector along the OCB north and account for
             # any changes associated with adjusting the size of the polar cap
             if self.scale_func is not None:
-                vmag = self.scale_func(vmag, self.aacgm_lat, self.ocb_lat)
+                vmag = self.scale_func(vmag, self.unscaled_r, self.scaled_r)
 
             self.ocb_n = vsigns['north'] * vmag * np.cos(ocb_angle)
             self.ocb_e = vsigns['east'] * vmag * np.sin(ocb_angle)
