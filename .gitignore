@@ -2,7 +2,7 @@
 *~
 
 # Compiled python modules.
-*.pyc
+*.py[cod]
 
 # Test directories
 /build/
