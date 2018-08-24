@@ -17,19 +17,19 @@ class TestOCBoundaryMethods(unittest.TestCase):
         from os import path
 
         ocb_dir = path.split(ocbpy.__file__)
-        test_north = path.join(ocb_dir[0], "tests", "test_data",
-                               "test_north_circle")
-        test_south = path.join(ocb_dir[0], "tests", "test_data",
-                               "test_south_circle")
-        self.assertTrue(path.isfile(test_north))
-        self.assertTrue(path.isfile(test_south))
-        self.ocb = ocbpy.ocboundary.OCBoundary(filename=test_north)
-        self.ocb_south = ocbpy.ocboundary.OCBoundary(filename=test_south,
+        self.test_north = path.join(ocb_dir[0], "tests", "test_data",
+                                    "test_north_circle")
+        self.test_south = path.join(ocb_dir[0], "tests", "test_data",
+                                    "test_south_circle")
+        self.assertTrue(path.isfile(self.test_north))
+        self.assertTrue(path.isfile(self.test_south))
+        self.ocb = ocbpy.ocboundary.OCBoundary(filename=self.test_north)
+        self.ocb_south = ocbpy.ocboundary.OCBoundary(filename=self.test_south,
                                                      instrument="Ampere",
                                                      hemisphere=-1)
 
     def tearDown(self):
-        del self.ocb, self.ocb_south
+        del self.ocb, self.ocb_south, self.test_north, self.test_south
 
     def test_nofile_init(self):
         """ Ensure that the class can be initialised without loading a file.
@@ -124,12 +124,30 @@ class TestOCBoundaryMethods(unittest.TestCase):
         southern hemisphere
         """
         self.ocb_south.rec_ind = 8
-        
+
         ocb_lat, ocb_mlt = self.ocb_south.normal_coord(-90.0, 0.0)
         self.assertAlmostEqual(ocb_lat, -86.4)
         self.assertAlmostEqual(ocb_mlt, 6.0)
         del ocb_lat, ocb_mlt
-        
+
+    def test_default_boundary_input(self):
+        """ Test to see that the boundary latitude has the correct sign
+        """
+        self.assertEqual(self.ocb.boundary_lat, 74.0)
+        self.assertEqual(self.ocb_south.boundary_lat, -72.0)
+
+    def test_mismatched_boundary_input(self):
+        """ Test to see that the boundary latitude has the correct sign
+        """
+        ocb_n = ocbpy.ocboundary.OCBoundary(filename=self.test_north,
+                                            hemisphere=-1)
+        ocb_s = ocbpy.ocboundary.OCBoundary(filename=self.test_south,
+                                            instrument="ampere",
+                                            hemisphere=1)
+        self.assertEqual(ocb_n.boundary_lat, -74.0)
+        self.assertEqual(ocb_s.boundary_lat, 72.0)
+        del ocb_n, ocb_s
+
     def test_match(self):
         """ Test to see that the data matching works properly
         """
