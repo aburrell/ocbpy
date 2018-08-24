@@ -153,6 +153,9 @@ class OCBoundary(object):
             else:
                 self.filename = filename
 
+        if not hemisphere in [1, -1]:
+            raise ValueError("hemisphere must be 1 (north) or -1 (south)")
+
         self.hemisphere = hemisphere
         self.records = 0
         self.rec_ind = 0
@@ -165,7 +168,11 @@ class OCBoundary(object):
         hlines, ocb_cols, datetime_fmt = self.inst_defaults()
 
         if boundary_lat is not None:
-            self.boundary_lat = hemisphere * boundary_lat
+            self.boundary_lat = boundary_lat
+
+            # Ensure that the boundary is in the correct hemisphere
+            if np.sign(boundary_lat) != np.sign(hemisphere):
+                self.boundary_lat += -1.0
 
         # If possible, load the data
         if self.filename is not None:
