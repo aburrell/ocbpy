@@ -176,7 +176,7 @@ class TestOCBoundaryMethods(unittest.TestCase):
         del test_times, idat
 
     def test_retrieve_all_good_ind(self):
-        """ Test routine that retrieves all good indices
+        """ Test routine that retrieves all good indices, record set at start
         """
 
         igood = ocbpy.ocboundary.retrieve_all_good_indices(self.ocb)
@@ -187,7 +187,7 @@ class TestOCBoundaryMethods(unittest.TestCase):
         self.assertEqual(self.ocb.rec_ind, -1)
 
     def test_retrieve_all_good_ind_init_middle(self):
-        """ Test routine that retrieves all good indices
+        """ Test routine that retrieves all good indices, record set at middle
         """
         self.ocb.rec_ind = 65
         igood = ocbpy.ocboundary.retrieve_all_good_indices(self.ocb)
@@ -198,10 +198,10 @@ class TestOCBoundaryMethods(unittest.TestCase):
         self.assertEqual(self.ocb.rec_ind, 65)
 
     def test_retrieve_all_good_ind_empty(self):
-        """ Test routine that retrieves all good indices
+        """ Test routine that retrieves all good indices, no data loaded
         """
         ocb = ocbpy.ocboundary.OCBoundary(filename=None)
-        igood = ocbpy.ocboundary.retrieve_all_good_indices(self.ocb)
+        igood = ocbpy.ocboundary.retrieve_all_good_indices(ocb)
 
         self.assertEqual(len(igood), 0)
 
