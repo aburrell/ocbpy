@@ -523,6 +523,43 @@ class OCBoundary(object):
 
         return aacgm_lat, aacgm_mlt
 
+def retrieve_all_good_indices(ocb):
+    """Retrieve all good indices from the ocb structure
+
+    Parameters
+    ----------
+    ocb : (OCBoundary)
+        Class containing the open-close field line boundary data
+
+    Returns
+    -------
+    good_ind : (list)
+        List of indices containing good OCBs
+
+    """
+
+    # Save the current record index
+    icurrent = ocb.rec_ind
+
+    # Set the record index to allow us to cycle through the entire data set
+    ocb.rec_ind = -1
+
+    # Initialize the output data
+    good_ind = list()
+
+    # Cycle through all records
+    while ocb.rec_ind < ocb.records:
+        ocb.get_next_good_ocb_ind()
+        if ocb.rec_ind < ocb.records:
+            good_ind.append(int(ocb.rec_ind))
+
+    # Reset the record index
+    ocb.rec_ind = icurrent
+
+    # Return the good indices
+    return good_ind
+
+    
 def match_data_ocb(ocb, dat_dtime, idat=0, max_tol=600, min_sectors=7,
                    rcent_dev=8.0, max_r=23.0, min_r=10.0, min_j=0.15):
     """Matches data records with OCB records, locating the closest values
