@@ -175,5 +175,35 @@ class TestOCBoundaryMethods(unittest.TestCase):
                         600.0)
         del test_times, idat
 
+    def test_retrieve_all_good_ind(self):
+        """ Test routine that retrieves all good indices
+        """
+
+        igood = ocbpy.ocboundary.retrieve_all_good_indices(self.ocb)
+
+        self.assertEqual(igood[0], 27)
+        self.assertEqual(igood[1], 31)
+        self.assertEqual(len(igood), 36)
+        self.assertEqual(self.ocb.rec_ind, -1)
+
+    def test_retrieve_all_good_ind_init_middle(self):
+        """ Test routine that retrieves all good indices
+        """
+        self.ocb.rec_ind = 65
+        igood = ocbpy.ocboundary.retrieve_all_good_indices(self.ocb)
+
+        self.assertEqual(igood[0], 27)
+        self.assertEqual(igood[1], 31)
+        self.assertEqual(len(igood), 36)
+        self.assertEqual(self.ocb.rec_ind, 65)
+
+    def test_retrieve_all_good_ind_empty(self):
+        """ Test routine that retrieves all good indices
+        """
+        ocb = ocbpy.ocboundary.OCBoundary(filename=None)
+        igood = ocbpy.ocboundary.retrieve_all_good_indices(self.ocb)
+
+        self.assertEqual(len(igood), 0)
+
 if __name__ == '__main__':
     unittest.main()
