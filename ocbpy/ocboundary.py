@@ -523,6 +523,94 @@ class OCBoundary(object):
 
         return aacgm_lat, aacgm_mlt
 
+    def get_aacgm_boundary_lat(self, aacgm_lon=None, rec_ind=None,
+                               overwrite=False):
+        """Calculate the OCB latitude in AACGM coordinates at specified
+        longitudes
+
+        Parameters
+        ----------
+        aacgm_lon : (array-like)
+            AACGM longitude locations for which the OCB latitude will be
+            calculated.  Longitudes should be in degrees.  If None, will use
+            previously provided longitudes stored in the 'aacgm_boundary_lon'
+            attribute (default=None).
+        rec_ind : (int, array-like, or NoneType)
+            Record index for which the OCB AACGM latitude will be calculated,
+            or None to calculate all boundary locations (default=None).
+        overwrite : (boolean)
+            Overwrite previous boundary locations if aacgm_lon input does
+            not match 'aacgm_boundary_lon' (default=False).
+
+        Returns
+        -------
+        updates OCBoundary object with attribute 'aacgm_boundary_lat',
+        containing the AACGM latitude locations of the OCB (in degrees) for
+        each requested time (empty arrays for times not requested) and
+        'aacgm_boundary_lon', which holds the aacgm_lon input
+
+        """
+
+        # Ensure that AACGM boundary longitude input is consistent with
+        # previous input or that previous input is available.  Initialize
+        # the latitude output, if necessary
+        if aacgm_lon is None:
+            if not hasattr(self, 'aacgm_boundary_lon'):
+                raise ValueError('missing AACGM boundary longitude input')
+        else:
+            # Ensure the boundary longitudes span from 0-360 degrees
+            aacgm_lon = np.array(aacgm_lon)
+            aacgm_lon[aacgm_lon < 0.0] += 360.0
+            aacgm_lon[aacgm_lon >= 360.0] -= 360.0
+            
+            if not hasattr(self, 'aacgm_boundary_lon'):
+                self.aacgm_boundary_lon = aacgm_lon
+            else:
+                if(aacgm_lon.shape != self.aacgm_boundary_lon.shape or
+                   sum(aacgm_lon - self.aacgm_boundary_lon) != 0.0):
+                    if overwrite:
+                        self.aacgm_boundary_lon = aacgm_lon
+                        del self.aacgm_boundary_lat
+                    else:
+                        raise ValueError('mismatched AACGM boundary longitude' +
+                                         ' input')
+
+        if not hasattr(self, "aacgm_boundary_lat"):
+            self.aacgm_boundary_lat = np.empty(shape=(self.records, \
+                                            self.aacgm_boundary_lon.shape[0]),
+                                               dtype=float) * np.nan
+
+        # Get the indices to calculate the boundary latitudes
+        if rec_ind is None:
+            # Create array of all indices
+            rinds = np.arange(0, self.records, 1)
+        else:
+            # Create array of indices as integers
+            rinds = np.asarray(rec_ind).astype('int')
+
+            # Ensure single values are stored as an interable object
+            if len(rinds.shape) == 0:
+                rinds = rinds.reshape(1,)
+
+        # Calculate the boundary location for each requested time
+        for i in rinds:
+            # Calculate the difference between the output longitude and the
+            # longitude of the centre of the polar cap
+            del_lon = np.radians(self.aacgm_boundary_lon - self.phi_cent[i])
+
+            # Calculate the radius of the OCB in degrees
+            rad = self.r_cent[i] * np.cos(del_lon) + \
+                np.sqrt(self.r[i]**2 - (self.r_cent[i] * np.sin(del_lon))**2)
+
+            # If the radius is negative, set to NaN
+            rad[rad < 0.0] = np.nan
+            
+            # Calculate the latitude of the OCB in AACGM coordinates
+            self.aacgm_boundary_lat[i] = self.hemisphere * (90.0 - rad)
+
+        return
+
+
 def retrieve_all_good_indices(ocb):
     """Retrieve all good indices from the ocb structure
 
