@@ -133,16 +133,14 @@ ax.yaxis.set_ticklabels(["85$^\circ$","80$^\circ$","75$^\circ$","70$^\circ$"])
 
 Mark the location of the circle centre in AACGM coordinates
 ```
-phi_cent_rad = np.radians(ocb.phi_cent[ocb.rec_ind])
-ax.plot([phi_cent_rad], [ocb.r_cent[ocb.rec_ind]], "mx", ms=10, label="OCB Pole")
+ax.plot(np.radians(ocb.phi_cent[ocb.rec_ind]), ocb.r_cent[ocb.rec_ind], "mx", ms=10, label="OCB Pole")
 ```
 
 Calculate at plot the location of the OCB in AACGM coordinates
 ```
-lon = np.arange(0.0, 2.0 * np.pi + 0.1, 0.1)
-del_lon = lon - phi_cent_rad
-lat = ocb.r_cent[ocb.rec_ind] * np.cos(del_lon) + np.sqrt(ocb.r[ocb.rec_ind]**2 - (ocb.r_cent[ocb.rec_ind] * np.sin(del_lon))**2)
-ax.plot(lon, lat, "m-", linewidth=2, label="OCB")
+lon = np.linspace(0.0, 2.0 * np.pi, num=64)
+ocb.get_aacgm_boundary_lat(aacgm_lon=np.degrees(lon), rec_ind=ocb.rec_ind)
+ax.plot(lon, 90.0-ocb.aacgm_boundary_lat[ocb.rec_ind], "m-", linewidth=2, label="OCB")
 ax.text(lon[35], lat[35]+1.5, "74$^\circ$", fontsize="medium", color="m")
 ```
 
