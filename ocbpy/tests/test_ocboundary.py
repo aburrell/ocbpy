@@ -254,7 +254,7 @@ class TestOCBoundaryMethods(unittest.TestCase):
                          (self.ocb.records, self.lon.shape[0]))
 
         # Test value of longitude attribute
-        self.assertItemsEqual(self.lon[:-1], self.ocb.aacgm_boundary_lon[:-1])
+        self.assertEqual(sum(self.lon[:-1]-self.ocb.aacgm_boundary_lon[:-1]), 0)
         self.assertAlmostEqual(self.ocb.aacgm_boundary_lon[-1], 0.0)
 
         # Test the value of the latitude attriubte at the good record location
