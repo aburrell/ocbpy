@@ -8,6 +8,7 @@
 
 import ocbpy
 import unittest
+import numpy as np
 
 class TestOCBoundaryMethods(unittest.TestCase):
 
@@ -27,10 +28,42 @@ class TestOCBoundaryMethods(unittest.TestCase):
         self.ocb_south = ocbpy.ocboundary.OCBoundary(filename=self.test_south,
                                                      instrument="Ampere",
                                                      hemisphere=-1)
+        self.lon = np.linspace(0.0, 360.0, num=6)
 
     def tearDown(self):
-        del self.ocb, self.ocb_south, self.test_north, self.test_south
+        del self.ocb, self.ocb_south, self.test_north, self.test_south, self.lon
 
+    def test_attrs(self):
+        """ Test the default attributes
+        """
+
+        for tattr in ["filename", "instrument", "hemisphere", "records",
+                      "rec_ind", "dtime", "phi_cent", "r_cent", "r",
+                      "boundary_lat"]:
+            self.assertTrue(hasattr(self.ocb, tattr))
+            self.assertTrue(hasattr(self.ocb_south, tattr))
+
+        # Ensure optional attributes are absent
+        for tattr in ["aacgm_boundary_lon", "aacgm_boundary_lat"]:
+            self.assertFalse(hasattr(self.ocb, tattr))
+            self.assertFalse(hasattr(self.ocb_south, tattr))
+
+    def test_image_attrs(self):
+        """ Test IMAGE attributes
+        """
+
+        for tattr in ["num_sectors", "year", "soy", "r_err", "a"]:
+            self.assertTrue(hasattr(self.ocb, tattr))
+            self.assertFalse(hasattr(self.ocb_south, tattr))
+
+    def test_ampere_attrs(self):
+        """ Test AMPERE attributes
+        """
+
+        for tattr in ['date', 'time', 'x', 'y', 'j_mag']:
+            self.assertTrue(hasattr(self.ocb_south, tattr))
+            self.assertFalse(hasattr(self.ocb, tattr))
+        
     def test_nofile_init(self):
         """ Ensure that the class can be initialised without loading a file.
         """
@@ -204,6 +237,125 @@ class TestOCBoundaryMethods(unittest.TestCase):
         igood = ocbpy.ocboundary.retrieve_all_good_indices(ocb)
 
         self.assertEqual(len(igood), 0)
+
+    def test_aacgm_boundary_location(self):
+        """ Test the calculation of the OCB in AACGM coordinates
+        """
+        # Add new attributes
+        self.ocb.get_aacgm_boundary_lat(aacgm_lon=self.lon)
+
+        # Ensure new attriutes were added
+        self.assertTrue(hasattr(self.ocb, "aacgm_boundary_lon"))
+        self.assertTrue(hasattr(self.ocb, "aacgm_boundary_lat"))
+
+        # Test shape of new attributes
+        self.assertEqual(self.ocb.aacgm_boundary_lon.shape, self.lon.shape)
+        self.assertEqual(self.ocb.aacgm_boundary_lat.shape,
+                         (self.ocb.records, self.lon.shape[0]))
+
+        # Test value of longitude attribute
+        self.assertItemsEqual(self.lon[:-1], self.ocb.aacgm_boundary_lon[:-1])
+        self.assertAlmostEqual(self.ocb.aacgm_boundary_lon[-1], 0.0)
+
+        # Test the value of the latitude attriubte at the good record location
+        # Also tests that specifying the same longitude locations twice is ok
+        self.test_aacgm_boundary_location_good()
+
+    def test_aacgm_boundary_location_good(self):
+        """ Test the calculation of the OCB in AACGM coordinates at the first
+        good location
+        """
+        rind = 27
+
+        # Add the attribute at the good location
+        self.ocb.get_aacgm_boundary_lat(aacgm_lon=self.lon, rec_ind=rind)
+
+        # Test value of latitude attribute
+        self.assertTrue(np.all(self.ocb.aacgm_boundary_lat[rind] > 0.0))
+        self.assertAlmostEqual(self.ocb.aacgm_boundary_lat[rind].min(),
+                               73.26939247752293)
+        self.assertEqual(self.ocb.aacgm_boundary_lat[rind].argmin(), 1)
+        self.assertAlmostEqual(self.ocb.aacgm_boundary_lat[rind].max(),
+                               78.52813223696786)
+        self.assertEqual(self.ocb.aacgm_boundary_lat[rind].argmax(), 4)
+
+    def test_aacgm_boundary_location_good_south(self):
+        """ Test the calculation of the OCB in AACGM coordinates at the first
+        good location for the southern hemisphere
+        """
+        rind = 8
+
+        # Add the attribute at the good location
+        self.ocb_south.get_aacgm_boundary_lat(aacgm_lon=self.lon, rec_ind=rind)
+
+        # Test value of latitude attribute
+        self.assertTrue(np.all(self.ocb_south.aacgm_boundary_lat[rind] < 0.0))
+        self.assertAlmostEqual(self.ocb_south.aacgm_boundary_lat[rind].min(),
+                               -81.92122960532046)
+        self.assertEqual(self.ocb_south.aacgm_boundary_lat[rind].argmin(), 1)
+        self.assertAlmostEqual(self.ocb_south.aacgm_boundary_lat[rind].max(),
+                               -78.11700354013985)
+        self.assertEqual(self.ocb_south.aacgm_boundary_lat[rind].argmax(), 4)
+
+    def test_aacgm_boundary_location_bad(self):
+        """ Test the calclation of the OCB in AACGM coordinates for a boundary
+        that doesn't span all MLT sectors
+        """
+        rind = 2
+
+        # Add the attriubte at the bad location
+        self.ocb.get_aacgm_boundary_lat(aacgm_lon=self.lon, rec_ind=rind)
+
+        # Test value of latitude attribute
+        self.assertFalse(np.all(self.ocb.aacgm_boundary_lat[rind] > 0.0))
+        self.assertTrue(np.any(self.ocb.aacgm_boundary_lat[rind] > 0.0))
+        self.assertTrue(np.any(np.isnan(self.ocb.aacgm_boundary_lat[rind])))
+        self.assertAlmostEqual(self.ocb.aacgm_boundary_lat[rind][1],
+                               72.82502115387997)
+
+    def test_aacgm_boundary_location_no_input(self):
+        """ Test failure of OCB AACGM location calculation for no input
+        """
+
+        with self.assertRaisesRegexp(ValueError,
+                                     "missing AACGM boundary longitude input"):
+            self.ocb.get_aacgm_boundary_lat()
+
+    def test_aacgm_boundary_location_mismatch_lon_shape(self):
+        """ Test failure of OCB AACGM location with different shaped longitude
+        """
+
+        # Initialize the attributes with values for the good location
+        self.test_aacgm_boundary_location_good()
+
+        # Attempt to assign another location with a different sized longitude
+        self.assertRaisesRegexp(ValueError,
+                                "mismatched AACGM boundary longitude input",
+                                self.ocb.get_aacgm_boundary_lat(),
+                                np.linspace(0.0, 360.0, 24))
+
+    def test_aacgm_boundary_location_mismatch_lon_values(self):
+        """ Test failure of OCB AACGM location with different valued longitude
+        """
+
+        # Initialize the attributes with values for the good location
+        self.test_aacgm_boundary_location_good()
+        new_lon = np.linspace(0.0, 270.0, self.lon.shape[0])
+
+        # Attempt to assign another location with a different sized longitude
+        with self.assertRaisesRegexp(ValueError, \
+                                "mismatched AACGM boundary longitude input"):
+            self.ocb.get_aacgm_boundary_lat(aacgm_lon=new_lon)
+
+    def test_aacgm_boundary_location_lon_range(self):
+        """ Test failure of OCB AACGM location with different valued longitude
+        """
+
+        self.lon[self.lon > 180.0] -= 360.0
+        self.ocb.get_aacgm_boundary_lat(aacgm_lon=self.lon)
+
+        # Test the attributes with values for the good location
+        self.test_aacgm_boundary_location_good()
 
 if __name__ == '__main__':
     unittest.main()
