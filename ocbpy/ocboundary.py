@@ -7,6 +7,8 @@
 
 Functions
 -------------------------------------------------------------------------------
+retrieve_all_good_indices(ocb)
+    Retrieve all good boundary indices
 match_data_ocb(ocb, dat_dtime, kwargs)
     Match data with open-closed field line boundaries
 
