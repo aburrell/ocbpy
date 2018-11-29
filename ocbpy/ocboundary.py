@@ -525,62 +525,50 @@ class OCBoundary(object):
 
         return aacgm_lat, aacgm_mlt
 
-    def get_aacgm_boundary_lat(self, aacgm_lon=None, rec_ind=None,
+    def get_aacgm_boundary_lat(self, aacgm_lon, rec_ind=None,
                                overwrite=False):
         """Calculate the OCB latitude in AACGM coordinates at specified
         longitudes
 
         Parameters
         ----------
-        aacgm_lon : (array-like)
-            AACGM longitude locations for which the OCB latitude will be
-            calculated.  Longitudes should be in degrees.  If None, will use
-            previously provided longitudes stored in the 'aacgm_boundary_lon'
-            attribute (default=None).
+        aacgm_lon : (int, float, or array-like)
+            AACGM longitude location(s) (in degrees) for which the OCB latitude
+            will becalculated.
         rec_ind : (int, array-like, or NoneType)
             Record index for which the OCB AACGM latitude will be calculated,
             or None to calculate all boundary locations (default=None).
         overwrite : (boolean)
-            Overwrite previous boundary locations if aacgm_lon input does
-            not match 'aacgm_boundary_lon' (default=False).
+            Overwrite previous boundary locations if this time already has
+            calculated boundary latitudes for a different set of input
+            longitudes (default=False).
 
         Returns
         -------
-        updates OCBoundary object with attribute 'aacgm_boundary_lat',
-        containing the AACGM latitude locations of the OCB (in degrees) for
-        each requested time (empty arrays for times not requested) and
-        'aacgm_boundary_lon', which holds the aacgm_lon input
+        Updates OCBoundary object with list attributes.  If no boundary value
+        is calculated at a certain time, the list is padded with None.  If
+        a boundary latitude cannot be calculated at that time and longitude,
+        that time and longitude is filled with NaN.
+
+        'aacgm_boundary_lat' contains the AACGM latitude location(s) of the OCB
+        (in degrees) for each requested time.
+
+        'aacgm_boundary_lon' holds the aacgm_lon input for each requested
+        time.  The requested longitude may differ from time to time, to allow
+        easy comparison with satellite passes.
 
         """
 
-        # Ensure that AACGM boundary longitude input is consistent with
-        # previous input or that previous input is available.  Initialize
-        # the latitude output, if necessary
-        if aacgm_lon is None:
-            if not hasattr(self, 'aacgm_boundary_lon'):
-                raise ValueError('missing AACGM boundary longitude input')
-        else:
-            # Ensure the boundary longitudes span from 0-360 degrees
-            aacgm_lon = np.array(aacgm_lon)
-            aacgm_lon[aacgm_lon < 0.0] += 360.0
-            aacgm_lon[aacgm_lon >= 360.0] -= 360.0
+        # Ensure the boundary longitudes span from 0-360 degrees
+        aacgm_lon = np.array(aacgm_lon)
+        aacgm_lon[aacgm_lon < 0.0] += 360.0
+        aacgm_lon[aacgm_lon >= 360.0] -= 360.0
             
-            if not hasattr(self, 'aacgm_boundary_lon'):
-                self.aacgm_boundary_lon = aacgm_lon
-            else:
-                if(aacgm_lon.shape != self.aacgm_boundary_lon.shape or
-                   sum(aacgm_lon - self.aacgm_boundary_lon) != 0.0):
-                    if overwrite:
-                        self.aacgm_boundary_lon = aacgm_lon
-                        del self.aacgm_boundary_lat
-                    else:
-                        raise ValueError('mismatched AACGM boundary longitude' +
-                                         ' input')
+        if not hasattr(self, 'aacgm_boundary_lon'):
+            self.aacgm_boundary_lon = [None for i in range(self.records)]
 
-        if not hasattr(self, "aacgm_boundary_lat"):
-            self.aacgm_boundary_lat = np.empty(shape=(self.records, \
-                                            self.aacgm_boundary_lon.shape[0]),
-                                               dtype=float) * np.nan
+        if not hasattr(self, 'aacgm_boundary_lat'):
+            self.aacgm_boundary_lat = [None for i in range(self.records)]
 
         # Get the indices to calculate the boundary latitudes
         if rec_ind is None:
@@ -596,20 +584,31 @@ class OCBoundary(object):
 
         # Calculate the boundary location for each requested time
         for i in rinds:
-            # Calculate the difference between the output longitude and the
-            # longitude of the centre of the polar cap
-            del_lon = np.radians(self.aacgm_boundary_lon - self.phi_cent[i])
+            # If data exists here and the overwrite option is off, skip
+            if self.aacgm_boundary_lat[i] is None or overwrite:
+                # Calculate the difference between the output longitude and the
+                # longitude of the centre of the polar cap
+                del_lon = np.radians(aacgm_lon - self.phi_cent[i])
 
-            # Calculate the radius of the OCB in degrees
-            rad = self.r_cent[i] * np.cos(del_lon) + \
+                # Calculate the radius of the OCB in degrees
+                rad = self.r_cent[i] * np.cos(del_lon) + \
                 np.sqrt(self.r[i]**2 - (self.r_cent[i] * np.sin(del_lon))**2)
 
-            # If the radius is negative, set to NaN
-            rad[rad < 0.0] = np.nan
-            
-            # Calculate the latitude of the OCB in AACGM coordinates
-            self.aacgm_boundary_lat[i] = self.hemisphere * (90.0 - rad)
+                # If the radius is negative, set to NaN
+                if len(rad.shape) > 0:
+                    rad[rad < 0.0] = np.nan
+                else:
+                    rad = np.nan if rad < 0.0 else float(rad)
 
+                # Calculate the latitude of the OCB in AACGM coordinates
+                self.aacgm_boundary_lat[i] = self.hemisphere * (90.0 - rad)
+
+                # Save the longitude at this time
+                self.aacgm_boundary_lon[i] = aacgm_lon
+            else:
+                logging.warn("unable to update AACGM boundary latitude at " +
+                             "{:}, overwrite blocked".format(self.dtime[i]))
+        
         return
 
 
