@@ -534,7 +534,7 @@ class OCBoundary(object):
         ----------
         aacgm_lon : (int, float, or array-like)
             AACGM longitude location(s) (in degrees) for which the OCB latitude
-            will becalculated.
+            will be calculated.
         rec_ind : (int, array-like, or NoneType)
             Record index for which the OCB AACGM latitude will be calculated,
             or None to calculate all boundary locations (default=None).
