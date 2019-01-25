@@ -15,12 +15,12 @@ class TestOCBScalingMethods(unittest.TestCase):
         """ Initialize the OCBoundary object using the test file, as well as
         the VectorData object
         """
-        from os.path import isfile
+        from os import path
 
-        ocb_dir = ocbpy.__file__.split("/")
-        test_file = "{:s}/{:s}".format("/".join(ocb_dir[:-1]),
-                                       "tests/test_data/test_north_circle")
-        self.assertTrue(isfile(test_file))
+        ocb_dir = path.split(ocbpy.__file__)
+        test_file = path.join(ocb_dir[0], "tests", "test_data",
+                              "test_north_circle")
+        self.assertTrue(path.isfile(test_file))
         self.ocb = ocbpy.ocboundary.OCBoundary(filename=test_file)
         self.ocb.rec_ind = 27
         self.vdata = ocbpy.ocb_scaling.VectorData(0, self.ocb.rec_ind, 75.0,
@@ -143,6 +143,8 @@ class TestOCBScalingMethods(unittest.TestCase):
         vsigns = self.vdata.calc_ocb_vec_sign(north=True, east=True)
         self.assertTrue(vsigns['north'])
         self.assertTrue(vsigns['east'])
+
+        del vmag, vsigns
         
     def test_scale_vec(self):
         """ Test the calculation of the OCB vector signs
@@ -171,6 +173,8 @@ class TestOCBScalingMethods(unittest.TestCase):
         self.assertEqual(self.vdata.aacgm_mag, self.vdata.ocb_mag)
         self.assertEqual(self.vdata.ocb_z, self.vdata.aacgm_z)
 
+        del vmag
+
     def test_set_ocb_zero(self):
         """ Test setting of OCB values for the VectorData object without any
         magnitude
@@ -196,7 +200,7 @@ class TestOCBScalingMethods(unittest.TestCase):
         # Set the OCB values with scaling for a variable proportional to
         # the electric field
         self.vdata.set_ocb(self.ocb, scale_func=ocbpy.ocb_scaling.normal_evar)
-        self.assertAlmostEqual(self.vdata.ocb_mag, 80.3516453163)
+        self.assertAlmostEqual(self.vdata.ocb_mag, 88.1262660863)
         
     def test_set_ocb_curl_evar(self):
         """ Test setting of OCB values for the VectorData object
@@ -206,7 +210,20 @@ class TestOCBScalingMethods(unittest.TestCase):
         # the curl of the electric field
         self.vdata.set_ocb(self.ocb,
                            scale_func=ocbpy.ocb_scaling.normal_curl_evar)
-        self.assertAlmostEqual(self.vdata.ocb_mag, 64.56491844)
+        self.assertAlmostEqual(self.vdata.ocb_mag, 77.6423447186)
+
+    def test_scaled_r(self):
+        """ Test that the scaled radius is correct
+        """
+        self.vdata.set_ocb(self.ocb, None)
+        self.assertEqual(self.vdata.scaled_r, 16.0)
+
+    def test_unscaled_r(self):
+        """ Test that the scaled radius is correct
+        """
+        self.vdata.set_ocb(self.ocb, None)
+        self.assertEqual(self.vdata.unscaled_r, 14.09)
+
         
 if __name__ == '__main__':
     unittest.main()

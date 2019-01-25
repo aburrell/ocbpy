@@ -16,7 +16,7 @@ Data
 ----------------------------------------------------------------------------
 Specialised SuperDARN data product, available from: gchi@bas.ac.uk
 """
-import logging
+import logbook as logging
 import numpy as np
 
 def vort2ascii_ocb(vortfile, outfile, ocb=None, ocbfile=None, max_sdiff=600,
@@ -94,7 +94,10 @@ def vort2ascii_ocb(vortfile, outfile, ocb=None, ocbfile=None, max_sdiff=600,
         except:
             logging.error("bad OCB file specified")
         return
-    
+
+    # Set the reference radius
+    ref_r = 90.0 - abs(ocb.boundary_lat)
+
     # Open and test the file to ensure it can be written
     try:
         fout = open(outfile, 'w')
@@ -137,7 +140,7 @@ def vort2ascii_ocb(vortfile, outfile, ocb=None, ocbfile=None, max_sdiff=600,
             nlat, nmlt = ocb.normal_coord(vdata['CENTRE_MLAT'][ivort],
                                           vdata['MLT'][ivort])
             nvort = ocbscal.normal_curl_evar(vdata['VORTICITY'][ivort],
-                                             vdata['CENTRE_MLAT'][ivort], nlat)
+                                             ocb.r[ocb.rec_ind], ref_r)
 
             # Format the output line
             #    DATE TIME (SAVE_ALL) OCB_LAT OCB_MLT NORM_VORT

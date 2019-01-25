@@ -1,11 +1,8 @@
+graft ocbpy/tests/test_data
+graft ocbpy/boundaries
+
 include README.md
+include README.rst
 include License.md
-include ocbpy/boundaries/README.md
-include ocbpy/boundaries/si12_north_circle
-include ocbpy/boundaries/si13_north_circle
-include ocbpy/boundaries/wic_north_circle
-include ocbpy/tests/test_data/test_north_circle
-include ocbpy/tests/test_data/test_smag
-include ocbpy/tests/test_data/test_vort
-include ocbpy/tests/test_data/out_smag
-include ocbpy/tests/test_data/out_vort
+include CODE_OF_CONDUCT.md
+include CONTRIBUTING.rst

@@ -7,6 +7,8 @@
 
 Functions
 -------------------------------------------------------------------------------
+retrieve_all_good_indices(ocb)
+    Retrieve all good boundary indices
 match_data_ocb(ocb, dat_dtime, kwargs)
     Match data with open-closed field line boundaries
 
@@ -26,7 +28,7 @@ Chisham, G. (2017), A new methodology for the development of high-latitude
  ionospheric climatologies and empirical models, Journal of Geophysical
  Research: Space Physics, 122, doi:10.1002/2016JA023235.
 """
-import logging
+import logbook as logging
 import numpy as np
 
 class OCBoundary(object):
@@ -157,6 +159,9 @@ class OCBoundary(object):
             else:
                 self.filename = filename
 
+        if not hemisphere in [1, -1]:
+            raise ValueError("hemisphere must be 1 (north) or -1 (south)")
+
         self.hemisphere = hemisphere
         self.records = 0
         self.rec_ind = 0
@@ -169,7 +174,11 @@ class OCBoundary(object):
         hlines, ocb_cols, datetime_fmt = self.inst_defaults()
 
         if boundary_lat is not None:
-            self.boundary_lat = hemisphere * boundary_lat
+            self.boundary_lat = boundary_lat
+
+            # Ensure that the boundary is in the correct hemisphere
+            if np.sign(boundary_lat) != np.sign(hemisphere):
+                self.boundary_lat += -1.0
 
         # If possible, load the data
         if self.filename is not None:
@@ -520,6 +529,130 @@ class OCBoundary(object):
 
         return aacgm_lat, aacgm_mlt
 
+    def get_aacgm_boundary_lat(self, aacgm_lon, rec_ind=None,
+                               overwrite=False):
+        """Calculate the OCB latitude in AACGM coordinates at specified
+        longitudes
+
+        Parameters
+        ----------
+        aacgm_lon : (int, float, or array-like)
+            AACGM longitude location(s) (in degrees) for which the OCB latitude
+            will be calculated.
+        rec_ind : (int, array-like, or NoneType)
+            Record index for which the OCB AACGM latitude will be calculated,
+            or None to calculate all boundary locations (default=None).
+        overwrite : (boolean)
+            Overwrite previous boundary locations if this time already has
+            calculated boundary latitudes for a different set of input
+            longitudes (default=False).
+
+        Returns
+        -------
+        Updates OCBoundary object with list attributes.  If no boundary value
+        is calculated at a certain time, the list is padded with None.  If
+        a boundary latitude cannot be calculated at that time and longitude,
+        that time and longitude is filled with NaN.
+
+        'aacgm_boundary_lat' contains the AACGM latitude location(s) of the OCB
+        (in degrees) for each requested time.
+
+        'aacgm_boundary_lon' holds the aacgm_lon input for each requested
+        time.  The requested longitude may differ from time to time, to allow
+        easy comparison with satellite passes.
+
+        """
+
+        # Ensure the boundary longitudes span from 0-360 degrees
+        aacgm_lon = np.array(aacgm_lon)
+        aacgm_lon[aacgm_lon < 0.0] += 360.0
+        aacgm_lon[aacgm_lon >= 360.0] -= 360.0
+            
+        if not hasattr(self, 'aacgm_boundary_lon'):
+            self.aacgm_boundary_lon = [None for i in range(self.records)]
+
+        if not hasattr(self, 'aacgm_boundary_lat'):
+            self.aacgm_boundary_lat = [None for i in range(self.records)]
+
+        # Get the indices to calculate the boundary latitudes
+        if rec_ind is None:
+            # Create array of all indices
+            rinds = np.arange(0, self.records, 1)
+        else:
+            # Create array of indices as integers
+            rinds = np.asarray(rec_ind).astype('int')
+
+            # Ensure single values are stored as an interable object
+            if len(rinds.shape) == 0:
+                rinds = rinds.reshape(1,)
+
+        # Calculate the boundary location for each requested time
+        for i in rinds:
+            # If data exists here and the overwrite option is off, skip
+            if self.aacgm_boundary_lat[i] is None or overwrite:
+                # Calculate the difference between the output longitude and the
+                # longitude of the centre of the polar cap
+                del_lon = np.radians(aacgm_lon - self.phi_cent[i])
+
+                # Calculate the radius of the OCB in degrees
+                rad = self.r_cent[i] * np.cos(del_lon) + \
+                np.sqrt(self.r[i]**2 - (self.r_cent[i] * np.sin(del_lon))**2)
+
+                # If the radius is negative, set to NaN
+                if len(rad.shape) > 0:
+                    rad[rad < 0.0] = np.nan
+                else:
+                    rad = np.nan if rad < 0.0 else float(rad)
+
+                # Calculate the latitude of the OCB in AACGM coordinates
+                self.aacgm_boundary_lat[i] = self.hemisphere * (90.0 - rad)
+
+                # Save the longitude at this time
+                self.aacgm_boundary_lon[i] = aacgm_lon
+            else:
+                logging.warn("unable to update AACGM boundary latitude at " +
+                             "{:}, overwrite blocked".format(self.dtime[i]))
+        
+        return
+
+
+def retrieve_all_good_indices(ocb):
+    """Retrieve all good indices from the ocb structure
+
+    Parameters
+    ----------
+    ocb : (OCBoundary)
+        Class containing the open-close field line boundary data
+
+    Returns
+    -------
+    good_ind : (list)
+        List of indices containing good OCBs
+
+    """
+
+    # Save the current record index
+    icurrent = ocb.rec_ind
+
+    # Set the record index to allow us to cycle through the entire data set
+    ocb.rec_ind = -1
+
+    # Initialize the output data
+    good_ind = list()
+
+    # Cycle through all records
+    while ocb.rec_ind < ocb.records:
+        ocb.get_next_good_ocb_ind()
+        if ocb.rec_ind < ocb.records:
+            good_ind.append(int(ocb.rec_ind))
+
+    # Reset the record index
+    ocb.rec_ind = icurrent
+
+    # Return the good indices
+    return good_ind
+
+    
 def match_data_ocb(ocb, dat_dtime, idat=0, max_tol=600, min_sectors=7,
                    rcent_dev=8.0, max_r=23.0, min_r=10.0, min_j=0.15):
     """Matches data records with OCB records, locating the closest values

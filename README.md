@@ -1,4 +1,4 @@
-[![Build Status](https://www.travis-ci.org/aburrell/ocbpy.svg?branch=master)](https://www.travis-ci.org/aburrell/ocbpy)	[![Coverage Status](https://coveralls.io/repos/github/aburrell/ocbpy/badge.svg?branch=master)](https://coveralls.io/github/aburrell/ocbpy?branch=master)	[![Documentation Status](https://readthedocs.org/projects/ocbpy/badge/?version=latest)](http://ocbpy.readthedocs.io/en/latest/?badge=latest)
+[![Build Status](https://www.travis-ci.org/aburrell/ocbpy.svg?branch=master)](https://www.travis-ci.org/aburrell/ocbpy)	[![Coverage Status](https://coveralls.io/repos/github/aburrell/ocbpy/badge.svg?branch=master)](https://coveralls.io/github/aburrell/ocbpy?branch=master)	[![Documentation Status](https://readthedocs.org/projects/ocbpy/badge/?version=latest)](http://ocbpy.readthedocs.io/en/latest/?badge=latest) [![DOI](https://zenodo.org/badge/96153180.svg)](https://zenodo.org/badge/latestdoi/96153180)
 
 # Overview
 
@@ -11,12 +11,14 @@ and polar cap measurements.  This coordinate system is described in:
 
   * Chisham, G. (2017), A new methodology for the development of high‐latitude
     ionospheric climatologies and empirical models, Journal of Geophysical
-    Research: Space Physics, doi:10.1002/2016JA023235.
+    Research: Space Physics,
+    [doi:10.1002/2016JA023235.](https://doi.org/10.1002/2016JA023235)
 
   * Full [documentation](http://ocbpy.rtfd.io/)
 
 OCBs must be obtained from observations for this coordinate transformation.
-Data from three auroral instruments provide northern hemisphere OCB locations
+In the British Antarctic Survey's [IMAGE Auroral Boundary data project](https://www.bas.ac.uk/project/image-auroral-boundary-data/)
+from three auroral instruments provide northern hemisphere OCB locations
 for 3 May 2000 03:01:42 UT - 22 Aug 2002 00:01:28, though not all of the times
 included in these files contain high-quality estimations of the OCB.
 Recommended selection criteria are included as defaults in the OCBoundary class.
@@ -30,24 +32,28 @@ These routines may be used as a guide to write routines for other datasets.
 
 # Python versions
 
-This module has been tested on python version 2.7, 3.3 - 3.6
+This module has been tested on python version 2.7, 3.4 - 3.6.  Local testing on
+3.3 was also performed, but may not be supported in the next version.
 
 # Dependencies
 
 The listed dependecies were tested with the following versions:
   * datetime 
-  * numpy (1.12.1)
-  * logging (0.5.1.2)
-  * os 
+  * numpy (1.11.3, 1.12.1, 1.14.1)
+  * logbook
   * setuptools (36.0.1)
 
-These additional packages are needed to perform unit tests
-  * unittest
-  * filecmp
+Testing is performed using the python module, unittest
 
 # Installation
 
-First, checkout the repository:
+Installation is now available through pypi [![PyPI version](https://badge.fury.io/py/ocbpy.svg)](https://badge.fury.io/py/ocbpy)
+
+```
+    $ pip install ocbpy
+```
+
+You may also checkout the repository and install it yourself:
 
 ```
     $ git clone git://github.com/aburrell/ocbpy.git;
@@ -87,7 +93,9 @@ print ocb
 The output should be as follows:
 
 ```
-Open-Closed Boundary file: /Users/ab763/Programs/Git/ocbpy/ocbpy/boundaries/si13_north_circle
+Open-Closed Boundary file: ~/ocbpy/ocbpy/boundaries/si13_north_circle
+Source instrument: IMAGE
+Open-Closed Boundary reference latitude: 74.0 degrees
 
 219927 records from 2000-05-05 11:35:27 to 2002-08-22 00:01:28
 
@@ -125,16 +133,14 @@ ax.yaxis.set_ticklabels(["85$^\circ$","80$^\circ$","75$^\circ$","70$^\circ$"])
 
 Mark the location of the circle centre in AACGM coordinates
 ```
-phi_cent_rad = np.radians(ocb.phi_cent[ocb.rec_ind])
-ax.plot([phi_cent_rad], [ocb.r_cent[ocb.rec_ind]], "mx", ms=10, label="OCB Pole")
+ax.plot(np.radians(ocb.phi_cent[ocb.rec_ind]), ocb.r_cent[ocb.rec_ind], "mx", ms=10, label="OCB Pole")
 ```
 
 Calculate at plot the location of the OCB in AACGM coordinates
 ```
-lon = np.arange(0.0, 2.0 * np.pi + 0.1, 0.1)
-del_lon = lon - phi_cent_rad
-lat = ocb.r_cent[ocb.rec_ind] * np.cos(del_lon) + np.sqrt(ocb.r[ocb.rec_ind]**2 - (ocb.r_cent[ocb.rec_ind] * np.sin(del_lon))**2)
-ax.plot(lon, lat, "m-", linewidth=2, label="OCB")
+lon = np.linspace(0.0, 2.0 * np.pi, num=64)
+ocb.get_aacgm_boundary_lat(aacgm_lon=np.degrees(lon), rec_ind=ocb.rec_ind)
+ax.plot(lon, 90.0-ocb.aacgm_boundary_lat[ocb.rec_ind], "m-", linewidth=2, label="OCB")
 ax.text(lon[35], lat[35]+1.5, "74$^\circ$", fontsize="medium", color="m")
 ```
 
@@ -175,11 +181,3 @@ The figure should now look like:
         <img height="0" width="0px">
         <img width="80%" src="/docs/example_ocb_location.png" alt="OCB Example" title="OCB Example"</img>
 </div>
-
-
-# Uninstallation 
-
-1. The install directory for pyglow is outputted when you run the
-   `python ./setup.py install` command.  For example, for macs this is usually
-    `/Library/Frameworks/Python.framework/Versions/2.7/lib/python2.7/site-packages`.
-2.  Remove the `ocbpy` folder from this directory.

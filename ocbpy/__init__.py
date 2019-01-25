@@ -29,9 +29,9 @@ instruments    Instrument-specific OCB gridding functions
 ocb_time       Time manipulation routines
 ---------------------------------------------------------------------------
 """
-import logging
+import logbook as logging
 
-__version__ = str('0.1a1')
+__version__ = str('0.2b2')
 __default_file__ = "boundaries/si13_north_circle"
 
 # Imports
@@ -40,10 +40,10 @@ __default_file__ = "boundaries/si13_north_circle"
 try:
     from ocbpy import (ocboundary, ocb_scaling, ocb_time)
     from ocbpy.ocboundary import (OCBoundary, match_data_ocb)
-except ImportError as e:
-    logging.exception('problem importing ocboundary: ' + str(e))
+except ImportError as err:
+    logging.exception('problem importing ocboundary: ' + str(err))
 
 try:
     from ocbpy import (instruments)
-except ImportError as e:
-    logging.exception('problem importing instruments: ' + str(e))
+except ImportError as err:
+    logging.exception('problem importing instruments: ' + str(err))
