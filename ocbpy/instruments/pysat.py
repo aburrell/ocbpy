@@ -20,10 +20,10 @@ import numpy as np
 
 try:
     import pysat
-except:
+except ImportError as ierr:
     err = 'unable to load the pysat modules; pysat is available at:\n'
     err += 'https://github.com/rstoneback/pysat'
-    raise err
+    raise ImportError("{:s}\n{:}".format(err, ierr))
 
 def add_ocb_to_data(pysat_inst, mlat_name, mlt_name, evar_names=list(),
                     curl_evar_names=list(), vector_names=dict(), dat_ind=list(),
@@ -89,6 +89,7 @@ def add_ocb_to_data(pysat_inst, mlat_name, mlt_name, evar_names=list(),
     ocb_names : (list)
         List of names added to pysat_inst containing the OCB coordinates
         and any scaled measurements.
+
     """
     import ocbpy
     import ocbpy.ocb_scaling as ocbscal
@@ -102,16 +103,13 @@ def add_ocb_to_data(pysat_inst, mlat_name, mlt_name, evar_names=list(),
         raise ValueError('unknown magnetic local time name: ' + mlt_name)
 
     # Test to see that the rest of the data names are present
-    if not np.all([eattr in pysat_inst.data.columns for eattr in evar_names]):
+    if not np.all([eattr in pysat_inst.data.columns or
+                   eattr in vector_names.keys() for eattr in evar_names]):
         raise ValueError('at least one unknown E field name')
 
-    if not np.all([eattr in pysat_inst.data.columns
-                   for eattr in curl_evar_names]):
+    if not np.all([eattr in pysat_inst.data.columns or
+                   eattr in vector_names.keys() for eattr in curl_evar_names]):
         raise ValueError('at least one unknown E field name')
-
-    if not np.all([vattr in evar_names or vattr in curl_evar_names
-                   for vattr in vector_names.keys()]):
-        raise ValueError('at least one unknown vector name')
 
     # Format the new data column names
     olat_name = "{:s}_ocb".format(mlat_name)
@@ -121,6 +119,7 @@ def add_ocb_to_data(pysat_inst, mlat_name, mlt_name, evar_names=list(),
     # Test the vector names to ensure that enough information
     # was provided and that it exists in the Instrument object
     nvect = len(vector_names.keys())
+    vector_attrs = dict()
     if nvect > 0:
         vector_reqs = ["aacgm_n", "aacgm_e", "aacgm_z"]
 
@@ -144,11 +143,22 @@ def add_ocb_to_data(pysat_inst, mlat_name, mlt_name, evar_names=list(),
             
             for vinit in vector_names[eattr].keys():
                 if vinit in vector_reqs:
-                    if(not vector_names[eattr][vinit] in
+                    if(vector_names[eattr][vinit] not in
                        pysat_inst.data.columns):
                         raise ValueError("unknown vector name: " +
                                          vector_names[eattr][vinit])
+                    else:
+                        if oattr not in vector_attrs.keys():
+                            vector_attrs[oattr] = list()
+                        vector_attrs[oattr].append(vector_names[eattr][vinit])
                     vdim += 1
+
+    # Append the remaining OCB output names
+    for eattr in evar_names:
+        ocb_names.append("{:s}_ocb".format(eattr))
+
+    for eattr in curl_evar_names:
+        ocb_names.append("{:s}_ocb".format(eattr))
 
     # Extract the AACGM locations
     aacgm_lat = np.array(pysat_inst[mlat_name])
@@ -196,13 +206,15 @@ def add_ocb_to_data(pysat_inst, mlat_name, mlt_name, evar_names=list(),
              ocb_output[omlt_name][iout]) = ocb.normal_coord(aacgm_lat[iout],
                                                              aacgm_mlt[iout])
 
+            # Scale and orient the vector values
             if nvect > 0:
                 # Set this value's AACGM vector values
-                vector_default = {"ocb_lat":ocb_output[olat_name][iout],
-                                  "ocb_mlt":ocb_output[omlt_name][iout],
-                                  "aacgm_n":0.0, "aacgm_e":0.0, "aacgm_z":0.0,
-                                  "aacgm_mag":np.nan, "dat_name":None,
-                                  "dat_units":None, "scale_func":None}
+                vector_default = {"ocb_lat": ocb_output[olat_name][iout],
+                                  "ocb_mlt": ocb_output[omlt_name][iout],
+                                  "aacgm_n": 0.0, "aacgm_e": 0.0,
+                                  "aacgm_z": 0.0, "aacgm_mag": np.nan,
+                                  "dat_name": None, "dat_units": None,
+                                  "scale_func": None}
                 vector_init = dict(vector_default)
 
                 for eattr in vector_names.keys():
@@ -218,16 +230,20 @@ def add_ocb_to_data(pysat_inst, mlat_name, mlt_name, evar_names=list(),
                     ocb_output[oattr][iout] = ocbscal.VectorData(iout, \
                 ocb.rec_ind, aacgm_lat[iout], aacgm_mlt[iout], **vector_init)
                     ocb_output[oattr][iout].set_ocb(ocb)
-                    
-                for eattr in evar_names:
-                    oattr = "{:s}_ocb".format(eattr)
-                    evar = getattr(pysat_inst, eattr)[iout]
-                    ocb_output[oattr][iout] = ocbscal.normal_evar(evar, \
-                                aacgm_lat[iout], ocb_output[olat_name][iout])
-                for eattr in curl_evar_names:
-                    oattr = "{:s}_ocb".format(eattr)
-                    evar = getattr(pysat_inst, eattr)[iout]
-                    ocb_output[oattr][iout] = ocbscal.normal_curl_evar(evar, \
+
+            # Scale the E-field proportional variables
+            for eattr in evar_names:
+                oattr = "{:s}_ocb".format(eattr)
+                evar = pysat_inst[eattr][iout]
+                ocb_output[oattr][iout] = ocbscal.normal_evar(evar,
+                                                              aacgm_lat[iout],\
+                                                    ocb_output[olat_name][iout])
+
+            # Scale the variables proportial to the curl of the E-field
+            for eattr in curl_evar_names:
+                oattr = "{:s}_ocb".format(eattr)
+                evar = pysat_inst[eattr][iout]
+                ocb_output[oattr][iout] = ocbscal.normal_curl_evar(evar, \
                                 aacgm_lat[iout], ocb_output[olat_name][iout])
             
             # Move to next line
@@ -256,14 +272,14 @@ def add_ocb_to_data(pysat_inst, mlat_name, mlt_name, evar_names=list(),
         if oattr in vector_names:
             func_name = vector_names[oattr]['scale_func'].__name__
             notes += " and was scaled using {:}".format(func_name)
+            eattr = vector_attrs[oattr][0]
 
         add_ocb_to_metadata(pysat_inst, oattr, eattr, notes=notes)
 
     return ocb_output.keys()
 
-                                            
 def add_ocb_to_metadata(pysat_inst, ocb_name, pysat_name, overwrite=False,
-                        notes=''):
+                        notes='', isvector=False):
     """ Update pysat metadata for OCB data
 
     Parameters
@@ -278,6 +294,8 @@ def add_ocb_to_metadata(pysat_inst, ocb_name, pysat_name, overwrite=False,
         Overwrite existing metadata, if present (default=False)
     notes : (str)
         Notes about this OCB data (default='')
+    isvector : (boolean)
+        Is this vector data or not (default=False)
 
     Returns
     -------
@@ -285,9 +303,8 @@ def add_ocb_to_metadata(pysat_inst, ocb_name, pysat_name, overwrite=False,
 
     """
 
-    labels = list(pysat_inst.meta.data.keys())
-
     # Test the input
+    
     if not pysat_name in pysat_inst.meta.data.index:
         logging.warning("original data has no metadata")
 
@@ -295,20 +312,33 @@ def add_ocb_to_metadata(pysat_inst, ocb_name, pysat_name, overwrite=False,
         logging.warning("OCB data already has metadata")
 
     else:
-        # Initialize with old values
-        new_meta = {ll: pysat_inst.meta[pysat_name][ll] for ll in labels}
+        if isvector:
+            name = ("OCB_" + ocb_name.split("_ocb")[0]).replace("_", " ")
+            new_meta = {pysat_inst.meta.fill_label: None,
+                        pysat_inst.meta.name_label: name,
+                        pysat_inst.meta.desc_label: "Open Closed field-line " \
+                        + "Boundary vector " + \
+                        pysat_inst.meta[pysat_name][pysat_inst.meta.desc_label],
+                        pysat_inst.meta.units_label:
+                        pysat_inst.meta[pysat_name][pysat_inst.meta.units_label],
+                        pysat_inst.meta.plot_label: name,
+                        pysat_inst.meta.axis_label: name}
+        else:
+            # Initialize with old values
+            labels = list(pysat_inst.meta.data.keys())
+            new_meta = {ll: pysat_inst.meta[pysat_name][ll] for ll in labels}
 
-        # Update certain categories with OCB information
-        new_meta[pysat_inst.meta.fill_label] = np.nan
-        new_meta[pysat_inst.meta.name_label] = "OCB " \
-            + new_meta[pysat_inst.meta.name_label]
-        new_meta[pysat_inst.meta.desc_label] = "Open Closed field-line " \
-            + "Boundary " + new_meta[pysat_inst.meta.desc_label]
-        new_meta[pysat_inst.meta.plot_label] = "OCB " \
-            + new_meta[pysat_inst.meta.plot_label]
-        new_meta[pysat_inst.meta.axis_label] = "OCB " \
-            + new_meta[pysat_inst.meta.axis_label]
-        new_meta[pysat_inst.meta.notes_label] = notes
+            # Update certain categories with OCB information
+            new_meta[pysat_inst.meta.fill_label] = np.nan
+            new_meta[pysat_inst.meta.name_label] = "OCB " \
+                + new_meta[pysat_inst.meta.name_label]
+            new_meta[pysat_inst.meta.desc_label] = "Open Closed field-line " \
+                + "Boundary " + new_meta[pysat_inst.meta.desc_label]
+            new_meta[pysat_inst.meta.plot_label] = "OCB " \
+                + new_meta[pysat_inst.meta.plot_label]
+            new_meta[pysat_inst.meta.axis_label] = "OCB " \
+                + new_meta[pysat_inst.meta.axis_label]
+            new_meta[pysat_inst.meta.notes_label] = notes
 
         # Set new metadata
         pysat_inst.meta.__setitem__(ocb_name, new_meta)
