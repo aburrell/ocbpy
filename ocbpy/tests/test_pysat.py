@@ -17,7 +17,7 @@ try:
 except ImportError:
     no_pysat = True
 
-@unittest.skipIf(no_pysat)
+@unittest.skipIf(no_pysat, "pysat not installed")
 class TestPysatMethods(unittest.TestCase):
 
     def setUp(self):
@@ -34,11 +34,12 @@ class TestPysatMethods(unittest.TestCase):
         self.ocb = ocbpy.OCBoundary(self.test_file)
         self.ocb.rec_ind = 27
 
-        self.test_inst = pysat.Instrument('pysat', 'testing', '10',
+        self.test_inst = pysat.Instrument('pysat', 'testing', tag='ocb',
+                                          sat_id=self.ocb.instrument,
                                           clean_level='clean',
                                           update_files=True)
-        self.test_inst.load(self.ocb.dtime[self.ocb.rec_ind])
-        self.test_inst['latitude'][np.sign(test_inst.data['latitude']) !=
+        self.test_inst.load(date=self.ocb.dtime[self.ocb.rec_ind])
+        self.test_inst['latitude'][np.sign(self.test_inst.data['latitude']) !=
                                    self.ocb.hemisphere] *= -1.0
 
         self.ocb_out = {'latitude': {'max': 87.23394, 'min': 24.17184},
@@ -50,11 +51,6 @@ class TestPysatMethods(unittest.TestCase):
         self.log_handler.push_thread()
 
     def tearDown(self):
-        import os
-
-        if os.path.isfile(self.temp_output):
-            os.remove(self.temp_output)
-
         self.log_handler.pop_thread()
         del self.test_file, self.log_handler, self.test_inst, self.ocb
         del self.ocb_out
@@ -65,7 +61,7 @@ class TestPysatMethods(unittest.TestCase):
         ocb_pysat.add_ocb_to_metadata(self.test_inst, "ocb_test", "dummy1",
                                       notes="test notes")
 
-        test_ocb_metadata(meta=self.test_inst.meta, notes='test notes')
+        self.test_ocb_metadata(meta=self.test_inst.meta, notes='test notes')
 
     def test_add_ocb_to_metadata_vector(self):
         """ Test the metadata adding routine for vector data
@@ -73,8 +69,8 @@ class TestPysatMethods(unittest.TestCase):
         ocb_pysat.add_ocb_to_metadata(self.test_inst, "ocb_test", "dummy1",
                                       notes="test notes", isvector=True)
 
-        test_ocb_metadata(meta=self.test_inst.meta, notes='test notes',
-                          isvector=True)
+        self.test_ocb_metadata(meta=self.test_inst.meta, notes='test notes',
+                               isvector=True)
 
     def test_ocb_metadata(self, meta=None, ocb_key='ocb_test',
                           pysat_key='dummy1', notes=None, isvector=False):
@@ -94,19 +90,28 @@ class TestPysatMethods(unittest.TestCase):
                 # Test the elements that are identical
                 for ll in [meta.units_label, meta.scale_label, meta.min_label,
                            meta.max_label, meta.fill_label]:
-                    self.assertTrue(meta[ocb_key][ll] == meta[pysat_key][ll])
+                    try:
+                        if np.isnan(meta[pysat_key][ll]):
+                            self.assertTrue(np.isnan(meta[ocb_key][ll]))
+                        else:
+                            self.assertEqual(meta[ocb_key][ll],
+                                             meta[pysat_key][ll])
+                    except TypeError:
+                        self.assertRegexpMatches(meta[ocb_key][ll],
+                                                 meta[pysat_key][ll])
 
             # Test the elements that have "OCB" appended to the text
             for ll in [meta.name_label, meta.axis_label, meta.plot_label]:
                 sline = meta[ocb_key][ll].split(" ")
-                self.assertTrue(sline[0] == "OCB")
+                self.assertRegexpMatches(sline[0], "OCB")
                 if not isvector:
-                    self.assertTrue(sline[1] == meta[pysat_key][ll])
+                    self.assertRegexpMatches(sline[1], meta[pysat_key][ll])
 
             # Test the remaining elements
-            self.assertTrue(meta[ocb_key][meta.desc_label].find("Open Closed"))
+            self.assertEqual(meta[ocb_key][meta.desc_label].find("Open Closed"),
+                             0)
             if notes is not None:
-                self.assertTrue(meta[ocb_key][meta.notes_label] == notes)
+                self.assertRegexpMatches(meta[ocb_key][meta.notes_label], notes)
 
             del ll, sline
 
@@ -122,7 +127,7 @@ class TestPysatMethods(unittest.TestCase):
     def test_no_overwrite_metadata(self):
         """ Test the overwrite block on metadata adding routine
         """
-        test_add_ocb_to_metadata()
+        self.test_add_ocb_to_metadata()
         ocb_pysat.add_ocb_to_metadata(self.test_inst, "ocb_test", "dummy1",
                                       notes="test notes two", overwrite=False)
 
@@ -133,12 +138,13 @@ class TestPysatMethods(unittest.TestCase):
     def test_overwrite_metadata(self):
         """ Test the overwrite permission on metadata adding routine
         """
-        test_add_ocb_to_metadata()
+        self.test_add_ocb_to_metadata()
         ocb_pysat.add_ocb_to_metadata(self.test_inst, "ocb_test", "dummy1",
                                       notes="test notes two", overwrite=True)
 
         meta = self.test_inst.meta
-        self.assertTrue(meta['ocb_test'][meta.notes_label] == "test notes two")
+        self.assertRegexpMatches(meta['ocb_test'][meta.notes_label],
+                                 "test notes two")
 
         del meta
 
@@ -152,7 +158,7 @@ class TestPysatMethods(unittest.TestCase):
         else:
             self.assertEqual(len(added_keys), nkeys)
 
-            for i,ocb_key in added_keys:
+            for i, ocb_key in enumerate(added_keys):
                 # Test to see that data was added
                 self.assertTrue(ocb_key in test_inst.data.columns)
                                 
@@ -160,8 +166,9 @@ class TestPysatMethods(unittest.TestCase):
                 isvector = False if pysat_keys[i] in test_inst.data.columns \
                     else True
                     
-                test_ocb_metadata(meta=test_inst.meta, ocb_key=ocb_key,
-                                  pysat_key=pysat_keys[i], isvector=isvector)
+                self.test_ocb_metadata(meta=test_inst.meta, ocb_key=ocb_key,
+                                       pysat_key=pysat_keys[i],
+                                       isvector=isvector)
 
                 # Test to see that data within 10 minutes of the test OCBs has
                 # OCB locations and other data is NaN
@@ -175,10 +182,10 @@ class TestPysatMethods(unittest.TestCase):
                                                ocbpy.ocb_scaling.VectorData))
                 else:
                     self.assertAlmostEqual(match_data.max(),
-                                           self.ocb_out[pysat_key]['max'],
+                                           self.ocb_out[pysat_keys[i]]['max'],
                                            places=5)
                     self.assertAlmostEqual(match_data.min(),
-                                           self.ocb_out[pysat_key]['min'],
+                                           self.ocb_out[pysat_keys[i]]['min'],
                                            places=5)
 
             del ocb_key, match_data
@@ -188,10 +195,10 @@ class TestPysatMethods(unittest.TestCase):
         """
 
         added = ocb_pysat.add_ocb_to_data(self.test_inst, "latitude", "mlt",
-                                          ocb=ocb)
+                                          ocb=self.ocb)
         pysat_keys = [aa.split("_ocb")[0] for aa in added]
-        test_ocb_added(self, test_inst=self.test_inst, added_keys=added,
-                       pysat_keys=pysat_keys, nkeys=2)
+        self.test_ocb_added(test_inst=self.test_inst, added_keys=added,
+                            pysat_keys=pysat_keys, nkeys=2)
         del added, pysat_keys, aa
 
     def test_add_ocb_to_data_ocb_file(self):
@@ -201,8 +208,8 @@ class TestPysatMethods(unittest.TestCase):
         added = ocb_pysat.add_ocb_to_data(self.test_inst, "latitude", "mlt",
                                           ocbfile=self.test_file)
         pysat_keys = [aa.split("_ocb")[0] for aa in added]
-        test_ocb_added(self, test_inst=self.test_inst, added_keys=added,
-                       pysat_keys=pysat_keys, nkeys=2)
+        self.test_ocb_added(test_inst=self.test_inst, added_keys=added,
+                            pysat_keys=pysat_keys, nkeys=2)
         del added, pysat_keys, aa
 
     def test_add_ocb_to_data_evar(self):
@@ -212,8 +219,8 @@ class TestPysatMethods(unittest.TestCase):
         added = ocb_pysat.add_ocb_to_data(self.test_inst, "latitude", "mlt",
                                           evar_names=['dummy1'], ocb=self.ocb)
         pysat_keys = [aa.split("_ocb")[0] for aa in added]
-        test_ocb_added(self, test_inst=self.test_inst, added_keys=added,
-                       pysat_keys=pysat_keys, nkeys=3)
+        self.test_ocb_added(test_inst=self.test_inst, added_keys=added,
+                            pysat_keys=pysat_keys, nkeys=3)
         del added, pysat_keys, aa
 
     def test_add_ocb_to_data_curl_evar(self):
@@ -224,8 +231,8 @@ class TestPysatMethods(unittest.TestCase):
                                           curl_evar_names=['dummy2'],
                                           ocb=self.ocb)
         pysat_keys = [aa.split("_ocb")[0] for aa in added]
-        test_ocb_added(self, test_inst=self.test_inst, added_keys=added,
-                       pysat_keys=pysat_keys, nkeys=3)
+        self.test_ocb_added(test_inst=self.test_inst, added_keys=added,
+                            pysat_keys=pysat_keys, nkeys=3)
         del added, pysat_keys, aa
 
     def test_add_ocb_to_data_evar_vect(self):
@@ -248,8 +255,8 @@ class TestPysatMethods(unittest.TestCase):
                 pp = 'dummy1'
             pysat_keys.append(pp)
         
-        test_ocb_added(self, test_inst=self.test_inst, added_keys=added,
-                       pysat_keys=pysat_keys, nkeys=3)
+        self.test_ocb_added(test_inst=self.test_inst, added_keys=added,
+                            pysat_keys=pysat_keys, nkeys=3)
         
         del added, pysat_keys, aa, pp
 
@@ -273,8 +280,8 @@ class TestPysatMethods(unittest.TestCase):
                 pp = 'dummy1'
             pysat_keys.append(pp)
         
-        test_ocb_added(self, test_inst=self.test_inst, added_keys=added,
-                       pysat_keys=pysat_keys, nkeys=3)
+        self.test_ocb_added(test_inst=self.test_inst, added_keys=added,
+                            pysat_keys=pysat_keys, nkeys=3)
         
         del added, pysat_keys, aa, pp
 
@@ -298,8 +305,8 @@ class TestPysatMethods(unittest.TestCase):
                 pp = 'dummy1'
             pysat_keys.append(pp)
         
-        test_ocb_added(self, test_inst=self.test_inst, added_keys=added,
-                       pysat_keys=pysat_keys, nkeys=3)
+        self.test_ocb_added(test_inst=self.test_inst, added_keys=added,
+                            pysat_keys=pysat_keys, nkeys=3)
         
         del added, pysat_keys, aa, pp
 
@@ -325,8 +332,8 @@ class TestPysatMethods(unittest.TestCase):
                 pp = 'dummy1'
             pysat_keys.append(pp)
         
-        test_ocb_added(self, test_inst=self.test_inst, added_keys=added,
-                       pysat_keys=pysat_keys, nkeys=5)
+        self.test_ocb_added(test_inst=self.test_inst, added_keys=added,
+                            pysat_keys=pysat_keys, nkeys=5)
         
         del added, pysat_keys, aa, pp
 
@@ -346,8 +353,8 @@ class TestPysatMethods(unittest.TestCase):
 
         with self.assertRaisesRegexp(ValueError,
                                      'unknown magnetic latitude name: mlat'):
-            ocb_pyat.add_ocb_to_data(self.test_inst, "mlat", "mlt",
-                                     ocb=self.ocb)
+            ocb_pysat.add_ocb_to_data(self.test_inst, "mlat", "mlt",
+                                      ocb=self.ocb)
 
     def test_add_ocb_to_data_bad_mlt(self):
         """ Test failure of unknown mlt key in add_ocb_to_data
@@ -355,8 +362,8 @@ class TestPysatMethods(unittest.TestCase):
 
         with self.assertRaisesRegexp(ValueError,
                                      'unknown magnetic local time name: bad'):
-            ocb_pyat.add_ocb_to_data(self.test_inst, "latitude", "bad",
-                                     ocb=self.ocb)
+            ocb_pysat.add_ocb_to_data(self.test_inst, "latitude", "bad",
+                                      ocb=self.ocb)
 
     def test_add_ocb_to_data_bad_evar(self):
         """ Test failure of unknown E field key in add_ocb_to_data
@@ -364,8 +371,8 @@ class TestPysatMethods(unittest.TestCase):
 
         with self.assertRaisesRegexp(ValueError,
                                      'at least one unknown E field name'):
-            ocb_pyat.add_ocb_to_data(self.test_inst, "latitude", "mlt",
-                                     evar_names=["bad"], ocb=self.ocb)
+            ocb_pysat.add_ocb_to_data(self.test_inst, "latitude", "mlt",
+                                      evar_names=["bad"], ocb=self.ocb)
 
     def test_add_ocb_to_data_bad_curl(self):
         """ Test failure of unknown E field key in add_ocb_to_data
@@ -373,20 +380,20 @@ class TestPysatMethods(unittest.TestCase):
 
         with self.assertRaisesRegexp(ValueError,
                                      'at least one unknown E field name'):
-            ocb_pyat.add_ocb_to_data(self.test_inst, "latitude", "mlt",
-                                     curl_evar_names=["bad"], ocb=self.ocb)
+            ocb_pysat.add_ocb_to_data(self.test_inst, "latitude", "mlt",
+                                      curl_evar_names=["bad"], ocb=self.ocb)
 
     def test_add_ocb_to_data_bad_vector_scale(self):
         """ Test failure of missing scaling function in add_ocb_to_data
         """
 
         with self.assertRaisesRegexp(ValueError,
-                                     'missing scaling func for: bad'):
-            ocb_pyat.add_ocb_to_data(self.test_inst, "latitude", "mlt",
-                                     vector_names={'bad': {'aacgm_n': 'bad_n',
-                                                           'aacgm_e': 'bad_e',
-                                                           'dat_name': 'bad',
-                                                           'dat_units':''}},
+                                     'missing scaling function for: bad'):
+            ocb_pysat.add_ocb_to_data(self.test_inst, "latitude", "mlt",
+                                      vector_names={'bad': {'aacgm_n': 'bad_n',
+                                                            'aacgm_e': 'bad_e',
+                                                            'dat_name': 'bad',
+                                                            'dat_units':''}},
                                      ocb=self.ocb)
 
     def test_add_ocb_to_data_bad_vector_name(self):
@@ -395,12 +402,12 @@ class TestPysatMethods(unittest.TestCase):
 
         with self.assertRaisesRegexp(ValueError,
                                      'unknown vector name: bad_n'):
-            ocb_pyat.add_ocb_to_data(self.test_inst, "latitude", "mlt",
-                                     evar_names=['bad'],
-                                     vector_names={'bad': {'aacgm_n': 'bad_n',
-                                                           'aacgm_e': 'dummy1',
-                                                           'dat_name': 'bad',
-                                                           'dat_units':''}},
+            ocb_pysat.add_ocb_to_data(self.test_inst, "latitude", "mlt",
+                                      evar_names=['bad'],
+                                      vector_names={'bad': {'aacgm_n': 'bad_n',
+                                                            'aacgm_e': 'dummy1',
+                                                            'dat_name': 'bad',
+                                                            'dat_units':''}},
                                      ocb=self.ocb)
 
 
