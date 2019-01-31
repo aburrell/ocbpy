@@ -338,7 +338,9 @@ def add_ocb_to_metadata(pysat_inst, ocb_name, pysat_name, overwrite=False,
                 + new_meta[pysat_inst.meta.plot_label]
             new_meta[pysat_inst.meta.axis_label] = "OCB " \
                 + new_meta[pysat_inst.meta.axis_label]
-            new_meta[pysat_inst.meta.notes_label] = notes
+
+        # Set the notes
+        new_meta[pysat_inst.meta.notes_label] = notes
 
         # Set new metadata
         pysat_inst.meta.__setitem__(ocb_name, new_meta)
