@@ -6,13 +6,13 @@
 """ Tests the ocb_scaling class and functions
 """
 
-import ocbpy.instruments.pysat as ocb_pysat
 import unittest
 import numpy as np
 import logbook
 
 try:
     import pysat
+    import ocbpy.instruments.pysat as ocb_pysat
     no_pysat = False
 except ImportError:
     no_pysat = True
