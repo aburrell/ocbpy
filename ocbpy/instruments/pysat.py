@@ -269,12 +269,19 @@ def add_ocb_to_data(pysat_inst, mlat_name, mlt_name, evar_names=list(),
         notes += "{:} using a boundary latitude of ".format(ocb.filename)
         notes += "{:.2f}".format(ocb.boundary_lat)
 
-        if oattr in vector_names:
-            func_name = vector_names[oattr]['scale_func'].__name__
+        if eattr in vector_names.keys():
+            if vector_names[eattr]['scale_func'] is None:
+                func_name = "None"
+            else:
+                func_name = vector_names[eattr]['scale_func'].__name__
             notes += " and was scaled using {:}".format(func_name)
             eattr = vector_attrs[oattr][0]
+            isvector = True
+        else:
+            isvector = False
 
-        add_ocb_to_metadata(pysat_inst, oattr, eattr, notes=notes)
+        add_ocb_to_metadata(pysat_inst, oattr, eattr, notes=notes,
+                            isvector=isvector)
 
     return ocb_output.keys()
 
