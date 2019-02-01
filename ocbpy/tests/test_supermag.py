@@ -65,9 +65,8 @@ class TestSuperMAGMethods(unittest.TestCase):
         del header, data, ktest, test_vals
 
     def test_load_failure(self):
-        """ Test the routine to load the SuperMAG data
+        """ Test the routine to load the SuperMAG data for bad filename
         """
-        import datetime as dt
 
         header, data = ocb_ismag.load_supermag_ascii_data("fake_file")
 
@@ -121,13 +120,22 @@ class TestSuperMAGMethods(unittest.TestCase):
                                         shallow=False))
 
     def test_supermag2ascii_ocb_bad_output(self):
-        """ Test the conversion of SuperMAG data from AACGM coordinates into
-        OCB coordinates
+        """ Test the failure caused by bad output name
         """
         # Run command that will fail to output a file
 
         with self.assertRaisesRegexp(IOError, "Is a directory: '/'"):
             ocb_ismag.supermag2ascii_ocb(self.test_file, "/",
+                                         ocbfile=self.test_ocb)
+
+    def test_supermag2ascii_ocb_bad_output_str(self):
+        """ Test failure caused by an non-string output name
+        """
+        # Run command that will fail to output a file
+
+        with self.assertRaisesRegexp(IOError, "output filename is not a " +
+                                     "string"):
+            ocb_ismag.supermag2ascii_ocb(self.test_file, 1,
                                          ocbfile=self.test_ocb)
 
     def test_supermag2ascii_ocb_bad_input(self):
@@ -136,14 +144,9 @@ class TestSuperMAGMethods(unittest.TestCase):
         """
         from ocbpy.instruments.general import test_file
 
-        try:
+        with self.assertRaisesRegexp(IOError, "SuperMAG file cannot be opened"):
             ocb_ismag.supermag2ascii_ocb("fake_file", "fake_out",
                                          ocbfile=self.test_ocb)
-
-            # Compare created file to stored test file
-            self.assertFalse(test_file("fake_out"))
-        except AssertionError:
-            self.assertTrue(True)
 
     def test_supermag2ascii_ocb_bad_ocb(self):
         """ Test the conversion of SuperMAG data from AACGM coordinates into

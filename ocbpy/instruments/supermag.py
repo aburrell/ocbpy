@@ -61,10 +61,11 @@ def supermag2ascii_ocb(smagfile, outfile, ocb=None, ocbfile=None,
     import ocbpy.ocb_scaling as ocbscal
     import datetime as dt
 
-    assert ocbpy.instruments.test_file(smagfile), \
-    logging.error("supermag file cannot be opened [{:s}]".format(smagfile))
-    assert isinstance(outfile, str), \
-        logging.error("output filename is not a string [{:}]".format(outfile))
+    if not ocbpy.instruments.test_file(smagfile):
+        raise IOError("SuperMAG file cannot be opened [{:s}]".format(smagfile))
+
+    if not isinstance(outfile, str):
+        raise IOError("output filename is not a string [{:}]".format(outfile))
 
     # Read the superMAG data and calculate the magnetic field magnitude
     header, mdata = load_supermag_ascii_data(smagfile)
