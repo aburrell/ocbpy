@@ -9,6 +9,7 @@
 import unittest
 import numpy as np
 import logbook
+import ocbpy
 
 try:
     import pysat
@@ -25,7 +26,6 @@ class TestPysatMethods(unittest.TestCase):
         the VectorData object
         """
         from os import path
-        import ocbpy
         
         ocb_dir = path.split(ocbpy.__file__)[0]
         self.test_file = path.join(ocb_dir, "tests", "test_data",
@@ -105,7 +105,8 @@ class TestPysatMethods(unittest.TestCase):
                 sline = meta[ocb_key][ll].split(" ")
                 self.assertRegexpMatches(sline[0], "OCB")
                 if not isvector:
-                    self.assertRegexpMatches(sline[1], meta[pysat_key][ll])
+                    self.assertRegexpMatches(" ".join(sline[1:]),
+                                             meta[pysat_key][ll])
 
             # Test the remaining elements
             self.assertEqual(meta[ocb_key][meta.desc_label].find("Open Closed"),
@@ -149,13 +150,16 @@ class TestPysatMethods(unittest.TestCase):
         del meta
 
     def test_ocb_added(self, test_inst=None, added_keys=[], pysat_keys=[],
-                       nkeys=0):
+                       isvector=[], nkeys=0):
         """ Test if OCB data was added correctly
         """
 
         if test_inst is None:
             self.assertTrue(True)
         else:
+            if len(isvector) < len(added_keys):
+                isvector = [False for ocb_key in added_keys]
+            
             self.assertEqual(len(added_keys), nkeys)
 
             for i, ocb_key in enumerate(added_keys):
@@ -163,21 +167,23 @@ class TestPysatMethods(unittest.TestCase):
                 self.assertTrue(ocb_key in test_inst.data.columns)
                                 
                 # Test the metadata
-                isvector = False if pysat_keys[i] in test_inst.data.columns \
-                    else True
-                    
                 self.test_ocb_metadata(meta=test_inst.meta, ocb_key=ocb_key,
                                        pysat_key=pysat_keys[i],
-                                       isvector=isvector)
+                                       isvector=isvector[i])
 
                 # Test to see that data within 10 minutes of the test OCBs has
                 # OCB locations and other data is NaN
-                match_data = test_inst[ocb_key][np.isfinite(test_inst[ocb_key])]
+                match_data = test_inst[ocb_key]
+                if not isvector[i]:
+                    match_data = match_data[np.isfinite(match_data)]
+                else:
+                    match_data = match_data[np.not_equal(match_data, None)]
+
                 self.assertEqual(len(match_data), 2040)
                 self.assertLessEqual(abs(match_data.index[0] -
                                          self.ocb.dtime[27]).total_seconds(),
                                      600.0)
-                if isvector:
+                if isvector[i]:
                     self.assertTrue(isinstance(match_data[0],
                                                ocbpy.ocb_scaling.VectorData))
                 else:
@@ -198,7 +204,8 @@ class TestPysatMethods(unittest.TestCase):
                                           ocb=self.ocb)
         pysat_keys = [aa.split("_ocb")[0] for aa in added]
         self.test_ocb_added(test_inst=self.test_inst, added_keys=added,
-                            pysat_keys=pysat_keys, nkeys=2)
+                            pysat_keys=pysat_keys, isvector=[False, False],
+                            nkeys=2)
         del added, pysat_keys, aa
 
     def test_add_ocb_to_data_ocb_file(self):
@@ -209,7 +216,8 @@ class TestPysatMethods(unittest.TestCase):
                                           ocbfile=self.test_file)
         pysat_keys = [aa.split("_ocb")[0] for aa in added]
         self.test_ocb_added(test_inst=self.test_inst, added_keys=added,
-                            pysat_keys=pysat_keys, nkeys=2)
+                            pysat_keys=pysat_keys, isvector=[False, False],
+                            nkeys=2)
         del added, pysat_keys, aa
 
     def test_add_ocb_to_data_evar(self):
@@ -220,7 +228,8 @@ class TestPysatMethods(unittest.TestCase):
                                           evar_names=['dummy1'], ocb=self.ocb)
         pysat_keys = [aa.split("_ocb")[0] for aa in added]
         self.test_ocb_added(test_inst=self.test_inst, added_keys=added,
-                            pysat_keys=pysat_keys, nkeys=3)
+                            pysat_keys=pysat_keys,
+                            isvector=[False, False, False], nkeys=3)
         del added, pysat_keys, aa
 
     def test_add_ocb_to_data_curl_evar(self):
@@ -232,7 +241,8 @@ class TestPysatMethods(unittest.TestCase):
                                           ocb=self.ocb)
         pysat_keys = [aa.split("_ocb")[0] for aa in added]
         self.test_ocb_added(test_inst=self.test_inst, added_keys=added,
-                            pysat_keys=pysat_keys, nkeys=3)
+                            pysat_keys=pysat_keys,
+                            isvector=[False, False, False], nkeys=3)
         del added, pysat_keys, aa
 
     def test_add_ocb_to_data_evar_vect(self):
@@ -249,16 +259,20 @@ class TestPysatMethods(unittest.TestCase):
                                           ocb=self.ocb)
 
         pysat_keys = list()
+        isvector = list()
         for aa in added:
             pp = aa.split("_ocb")[0]
             if pp not in self.test_inst.data.columns:
                 pp = 'dummy1'
+                isvector.append(True)
+            else:
+                isvector.append(False)
             pysat_keys.append(pp)
         
         self.test_ocb_added(test_inst=self.test_inst, added_keys=added,
-                            pysat_keys=pysat_keys, nkeys=3)
+                            pysat_keys=pysat_keys, isvector=isvector, nkeys=3)
         
-        del added, pysat_keys, aa, pp
+        del added, pysat_keys, aa, pp, isvector
 
     def test_add_ocb_to_data_curl_evar_vect(self):
         """ Test adding ocb to pysat with Curl E-field related variables
@@ -274,16 +288,20 @@ class TestPysatMethods(unittest.TestCase):
                                           ocb=self.ocb)
 
         pysat_keys = list()
+        isvector = list()
         for aa in added:
             pp = aa.split("_ocb")[0]
             if pp not in self.test_inst.data.columns:
                 pp = 'dummy1'
+                isvector.append(True)
+            else:
+                isvector.append(False)
             pysat_keys.append(pp)
         
         self.test_ocb_added(test_inst=self.test_inst, added_keys=added,
-                            pysat_keys=pysat_keys, nkeys=3)
+                            pysat_keys=pysat_keys, isvector=isvector, nkeys=3)
         
-        del added, pysat_keys, aa, pp
+        del added, pysat_keys, aa, pp, isvector
 
     def test_add_ocb_to_data_custom_vect(self):
         """ Test adding ocb to pysat with custom scaled variables
@@ -299,16 +317,20 @@ class TestPysatMethods(unittest.TestCase):
                                           ocb=self.ocb)
 
         pysat_keys = list()
+        isvector = list()
         for aa in added:
             pp = aa.split("_ocb")[0]
             if pp not in self.test_inst.data.columns:
                 pp = 'dummy1'
+                isvector.append(True)
+            else:
+                isvector.append(False)
             pysat_keys.append(pp)
         
         self.test_ocb_added(test_inst=self.test_inst, added_keys=added,
-                            pysat_keys=pysat_keys, nkeys=3)
+                            pysat_keys=pysat_keys, isvector=isvector, nkeys=3)
         
-        del added, pysat_keys, aa, pp
+        del added, pysat_keys, aa, pp, isvector
 
     def test_add_ocb_to_data_all_types(self):
         """ Test adding ocb to pysat with E-field, Curl, and Vector data
@@ -326,16 +348,20 @@ class TestPysatMethods(unittest.TestCase):
                                           ocb=self.ocb)
 
         pysat_keys = list()
+        isvector = list()
         for aa in added:
             pp = aa.split("_ocb")[0]
             if pp not in self.test_inst.data.columns:
                 pp = 'dummy1'
+                isvector.append(True)
+            else:
+                isvector.append(False)
             pysat_keys.append(pp)
         
         self.test_ocb_added(test_inst=self.test_inst, added_keys=added,
-                            pysat_keys=pysat_keys, nkeys=5)
+                            pysat_keys=pysat_keys, isvector=isvector, nkeys=5)
         
-        del added, pysat_keys, aa, pp
+        del added, pysat_keys, aa, pp, isvector
 
     def test_add_ocb_to_data_no_file(self):
         """ Test adding ocb to pydat data when no OCB file or data is provided
