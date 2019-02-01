@@ -68,10 +68,11 @@ def vort2ascii_ocb(vortfile, outfile, ocb=None, ocbfile=None, max_sdiff=600,
     import ocbpy.ocb_scaling as ocbscal
     import datetime as dt
 
-    assert ocbpy.instruments.test_file(vortfile), \
-        logging.error("vorticity file cannot be opened[{:s}]".format(vortfile))
-    assert isinstance(outfile, str), \
-        logging.error("output filename is not a string [{:}]".format(outfile))
+    if not ocbpy.instruments.test_file(vortfile):
+        raise IOError("vorticity file cannot be opened [{:s}]".format(vortfile))
+
+    if not isinstance(outfile, str):
+        raise IOError("output filename is not a string [{:}]".format(outfile))
 
     # Read the vorticity data
     vdata = load_vorticity_ascii_data(vortfile, save_all=save_all)
@@ -103,9 +104,9 @@ def vort2ascii_ocb(vortfile, outfile, ocb=None, ocbfile=None, max_sdiff=600,
         if save_all:
             vkeys = vdata.keys()
             vkeys.pop(vkeys.index("DATETIME"))
-            outline = "{:s}{:s} ".format(outline, " ".join(vkeys))
+            outline += "{:s} ".format(" ".join(vkeys))
 
-        outline = "{:s}OCB_LAT OCB_MLT NORM_VORT\n".format(outline)
+        outline += "OCB_LAT OCB_MLT NORM_VORT\n"
 
         try:
             fout.write(outline)
@@ -141,16 +142,15 @@ def vort2ascii_ocb(vortfile, outfile, ocb=None, ocbfile=None, max_sdiff=600,
 
                 if save_all:
                     for k in vkeys:
-                        outline = "{:s}{:} ".format(outline, vdata[k][ivort])
+                        outline += "{:} ".format(vdata[k][ivort])
 
-                outline = "{:s}{:.2f} {:.6f} {:.6f}\n".format(outline, nlat,
-                                                              nmlt, nvort)
+                outline += "{:.2f} {:.6f} {:.6f}\n".format(nlat, nmlt, nvort)
 
                 try:
                     fout.write(outline)
                 except IOError as err:
                     estr = "unable to write [{:s}] ".format(outline)
-                    estr = "{:s}because of error [{:}]".format(estr, err)
+                    estr += "because of error [{:}]".format(err)
                     logging.error(estr)
                     return
 
@@ -193,7 +193,7 @@ def load_vorticity_ascii_data(vortfile, save_all=False):
                           "C4_GLON", "CENTRE_MLON", "C1_MLAT", "C1_MLON",
                           "C2_MLAT", "C2_MLON", "C3_MLAT", "C3_MLON", "C4_MLAT",
                           "C4_MLON"])
-        vdata = {k:list() for k in vkeys}
+        vdata = {vk: list() for vk in vkeys}
         vkeys = set(vkeys)
 
         # Set the data block keys
@@ -217,7 +217,7 @@ def load_vorticity_ascii_data(vortfile, save_all=False):
                 # This is a date line
                 if len(vsplit) != 4:
                     estr = "unexpected line encountered when date line "
-                    estr = "{:s}expected [{:s}]".format(estr, vline)
+                    estr += "expected [{:s}]".format(vline)
                     logging.error(estr)
                     fvort.close()
                     return None
@@ -237,7 +237,7 @@ def load_vorticity_ascii_data(vortfile, save_all=False):
                 # This is a number of entries line
                 if len(vsplit) != 1:
                     estr = "unexpected line encountered when number of entries "
-                    estr = "{:s}line expected [{:s}]".format(estr, vline)
+                    estr += "line expected [{:s}]".format(vline)
                     logging.error(estr)
                     fvort.close()
                     return None
@@ -260,7 +260,7 @@ def load_vorticity_ascii_data(vortfile, save_all=False):
                         # Test to see that this line has the right number of col
                         if len(vsplit) != len(bklist):
                             estr = "unexpected line encountered for a data "
-                            estr = "block {:s}[{:s}]".format(estr, vline)
+                            estr += "block [{:s}]".format(vline)
                             logging.error(estr)
                             fvort.close()
                             return None
