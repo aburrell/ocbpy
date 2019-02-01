@@ -124,21 +124,11 @@ class TestSuperMAGMethods(unittest.TestCase):
         """ Test the conversion of SuperMAG data from AACGM coordinates into
         OCB coordinates
         """
-        import logbook
-
-        log_handler = logbook.TestHandler()
-        log_handler.push_thread()
-
         # Run command that will fail to output a file
-        ocb_ismag.supermag2ascii_ocb(self.test_file, "/", ocbfile=self.test_ocb)
 
-        log_rec = log_handler.formatted_records
-        # Test logging error message
-        self.assertEqual(len(log_rec), 1)
-        self.assertTrue(log_rec[0].find("unable to create output file") > 0)
-
-        log_handler.pop_thread()
-        del log_rec, log_handler
+        with self.assertRaisesRegexp(IOError, "Is a directory: '/'"):
+            ocb_ismag.supermag2ascii_ocb(self.test_file, "/",
+                                         ocbfile=self.test_ocb)
 
     def test_supermag2ascii_ocb_bad_input(self):
         """ Test the conversion of SuperMAG data from AACGM coordinates into
