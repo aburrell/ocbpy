@@ -15,8 +15,8 @@ Module
 pysat is available at: http://github.com/rstoneback/pysat or pypi
 
 """
-import logbook as logging
 import numpy as np
+import logbook as logging
 
 try:
     import pysat
@@ -91,9 +91,9 @@ def add_ocb_to_data(pysat_inst, mlat_name, mlt_name, evar_names=list(),
         and any scaled measurements.
 
     """
+    import datetime as dt
     import ocbpy
     import ocbpy.ocb_scaling as ocbscal
-    import datetime as dt
 
     # Test to see if the magnetic coordinates are present
     if mlat_name not in pysat_inst.data.columns:
