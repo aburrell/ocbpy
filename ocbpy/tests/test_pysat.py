@@ -8,15 +8,70 @@
 
 import unittest
 import numpy as np
-import logbook
-import ocbpy
 
+import logbook
+
+import ocbpy
 try:
     import pysat
     import ocbpy.instruments.pysat as ocb_pysat
     no_pysat = False
 except ImportError:
     no_pysat = True
+
+@unittest.skipIf(not no_pysat, "pysat installed, cannot test failure")
+class TestPysatFailure(unittest.TestCase):
+    def setUp(self):
+        """ No initialization needed """
+        pass
+
+    def tearDown(self):
+        """ No teardown needed"""
+        pass
+
+    def test_import_failure(self):
+        """ Test pysat import failure"""
+
+        with self.assertRaisesRegexp(ImportError, 'unable to load the pysat'):
+            import ocbpy.instruments.pysat as ocb_pysat
+
+
+@unittest.skipIf(no_pysat, "pysat not installed")
+class TestPysatStructure(unittest.TestCase):
+    def setUp(self):
+        """ No setup needed"""
+        pass
+
+    def tearDown(self):
+        """ No teardown needed"""
+        pass
+
+    def test_add_ocb_to_data_defaults(self):
+        """ test the add_ocb_to_data function defaults"""
+
+        defaults = ocb_pysat.add_ocb_to_data.func_defaults
+
+        for i in [0, 1, 3]:
+            self.assertListEqual(defaults[i], list())
+
+        for i in [4, 5]:
+            self.assertIsNone(defaults[i])
+
+        for i, val in enumerate([600, 7, 8.0, 23.0, 10.0, 0.15]):
+            self.assertEqual(defaults[i+6], val)
+
+        self.assertDictEqual(defaults[2], dict())
+
+    def test_add_ocb_to_metadata_defaults(self):
+        """ test the add_ocb_to_metadata function defaults"""
+
+        defaults = ocb_pysat.add_ocb_to_metadata.func_defaults
+
+        for i in [0, 2]:
+            self.assertFalse(defaults[i])
+
+        self.assertRegexpMatches(defaults[1], '')
+
 
 @unittest.skipIf(no_pysat, "pysat not installed")
 class TestPysatMethods(unittest.TestCase):
