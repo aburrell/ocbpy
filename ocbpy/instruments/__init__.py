@@ -32,6 +32,6 @@ except ImportError as err:
     logging.exception('problem importing vort: ' + str(err))
 
 try:
-    from ocbpy.instruments import (pysat)
+    from ocbpy.instruments import (pysat_instruments)
 except ImportError as err:
-    logging.exception('problem importing pysat: ' + str(err))
+    logging.exception('problem importing pysat_instruments: ' + str(err))

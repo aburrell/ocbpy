@@ -14,7 +14,7 @@ import logbook
 import ocbpy
 try:
     import pysat
-    import ocbpy.instruments.pysat as ocb_pysat
+    import ocbpy.instruments.pysat_instruments as ocb_pysat
     no_pysat = False
 except ImportError:
     no_pysat = True
@@ -33,7 +33,7 @@ class TestPysatFailure(unittest.TestCase):
         """ Test pysat import failure"""
 
         with self.assertRaisesRegexp(ImportError, 'unable to load the pysat'):
-            import ocbpy.instruments.pysat as ocb_pysat
+            import ocbpy.instruments.pysat_instruments as ocb_pysat
 
 
 @unittest.skipIf(no_pysat, "pysat not installed")
