@@ -58,6 +58,7 @@ setup(name='ocbpy',
           'numpy',
           'logbook'
       ],
+      extras_require = {'pysat_instruments': ['pysat>=1.2.1']},
       include_package_data=True,
       zip_safe=False,
       test_suite='setup.ocb_test_suite',
