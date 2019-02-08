@@ -26,6 +26,7 @@ class TestPysatMethods(unittest.TestCase):
         the VectorData object
         """
         from os import path
+        import pandas as pds
         
         ocb_dir = path.split(ocbpy.__file__)[0]
         self.test_file = path.join(ocb_dir, "tests", "test_data",
@@ -34,18 +35,20 @@ class TestPysatMethods(unittest.TestCase):
         self.ocb = ocbpy.OCBoundary(self.test_file)
         self.ocb.rec_ind = 27
 
-        self.test_inst = pysat.Instrument('pysat', 'testing', tag='ocb',
-                                          sat_id=self.ocb.instrument,
+        self.test_inst = pysat.Instrument('pysat', 'testing', tag='50400',
                                           clean_level='clean',
-                                          update_files=True)
+                                          update_files=True, \
+                            file_date_range=pds.date_range(self.ocb.dtime[0],
+                                                           self.ocb.dtime[-1],
+                                                           freq='1D'))
         self.test_inst.load(date=self.ocb.dtime[self.ocb.rec_ind])
         self.test_inst['latitude'][np.sign(self.test_inst.data['latitude']) !=
                                    self.ocb.hemisphere] *= -1.0
 
-        self.ocb_out = {'latitude': {'max': 87.23394, 'min': 24.17184},
-                        'mlt': {'max': 23.14262, 'min': 8.74717},
-                        'dummy1': {'max': 16.74727, 'min': 8.20059},
-                        'dummy2': {'max': 24.651598, 'min': 0.0}}
+        self.ocb_out = {'latitude': {'max': 86.86586, 'min': 1.26930},
+                        'mlt': {'max': 18.47234, 'min': 14.60623},
+                        'dummy1': {'max': 17.21520, 'min': 0.0},
+                        'dummy2': {'max': 16.37831, 'min': 0.0}}
 
         self.log_handler = logbook.TestHandler()
         self.log_handler.push_thread()
@@ -179,7 +182,7 @@ class TestPysatMethods(unittest.TestCase):
                 else:
                     match_data = match_data[np.not_equal(match_data, None)]
 
-                self.assertEqual(len(match_data), 2040)
+                self.assertEqual(len(match_data), 1770)
                 self.assertLessEqual(abs(match_data.index[0] -
                                          self.ocb.dtime[27]).total_seconds(),
                                      600.0)
