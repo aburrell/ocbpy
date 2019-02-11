@@ -84,6 +84,13 @@ class OCBoundary(object):
     r : (numpy.ndarray or NoneType)
         Numpy array of floats that give the radius of the OCBoundary
         in degrees (default=None)
+    rfunc : (numpy.ndarray or NoneType)
+        Non-circular boundaries must be specified by a boundary function that
+        alters r at a specified AACGM MLT (in hours).  To allow the boundary
+        shape to change with time, each temporal instance may have a different
+        function. (default=None)
+    rfunc_kwargs : (numpy.ndarray or NoneType)
+        Optional keyword arguements for rfunc. (default=None)
     (more) : (numpy.ndarray or NoneType)
         Numpy array of floats that hold the remaining values in input file
 
@@ -169,6 +176,8 @@ class OCBoundary(object):
         self.phi_cent = None
         self.r_cent = None
         self.r = None
+        self.rfunc = None
+        self.rfunc_kwargs = None
 
         # Get the instrument defaults
         hlines, ocb_cols, datetime_fmt = self.inst_defaults()
@@ -368,6 +377,9 @@ class OCBoundary(object):
         for nn in oname:
             setattr(self, nn, getattr(odata, nn)[itime])
 
+        # Set the default boundary function
+        self._set_default_rfunc()
+
         return
 
     def get_next_good_ocb_ind(self, min_sectors=7, rcent_dev=8.0, max_r=23.0,
@@ -458,15 +470,22 @@ class OCBoundary(object):
         if np.sign(aacgm_lat) != self.hemisphere:
             return np.nan, np.nan
 
+        # Calculate the center of the OCB
         phi_cent_rad = np.radians(self.phi_cent[self.rec_ind])
         xc = self.r_cent[self.rec_ind] * np.cos(phi_cent_rad)
         yc = self.r_cent[self.rec_ind] * np.sin(phi_cent_rad)
 
+        # Calculate the desired point location relative to the AACGM pole
         scalep = 90.0 - self.hemisphere * aacgm_lat
         xp = scalep * np.cos(np.radians(aacgm_mlt * 15.0))
         yp = scalep * np.sin(np.radians(aacgm_mlt * 15.0))
 
-        scalen = (90.0 - abs(self.boundary_lat)) / self.r[self.rec_ind]
+        # Get the distance between the OCB pole and the point location.  This
+        # distance is then scaled by r, the OCB radius.  For non-circular
+        # boundaries, r is a function of MLT
+        local_r = self.rfunc[self.rec_ind](self, aacgm_mlt,
+                                           self.rfunc_kwargs[self.rec_ind])
+        scalen = (90.0 - abs(self.boundary_lat)) / local_r
         xn = (xp - xc) * scalen
         yn = (yp - yc) * scalen
 
@@ -516,8 +535,9 @@ class OCBoundary(object):
         xn = rn * np.cos(thetan)
         yn = rn * np.sin(thetan)
 
-        scale_ocb = self.r[self.rec_ind] / (90.0 - self.hemisphere *
-                                            self.boundary_lat)
+        # THIS IS A PROBLEM.  CURRENT FUNCTION NEEDS AACGM MLT TO GET LOCAL_R
+        local_r = self.rfunc[self.rec_ind](aacgm_mlt)
+        scale_ocb = local_r / (90.0 - self.hemisphere * self.boundary_lat)
         xp = xn * scale_ocb + xc
         yp = yn * scale_ocb + yc
 
@@ -613,6 +633,26 @@ class OCBoundary(object):
                 logging.warn("unable to update AACGM boundary latitude at " +
                              "{:}, overwrite blocked".format(self.dtime[i]))
         
+        return
+
+    def _set_default_rfunc(self):
+        """Set the default instrument OCB boundary function
+        """
+        import ocbpy.ocb_correction as ocbcor
+
+
+        if self.instrument == "image":
+            self.rfunc = np.full(shape=self.records, fill_value=ocbcor.circular)
+            self.rfunc_kwargs = np.full(shape=self.records,
+                                        fill_value={'r_add':0.0})
+        elif self.instrument == "ampere":
+            self.rfunc = np.full(shape=self.records,
+                                 fill_value=ocbcor.ampere_harmonic)
+            self.rfunc_kwargs = np.full(shape=self.records,
+                                        fill_value={'method':'median'})
+        else:
+            raise ValueError("unknown instrument")
+
         return
 
 
