@@ -18,7 +18,7 @@ Burrell paper in prep
 
 """
 
-def circular(ocb, mlt, r_add=0.0):
+def circular(ocb, mlt, mlt_coords="aacgm", r_add=0.0):
     """Return a circular boundary
 
     Parameters
@@ -27,6 +27,9 @@ def circular(ocb, mlt, r_add=0.0):
         OCBoundary object
     mlt : (float)
         Magnetic local time in hours (not actually used)
+    mlt_coords : (str)
+        Coordinates of the MLT.  Accepts 'aacgm' and 'ocb' (default='aacgm')
+        (not used here)
     r_add : (float)
         Offset added to default radius (default=0.0)
 
@@ -45,15 +48,17 @@ def circular(ocb, mlt, r_add=0.0):
     return r
 
 
-def ampere_harmonic(ocb, mlt, method='median'):
+def ampere_harmonic(ocb, mlt, mlt_coords="aacgm", method='median'):
     """Return the results of a 3rd order harmonic fit to AMPERE/DMSP differences
 
     Parameters
     ----------
     ocb : (OCBoundary)
         OCBoundary object
-    mlt : (float)
+    mlt : (float or array-like)
         Magnetic local time in hours (not actually used)
+    mlt_coords : (str)
+        Coordinates of the MLT.  Accepts 'aacgm' and 'ocb' (default='aacgm')
     method : (str)
         Method used to determine coefficients; accepts median or gaussian
         (default='median')
@@ -64,6 +69,12 @@ def ampere_harmonic(ocb, mlt, method='median'):
         Radius at this MLT and time (as specified by ocb.rec_ind)
 
     """
+    from ocb_time import hr2rad
+
+    mlt_coods = mlt_coords.lower()
+    
+    if mlt_coords == "ocb":
+        raise ValueError("routine lacks OCB to AACGM conversion")
 
     coeff = {'median': [3.10, -0.10, -0.08, 1.83, -0.73, -0.80, -0.07, 0.28,
                         -0.67, 0.93, -0.12, -0.21, 0.08],
@@ -76,7 +87,7 @@ def ampere_harmonic(ocb, mlt, method='median'):
     if ocb.rec_ind < 0 or ocb.rec_ind >= ocb.records:
         r = np.nan
     else:
-        rad_mlt = mlt * np.pi / 12.0
+        rad_mlt = hr2rad(mlt)
         r_add = coeff[method][0] \
             + coeff[method][1] * np.cos(rad_mlt+coeff[method][2]) \
             + coeff[method][3] * np.sin(rad_mlt+coeff[method][4]) \
