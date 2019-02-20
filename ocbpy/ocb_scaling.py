@@ -403,10 +403,11 @@ class VectorData(object):
         # Set the AACGM coordinates of the OCB pole
         self.ocb_aacgm_mlt = deg2hr(ocb.phi_cent[self.ocb_ind])
         self.ocb_aacgm_lat = 90.0 - ocb.r_cent[self.ocb_ind]
-        ocb_func = ocb
-        ocb_func.rec_ind = self.ocb_ind
-        self.unscaled_r = ocb.rfunc[self.ocb_ind](ocb_func, self.ocb_aacgm_mlt,\
-                                            ocb.rfunc_kwargs[self.ocb_ind])
+        in_rec_ind = ocb.rec_ind
+        ocb.rec_ind = self.ocb_ind
+        self.unscaled_r = ocb.rfunc[self.ocb_ind](ocb, self.ocb_aacgm_mlt,\
+                                            **ocb.rfunc_kwargs[self.ocb_ind])
+        ocb.rec_ind = in_rec_ind
         self.scaled_r = 90.0 - abs(ocb.boundary_lat)
 
         # If the OCB vector coordinates weren't included in the initial info,
