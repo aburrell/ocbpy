@@ -113,8 +113,9 @@ def load_ascii_data(filename, hlines, miss=None, fill=np.nan, hsplit=None,
     #--------------------------------------------------
     # Initialize the convert_time input dictionary
     dfmt_parts = list() if datetime_fmt is None else datetime_fmt.split(" ")
-    convert_time_input = {"year":None, "soy":None, "yyddd":None,
-                          "date":None, "tod":None, "datetime_fmt":datetime_fmt}
+    convert_time_input = {"year": None, "soy": None, "yyddd": None,
+                          "date": None, "tod": None,
+                          "datetime_fmt": datetime_fmt}
     time_formats = ["H", "I", "p", "M", "S", "f", "z", "Z"]
 
     #----------------------------------------------------------------------
@@ -151,17 +152,12 @@ def load_ascii_data(filename, hlines, miss=None, fill=np.nan, hsplit=None,
 
     #----------------------------------------------
     # Open the datafile and read the header rows
-    f = open(filename, "r")
-    in_header = str(header[-1]) if len(header) > 0 else None
-    
-    if not f:
-        logging.error("unable to open input file [{:s}]".format(filename))
-        return header, dict()
+    with open(filename, "r") as fin:
+        in_header = str(header[-1]) if len(header) > 0 else None
 
-    for h in range(hlines):
-        header.append(f.readline())
+        for h in range(hlines):
+            header.append(fin.readline())
 
-    f.close()
     #---------------------------------------------------------------------
     # Create the output dictionary keylist
     if len(header) == 0:
@@ -176,7 +172,7 @@ def load_ascii_data(filename, hlines, miss=None, fill=np.nan, hsplit=None,
     keyheader = keyheader.replace("#", "")
     keylist = keyheader.split(hsplit)
     nhead = len(keylist)
-    out = {k:list() for k in keylist}
+    out = {okey: list() for okey in keylist}
 
     #---------------------------------------------------------------------
     # Build the dtype list
@@ -214,7 +210,7 @@ def load_ascii_data(filename, hlines, miss=None, fill=np.nan, hsplit=None,
         temp = np.genfromtxt(filename, skip_header=hlines, missing_values=miss,
                              filling_values=fill, comments=inline_comment,
                              invalid_raise=False, dtype=ldtype)
-    except:
+    except ValueError as err:
         logging.error("unable to read data in file [{:s}]".format(filename))
         return header, out
 
@@ -227,7 +223,7 @@ def load_ascii_data(filename, hlines, miss=None, fill=np.nan, hsplit=None,
                     if len(name) > 0:
                         if idt < len(dt_keys) and name == dt_keys[idt]:
                             # Build the convert_time input
-                            for icol,dcol in enumerate(datetime_cols):
+                            for icol, dcol in enumerate(datetime_cols):
                                 if dfmt_parts[dcol].find("%") == 0:
                                     if dfmt_parts[dcol][1] in time_formats:
                                         ckey = "tod"
@@ -245,8 +241,8 @@ def load_ascii_data(filename, hlines, miss=None, fill=np.nan, hsplit=None,
                             # Convert the string into a datetime object
                             try:
                                 ftime = ocbt.convert_time(**convert_time_input)
-                            except ValueError as v:
-                                raise v
+                            except ValueError as verr:
+                                raise verr
 
                             # Save the output data
                             out[dt_keys[idt]].append(ftime)
@@ -260,11 +256,12 @@ def load_ascii_data(filename, hlines, miss=None, fill=np.nan, hsplit=None,
                 return header, dict()
 
     del temp
+
     # Cast all lists and numpy arrays
     for k in out.keys():
         try:
             out[k] = np.array(out[k], dtype=type(out[k][0]))
-        except:
+        except TypeError:
             pass
 
     return header, out

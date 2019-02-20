@@ -131,16 +131,11 @@ class TestVortMethods(unittest.TestCase):
         """ Test the conversion of vorticity data from AACGM coordinates into
         OCB coordinates with a bad vorticity file
         """
-        from ocbpy.instruments.general import test_file
 
-        try:
+        with self.assertRaisesRegexp(IOError, "vorticity file cannot be " +
+                                     "opened"):
             ocb_ivort.vort2ascii_ocb("fake_file", "fake_out",
                                      ocbfile=self.test_ocb)
-
-            # Compare created file to stored test file
-            self.assertFalse(test_file("fake_out"))
-        except AssertionError:
-            self.assertTrue(True)
 
     def test_vort2ascii_ocb_no_ocb(self):
         """ Test the conversion of vorticity data from AACGM coordinates into
@@ -154,23 +149,18 @@ class TestVortMethods(unittest.TestCase):
         self.assertFalse(test_file("fake_out"))
 
     def test_vort2ascii_ocb_output_failure(self):
-        """ Test the conversion of vorticity data from AACGM coordinates into
-        OCB coordinates
+        """ Test failure when bad filename is provided
         """
-        import logbook
+        with self.assertRaisesRegexp(IOError, "Is a directory: '/'"):
+            ocb_ivort.vort2ascii_ocb(self.test_file, "/", ocbfile=self.test_ocb)
 
-        log_handler = logbook.TestHandler()
-        log_handler.push_thread()
-        
-        ocb_ivort.vort2ascii_ocb(self.test_file, "/", ocbfile=self.test_ocb)
+    def test_vort2ascii_ocb_output_failure_str(self):
+        """ Test failure when a filename that is not a string is provided
+        """
+        with self.assertRaisesRegexp(IOError, "output filename is not a " +
+                                     "string"):
+            ocb_ivort.vort2ascii_ocb(self.test_file, 1, ocbfile=self.test_ocb)
 
-        log_rec = log_handler.formatted_records
-        # Test logging error message
-        self.assertEqual(len(log_rec), 1)
-        self.assertTrue(log_rec[0].find("unable to create output file") > 0)
-
-        log_handler.pop_thread()
-        del log_rec, log_handler
 
 if __name__ == '__main__':
     unittest.main()

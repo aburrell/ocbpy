@@ -276,7 +276,191 @@ class TestOCBScalingMethods(unittest.TestCase):
         self.vdata.set_ocb(self.ocb, None)
         self.assertEqual(self.vdata.unscaled_r, 14.09)
 
+    def test_no_ocb_lat(self):
+        """ Test failure when OCB latitude is not available"""
+
+        self.vdata.ocb_lat = np.nan
         
+        with self.assertRaisesRegexp(ValueError, 'OCB coordinates required'):
+            self.vdata.scale_vector()
+
+    def test_no_ocb_mlt(self):
+        """ Test failure when OCB latitude is not available"""
+
+        self.vdata.ocb_mlt = np.nan
+        
+        with self.assertRaisesRegexp(ValueError, 'OCB coordinates required'):
+            self.vdata.scale_vector()
+
+    def test_no_ocb_pole_location(self):
+        """ Test failure when OCB latitude is not available"""
+
+        self.vdata.set_ocb(self.ocb, None)
+        self.vdata.ocb_aacgm_mlt = np.nan
+        
+        with self.assertRaisesRegexp(ValueError, "OCB pole location required"):
+            self.vdata.scale_vector()
+
+    def test_no_ocb_pole_angle(self):
+        """ Test failure when pole angle is not available"""
+
+        self.vdata.set_ocb(self.ocb, None)
+        self.vdata.pole_angle = np.nan
+        
+        with self.assertRaisesRegexp(ValueError, \
+                            "vector angle in poles-vector triangle required"):
+            self.vdata.scale_vector()
+
+    def test_bad_ocb_quad(self):
+        """ Test failure when OCB quadrant is wrong"""
+
+        self.vdata.set_ocb(self.ocb, None)
+        self.vdata.ocb_quad = -1
+        
+        with self.assertRaisesRegexp(ValueError, "OCB quadrant undefined"):
+            self.vdata.calc_ocb_polar_angle()
+
+    def test_bad_vec_quad(self):
+        """ Test failure when vector quadrant is wrong"""
+
+        self.vdata.set_ocb(self.ocb, None)
+        self.vdata.vec_quad = -1
+        
+        with self.assertRaisesRegexp(ValueError, "Vector quadrant undefined"):
+            self.vdata.calc_ocb_polar_angle()
+
+    def test_bad_quad_polar_angle(self):
+        """ Test failure when quadrant polar angle is bad"""
+
+        self.vdata.set_ocb(self.ocb, None)
+        self.vdata.aacgm_naz = np.nan
+        
+        with self.assertRaisesRegexp(ValueError, "AACGM polar angle undefined"):
+            self.vdata.calc_ocb_polar_angle()
+
+    def test_bad_quad_pole_angle(self):
+        """ Test failure when quandrant pole angle is bad"""
+
+        self.vdata.set_ocb(self.ocb, None)
+        self.vdata.pole_angle = np.nan
+        
+        with self.assertRaisesRegexp(ValueError, "Vector angle undefined"):
+            self.vdata.calc_ocb_polar_angle()
+
+    def test_bad_calc_vec_sign_direction(self):
+        """ Test calc_vec_sign failure when no direction is provided"""
+
+        self.vdata.set_ocb(self.ocb, None)
+        
+        with self.assertRaisesRegexp(ValueError,
+                                     "must set at least one direction"):
+            self.vdata.calc_ocb_vec_sign()
+
+    def test_bad_calc_sign_ocb_quad(self):
+        """ Test calc_vec_sign failure with bad OCB quadrant"""
+
+        self.vdata.set_ocb(self.ocb, None)
+        self.vdata.ocb_quad = -1
+        
+        with self.assertRaisesRegexp(ValueError, "OCB quadrant undefined"):
+            self.vdata.calc_ocb_vec_sign(north=True)
+
+    def test_bad_calc_sign_vec_quad(self):
+        """ Test calc_vec_sign failure with bad vector quadrant"""
+
+        self.vdata.set_ocb(self.ocb, None)
+        self.vdata.vec_quad = -1
+        
+        with self.assertRaisesRegexp(ValueError, "Vector quadrant undefined"):
+            self.vdata.calc_ocb_vec_sign(north=True)
+
+    def test_bad_calc_sign_polar_angle(self):
+        """ Test calc_vec_sign failure with bad polar angle"""
+
+        self.vdata.set_ocb(self.ocb, None)
+        self.vdata.aacgm_naz = np.nan
+        
+        with self.assertRaisesRegexp(ValueError, "AACGM polar angle undefined"):
+            self.vdata.calc_ocb_vec_sign(north=True)
+
+    def test_bad_calc_sign_pole_angle(self):
+        """ Test calc_vec_sign failure with bad pole angle"""
+
+        self.vdata.set_ocb(self.ocb, None)
+        self.vdata.pole_angle = np.nan
+        
+        with self.assertRaisesRegexp(ValueError, "Vector angle undefined"):
+            self.vdata.calc_ocb_vec_sign(north=True)
+
+    def test_bad_calc_vec_pole_angle_mlt(self):
+        """Test calc_vec_pole_angle failure with bad AACGM MLT"""
+
+        self.vdata.set_ocb(self.ocb, None)
+        self.vdata.aacgm_mlt = np.nan
+        
+        with self.assertRaisesRegexp(ValueError,
+                                     "AACGM MLT of Vector undefinded"):
+            self.vdata.calc_vec_pole_angle()
+
+    def test_bad_calc_vec_pole_angle_ocb_mlt(self):
+        """Test calc_vec_pole_angle failure with bad OCB MLT"""
+
+        self.vdata.set_ocb(self.ocb, None)
+        self.vdata.ocb_aacgm_mlt = np.nan
+        
+        with self.assertRaisesRegexp(ValueError,
+                                     "AACGM MLT of OCB pole is undefined"):
+            self.vdata.calc_vec_pole_angle()
+
+    def test_bad_calc_vec_pole_angle_ocb_mlat(self):
+        """Test calc_vec_pole_angle failure with bad OCB latitude"""
+
+        self.vdata.set_ocb(self.ocb, None)
+        self.vdata.ocb_aacgm_lat = np.nan
+        
+        with self.assertRaisesRegexp(ValueError,
+                                     "AACGM latitude of OCB pole is undefined"):
+            self.vdata.calc_vec_pole_angle()
+
+    def test_bad_calc_vec_pole_angle_vec_mlat(self):
+        """Test calc_vec_pole_angle failure with bad vector latitude"""
+
+        self.vdata.set_ocb(self.ocb, None)
+        self.vdata.aacgm_lat = np.nan
+        
+        with self.assertRaisesRegexp(ValueError,
+                                     "AACGM latitude of Vector undefined"):
+            self.vdata.calc_vec_pole_angle()
+
+    def test_bad_define_quandrants_pole_mlt(self):
+        """Test define_quadrants failure with bad pole MLT"""
+
+        self.vdata.set_ocb(self.ocb, None)
+        self.vdata.ocb_aacgm_mlt = np.nan
+        
+        with self.assertRaisesRegexp(ValueError, "OCB pole location required"):
+            self.vdata.define_quadrants()
+
+    def test_bad_define_quandrants_vec_mlt(self):
+        """Test define_quadrants failure with bad vector MLT"""
+
+        self.vdata.set_ocb(self.ocb, None)
+        self.vdata.aacgm_mlt = np.nan
+        
+        with self.assertRaisesRegexp(ValueError,
+                                     "Vector AACGM location required"):
+            self.vdata.define_quadrants()
+
+    def test_bad_define_quandrants_pole_angle(self):
+        """Test define_quadrants failure with bad pole angle"""
+
+        self.vdata.set_ocb(self.ocb, None)
+        self.vdata.pole_angle = np.nan
+        
+        with self.assertRaisesRegexp(ValueError, \
+                            "vector angle in poles-vector triangle required"):
+            self.vdata.define_quadrants()
+
 if __name__ == '__main__':
     unittest.main()
 

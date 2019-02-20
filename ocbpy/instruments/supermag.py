@@ -61,10 +61,11 @@ def supermag2ascii_ocb(smagfile, outfile, ocb=None, ocbfile=None,
     import ocbpy.ocb_scaling as ocbscal
     import datetime as dt
 
-    assert ocbpy.instruments.test_file(smagfile), \
-    logging.error("supermag file cannot be opened [{:s}]".format(smagfile))
-    assert isinstance(outfile, str), \
-        logging.error("output filename is not a string [{:}]".format(outfile))
+    if not ocbpy.instruments.test_file(smagfile):
+        raise IOError("SuperMAG file cannot be opened [{:s}]".format(smagfile))
+
+    if not isinstance(outfile, str):
+        raise IOError("output filename is not a string [{:}]".format(outfile))
 
     # Read the superMAG data and calculate the magnetic field magnitude
     header, mdata = load_supermag_ascii_data(smagfile)
@@ -85,90 +86,84 @@ def supermag2ascii_ocb(smagfile, outfile, ocb=None, ocbfile=None,
 
     # Test the OCB data
     if ocb.filename is None or ocb.records == 0:
-        try:
-            logging.error("no data in OCB file {:s}".format(ocb.filename))
-        except:
-            logging.error("bad OCB file specified")
+        logging.error("no data in OCB file {:}".format(ocb.filename))
         return
 
     # Open and test the file to ensure it can be written
-    try:
-        fout = open(outfile, 'w')
-    except:
-        logging.error("unable to create output file [{:}]".format(outfile))
-        return
+    with open(outfile, 'w') as fout:
+        # Write the output line
+        outline = "#DATE TIME NST STID "
+        optional_keys = ["SML", "SMU", "SZA"]
+        for okey in optional_keys:
+            if okey in mdata.keys():
+                outline = "{:s}{:s} ".format(outline, okey)
 
-    # Write the output line
-    outline = "#DATE TIME NST STID "
-    optional_keys = ["SML", "SMU", "SZA"]
-    for okey in optional_keys:
-        if okey in mdata.keys():
-            outline = "{:s}{:s} ".format(outline, okey)
-
-    outline = "{:s}MLAT MLT BMAG BN BE BZ OCB_MLAT OCB_MLT ".format(outline)
-    outline = "{:s}OCB_BMAG OCB_BN OCB_BE OCB_BZ\n".format(outline)
-    try:
-        fout.write(outline)
-    except:
-        estr = "unable to write [{:s}] because of error ".format(outline)
-        estr = "{:s}[{:}]".format(estr, e)
-        logging.error(estr)
-        return
+        outline = "{:s}MLAT MLT BMAG BN BE BZ OCB_MLAT OCB_MLT ".format(outline)
+        outline = "{:s}OCB_BMAG OCB_BN OCB_BE OCB_BZ\n".format(outline)
+        try:
+            fout.write(outline)
+        except IOError as err:
+            estr = "unable to write [{:s}] because of error ".format(outline)
+            estr = "{:s}[{:}]".format(estr, err)
+            logging.error(estr)
+            return
     
-    # Initialise the ocb and SuperMAG indices
-    imag = 0
-    nmag = mdata['DATETIME'].shape[0]
+        # Initialise the ocb and SuperMAG indices
+        imag = 0
+        nmag = mdata['DATETIME'].shape[0]
     
-    # Cycle through the data, matching SuperMAG and OCB records
-    while imag < nmag and ocb.rec_ind < ocb.records:
-        imag = ocbpy.match_data_ocb(ocb, mdata['DATETIME'], idat=imag,
-                                    max_tol=max_sdiff, min_sectors=min_sectors,
-                                    rcent_dev=rcent_dev, max_r=max_r,
-                                    min_r=min_r, min_j=min_j)
-        
-        if imag < nmag and ocb.rec_ind < ocb.records:
-            # Set this value's AACGM vector values
-            vdata = ocbscal.VectorData(imag, ocb.rec_ind, mdata['MLAT'][imag],
-                                       mdata['MLT'][imag],
-                                       aacgm_n=mdata['BN'][imag],
-                                       aacgm_e=mdata['BE'][imag],
-                                       aacgm_z=mdata['BZ'][imag],
-                                       scale_func=ocbscal.normal_curl_evar)
-            
-            vdata.set_ocb(ocb)
+        # Cycle through the data, matching SuperMAG and OCB records
+        while imag < nmag and ocb.rec_ind < ocb.records:
+            imag = ocbpy.match_data_ocb(ocb, mdata['DATETIME'], idat=imag,
+                                        max_tol=max_sdiff,
+                                        min_sectors=min_sectors,
+                                        rcent_dev=rcent_dev, max_r=max_r,
+                                        min_r=min_r, min_j=min_j)
 
-            # Format the output line
-            #    DATE TIME NST [SML SMU] STID [SZA] MLAT MLT BMAG BN BE BZ
-            #    OCB_MLAT OCB_MLT OCB_BMAG OCB_BN OCB_BE OCB_BZ
-            outline = "{:} {:d} {:s} ".format(mdata['DATETIME'][imag],
-                                              mdata['NST'][imag],
-                                              mdata['STID'][imag])
+            if imag < nmag and ocb.rec_ind < ocb.records:
+                # Set this value's AACGM vector values
+                vdata = ocbscal.VectorData(imag, ocb.rec_ind,
+                                           mdata['MLAT'][imag],
+                                           mdata['MLT'][imag],
+                                           aacgm_n=mdata['BN'][imag],
+                                           aacgm_e=mdata['BE'][imag],
+                                           aacgm_z=mdata['BZ'][imag],
+                                           scale_func=ocbscal.normal_curl_evar)
 
-            for okey in optional_keys:
-                if okey == "SZA":
-                    outline = "{:s}{:.2f} ".format(outline, mdata[okey][imag])
-                else:
-                    outline = "{:s}{:d} ".format(outline, mdata[okey][imag])
-            
-            outline = "{:s}{:.2f} {:.2f} {:.2f} {:.2f} ".format(outline, \
-            vdata.aacgm_lat, vdata.aacgm_mlt, vdata.aacgm_mag, vdata.aacgm_n)
-            outline = "{:s}{:.2f} {:.2f} {:.2f} {:.2f} ".format(outline, \
-                    vdata.aacgm_e, vdata.aacgm_z, vdata.ocb_lat, vdata.ocb_mlt)
-            outline = "{:s}{:.2f} {:.2f} {:.2f} {:.2f}\n".format(outline, \
+                vdata.set_ocb(ocb)
+
+                # Format the output line
+                #    DATE TIME NST [SML SMU] STID [SZA] MLAT MLT BMAG BN BE BZ
+                #    OCB_MLAT OCB_MLT OCB_BMAG OCB_BN OCB_BE OCB_BZ
+                outline = "{:} {:d} {:s} ".format(mdata['DATETIME'][imag],
+                                                  mdata['NST'][imag],
+                                                  mdata['STID'][imag])
+
+                for okey in optional_keys:
+                    if okey == "SZA":
+                        outline = "{:s}{:.2f} ".format(outline,
+                                                       mdata[okey][imag])
+                    else:
+                        outline = "{:s}{:d} ".format(outline, mdata[okey][imag])
+
+                outline = "{:s}{:.2f} {:.2f} {:.2f} {:.2f} ".format(outline, \
+                                            vdata.aacgm_lat, vdata.aacgm_mlt, \
+                                            vdata.aacgm_mag, vdata.aacgm_n)
+                outline = "{:s}{:.2f} {:.2f} {:.2f} {:.2f} ".format(outline, \
+                                            vdata.aacgm_e, vdata.aacgm_z, \
+                                            vdata.ocb_lat, vdata.ocb_mlt)
+                outline = "{:s}{:.2f} {:.2f} {:.2f} {:.2f}\n".format(outline, \
                     vdata.ocb_mag, vdata.ocb_n, vdata.ocb_e, vdata.ocb_z)
-            try:
-                fout.write(outline)
-            except e:
-                estr = "unable to write [{:s}] ".format(outline)
-                estr = "{:s}because of error [{:}]".format(estr, e)
-                logging.error(estr)
-                return
-            
-            # Move to next line
-            imag += 1
+                try:
+                    fout.write(outline)
+                except IOError as err:
+                    estr = "unable to write [{:s}] ".format(outline)
+                    estr = "{:s}because of error [{:}]".format(estr, err)
+                    logging.error(estr)
+                    return
 
-    # Close output file
-    fout.close()
+                # Move to next line
+                imag += 1
         
     return
 
@@ -205,66 +200,59 @@ def load_supermag_ascii_data(filename):
     
     #----------------------------------------------
     # Open the datafile and read the data
-    try:
-        f = open(filename, "r")
-    except:
-        logging.error("unable to open input file [{:s}]".format(filename))
-        return header, dict()
-
-    hflag = True
-    n = -1
-    for line in f.readlines():
-        if hflag:
-            # Fill the header list
-            header.append(line)
-            if line.find("=========================================") >= 0:
-                hflag = False
-                dflag = True
-        else:
-            # Fill the output dictionary
-            if n < 0:
-                # This is a date line
-                n = 0
-                lsplit = np.array(line.split(), dtype=int)
-                dtime = dt.datetime(lsplit[0], lsplit[1], lsplit[2], lsplit[3],
-                                    lsplit[4], lsplit[5])
-                snum = lsplit[-1]
+    with open(filename, "r") as f:
+        hflag = True
+        n = -1
+        for line in f.readlines():
+            if hflag:
+                # Fill the header list
+                header.append(line)
+                if line.find("=========================================") >= 0:
+                    hflag = False
+                    dflag = True
             else:
-                lsplit = line.split()
-
-                if len(lsplit) == 2:
-                    # This is an index line
-                    ind[lsplit[0]] = int(lsplit[1])
+                # Fill the output dictionary
+                if n < 0:
+                    # This is a date line
+                    n = 0
+                    lsplit = np.array(line.split(), dtype=int)
+                    dtime = dt.datetime(lsplit[0], lsplit[1], lsplit[2],
+                                        lsplit[3], lsplit[4], lsplit[5])
+                    snum = lsplit[-1]
                 else:
-                    # This is a station data line
-                    out['YEAR'].append(dtime.year)
-                    out['MONTH'].append(dtime.month)
-                    out['DAY'].append(dtime.day)
-                    out['HOUR'].append(dtime.hour)
-                    out['MIN'].append(dtime.minute)
-                    out['SEC'].append(dtime.second)
-                    out['DATETIME'].append(dtime)
-                    out['NST'].append(snum)
+                    lsplit = line.split()
 
-                    for k in ind.keys():
-                        out[k].append(ind[k])
-                        
-                    out['STID'].append(lsplit[0])
-                    out['BN'].append(float(lsplit[1]))
-                    out['BE'].append(float(lsplit[2]))
-                    out['BZ'].append(float(lsplit[3]))
-                    out['MLT'].append(float(lsplit[4]))
-                    out['MLAT'].append(float(lsplit[5]))
-                    out['DEC'].append(float(lsplit[6]))
-                    out['SZA'].append(float(lsplit[7]))
+                    if len(lsplit) == 2:
+                        # This is an index line
+                        ind[lsplit[0]] = int(lsplit[1])
+                    else:
+                        # This is a station data line
+                        out['YEAR'].append(dtime.year)
+                        out['MONTH'].append(dtime.month)
+                        out['DAY'].append(dtime.day)
+                        out['HOUR'].append(dtime.hour)
+                        out['MIN'].append(dtime.minute)
+                        out['SEC'].append(dtime.second)
+                        out['DATETIME'].append(dtime)
+                        out['NST'].append(snum)
 
-                    n += 1
+                        for k in ind.keys():
+                            out[k].append(ind[k])
 
-                    if n == snum:
-                        n = -1
-                        ind = {"SMU":fill_val, "SML":fill_val}
+                        out['STID'].append(lsplit[0])
+                        out['BN'].append(float(lsplit[1]))
+                        out['BE'].append(float(lsplit[2]))
+                        out['BZ'].append(float(lsplit[3]))
+                        out['MLT'].append(float(lsplit[4]))
+                        out['MLAT'].append(float(lsplit[5]))
+                        out['DEC'].append(float(lsplit[6]))
+                        out['SZA'].append(float(lsplit[7]))
 
-    f.close()
+                        n += 1
+
+                        if n == snum:
+                            n = -1
+                            ind = {"SMU":fill_val, "SML":fill_val}
 
     # Recast data as numpy arrays and replace fill value with np.nan
     for k in out:

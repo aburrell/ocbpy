@@ -10,7 +10,7 @@ vort        SuperDARN vorticity data may be obtained from: gchi@bas.ac.uk
 general     General file loading and testing routines
 ---------------------------------------------------------------------------
 """
-import logging
+import logbook as logging
 
 # Imports
 #---------------------------------------------------------------------
@@ -32,6 +32,6 @@ except ImportError as err:
     logging.exception('problem importing vort: ' + str(err))
 
 try:
-    from ocbpy.instruments import (pysat)
-except ImportError as e:
-    logging.exception('problem importing pysat: ' + str(e))
+    from ocbpy.instruments import (pysat_instruments)
+except ImportError as err:
+    logging.exception('problem importing pysat_instruments: ' + str(err))
