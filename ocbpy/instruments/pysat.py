@@ -180,6 +180,7 @@ def add_ocb_series(pysat_data, mlat_attr, mlt_attr, evar_attrs=list(),
     # Cycle through the data, matching data and OCB records
     idat = 0
     ndat = len(dat_ind)
+    ref_r = 90.0 - abs(ocb.boundary_lat)
     while idat < ndat and ocb.rec_ind < ocb.records:
         idat = ocbpy.match_data_ocb(ocb, pysat_data.index[dat_ind], idat=idat,
                                     max_tol=max_sdiff, min_sectors=min_sectors,
@@ -196,18 +197,20 @@ def add_ocb_series(pysat_data, mlat_attr, mlt_attr, evar_attrs=list(),
 
             if nvect > 0:
                 # Set this value's AACGM vector values
-                vector_default = {"ocb_lat":ocb_series[olat_attr][iser],
-                                  "ocb_mlt":ocb_series[omlt_attr][iser],
-                                  "aacgm_n":0.0, "aacgm_e":0.0, "aacgm_z":0.0,
-                                  "aacgm_mag":np.nan, "dat_name":None,
-                                  "dat_units":None, "scale_func":None}
+                vector_default = {"ocb_lat": ocb_series[olat_attr][iser],
+                                  "ocb_mlt": ocb_series[omlt_attr][iser],
+                                  "aacgm_n": 0.0, "aacgm_e": 0.0,
+                                  "aacgm_z": 0.0, "aacgm_mag": np.nan,
+                                  "dat_name": None, "dat_units": None,
+                                  "scale_func": None}
                 vector_init = dict(vector_default)
 
                 for eattr in vector_attrs.keys():
                     oattr = "{:s}_ocb".format(eattr)
                     for ikey in vector_attrs[eattr].keys():
                         try:
-                            vector_init[ikey] = getattr(pysat_data, vector_attrs[eattr][ikey])[iser]
+                            vector_init[ikey] = getattr(pysat_data, \
+                                            vector_attrs[eattr][ikey])[iser]
                         except:
                             # Not all vector attributes are DataFrame attributes
                             vector_init[ikey] = vector_attrs[eattr][ikey]
@@ -215,17 +218,20 @@ def add_ocb_series(pysat_data, mlat_attr, mlt_attr, evar_attrs=list(),
                     ocb_series[oattr][iser] = ocbscal.VectorData(iser, \
                 ocb.rec_ind, aacgm_lat[iser], aacgm_mlt[iser], **vector_init)
                     ocb_series[oattr][iser].set_ocb(ocb)
+
+                unscaled_r = ocb.rfunc[ocb.rec_ind](ocb, aacgm_mlt[iser], \
+                                                ocb.rfunc_kwargs[ocb.rec_ind])
                     
                 for eattr in evar_attrs:
                     oattr = "{:s}_ocb".format(eattr)
                     evar = getattr(pysat_data, eattr)[iser]
                     ocb_series[oattr][iser] = ocbscal.normal_evar(evar, \
-                                aacgm_lat[iser], ocb_series[olat_attr][iser])
+                                                            unscaled_r, ref_r)
                 for eattr in curl_evar_attrs:
                     oattr = "{:s}_ocb".format(eattr)
                     evar = getattr(pysat_data, eattr)[iser]
                     ocb_series[oattr][iser] = ocbscal.normal_curl_evar(evar, \
-                                aacgm_lat[iser], ocb_series[olat_attr][iser])
+                                                            unscaled_r, ref_r)
 
             
             # Move to next line
