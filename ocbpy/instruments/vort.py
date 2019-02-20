@@ -15,9 +15,10 @@ load_vorticity_ascii_data(filename, save_all=False)
 Data
 ----------------------------------------------------------------------------
 Specialised SuperDARN data product, available from: gchi@bas.ac.uk
+
 """
-import logbook as logging
 import numpy as np
+import logbook as logging
 
 def vort2ascii_ocb(vortfile, outfile, ocb=None, ocbfile=None, max_sdiff=600,
                    save_all=False, min_sectors=7, rcent_dev=8.0, max_r=23.0,
@@ -63,10 +64,11 @@ def vort2ascii_ocb(vortfile, outfile, ocb=None, ocbfile=None, max_sdiff=600,
     Notes
     --------
     Input header or col_names must include the names in the default string.
+
     """
+    import datetime as dt
     import ocbpy
     import ocbpy.ocb_scaling as ocbscal
-    import datetime as dt
 
     if not ocbpy.instruments.test_file(vortfile):
         raise IOError("vorticity file cannot be opened [{:s}]".format(vortfile))
@@ -107,6 +109,45 @@ def vort2ascii_ocb(vortfile, outfile, ocb=None, ocbfile=None, max_sdiff=600,
             outline += "{:s} ".format(" ".join(vkeys))
 
         outline += "OCB_LAT OCB_MLT NORM_VORT\n"
+
+    # Cycle through the data, matching vorticity and OCB records
+    while ivort < num_vort and ocb.rec_ind < ocb.records:
+        ivort = ocbpy.match_data_ocb(ocb, vdata['DATETIME'], idat=ivort,
+                                     max_tol=max_sdiff, min_sectors=min_sectors,
+                                     rcent_dev=rcent_dev, max_r=max_r,
+                                     min_r=min_r, min_j=min_j)
+        
+        if ivort < num_vort and ocb.rec_ind < ocb.records:
+            # Use the indexed OCB to convert the AACGM grid coordinate to one
+            # related to the OCB
+            nlat, nmlt = ocb.normal_coord(vdata['CENTRE_MLAT'][ivort],
+                                          vdata['MLT'][ivort])
+            rscale = ocb.rfunc[ocb.rec_ind](ocb, vdata['MLT'][ivort],
+                                            **ocb.rfunc_kwargs[ocb.rec_ind])
+            nvort = ocbscal.normal_curl_evar(vdata['VORTICITY'][ivort],
+                                             rscale, ref_r)
+
+            # Format the output line
+            #    DATE TIME (SAVE_ALL) OCB_LAT OCB_MLT NORM_VORT
+            outline = "{:} ".format(vdata['DATETIME'][ivort])
+
+            if save_all:
+                for k in vkeys:
+                    outline = "{:s}{:} ".format(outline, vdata[k][ivort])
+
+            outline = "{:s}{:.2f} {:.6f} {:.6f}\n".format(outline, nlat, nmlt,
+                                                          nvort)
+            
+            try:
+                fout.write(outline)
+            except e:
+                estr = "unable to write [{:s}] ".format(outline)
+                estr = "{:s}because of error [{:}]".format(estr, e)
+                logging.error(estr)
+                return
+
+            # Move to next line
+            ivort += 1
 
         try:
             fout.write(outline)
@@ -174,9 +215,10 @@ def load_vorticity_ascii_data(vortfile, save_all=False):
     ---------
     vdata : (dict)
         Dictionary of numpy arrays
+
     """
-    from ocbpy.instruments import test_file
     import datetime as dt
+    from ocbpy.instruments import test_file
 
     if not test_file(vortfile):
         return None

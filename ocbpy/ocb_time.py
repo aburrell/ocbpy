@@ -13,10 +13,19 @@ yyddd_to_date(yyddd)
     Converts from years since 1900 and day of year to datetime
 convert_time(kwargs)
     Convert to datetime from multiple time formats
+deg2hr(lon)
+    Convert from degrees to hours
+hr2deg(lt)
+    Convert from hours to degrees
+rad2hr(lon)
+    Convert from radians to hours
+hr2rad(lt)
+    Convert from hours to radians
 
 Moduleauthor
 -------------------------------------------------------------------------------
 Angeline G. Burrell (AGB), 15 April 2017, University of Texas, Dallas (UTDallas)
+
 """
 
 import logbook as logging
@@ -36,6 +45,7 @@ def year_soy_to_datetime(yyyy, soy):
     ---------
     dtime : (dt.datetime)
         datetime object
+
     """
     import numpy as np
                 
@@ -72,6 +82,7 @@ def yyddd_to_date(yyddd):
     -------
     dtime : (dt.datetime)
         Datetime object containing date information
+
     """
     assert isinstance(yyddd, str), logging.error("YYDDD must be a string")
     
@@ -115,6 +126,7 @@ def convert_time(year=None, soy=None, yyddd=None, sod=None, date=None, tod=None,
     --------
     dtime : (datetime)
         Datetime object
+
     """
     import numpy as np
 
@@ -167,3 +179,83 @@ def convert_time(year=None, soy=None, yyddd=None, sod=None, date=None, tod=None,
             raise v
 
     return dtime
+
+def deg2hr(lon):
+    """ Convert from degrees to hours
+
+    Parameters
+    ----------
+    lon : (float or array-like)
+        Longitude-like value in degrees
+
+    Returns
+    -------
+    lt : (float or array-like)
+        Local time-like value in hours
+
+    """
+
+    lt = lon / 15.0 # 12 hr/180 deg = 1/15 hr/deg
+
+    return lt
+
+def hr2deg(lt):
+    """ Convert from degrees to hours
+
+    Parameters
+    ----------
+    lt : (float or array-like)
+        Local time-like value in hours
+
+    Returns
+    -------
+    lon : (float or array-like)
+        Longitude-like value in degrees
+
+    """
+
+    lon = lt * 15.0 # 180 deg/12 hr = 15 deg/hr
+
+    return lon
+
+def hr2rad(lt):
+    """ Convert from hours to radians
+
+    Parameters
+    ----------
+    lt : (float or array-like)
+        Local time-like value in hours
+
+    Returns
+    -------
+    lon : (float or array-like)
+        Longitude-like value in radians
+
+    """
+    import numpy as np
+
+    lon = lt * np.pi / 12.0
+
+    return lon
+
+def rad2hr(lon):
+    """ Convert from radians to hours
+
+    Parameters
+    ----------
+    lon : (float or array-like)
+        Longitude-like value in radians
+
+    Returns
+    -------
+    lt : (float or array-like)
+        Local time-like value in hours
+
+    """
+    import numpy as np
+
+    lt = lon * 12.0 / np.pi
+
+    return lt
+
+    
