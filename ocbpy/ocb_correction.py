@@ -70,7 +70,7 @@ def ampere_harmonic(ocb, mlt, mlt_coords="aacgm", method='median'):
         Radius at this MLT and time (as specified by ocb.rec_ind)
 
     """
-    from ocb_time import hr2rad
+    from ocbpy.ocb_time import hr2rad
 
     mlt_coods = mlt_coords.lower()
     

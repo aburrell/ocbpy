@@ -588,7 +588,7 @@ class OCBoundary(object):
         easy comparison with satellite passes.
 
         """
-        from ocb_time import deg2hr
+        from ocbpy.ocb_time import deg2hr
 
         # Save the input rec_ind
         in_rec_ind = self.rec_ind

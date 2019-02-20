@@ -71,19 +71,29 @@ class TestOCBScalingMethods(unittest.TestCase):
 
     def test_vector_repr_no_scaling(self):
         """ Test the VectorData print statement without a scaling function """
+        import sys
         out = self.vdata.__repr__()
 
-        self.assertRegexpMatches(out, "Vector data:")
-        self.assertRegexpMatches(out, "No magnitude scaling function")
+        if sys.version_info.major == 2:
+            self.assertRegexpMatches(out, "Vector data:")
+            self.assertRegexpMatches(out, "No magnitude scaling function")
+        else:
+            self.assertRegex(out, "Vector data:")
+            self.assertRegex(out, "No magnitude scaling function")
         del out
 
     def test_vector_repr_with_scaling(self):
         """ Test the VectorData print statement with a scaling function """
+        import sys
         self.vdata.set_ocb(self.ocb, scale_func=ocbpy.ocb_scaling.normal_evar)
         out = self.vdata.__repr__()
 
-        self.assertRegexpMatches(out, "Vector data:")
-        self.assertRegexpMatches(out, "Scaling function")
+        if sys.version_info.major == 2:
+            self.assertRegexpMatches(out, "Vector data:")
+            self.assertRegexpMatches(out, "Scaling function")
+        else:
+            self.assertRegex(out, "Vector data:")
+            self.assertRegex(out, "Scaling function")
 
     def test_haversine(self):
         """ Test implimentation of the haversine
