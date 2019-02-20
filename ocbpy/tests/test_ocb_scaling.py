@@ -5,9 +5,10 @@
 #-----------------------------------------------------------------------------
 """ Tests the ocb_scaling class and functions
 """
-import ocbpy
 import unittest
 import numpy as np
+
+import ocbpy
 
 class TestOCBScalingMethods(unittest.TestCase):
 
@@ -28,6 +29,12 @@ class TestOCBScalingMethods(unittest.TestCase):
                                                   aacgm_e=86.5, aacgm_z=5.0,
                                                   dat_name="Test",
                                                   dat_units="$m s^{-1}$")
+        self.wdata = ocbpy.ocb_scaling.VectorData(0, self.ocb.rec_ind, 75.0,
+                                                  22.0, aacgm_n=50.0,
+                                                  aacgm_e=86.5, aacgm_z=5.0,
+                                                  aacgm_mag=100.036243432,
+                                                  dat_name="Test",
+                                                  dat_units="$m s^{-1}$")
         self.zdata = ocbpy.ocb_scaling.VectorData(0, self.ocb.rec_ind, 87.2,
                                                   21.22, aacgm_n=0.0,
                                                   aacgm_e=0.0,
@@ -35,13 +42,48 @@ class TestOCBScalingMethods(unittest.TestCase):
                                                   dat_units="$m s^{-1}$")
 
     def tearDown(self):
-        del self.ocb, self.vdata, self.zdata
+        del self.ocb, self.vdata, self.wdata, self.zdata
 
-    def test_init(self):
-        """ Test the initialisation of the VectorData object
+    def test_init_nez(self):
+        """ Test the initialisation of the VectorData object without magnitude
         """
         self.assertAlmostEqual(self.vdata.aacgm_mag, 100.036243432)
         self.assertAlmostEqual(self.zdata.aacgm_mag, 0.0)
+
+    def test_init_mag(self):
+        """ Test the initialisation of the VectorData object with magnitude
+        """
+        self.assertAlmostEqual(self.wdata.aacgm_mag, 100.036243432)
+
+    def test_init_failure(self):
+        """ Test the initialisation of the VectorData object with inconsistent
+        AACGM components
+        """
+        with self.assertRaisesRegexp(ValueError, "inconsistent AACGM"):
+            self.wdata = ocbpy.ocb_scaling.VectorData(0, self.ocb.rec_ind, 75.0,
+                                                      22.0, aacgm_mag=100.0,
+                                                      dat_name="Test",
+                                                      dat_units="$m s^{-1}$")
+
+    def test_vector_repr_str(self):
+        """ Test the VectorData print statement using repr and str """
+        self.assertTrue(self.vdata.__repr__(), self.vdata.__str__())
+
+    def test_vector_repr_no_scaling(self):
+        """ Test the VectorData print statement without a scaling function """
+        out = self.vdata.__repr__()
+
+        self.assertRegexpMatches(out, "Vector data:")
+        self.assertRegexpMatches(out, "No magnitude scaling function")
+        del out
+
+    def test_vector_repr_with_scaling(self):
+        """ Test the VectorData print statement with a scaling function """
+        self.vdata.set_ocb(self.ocb, scale_func=ocbpy.ocb_scaling.normal_evar)
+        out = self.vdata.__repr__()
+
+        self.assertRegexpMatches(out, "Vector data:")
+        self.assertRegexpMatches(out, "Scaling function")
 
     def test_haversine(self):
         """ Test implimentation of the haversine
