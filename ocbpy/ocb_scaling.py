@@ -27,9 +27,10 @@ References
 Chisham, G. (2017), A new methodology for the development of high-latitude
  ionospheric climatologies and empirical models, Journal of Geophysical
  Research: Space Physics, 122, doi:10.1002/2016JA023235.
+
 """
-import logbook as logging
 import numpy as np
+import logbook as logging
 
 def normal_evar(evar, unscaled_r, scaled_r):
     """ Normalise a variable proportional to the electric field
@@ -61,6 +62,7 @@ def normal_evar(evar, unscaled_r, scaled_r):
     Chisham, G. (2017), A new methodology for the development of high‐latitude
     ionospheric climatologies and empirical models, Journal of Geophysical
     Research: Space Physics, doi:10.1002/2016JA023235.
+
     """
 
     nvar = evar * unscaled_r / scaled_r
@@ -97,6 +99,7 @@ def normal_curl_evar(curl_evar, unscaled_r, scaled_r):
     Chisham, G. (2017), A new methodology for the development of high‐latitude
     ionospheric climatologies and empirical models, Journal of Geophysical
     Research: Space Physics, doi:10.1002/2016JA023235.
+
     """
 
     nvar = curl_evar * (unscaled_r / scaled_r)**2
@@ -208,6 +211,7 @@ class VectorData(object):
         calculate the signs of the OCB scaled vector components
     calc_vec_pole_angle(angular_res=1.0e-3)
         calculate the vector angle of the vector-poles triangle
+
     """
 
     def __init__(self, dat_ind, ocb_ind, aacgm_lat, aacgm_mlt, ocb_lat=np.nan,
@@ -252,6 +256,7 @@ class VectorData(object):
         Returns
         --------
             self : Initialised VectorData class object by setting AACGM values
+
         """
         # Assign the vector data name and units
         self.dat_name = dat_name
@@ -295,8 +300,7 @@ class VectorData(object):
         return
 
     def __repr__(self):
-        """ Provide readable representation of the DataVector object
-        """
+        """ Provide readable representation of the DataVector object """
         
         out = "Vector data:"
         if self.dat_name is not None:
@@ -334,8 +338,7 @@ class VectorData(object):
         return out
 
     def __str__(self):
-        """ Provide readable representation of the DataVector object
-        """
+        """ Provide readable representation of the DataVector object """
         
         out = self.__repr__()
         return out
@@ -390,13 +393,16 @@ class VectorData(object):
             [measurement value, unscaled polar cap radius (degrees),
             scaled polar cap radius (degrees)]
             Not necessary if defined earlier or if no scaling is needed.
+
         """
+        from ocbpy.ocb_time import deg2hr
 
         # Set the AACGM coordinates of the OCB pole
-        self.unscaled_r = ocb.r[self.ocb_ind]
-        self.scaled_r = 90.0 - abs(ocb.boundary_lat)
-        self.ocb_aacgm_mlt = ocb.phi_cent[self.ocb_ind] / 15.0
+        self.ocb_aacgm_mlt = deg2hr(ocb.phi_cent[self.ocb_ind])
         self.ocb_aacgm_lat = 90.0 - ocb.r_cent[self.ocb_ind]
+        self.unscaled_r = ocb.rfunc[self.ocb_ind](ocb, self.ocb_aacgm_mlt, \
+                                            self.rfunc_kwargs[self.ocb_ind])
+        self.scaled_r = 90.0 - abs(ocb.boundary_lat)
 
         # If the OCB vector coordinates weren't included in the initial info,
         # update them here
@@ -450,6 +456,7 @@ class VectorData(object):
         North (N) and East (E) are defined by the AACGM directions centred on
         the data vector location, assuming vertical is positive downwards
         Quadrants: 1 [N, E]; 2 [N, W]; 3 [S, W]; 4 [S, E]
+
         """
 
         # Test input
@@ -506,6 +513,7 @@ class VectorData(object):
             OCB scaled vertical component
         ocb_mag : (float)
             OCB scaled magnitude
+
         """
 
         # Test input
@@ -594,6 +602,7 @@ class VectorData(object):
         --------
         ocb_naz : (float)
             Angle between measurement vector and OCB pole in degrees
+
         """
         quad_range = np.arange(1, 5)
 
@@ -753,7 +762,10 @@ class VectorData(object):
         --------
         self.pole_angle : (float)
             Angle in degrees between AACGM north, a measurement, and OCB north
+
         """
+        from ocbpy.ocb_time import hr2rad
+        
         # Test input
         assert(not np.isnan(self.aacgm_mlt)), \
             logging.error("AACGM MLT of Vector undefinded")
@@ -766,7 +778,7 @@ class VectorData(object):
 
         # Convert the AACGM MLT of the observation and OCB pole to radians,
         # then calculate the difference between them.
-        del_long = (self.ocb_aacgm_mlt - self.aacgm_mlt) * np.pi / 12.0
+        del_long = hr2rad(self.ocb_aacgm_mlt - self.aacgm_mlt)
 
         if del_long < 0.0:
             del_long += 2.0 * np.pi
@@ -813,6 +825,7 @@ def hav(alpha):
     --------
     hav_alpha : (float)
         Haversine of alpha, equal to the square of the sine of half-alpha
+
     """
     hav_alpha = np.sin(alpha * 0.5)**2
 
@@ -830,6 +843,7 @@ def archav(hav):
     ---------
     alpha : (float)
         Angle in radians
+
     """
     alpha = 2.0 * np.arcsin(np.sqrt(hav))
 
