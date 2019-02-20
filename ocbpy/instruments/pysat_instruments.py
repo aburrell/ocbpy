@@ -192,6 +192,7 @@ def add_ocb_to_data(pysat_inst, mlat_name, mlt_name, evar_names=list(),
     # Cycle through the data, matching data and OCB records
     idat = 0
     ndat = len(dat_ind)
+    ref_r = 90.0 - abs(ocb.boundary_lat)
     while idat < ndat and ocb.rec_ind < ocb.records:
         idat = ocbpy.match_data_ocb(ocb, pysat_inst.index[dat_ind], idat=idat,
                                     max_tol=max_sdiff, min_sectors=min_sectors,
@@ -231,20 +232,22 @@ def add_ocb_to_data(pysat_inst, mlat_name, mlt_name, evar_names=list(),
                 ocb.rec_ind, aacgm_lat[iout], aacgm_mlt[iout], **vector_init)
                     ocb_output[oattr][iout].set_ocb(ocb)
 
+            unscaled_r = ocb.rfunc[ocb.rec_ind](ocb, aacgm_mlt[iser],
+                                                ocb.rfunc_kwargs[ocb.rec_ind])
+                    
             # Scale the E-field proportional variables
             for eattr in evar_names:
                 oattr = "{:s}_ocb".format(eattr)
                 evar = pysat_inst[eattr][iout]
-                ocb_output[oattr][iout] = ocbscal.normal_evar(evar,
-                                                              aacgm_lat[iout],\
-                                                    ocb_output[olat_name][iout])
+                ocb_output[oattr][iout] = ocbscal.normal_evar(evar, unscaled_r,
+                                                              ref_r)
 
             # Scale the variables proportial to the curl of the E-field
             for eattr in curl_evar_names:
                 oattr = "{:s}_ocb".format(eattr)
                 evar = pysat_inst[eattr][iout]
                 ocb_output[oattr][iout] = ocbscal.normal_curl_evar(evar, \
-                                aacgm_lat[iout], ocb_output[olat_name][iout])
+                                                        unscaled_r, ref_r)
             
             # Move to next line
             idat += 1
