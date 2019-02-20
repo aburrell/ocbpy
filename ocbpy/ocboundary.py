@@ -535,8 +535,7 @@ class OCBoundary(object):
         xn = rn * np.cos(thetan)
         yn = rn * np.sin(thetan)
 
-        # THIS IS A PROBLEM.  CURRENT FUNCTION NEEDS AACGM MLT TO GET LOCAL_R
-        local_r = self.rfunc[self.rec_ind](aacgm_mlt)
+        local_r = self.rfunc[self.rec_ind](aacgm_mlt, mlt_coords="ocb")
         scale_ocb = local_r / (90.0 - self.hemisphere * self.boundary_lat)
         xp = xn * scale_ocb + xc
         yp = yn * scale_ocb + yc
@@ -582,6 +581,7 @@ class OCBoundary(object):
         easy comparison with satellite passes.
 
         """
+        from ocb_time import deg2hr
 
         # Ensure the boundary longitudes span from 0-360 degrees
         aacgm_lon = np.array(aacgm_lon)
@@ -615,8 +615,10 @@ class OCBoundary(object):
                 del_lon = np.radians(aacgm_lon - self.phi_cent[i])
 
                 # Calculate the radius of the OCB in degrees
+                scale_r = self.rfunc[i](self, deg2hr(aacgm_lon),
+                                        self.rfunc_kwargs[i])
                 rad = self.r_cent[i] * np.cos(del_lon) + \
-                np.sqrt(self.r[i]**2 - (self.r_cent[i] * np.sin(del_lon))**2)
+                np.sqrt(scale_r**2 - (self.r_cent[i] * np.sin(del_lon))**2)
 
                 # If the radius is negative, set to NaN
                 if len(rad.shape) > 0:
