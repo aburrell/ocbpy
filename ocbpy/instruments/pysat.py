@@ -23,7 +23,7 @@ try:
 except:
     err = 'unable to load pysat and/or pandas modules; pysat is available at:\n'
     err += 'https://github.com/rstoneback/pysat'
-    raise err
+    raise ImportError(err)
 
 def add_ocb_series(pysat_data, mlat_attr, mlt_attr, evar_attrs=list(),
                    curl_evar_attrs=list(), vector_attrs=dict(), dat_ind=list(),
