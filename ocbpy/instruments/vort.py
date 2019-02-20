@@ -142,7 +142,7 @@ def vort2ascii_ocb(vortfile, outfile, ocb=None, ocbfile=None, max_sdiff=600,
             nlat, nmlt = ocb.normal_coord(vdata['CENTRE_MLAT'][ivort],
                                           vdata['MLT'][ivort])
             rscale = ocb.rfunc[ocb.rec_ind](ocb, vdata['MLT'][ivort],
-                                            ocb.rfunc_kwargs[ocb.rec_ind])
+                                            **ocb.rfunc_kwargs[ocb.rec_ind])
             nvort = ocbscal.normal_curl_evar(vdata['VORTICITY'][ivort],
                                              rscale, ref_r)
 
