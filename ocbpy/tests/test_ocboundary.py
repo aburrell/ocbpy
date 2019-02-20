@@ -6,9 +6,10 @@
 """ Tests the ocboundary class and functions
 """
 
-import ocbpy
 import unittest
 import numpy as np
+
+import ocbpy
 
 class TestOCBoundaryMethods(unittest.TestCase):
 
@@ -28,6 +29,11 @@ class TestOCBoundaryMethods(unittest.TestCase):
         self.ocb_south = ocbpy.ocboundary.OCBoundary(filename=self.test_south,
                                                      instrument="Ampere",
                                                      hemisphere=-1)
+        # Set a custom correction for AMPERE
+        for i in range(self.ocb_south.records):
+            self.ocb_south.rfunc[i] = ocbpy.ocb_correction.circular
+            self.ocb_south.rfunc_kwargs[i] = {"r_add": 0.0}
+        
         self.lon = np.linspace(0.0, 360.0, num=6)
 
     def tearDown(self):
@@ -163,6 +169,18 @@ class TestOCBoundaryMethods(unittest.TestCase):
         self.assertAlmostEqual(ocb_mlt, 6.0)
         del ocb_lat, ocb_mlt
 
+    def test_normal_coord_south_corrected(self):
+        """ Test to see that the normalisation is performed properly in the
+        southern hemisphere with a corrected OCB 
+        """
+        self.ocb_south.rec_ind = 8
+        self.ocb_south.rfunc_kwargs[self.ocb_south.rec_ind]['r_add'] = 1.0
+
+        ocb_lat, ocb_mlt = self.ocb_south.normal_coord(-90.0, 0.0)
+        self.assertAlmostEqual(ocb_lat, -86.72727272)
+        self.assertAlmostEqual(ocb_mlt, 6.0)
+        del ocb_lat, ocb_mlt
+
     def test_default_boundary_input(self):
         """ Test to see that the boundary latitude has the correct sign
         """
@@ -286,6 +304,25 @@ class TestOCBoundaryMethods(unittest.TestCase):
         good location for the southern hemisphere
         """
         rind = 8
+
+        # Add the attribute at the good location
+        self.ocb_south.get_aacgm_boundary_lat(aacgm_lon=self.lon, rec_ind=rind)
+
+        # Test value of latitude attribute
+        self.assertTrue(np.all(self.ocb_south.aacgm_boundary_lat[rind] < 0.0))
+        self.assertAlmostEqual(self.ocb_south.aacgm_boundary_lat[rind].min(),
+                               -81.92122960532046)
+        self.assertEqual(self.ocb_south.aacgm_boundary_lat[rind].argmin(), 1)
+        self.assertAlmostEqual(self.ocb_south.aacgm_boundary_lat[rind].max(),
+                               -78.11700354013985)
+        self.assertEqual(self.ocb_south.aacgm_boundary_lat[rind].argmax(), 4)
+
+    def test_aacgm_boundary_location_good_south_corrected(self):
+        """ Test the calculation of the OCB in AACGM coordinates at the first
+        good location for the southern hemisphere with a corrected OCB
+        """
+        rind = 8
+        self.ocb_south.rfunc_kwargs[self.ocb_south.rec_ind]['r_add'] = 1.0
 
         # Add the attribute at the good location
         self.ocb_south.get_aacgm_boundary_lat(aacgm_lon=self.lon, rec_ind=rind)
