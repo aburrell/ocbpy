@@ -17,6 +17,7 @@ References
 Burrell paper in prep
 
 """
+import numpy as np
 
 def circular(ocb, mlt, mlt_coords="aacgm", r_add=0.0):
     """Return a circular boundary
