@@ -27,9 +27,10 @@ References
 Chisham, G. (2017), A new methodology for the development of high-latitude
  ionospheric climatologies and empirical models, Journal of Geophysical
  Research: Space Physics, 122, doi:10.1002/2016JA023235.
+
 """
-import logbook as logging
 import numpy as np
+import logbook as logging
 
 class OCBoundary(object):
     """ Object containing open-closed field-line boundary (OCB) data
@@ -110,6 +111,7 @@ class OCBoundary(object):
         Calculate the OCB coordinates of an AACGM location
     revert_coord(ocb_lat, ocb_mlt)
         Calculate the AACGM location of OCB coordinates for this OCB
+
     """
 
     def __init__(self, filename="default", instrument="image", hemisphere=1,
@@ -133,6 +135,7 @@ class OCBoundary(object):
             First time to load data or beginning of file (default=None)
         etime : (datetime or NoneType)
             Last time to load data or ending of file (default=None)
+
         """
         import ocbpy
 
@@ -200,8 +203,7 @@ class OCBoundary(object):
         return
 
     def __repr__(self):
-        """ Provide readable representation of the OCBoundary object
-        """
+        """ Provide readable representation of the OCBoundary object """
     
         if self.filename is None:
             out = "No Open-Closed Boundary file specified\n"
@@ -234,8 +236,7 @@ class OCBoundary(object):
         return out
 
     def __str__(self):
-        """ Provide readable representation of the OCBoundary object
-        """
+        """ Provide readable representation of the OCBoundary object """
 
         out = self.__repr__()
         return out
@@ -253,6 +254,7 @@ class OCBoundary(object):
             String containing the names for each data column
         datetime_fmt : (str)
             String containing the datetime format
+
         """
 
         if self.instrument == "image":
@@ -300,6 +302,7 @@ class OCBoundary(object):
         Returns
         --------
         self
+
         """
         import datetime as dt
         import ocbpy.ocb_time as ocbt
@@ -416,6 +419,7 @@ class OCBoundary(object):
         - more than 6 MLT boundary values have contributed to OCB circle
         - that the OCB 'pole' is with 8 degrees of the AACGM pole
         - that the OCB 'radius' is greater than 10 and less than 23 degrees
+
         """
 
         # Incriment forward from previous boundary
@@ -463,6 +467,7 @@ class OCBoundary(object):
         Comments
         ---------
         Approximation - Conversion assumes a planar surface
+
         """
         if self.rec_ind < 0 or self.rec_ind >= self.records:
             return np.nan, np.nan
@@ -484,7 +489,7 @@ class OCBoundary(object):
         # distance is then scaled by r, the OCB radius.  For non-circular
         # boundaries, r is a function of MLT
         local_r = self.rfunc[self.rec_ind](self, aacgm_mlt,
-                                           self.rfunc_kwargs[self.rec_ind])
+                                           **self.rfunc_kwargs[self.rec_ind])
         scalen = (90.0 - abs(self.boundary_lat)) / local_r
         xn = (xp - xc) * scalen
         yn = (yp - yc) * scalen
@@ -518,6 +523,7 @@ class OCBoundary(object):
         Comments
         ---------
         Approximation - Conversion assumes a planar surface
+
         """
         if self.rec_ind < 0 or self.rec_ind >= self.records:
             return np.nan, np.nan
@@ -535,7 +541,8 @@ class OCBoundary(object):
         xn = rn * np.cos(thetan)
         yn = rn * np.sin(thetan)
 
-        local_r = self.rfunc[self.rec_ind](aacgm_mlt, mlt_coords="ocb")
+        local_r = self.rfunc[self.rec_ind](self, ocb_mlt, mlt_coords="ocb",
+                                           **self.rfunc_kwargs[self.rec_ind])
         scale_ocb = local_r / (90.0 - self.hemisphere * self.boundary_lat)
         xp = xn * scale_ocb + xc
         yp = yn * scale_ocb + yc
@@ -583,6 +590,9 @@ class OCBoundary(object):
         """
         from ocb_time import deg2hr
 
+        # Save the input rec_ind
+        in_rec_ind = self.rec_ind
+
         # Ensure the boundary longitudes span from 0-360 degrees
         aacgm_lon = np.array(aacgm_lon)
         aacgm_lon[aacgm_lon < 0.0] += 360.0
@@ -615,8 +625,9 @@ class OCBoundary(object):
                 del_lon = np.radians(aacgm_lon - self.phi_cent[i])
 
                 # Calculate the radius of the OCB in degrees
+                self.rec_ind = i
                 scale_r = self.rfunc[i](self, deg2hr(aacgm_lon),
-                                        self.rfunc_kwargs[i])
+                                        **self.rfunc_kwargs[i])
                 rad = self.r_cent[i] * np.cos(del_lon) + \
                 np.sqrt(scale_r**2 - (self.r_cent[i] * np.sin(del_lon))**2)
 
@@ -634,12 +645,13 @@ class OCBoundary(object):
             else:
                 logging.warn("unable to update AACGM boundary latitude at " +
                              "{:}, overwrite blocked".format(self.dtime[i]))
-        
+
+        # Reset the record index to the initial value
+        self.rec_ind = in_rec_ind
         return
 
     def _set_default_rfunc(self):
-        """Set the default instrument OCB boundary function
-        """
+        """Set the default instrument OCB boundary function """
         import ocbpy.ocb_correction as ocbcor
 
 
@@ -733,9 +745,10 @@ def match_data_ocb(ocb, dat_dtime, idat=0, max_tol=600, min_sectors=7,
     --------
     Updates OCBoundary.rec_ind for matched value.  None if all of the
     boundaries have been searched.
+
     """
-    import ocbpy.ocboundary as ocboundary
     import datetime as dt
+    import ocbpy.ocboundary as ocboundary
 
     dat_records = len(dat_dtime)
 
