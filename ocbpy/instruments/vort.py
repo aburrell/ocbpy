@@ -15,9 +15,10 @@ load_vorticity_ascii_data(filename, save_all=False)
 Data
 ----------------------------------------------------------------------------
 Specialised SuperDARN data product, available from: gchi@bas.ac.uk
+
 """
-import logbook as logging
 import numpy as np
+import logbook as logging
 
 def vort2ascii_ocb(vortfile, outfile, ocb=None, ocbfile=None, max_sdiff=600,
                    save_all=False, min_sectors=7, rcent_dev=8.0, max_r=23.0,
@@ -63,10 +64,11 @@ def vort2ascii_ocb(vortfile, outfile, ocb=None, ocbfile=None, max_sdiff=600,
     Notes
     --------
     Input header or col_names must include the names in the default string.
+
     """
+    import datetime as dt
     import ocbpy
     import ocbpy.ocb_scaling as ocbscal
-    import datetime as dt
 
     assert ocbpy.instruments.test_file(vortfile), \
         logging.error("vorticity file cannot be opened[{:s}]".format(vortfile))
@@ -139,8 +141,10 @@ def vort2ascii_ocb(vortfile, outfile, ocb=None, ocbfile=None, max_sdiff=600,
             # related to the OCB
             nlat, nmlt = ocb.normal_coord(vdata['CENTRE_MLAT'][ivort],
                                           vdata['MLT'][ivort])
+            rscale = ocb.rfunc[ocb.rec_ind](ocb, vdata['MLT'][ivort],
+                                            ocb.rfunc_kwargs[ocb.rec_ind])
             nvort = ocbscal.normal_curl_evar(vdata['VORTICITY'][ivort],
-                                             ocb.r[ocb.rec_ind], ref_r)
+                                             rscale, ref_r)
 
             # Format the output line
             #    DATE TIME (SAVE_ALL) OCB_LAT OCB_MLT NORM_VORT
@@ -184,9 +188,10 @@ def load_vorticity_ascii_data(vortfile, save_all=False):
     ---------
     vdata : (dict)
         Dictionary of numpy arrays
+
     """
-    from ocbpy.instruments import test_file
     import datetime as dt
+    from ocbpy.instruments import test_file
 
     if not test_file(vortfile):
         return None
