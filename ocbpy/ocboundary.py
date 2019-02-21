@@ -137,10 +137,11 @@ class OCBoundary(object):
             Last time to load data or ending of file (default=None)
 
         """
+        from os import path
         import ocbpy
 
         if not isinstance(instrument, str):
-            estr = "OCB instrument must be a string [{:s}]".format(instrument)
+            estr = "OCB instrument must be a string [{:}]".format(instrument)
             logging.error(estr)
             self.filename = None
             self.instrument = None
@@ -150,13 +151,13 @@ class OCBoundary(object):
             if filename is None:
                 self.filename = None
             elif not isinstance(filename, str):
-                logging.warning("file is not a string [{:s}]".format(filename))
+                logging.warning("file is not a string [{:}]".format(filename))
                 self.filename = None
             elif filename.lower() == "default":
                 if instrument.lower() == "image":
-                    ocb_dir = ocbpy.__file__.split("/")
-                    self.filename = "{:s}/{:s}".format("/".join(ocb_dir[:-1]),
-                                                       ocbpy.__default_file__)
+                    ocb_dir = path.split(ocbpy.__file__)[0]
+                    default_file = ocbpy.__default_file__.split("/")
+                    self.filename = path.join(ocb_dir, *default_file)
                     if not ocbpy.instruments.test_file(self.filename):
                         logging.warning("problem with default OC Boundary file")
                         self.filename = None
@@ -797,8 +798,7 @@ def match_data_ocb(ocb, dat_dtime, idat=0, max_tol=600, min_sectors=7,
                                       rcent_dev=rcent_dev, max_r=max_r,
                                       min_r=min_r, min_j=min_j)
         elif sdiff > max_tol:
-            # Cycle to the next vorticity value if no OCB values were close
-            # enough to grid this one
+            # Cycle to the next value if no OCB values were close enough
             estr = "no OCB data available within [{:d} s] of".format(max_tol)
             estr = "{:s} input measurement at ".format(estr)
             estr = "{:s}[{:}]".format(estr, dat_dtime[idat])
@@ -833,4 +833,9 @@ def match_data_ocb(ocb, dat_dtime, idat=0, max_tol=600, min_sectors=7,
             return idat
 
     # Return from the last loop
+    if idat == 0 and abs(sdiff) > max_tol:
+        estr = "no OCB data available within [{:d} s] of".format(max_tol)
+        estr = "{:s} first measurement [{:}]".format(estr, dat_dtime[idat])
+        logging.info(estr)
+    
     return idat
