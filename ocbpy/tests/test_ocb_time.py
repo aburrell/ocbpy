@@ -29,7 +29,7 @@ class TestOCBTimeMethods(unittest.TestCase):
         self.assertEqual(ocb_time.year_soy_to_datetime(2001, 0), self.dtime)
 
     def test_convert_time_date_tod(self):
-        """ Test to see that the datetime construction works
+        """ Test to see that the default datetime construction works
         """
         # Test the default date implimentation
         self.assertEqual(ocb_time.convert_time(date="2001-01-01",
@@ -37,7 +37,7 @@ class TestOCBTimeMethods(unittest.TestCase):
                          self.dtime)
 
     def test_convert_time_date_tod_fmt(self):
-        """ Test to see that the datetime construction works
+        """ Test to see that the datetime construction works with custom format
         """
         # Test the custom date implimentation
         self.assertEqual(ocb_time.convert_time(date="2001-01-01", \
@@ -45,27 +45,27 @@ class TestOCBTimeMethods(unittest.TestCase):
                          self.dtime)
 
     def test_convert_time_year_soy(self):
-        """ Test to see that the datetime construction works
+        """ Test to see that the datetime construction works with year-soy
         """
         # Test the year-soy implimentation
         self.assertEqual(ocb_time.convert_time(year=2001, soy=0), self.dtime)
 
     def test_convert_time_yyddd_tod(self):
-        """ Test to see that the datetime construction works
+        """ Test to see that the datetime construction works with yyddd and tod
         """
         # Test the year-soy implimentation
         self.assertEqual(ocb_time.convert_time(yyddd="101001", tod="00:00:00"),
                          self.dtime)
 
     def test_convert_time_yyddd_sod(self):
-        """ Test to see that the datetime construction works
+        """ Test to see that the datetime construction works  with yyddd and sod
         """
         # Test the year-soy implimentation
         self.assertEqual(ocb_time.convert_time(yyddd="101001", sod=0),
                          self.dtime)
 
     def test_convert_time_dict_input(self):
-        """ Test to see that the datetime construction works
+        """ Test to see that the datetime construction works with dict inputs
         """
         # Test dictionary input implimentation
         input_dict = {"year":None, "soy":None, "yyddd":None, "sod":None,
