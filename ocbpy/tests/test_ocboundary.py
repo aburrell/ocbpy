@@ -173,10 +173,7 @@ class TestOCBoundaryMethodsNorth(unittest.TestCase):
     def test_default_str(self):
         """ Test the default class representation for string output"""
 
-        if sys.version_info.major == 2:
-            self.assertRegexpMatches(self.ocb.__str__(), self.ocb.__repr__())
-        else:
-            self.assertRegex(self.ocb.__str__(), self.ocb.__repr__())
+        self.assertTrue(self.ocb.__str__() == self.ocb.__repr__())
 
     def test_attrs(self):
         """ Test the default attributes in the north

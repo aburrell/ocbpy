@@ -151,7 +151,8 @@ class TestVortMethods(unittest.TestCase):
     def test_vort2ascii_ocb_output_failure(self):
         """ Test failure when bad filename is provided
         """
-        with self.assertRaisesRegexp(IOError, "Is a directory: '/'"):
+        # Error message changes based on operating system
+        with self.assertRaises(IOError):
             ocb_ivort.vort2ascii_ocb(self.test_file, "/", ocbfile=self.test_ocb)
 
     def test_vort2ascii_ocb_output_failure_str(self):
