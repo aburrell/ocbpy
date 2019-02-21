@@ -11,7 +11,7 @@ import numpy as np
 
 import ocbpy
 
-class TestOCBoundaryMethods(unittest.TestCase):
+class TestOCBoundaryMethodsNorth(unittest.TestCase):
 
     def setUp(self):
         """ Initialize the OCBoundary object using the test file
@@ -21,23 +21,13 @@ class TestOCBoundaryMethods(unittest.TestCase):
         ocb_dir = path.split(ocbpy.__file__)
         self.test_north = path.join(ocb_dir[0], "tests", "test_data",
                                     "test_north_circle")
-        self.test_south = path.join(ocb_dir[0], "tests", "test_data",
-                                    "test_south_circle")
         self.assertTrue(path.isfile(self.test_north))
-        self.assertTrue(path.isfile(self.test_south))
         self.ocb = ocbpy.ocboundary.OCBoundary(filename=self.test_north)
-        self.ocb_south = ocbpy.ocboundary.OCBoundary(filename=self.test_south,
-                                                     instrument="Ampere",
-                                                     hemisphere=-1)
-        # Set a custom correction for AMPERE
-        for i in range(self.ocb_south.records):
-            self.ocb_south.rfunc[i] = ocbpy.ocb_correction.circular
-            self.ocb_south.rfunc_kwargs[i] = {"r_add": 0.0}
         
         self.lon = np.linspace(0.0, 360.0, num=6)
 
     def tearDown(self):
-        del self.ocb, self.ocb_south, self.test_north, self.test_south, self.lon
+        del self.ocb, self.test_north, self.lon
 
     def test_attrs(self):
         """ Test the default attributes
@@ -47,12 +37,10 @@ class TestOCBoundaryMethods(unittest.TestCase):
                       "rec_ind", "dtime", "phi_cent", "r_cent", "r",
                       "boundary_lat"]:
             self.assertTrue(hasattr(self.ocb, tattr))
-            self.assertTrue(hasattr(self.ocb_south, tattr))
 
         # Ensure optional attributes are absent
         for tattr in ["aacgm_boundary_lon", "aacgm_boundary_lat"]:
             self.assertFalse(hasattr(self.ocb, tattr))
-            self.assertFalse(hasattr(self.ocb_south, tattr))
 
     def test_image_attrs(self):
         """ Test IMAGE attributes
@@ -60,14 +48,12 @@ class TestOCBoundaryMethods(unittest.TestCase):
 
         for tattr in ["num_sectors", "year", "soy", "r_err", "a"]:
             self.assertTrue(hasattr(self.ocb, tattr))
-            self.assertFalse(hasattr(self.ocb_south, tattr))
 
     def test_ampere_attrs(self):
         """ Test AMPERE attributes
         """
 
         for tattr in ['date', 'time', 'x', 'y', 'j_mag']:
-            self.assertTrue(hasattr(self.ocb_south, tattr))
             self.assertFalse(hasattr(self.ocb, tattr))
         
     def test_nofile_init(self):
@@ -99,9 +85,6 @@ class TestOCBoundaryMethods(unittest.TestCase):
         self.assertGreater(self.ocb.records, 0)
         self.assertEqual(self.ocb.boundary_lat, 74.0)
 
-        self.assertGreater(self.ocb_south.records, 0)
-        self.assertEqual(self.ocb_south.boundary_lat, -72.0)
-
     def test_partial_load(self):
         """ Ensure limited sections of a file can be loaded
         """
@@ -123,16 +106,11 @@ class TestOCBoundaryMethods(unittest.TestCase):
         """ Test to see that we can find the first good point
         """
         self.ocb.rec_ind = -1
-        self.ocb_south.rec_ind = -1
 
         self.ocb.get_next_good_ocb_ind()
-        self.ocb_south.get_next_good_ocb_ind()
 
         self.assertGreater(self.ocb.rec_ind, -1)
         self.assertLess(self.ocb.rec_ind, self.ocb.records)
-
-        self.assertGreater(self.ocb_south.rec_ind, -1)
-        self.assertLess(self.ocb_south.rec_ind, self.ocb_south.records)
 
     def test_normal_coord_north(self):
         """ Test to see that the normalisation is performed properly in the
@@ -146,7 +124,6 @@ class TestOCBoundaryMethods(unittest.TestCase):
         del ocb_lat, ocb_mlt
 
     def test_revert_coord_north(self):
-
         """ Test to see that the reversion to AACGM coordinates is performed
         properly
         """
@@ -158,46 +135,18 @@ class TestOCBoundaryMethods(unittest.TestCase):
         self.assertAlmostEqual(aacgm_mlt, 0.0)
         del ocb_lat, ocb_mlt, aacgm_lat, aacgm_mlt
 
-    def test_normal_coord_south(self):
-        """ Test to see that the normalisation is performed properly in the
-        southern hemisphere
-        """
-        self.ocb_south.rec_ind = 8
-
-        ocb_lat, ocb_mlt = self.ocb_south.normal_coord(-90.0, 0.0)
-        self.assertAlmostEqual(ocb_lat, -86.4)
-        self.assertAlmostEqual(ocb_mlt, 6.0)
-        del ocb_lat, ocb_mlt
-
-    def test_normal_coord_south_corrected(self):
-        """ Test to see that the normalisation is performed properly in the
-        southern hemisphere with a corrected OCB 
-        """
-        self.ocb_south.rec_ind = 8
-        self.ocb_south.rfunc_kwargs[self.ocb_south.rec_ind]['r_add'] = 1.0
-
-        ocb_lat, ocb_mlt = self.ocb_south.normal_coord(-90.0, 0.0)
-        self.assertAlmostEqual(ocb_lat, -86.72727272)
-        self.assertAlmostEqual(ocb_mlt, 6.0)
-        del ocb_lat, ocb_mlt
-
     def test_default_boundary_input(self):
         """ Test to see that the boundary latitude has the correct sign
         """
         self.assertEqual(self.ocb.boundary_lat, 74.0)
-        self.assertEqual(self.ocb_south.boundary_lat, -72.0)
 
     def test_mismatched_boundary_input(self):
         """ Test to see that the boundary latitude has the correct sign
         """
         ocb_n = ocbpy.ocboundary.OCBoundary(filename=self.test_north,
                                             hemisphere=-1)
-        ocb_s = ocbpy.ocboundary.OCBoundary(filename=self.test_south,
-                                            instrument="ampere",
-                                            hemisphere=1)
         self.assertEqual(ocb_n.boundary_lat, -74.0)
-        self.assertEqual(ocb_s.boundary_lat, 72.0)
-        del ocb_n, ocb_s
+        del ocb_n
 
     def test_match(self):
         """ Test to see that the data matching works properly
@@ -299,43 +248,6 @@ class TestOCBoundaryMethods(unittest.TestCase):
                                78.52813223696786)
         self.assertEqual(self.ocb.aacgm_boundary_lat[rind].argmax(), 4)
 
-    def test_aacgm_boundary_location_good_south(self):
-        """ Test the calculation of the OCB in AACGM coordinates at the first
-        good location for the southern hemisphere
-        """
-        rind = 8
-
-        # Add the attribute at the good location
-        self.ocb_south.get_aacgm_boundary_lat(aacgm_lon=self.lon, rec_ind=rind)
-
-        # Test value of latitude attribute
-        self.assertTrue(np.all(self.ocb_south.aacgm_boundary_lat[rind] < 0.0))
-        self.assertAlmostEqual(self.ocb_south.aacgm_boundary_lat[rind].min(),
-                               -81.92122960532046)
-        self.assertEqual(self.ocb_south.aacgm_boundary_lat[rind].argmin(), 1)
-        self.assertAlmostEqual(self.ocb_south.aacgm_boundary_lat[rind].max(),
-                               -78.11700354013985)
-        self.assertEqual(self.ocb_south.aacgm_boundary_lat[rind].argmax(), 4)
-
-    def test_aacgm_boundary_location_good_south_corrected(self):
-        """ Test the calculation of the OCB in AACGM coordinates at the first
-        good location for the southern hemisphere with a corrected OCB
-        """
-        rind = 8
-        self.ocb_south.rfunc_kwargs[self.ocb_south.rec_ind]['r_add'] = 1.0
-
-        # Add the attribute at the good location
-        self.ocb_south.get_aacgm_boundary_lat(aacgm_lon=self.lon, rec_ind=rind)
-
-        # Test value of latitude attribute
-        self.assertTrue(np.all(self.ocb_south.aacgm_boundary_lat[rind] < 0.0))
-        self.assertAlmostEqual(self.ocb_south.aacgm_boundary_lat[rind].min(),
-                               -81.92122960532046)
-        self.assertEqual(self.ocb_south.aacgm_boundary_lat[rind].argmin(), 1)
-        self.assertAlmostEqual(self.ocb_south.aacgm_boundary_lat[rind].max(),
-                               -78.11700354013985)
-        self.assertEqual(self.ocb_south.aacgm_boundary_lat[rind].argmax(), 4)
-
     def test_aacgm_boundary_location_bad(self):
         """ Test the calclation of the OCB in AACGM coordinates for a boundary
         that doesn't span all MLT sectors
@@ -358,22 +270,6 @@ class TestOCBoundaryMethods(unittest.TestCase):
 
         with self.assertRaises(TypeError):
             self.ocb.get_aacgm_boundary_lat()
-
-    def test_aacgm_boundary_location_partial_fill(self):
-        """ Test the partial filling when some indices are specified
-        """
-        rind = 8
-        self.test_aacgm_boundary_location_good_south()
-
-        for i in range(self.ocb_south.records):
-            if i != rind:
-                self.assertTrue(self.ocb_south.aacgm_boundary_lat[i] is None)
-                self.assertTrue(self.ocb_south.aacgm_boundary_lon[i] is None)
-            else:
-                self.assertEqual(self.ocb_south.aacgm_boundary_lat[i].shape,
-                                 self.ocb_south.aacgm_boundary_lon[i].shape)
-                self.assertEqual(self.ocb_south.aacgm_boundary_lon[i].shape,
-                                 self.lon.shape)
 
     def test_aacgm_boundary_location_no_overwrite(self):
         """ Ensure OCB AACGM location will not overwrite calculated AACGM
@@ -425,6 +321,161 @@ class TestOCBoundaryMethods(unittest.TestCase):
 
         # Test the attributes with values for the good location
         self.test_aacgm_boundary_location_good()
+
+class TestOCBoundaryMethodsSouth(unittest.TestCase):
+
+    def setUp(self):
+        """ Initialize the OCBoundary object using the test file
+        """
+        from os import path
+
+        ocb_dir = path.split(ocbpy.__file__)
+        self.test_south = path.join(ocb_dir[0], "tests", "test_data",
+                                    "test_south_circle")
+        self.assertTrue(path.isfile(self.test_south))
+        self.ocb_south = ocbpy.ocboundary.OCBoundary(filename=self.test_south,
+                                                     instrument="Ampere",
+                                                     hemisphere=-1)
+        # Set a custom correction for AMPERE
+        for i in range(self.ocb_south.records):
+            self.ocb_south.rfunc[i] = ocbpy.ocb_correction.circular
+            self.ocb_south.rfunc_kwargs[i] = {"r_add": 0.0}
+        
+        self.lon = np.linspace(0.0, 360.0, num=6)
+
+    def tearDown(self):
+        del self.ocb_south, self.test_south, self.lon
+
+    def test_attrs(self):
+        """ Test the default attributes """
+
+        for tattr in ["filename", "instrument", "hemisphere", "records",
+                      "rec_ind", "dtime", "phi_cent", "r_cent", "r",
+                      "boundary_lat"]:
+            self.assertTrue(hasattr(self.ocb_south, tattr))
+
+        # Ensure optional attributes are absent
+        for tattr in ["aacgm_boundary_lon", "aacgm_boundary_lat"]:
+            self.assertFalse(hasattr(self.ocb_south, tattr))
+
+    def test_image_attrs(self):
+        """ Test IMAGE attributes """
+
+        for tattr in ["num_sectors", "year", "soy", "r_err", "a"]:
+            self.assertFalse(hasattr(self.ocb_south, tattr))
+
+    def test_ampere_attrs(self):
+        """ Test AMPERE attributes """
+
+        for tattr in ['date', 'time', 'x', 'y', 'j_mag']:
+            self.assertTrue(hasattr(self.ocb_south, tattr))
+        
+    def test_load(self):
+        """ Ensure that records from the default file were loaded and the
+        default latitude boundary was set
+        """
+        self.assertGreater(self.ocb_south.records, 0)
+        self.assertEqual(self.ocb_south.boundary_lat, -72.0)
+
+    def test_first_good(self):
+        """ Test to see that we can find the first good point
+        """
+        self.ocb_south.rec_ind = -1
+
+        self.ocb_south.get_next_good_ocb_ind()
+
+        self.assertGreater(self.ocb_south.rec_ind, -1)
+        self.assertLess(self.ocb_south.rec_ind, self.ocb_south.records)
+
+    def test_normal_coord_south(self):
+        """ Test to see that the normalisation is performed properly in the
+        southern hemisphere
+        """
+        self.ocb_south.rec_ind = 8
+
+        ocb_lat, ocb_mlt = self.ocb_south.normal_coord(-90.0, 0.0)
+        self.assertAlmostEqual(ocb_lat, -86.4)
+        self.assertAlmostEqual(ocb_mlt, 6.0)
+        del ocb_lat, ocb_mlt
+
+    def test_normal_coord_south_corrected(self):
+        """ Test to see that the normalisation is performed properly in the
+        southern hemisphere with a corrected OCB 
+        """
+        self.ocb_south.rec_ind = 8
+        self.ocb_south.rfunc_kwargs[self.ocb_south.rec_ind]['r_add'] = 1.0
+
+        ocb_lat, ocb_mlt = self.ocb_south.normal_coord(-90.0, 0.0)
+        self.assertAlmostEqual(ocb_lat, -86.72727272)
+        self.assertAlmostEqual(ocb_mlt, 6.0)
+        del ocb_lat, ocb_mlt
+
+    def test_default_boundary_input(self):
+        """ Test to see that the boundary latitude has the correct sign
+        """
+        self.assertEqual(self.ocb_south.boundary_lat, -72.0)
+
+    def test_mismatched_boundary_input(self):
+        """ Test to see that the boundary latitude has the correct sign
+        """
+        ocb_s = ocbpy.ocboundary.OCBoundary(filename=self.test_south,
+                                            instrument="ampere",
+                                            hemisphere=1)
+        self.assertEqual(ocb_s.boundary_lat, 72.0)
+        del ocb_s
+
+    def test_aacgm_boundary_location_good_south(self):
+        """ Test the calculation of the OCB in AACGM coordinates at the first
+        good location for the southern hemisphere
+        """
+        rind = 8
+
+        # Add the attribute at the good location
+        self.ocb_south.get_aacgm_boundary_lat(aacgm_lon=self.lon, rec_ind=rind)
+
+        # Test value of latitude attribute
+        self.assertTrue(np.all(self.ocb_south.aacgm_boundary_lat[rind] < 0.0))
+        self.assertAlmostEqual(self.ocb_south.aacgm_boundary_lat[rind].min(),
+                               -81.92122960532046)
+        self.assertEqual(self.ocb_south.aacgm_boundary_lat[rind].argmin(), 1)
+        self.assertAlmostEqual(self.ocb_south.aacgm_boundary_lat[rind].max(),
+                               -78.11700354013985)
+        self.assertEqual(self.ocb_south.aacgm_boundary_lat[rind].argmax(), 4)
+
+    def test_aacgm_boundary_location_good_south_corrected(self):
+        """ Test the calculation of the OCB in AACGM coordinates at the first
+        good location for the southern hemisphere with a corrected OCB
+        """
+        rind = 8
+        self.ocb_south.rfunc_kwargs[self.ocb_south.rec_ind]['r_add'] = 1.0
+
+        # Add the attribute at the good location
+        self.ocb_south.get_aacgm_boundary_lat(aacgm_lon=self.lon, rec_ind=rind)
+
+        # Test value of latitude attribute
+        self.assertTrue(np.all(self.ocb_south.aacgm_boundary_lat[rind] < 0.0))
+        self.assertAlmostEqual(self.ocb_south.aacgm_boundary_lat[rind].min(),
+                               -81.92122960532046)
+        self.assertEqual(self.ocb_south.aacgm_boundary_lat[rind].argmin(), 1)
+        self.assertAlmostEqual(self.ocb_south.aacgm_boundary_lat[rind].max(),
+                               -78.11700354013985)
+        self.assertEqual(self.ocb_south.aacgm_boundary_lat[rind].argmax(), 4)
+
+    def test_aacgm_boundary_location_partial_fill(self):
+        """ Test the partial filling when some indices are specified
+        """
+        rind = 8
+        self.test_aacgm_boundary_location_good_south()
+
+        for i in range(self.ocb_south.records):
+            if i != rind:
+                self.assertTrue(self.ocb_south.aacgm_boundary_lat[i] is None)
+                self.assertTrue(self.ocb_south.aacgm_boundary_lon[i] is None)
+            else:
+                self.assertEqual(self.ocb_south.aacgm_boundary_lat[i].shape,
+                                 self.ocb_south.aacgm_boundary_lon[i].shape)
+                self.assertEqual(self.ocb_south.aacgm_boundary_lon[i].shape,
+                                 self.lon.shape)
 
 if __name__ == '__main__':
     unittest.main()
