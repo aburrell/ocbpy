@@ -67,7 +67,7 @@ class TestOCBScalingMethods(unittest.TestCase):
 
     def test_vector_repr_str(self):
         """ Test the VectorData print statement using repr and str """
-        self.assertTrue(self.vdata.__repr__(), self.vdata.__str__())
+        self.assertTrue(self.vdata.__repr__() == self.vdata.__str__())
 
     def test_vector_repr_no_scaling(self):
         """ Test the VectorData print statement without a scaling function """

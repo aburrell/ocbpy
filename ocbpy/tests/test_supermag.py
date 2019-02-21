@@ -122,9 +122,9 @@ class TestSuperMAGMethods(unittest.TestCase):
     def test_supermag2ascii_ocb_bad_output(self):
         """ Test the failure caused by bad output name
         """
-        # Run command that will fail to output a file
-
-        with self.assertRaisesRegexp(IOError, "Is a directory: '/'"):
+        # Run command that will fail to output a file.  Error message changes
+        # based on the operating system
+        with self.assertRaises(IOError):
             ocb_ismag.supermag2ascii_ocb(self.test_file, "/",
                                          ocbfile=self.test_ocb)
 
