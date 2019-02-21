@@ -79,13 +79,37 @@ class TestOCBTimeMethods(unittest.TestCase):
         self.assertEqual(ocb_time.convert_time(**input_dict), self.dtime)
 
         del input_dict
-        
+
+    def test_convert_time_failure_yyddd(self):
+        """ Test convert_time failure with non-string input for yyddd
+        """
+        with self.assertRaisesRegexp(ValueError, "YYDDD must be a string"):
+            ocb_time.convert_time(yyddd=101001)
+
+    def test_convert_time_failure_soy(self):
+        """ Test convert_time failure with bad input for year-soy
+        """
+        with self.assertRaisesRegexp(ValueError, "does not match format"):
+            ocb_time.convert_time(soy=200)
+
+    def test_convert_time_failure_bad_date_fmt(self):
+        """ Test convert_time failure with bad input for incorrect date format
+        """
+        with self.assertRaisesRegexp(ValueError, "does not match format"):
+            ocb_time.convert_time(date="2000", tod="00")
+
     def test_yyddd_to_date(self):
         """ Test to see that the datetime construction works
         """
         # Test the year-soy implimentation for 2001 and 1901
         self.assertEqual(ocb_time.yyddd_to_date(yyddd="101001"), self.dtime)
         self.assertEqual(ocb_time.yyddd_to_date(yyddd="01001"), self.dtime2)
+
+    def test_yyddd_to_date_failure(self):
+        """ Test yyddd_to_date failure with non-string input
+        """
+        with self.assertRaisesRegexp(ValueError, "YYDDD must be a string"):
+            ocb_time.yyddd_to_date(yyddd=101001)
 
 class TestOCBTimeUnits(unittest.TestCase):
     def setUp(self):

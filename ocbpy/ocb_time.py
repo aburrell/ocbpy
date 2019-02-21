@@ -84,8 +84,9 @@ def yyddd_to_date(yyddd):
         Datetime object containing date information
 
     """
-    assert isinstance(yyddd, str), logging.error("YYDDD must be a string")
-    
+    if not isinstance(yyddd, str):
+        raise ValueError("YYDDD must be a string")
+
     # Remove any decimal data
     yyddd = yyddd.split(".")[0]
 
@@ -168,15 +169,15 @@ def convert_time(year=None, soy=None, yyddd=None, sod=None, date=None, tod=None,
                     # Add the microseconds to dtime
                     microsec = np.ceil(microsec * 1.0e6)
                     dtime += dt.timedelta(microseconds=int(microsec))
-                
-    except ValueError as v:
-        if(len(v.args) > 0 and
-           v.args[0].startswith('unconverted data remains: ')):
-            vsplit = v.args[0].split(" ")
+
+    except ValueError as verr:
+        if(len(verr.args) > 0 and
+           verr.args[0].startswith('unconverted data remains: ')):
+            vsplit = verr.args[0].split(" ")
             dtime = dt.datetime.strptime(str_time[:-(len(vsplit[-1]))],
                                          datetime_fmt)
         else:
-            raise v
+            raise ValueError(verr)
 
     return dtime
 
