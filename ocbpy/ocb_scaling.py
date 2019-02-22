@@ -215,8 +215,8 @@ class VectorData(object):
     """
 
     def __init__(self, dat_ind, ocb_ind, aacgm_lat, aacgm_mlt, ocb_lat=np.nan,
-                 ocb_mlt=np.nan, aacgm_n=0.0, aacgm_e=0.0, aacgm_z=0.0,
-                 aacgm_mag=np.nan, dat_name=None, dat_units=None,
+                 ocb_mlt=np.nan, r_corr=np.nan, aacgm_n=0.0, aacgm_e=0.0,
+                 aacgm_z=0.0, aacgm_mag=np.nan, dat_name=None, dat_units=None,
                  scale_func=None):
         """ Initialize VectorData object
 
@@ -288,6 +288,7 @@ class VectorData(object):
         self.ocb_mag = np.nan
         self.ocb_lat = ocb_lat
         self.ocb_mlt = ocb_mlt
+        self.r_corr = r_corr
 
         # Assign the default pole locations, relative angles, and quadrants
         self.ocb_quad = 0
@@ -374,6 +375,8 @@ class VectorData(object):
             Vector OCB latitude, if not updated already (degrees)
         self.ocb_mlt : (float)
             Vector OCB MLT, if not updated already (hours)
+        self.r_corr : (float)
+            OCB radius correction for vector location (degrees)
         self.ocb_quad : (int)
             OCB pole AACGM quadrant
         self.vec_quad : (int)
@@ -396,21 +399,18 @@ class VectorData(object):
         """
         from ocbpy.ocb_time import deg2hr
 
-        # Set the AACGM coordinates of the OCB pole
-        self.ocb_aacgm_mlt = deg2hr(ocb.phi_cent[self.ocb_ind])
-        self.ocb_aacgm_lat = 90.0 - ocb.r_cent[self.ocb_ind]
-        in_rec_ind = ocb.rec_ind
-        ocb.rec_ind = self.ocb_ind
-        self.unscaled_r = ocb.rfunc[self.ocb_ind](ocb, self.ocb_aacgm_mlt,\
-                                            **ocb.rfunc_kwargs[self.ocb_ind])
-        ocb.rec_ind = in_rec_ind
-        self.scaled_r = 90.0 - abs(ocb.boundary_lat)
-
         # If the OCB vector coordinates weren't included in the initial info,
         # update them here
-        if np.isnan(self.ocb_lat) or np.isnan(self.ocb_mlt):
-            self.ocb_lat, self.ocb_mlt = ocb.normal_coord(self.aacgm_lat,
-                                                          self.aacgm_mlt)
+        if(np.isnan(self.ocb_lat) or np.isnan(self.ocb_mlt) or
+           np.isnan(self.r_corr)):
+            (self.ocb_lat, self.ocb_mlt,
+             self.r_corr) = ocb.normal_coord(self.aacgm_lat, self.aacgm_mlt)
+
+        # Set the AACGM coordinates of the OCB pole
+        self.unscaled_r = ocb.r[self.ocb_ind] + self.r_corr
+        self.scaled_r = 90.0 - abs(ocb.boundary_lat)
+        self.ocb_aacgm_mlt = deg2hr(ocb.phi_cent[self.ocb_ind])
+        self.ocb_aacgm_lat = 90.0 - ocb.r_cent[self.ocb_ind]
 
         # Get the angle at the data vector appended by the AACGM and OCB poles
         self.calc_vec_pole_angle()

@@ -114,7 +114,8 @@ def add_ocb_to_data(pysat_inst, mlat_name, mlt_name, evar_names=list(),
     # Format the new data column names
     olat_name = "{:s}_ocb".format(mlat_name)
     omlt_name = "{:s}_ocb".format(mlt_name)
-    ocb_names = [olat_name, omlt_name]
+    ocor_name = "r_corr_ocb"
+    ocb_names = [olat_name, omlt_name, ocor_name]
 
     # Test the vector names to ensure that enough information
     # was provided and that it exists in the Instrument object
@@ -203,8 +204,8 @@ def add_ocb_to_data(pysat_inst, mlat_name, mlt_name, evar_names=list(),
             iout = dat_ind[idat]
 
             # Get the OCB coordinates
-            (ocb_output[olat_name][iout],
-             ocb_output[omlt_name][iout]) = ocb.normal_coord(aacgm_lat[iout],
+            (ocb_output[olat_name][iout], ocb_output[omlt_name][iout],
+             ocb_output[ocor_name][iout]) = ocb.normal_coord(aacgm_lat[iout],
                                                              aacgm_mlt[iout])
 
             # Scale and orient the vector values
@@ -232,8 +233,7 @@ def add_ocb_to_data(pysat_inst, mlat_name, mlt_name, evar_names=list(),
                 ocb.rec_ind, aacgm_lat[iout], aacgm_mlt[iout], **vector_init)
                     ocb_output[oattr][iout].set_ocb(ocb)
 
-            unscaled_r = ocb.rfunc[ocb.rec_ind](ocb, aacgm_mlt[iser],
-                                                ocb.rfunc_kwargs[ocb.rec_ind])
+            unscaled_r = ocb.r[ocb.rec_ind] + ocb_output[ocor_name][iout]
                     
             # Scale the E-field proportional variables
             for eattr in evar_names:
@@ -314,45 +314,49 @@ def add_ocb_to_metadata(pysat_inst, ocb_name, pysat_name, overwrite=False,
     """
 
     # Test the input
-    
-    if not pysat_name in pysat_inst.meta.data.index:
-        logging.warning("original data has no metadata")
-
-    elif ocb_name in pysat_inst.meta.data.index and not overwrite:
+    if ocb_name in pysat_inst.meta.data.index and not overwrite:
         logging.warning("OCB data already has metadata")
 
     else:
-        if isvector:
+        if not pysat_name in pysat_inst.meta.data.index:
             name = ("OCB_" + ocb_name.split("_ocb")[0]).replace("_", " ")
-            new_meta = {pysat_inst.meta.fill_label: None,
-                        pysat_inst.meta.name_label: name,
-                        pysat_inst.meta.desc_label: "Open Closed field-line " \
-                        + "Boundary vector " + \
-                        pysat_inst.meta[pysat_name][pysat_inst.meta.desc_label],
-                        pysat_inst.meta.units_label:
-                        pysat_inst.meta[pysat_name][pysat_inst.meta.units_label],
-                        pysat_inst.meta.plot_label: name,
-                        pysat_inst.meta.axis_label: name}
+            new_meta = {pysat_inst.fill_label: np.nan,
+                        pysat_inst.name_label: name,
+                        pysat_inst.desc_label: name.replace("OCB", \
+                                        "Open Closed field-line Boundary"),
+                        pysat_inst.plot_label: name,
+                        pysat_inst.axis_label: name}
+        elif isvector:
+            name = ("OCB_" + ocb_name.split("_ocb")[0]).replace("_", " ")
+            new_meta = {pysat_inst.fill_label: None,
+                        pysat_inst.name_label: name,
+                        pysat_inst.desc_label: "Open Closed field-line " \
+                        + "Boundary vector " \
+                        + pysat_inst.meta[pysat_name][pysat_inst.desc_label],
+                        pysat_inst.units_label:
+                        pysat_inst.meta[pysat_name][pysat_inst.units_label],
+                        pysat_inst.plot_label: name,
+                        pysat_inst.axis_label: name}
         else:
             # Initialize with old values
             labels = list(pysat_inst.meta.data.keys())
             new_meta = {ll: pysat_inst.meta[pysat_name][ll] for ll in labels}
 
             # Update certain categories with OCB information
-            new_meta[pysat_inst.meta.fill_label] = np.nan
-            new_meta[pysat_inst.meta.name_label] = "OCB " \
-                + new_meta[pysat_inst.meta.name_label]
-            new_meta[pysat_inst.meta.desc_label] = "Open Closed field-line " \
-                + "Boundary " + new_meta[pysat_inst.meta.desc_label]
-            new_meta[pysat_inst.meta.plot_label] = "OCB " \
-                + new_meta[pysat_inst.meta.plot_label]
-            new_meta[pysat_inst.meta.axis_label] = "OCB " \
-                + new_meta[pysat_inst.meta.axis_label]
+            new_meta[pysat_inst.fill_label] = np.nan
+            new_meta[pysat_inst.name_label] = "OCB " \
+                + new_meta[pysat_inst.name_label]
+            new_meta[pysat_inst.desc_label] = "Open Closed field-line " \
+                + "Boundary " + new_meta[pysat_inst.desc_label]
+            new_meta[pysat_inst.plot_label] = "OCB " \
+                + new_meta[pysat_inst.plot_label]
+            new_meta[pysat_inst.axis_label] = "OCB " \
+                + new_meta[pysat_inst.axis_label]
 
         # Set the notes
-        new_meta[pysat_inst.meta.notes_label] = notes
+        new_meta[pysat_inst.notes_label] = notes
 
         # Set new metadata
-        pysat_inst.meta.__setitem__(ocb_name, new_meta)
+        pysat_inst.meta[ocb_name] = new_meta
 
     return
