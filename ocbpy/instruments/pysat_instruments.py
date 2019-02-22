@@ -213,6 +213,7 @@ def add_ocb_to_data(pysat_inst, mlat_name, mlt_name, evar_names=list(),
                 # Set this value's AACGM vector values
                 vector_default = {"ocb_lat": ocb_output[olat_name][iout],
                                   "ocb_mlt": ocb_output[omlt_name][iout],
+                                  "r_corr": ocb_output[ocor_name][iout],
                                   "aacgm_n": 0.0, "aacgm_e": 0.0,
                                   "aacgm_z": 0.0, "aacgm_mag": np.nan,
                                   "dat_name": None, "dat_units": None,

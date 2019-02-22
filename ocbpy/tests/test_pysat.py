@@ -100,18 +100,12 @@ class TestPysatMethods(unittest.TestCase):
         self.test_inst['latitude'][np.sign(self.test_inst.data['latitude']) !=
                                    self.ocb.hemisphere] *= -1.0
 
-        self.ocb_out = {'latitude': {'max': 86.86586, 'min': 1.26930},
-                        'mlt': {'max': 18.47234, 'min': 14.60623},
-                        'dummy1': {'max': 17.21520, 'min': 0.0},
-                        'dummy2': {'max': 16.37831, 'min': 0.0}}
-
         self.log_handler = logbook.TestHandler()
         self.log_handler.push_thread()
 
     def tearDown(self):
         self.log_handler.pop_thread()
         del self.test_file, self.log_handler, self.test_inst, self.ocb
-        del self.ocb_out
 
     def test_add_ocb_to_metadata(self):
         """ Test the metadata adding routine
@@ -224,10 +218,9 @@ class TestPysatMethods(unittest.TestCase):
                 # Test to see that data within 10 minutes of the test OCBs has
                 # OCB locations and other data is NaN
                 match_data = test_inst[ocb_key]
-                if not isvector[i]:
-                    match_data = match_data[np.isfinite(match_data)]
-                else:
-                    match_data = match_data[np.not_equal(match_data, None)]
+                mask_data = np.not_equal(match_data, None) if isvector[i] \
+                    else np.isfinite(match_data)
+                match_data = match_data[mask_data]
 
                 self.assertEqual(len(match_data), 1770)
                 self.assertLessEqual(abs(match_data.index[0] -
@@ -237,14 +230,14 @@ class TestPysatMethods(unittest.TestCase):
                     self.assertTrue(isinstance(match_data[0],
                                                ocbpy.ocb_scaling.VectorData))
                 elif pysat_keys[i] is not None:
-                    self.assertAlmostEqual(match_data.max(),
-                                           self.ocb_out[pysat_keys[i]]['max'],
-                                           places=5)
-                    self.assertAlmostEqual(match_data.min(),
-                                           self.ocb_out[pysat_keys[i]]['min'],
-                                           places=5)
+                    pysat_data = test_inst[pysat_keys[i]][mask_data]
+                    rscale = (self.ocb.r / (90.0 - self.ocb.boundary_lat))**2
+                    self.assertGreaterEqual(match_data.min(),
+                                            pysat_data.min() * rscale.min())
+                    self.assertGreaterEqual(pysat_data.max() * rscale.max(),
+                                            match_data.max())
 
-            del ocb_key, match_data
+            del ocb_key, match_data, mask_data
 
     def test_add_ocb_to_data_ocb_obj(self):
         """ Test adding ocb to pysat data using the loaded OCB object
@@ -253,14 +246,15 @@ class TestPysatMethods(unittest.TestCase):
         added = ocb_pysat.add_ocb_to_data(self.test_inst, "latitude", "mlt",
                                           ocb=self.ocb)
 
+        nkeys = len(added)
         pysat_keys = [aa.split("_ocb")[0] for aa in added]
         self.assertTrue('r_corr' in pysat_keys)
         pysat_keys[pysat_keys.index("r_corr")] = None
 
         self.test_ocb_added(test_inst=self.test_inst, added_keys=added,
-                            pysat_keys=pysat_keys, isvector=[False, False],
-                            nkeys=3)
-        del added, pysat_keys, aa
+                            pysat_keys=pysat_keys,
+                            isvector=[False for i in range(nkeys)], nkeys=nkeys)
+        del added, pysat_keys, aa, nkeys
 
     def test_add_ocb_to_data_ocb_file(self):
         """ Test adding ocb to pysat data using the OCB file name
@@ -269,14 +263,15 @@ class TestPysatMethods(unittest.TestCase):
         added = ocb_pysat.add_ocb_to_data(self.test_inst, "latitude", "mlt",
                                           ocbfile=self.test_file)
 
+        nkeys = len(added)
         pysat_keys = [aa.split("_ocb")[0] for aa in added]
         self.assertTrue('r_corr' in pysat_keys)
         pysat_keys[pysat_keys.index("r_corr")] = None
 
         self.test_ocb_added(test_inst=self.test_inst, added_keys=added,
-                            pysat_keys=pysat_keys, isvector=[False, False],
-                            nkeys=3)
-        del added, pysat_keys, aa
+                            pysat_keys=pysat_keys,
+                            isvector=[False for i in range(nkeys)], nkeys=nkeys)
+        del added, pysat_keys, aa, nkeys
 
     def test_add_ocb_to_data_evar(self):
         """ Test adding ocb to pysat with E-field related variables
@@ -285,14 +280,15 @@ class TestPysatMethods(unittest.TestCase):
         added = ocb_pysat.add_ocb_to_data(self.test_inst, "latitude", "mlt",
                                           evar_names=['dummy1'], ocb=self.ocb)
 
+        nkeys = len(added)
         pysat_keys = [aa.split("_ocb")[0] for aa in added]
         self.assertTrue('r_corr' in pysat_keys)
         pysat_keys[pysat_keys.index("r_corr")] = None
 
         self.test_ocb_added(test_inst=self.test_inst, added_keys=added,
                             pysat_keys=pysat_keys,
-                            isvector=[False, False, False], nkeys=4)
-        del added, pysat_keys, aa
+                            isvector=[False for i in range(nkeys)], nkeys=nkeys)
+        del added, pysat_keys, aa, nkeys
 
     def test_add_ocb_to_data_curl_evar(self):
         """ Test adding ocb to pysat with Curl E-field related variables
@@ -302,14 +298,15 @@ class TestPysatMethods(unittest.TestCase):
                                           curl_evar_names=['dummy2'],
                                           ocb=self.ocb)
 
+        nkeys = len(added)
         pysat_keys = [aa.split("_ocb")[0] for aa in added]
         self.assertTrue('r_corr' in pysat_keys)
         pysat_keys[pysat_keys.index("r_corr")] = None
 
         self.test_ocb_added(test_inst=self.test_inst, added_keys=added,
                             pysat_keys=pysat_keys,
-                            isvector=[False, False, False], nkeys=4)
-        del added, pysat_keys, aa
+                            isvector=[False for i in range(nkeys)], nkeys=nkeys)
+        del added, pysat_keys, aa, nkeys
 
     def test_add_ocb_to_data_evar_vect(self):
         """ Test adding ocb to pysat with Curl E-field related variables
@@ -324,6 +321,7 @@ class TestPysatMethods(unittest.TestCase):
                                                          'dat_units': 'm/s'}},
                                           ocb=self.ocb)
 
+        nkeys = len(added)
         pysat_keys = list()
         isvector = list()
         for aa in added:
@@ -337,9 +335,10 @@ class TestPysatMethods(unittest.TestCase):
             pysat_keys.append(pp)
         
         self.test_ocb_added(test_inst=self.test_inst, added_keys=added,
-                            pysat_keys=pysat_keys, isvector=isvector, nkeys=4)
+                            pysat_keys=pysat_keys, isvector=isvector,
+                            nkeys=nkeys)
         
-        del added, pysat_keys, aa, pp, isvector
+        del added, pysat_keys, aa, pp, isvector, nkeys
 
     def test_add_ocb_to_data_curl_evar_vect(self):
         """ Test adding ocb to pysat with Curl E-field related variables
@@ -354,6 +353,7 @@ class TestPysatMethods(unittest.TestCase):
                                                          'dat_units': 'm/s'}},
                                           ocb=self.ocb)
 
+        nkeys = len(added)
         pysat_keys = list()
         isvector = list()
         for aa in added:
@@ -367,9 +367,10 @@ class TestPysatMethods(unittest.TestCase):
             pysat_keys.append(pp)
         
         self.test_ocb_added(test_inst=self.test_inst, added_keys=added,
-                            pysat_keys=pysat_keys, isvector=isvector, nkeys=4)
+                            pysat_keys=pysat_keys, isvector=isvector,
+                            nkeys=nkeys)
         
-        del added, pysat_keys, aa, pp, isvector
+        del added, pysat_keys, aa, pp, isvector, nkeys
 
     def test_add_ocb_to_data_custom_vect(self):
         """ Test adding ocb to pysat with custom scaled variables
@@ -384,6 +385,7 @@ class TestPysatMethods(unittest.TestCase):
                                                          'scale_func': None}},
                                           ocb=self.ocb)
 
+        nkeys = len(added)
         pysat_keys = list()
         isvector = list()
         for aa in added:
@@ -397,9 +399,10 @@ class TestPysatMethods(unittest.TestCase):
             pysat_keys.append(pp)
         
         self.test_ocb_added(test_inst=self.test_inst, added_keys=added,
-                            pysat_keys=pysat_keys, isvector=isvector, nkeys=4)
+                            pysat_keys=pysat_keys, isvector=isvector,
+                            nkeys=nkeys)
         
-        del added, pysat_keys, aa, pp, isvector
+        del added, pysat_keys, aa, pp, isvector, nkeys
 
     def test_add_ocb_to_data_all_types(self):
         """ Test adding ocb to pysat with E-field, Curl, and Vector data
@@ -416,6 +419,7 @@ class TestPysatMethods(unittest.TestCase):
                                                          'scale_func': None}},
                                           ocb=self.ocb)
 
+        nkeys = len(added)
         pysat_keys = list()
         isvector = list()
         for aa in added:
@@ -429,9 +433,10 @@ class TestPysatMethods(unittest.TestCase):
             pysat_keys.append(pp)
         
         self.test_ocb_added(test_inst=self.test_inst, added_keys=added,
-                            pysat_keys=pysat_keys, isvector=isvector, nkeys=6)
+                            pysat_keys=pysat_keys, isvector=isvector,
+                            nkeys=nkeys)
         
-        del added, pysat_keys, aa, pp, isvector
+        del added, pysat_keys, aa, pp, isvector, nkeys
 
     def test_add_ocb_to_data_no_file(self):
         """ Test adding ocb to pydat data when no OCB file or data is provided
