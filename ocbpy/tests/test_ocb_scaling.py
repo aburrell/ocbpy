@@ -127,9 +127,9 @@ class TestOCBScalingMethods(unittest.TestCase):
         """
         self.vdata.ocb_aacgm_mlt = self.ocb.phi_cent[self.vdata.ocb_ind] / 15.0
         self.vdata.ocb_aacgm_lat = 90.0 - self.ocb.r_cent[self.vdata.ocb_ind]
-        (self.vdata.ocb_lat,
-         self.vdata.ocb_mlt) = self.ocb.normal_coord(self.vdata.aacgm_lat,
-                                                     self.vdata.aacgm_mlt)
+        (self.vdata.ocb_lat, self.vdata.ocb_mlt,
+         self.vdata.r_corr) = self.ocb.normal_coord(self.vdata.aacgm_lat,
+                                                    self.vdata.aacgm_mlt)
 
         # Test the calculation of the test pole angle
         self.vdata.calc_vec_pole_angle()
@@ -165,8 +165,8 @@ class TestOCBScalingMethods(unittest.TestCase):
         # Set the initial values
         self.vdata.ocb_aacgm_mlt = self.ocb.phi_cent[self.vdata.ocb_ind] / 15.0
         self.vdata.ocb_aacgm_lat = 90.0 - self.ocb.r_cent[self.vdata.ocb_ind]
-        (self.vdata.ocb_lat,
-         self.vdata.ocb_mlt) = self.ocb.normal_coord(self.vdata.aacgm_lat,
+        (self.vdata.ocb_lat, self.vdata.ocb_mlt,
+         self.vdata.r_corr) = self.ocb.normal_coord(self.vdata.aacgm_lat,
                                                      self.vdata.aacgm_mlt)
         self.vdata.calc_vec_pole_angle()
         
@@ -182,9 +182,9 @@ class TestOCBScalingMethods(unittest.TestCase):
         # Set the initial values
         self.vdata.ocb_aacgm_mlt = self.ocb.phi_cent[self.vdata.ocb_ind] / 15.0
         self.vdata.ocb_aacgm_lat = 90.0 - self.ocb.r_cent[self.vdata.ocb_ind]
-        (self.vdata.ocb_lat,
-         self.vdata.ocb_mlt) = self.ocb.normal_coord(self.vdata.aacgm_lat,
-                                                     self.vdata.aacgm_mlt)
+        (self.vdata.ocb_lat, self.vdata.ocb_mlt,
+         self.vdata.r_corr) = self.ocb.normal_coord(self.vdata.aacgm_lat,
+                                                    self.vdata.aacgm_mlt)
         self.vdata.calc_vec_pole_angle()
         self.vdata.define_quadrants()
 
@@ -205,9 +205,9 @@ class TestOCBScalingMethods(unittest.TestCase):
         # Set the initial values
         self.vdata.ocb_aacgm_mlt = self.ocb.phi_cent[self.vdata.ocb_ind] / 15.0
         self.vdata.ocb_aacgm_lat = 90.0 - self.ocb.r_cent[self.vdata.ocb_ind]
-        (self.vdata.ocb_lat,
-         self.vdata.ocb_mlt) = self.ocb.normal_coord(self.vdata.aacgm_lat,
-                                                     self.vdata.aacgm_mlt)
+        (self.vdata.ocb_lat, self.vdata.ocb_mlt,
+         self.vdata.r_corr) = self.ocb.normal_coord(self.vdata.aacgm_lat,
+                                                    self.vdata.aacgm_mlt)
         self.vdata.calc_vec_pole_angle()
         self.vdata.define_quadrants()
 
