@@ -175,15 +175,6 @@ class TestPysatMethods(unittest.TestCase):
 
             del ll, sline
 
-    def test_missing_metadata(self):
-        """ Test the metadata adding routine when pysat object has no metadata
-        """
-        ocb_pysat.add_ocb_to_metadata(pysat.Instrument(), "ocb_test", "dummy1")
-
-        self.assertEqual(len(self.log_handler.formatted_records), 1)
-        self.assertTrue(self.log_handler.formatted_records[0].find( \
-                                        'original data has no metadata') > 0)
-
     def test_no_overwrite_metadata(self):
         """ Test the overwrite block on metadata adding routine
         """
@@ -337,12 +328,13 @@ class TestPysatMethods(unittest.TestCase):
         isvector = list()
         for aa in added:
             pp = aa.split("_ocb")[0]
-            if pp not in self.test_inst.data.columns:
+            isvector.append(False)
+            if pp == "r_corr":
+                pp = None
+            elif pp not in self.test_inst.data.columns:
                 pp = 'dummy1'
-                isvector.append(True)
-            else:
-                isvector.append(False)
-            pysat_keys.append(pp if pp != "r_corr" else None)
+                isvector[-1] = True
+            pysat_keys.append(pp)
         
         self.test_ocb_added(test_inst=self.test_inst, added_keys=added,
                             pysat_keys=pysat_keys, isvector=isvector, nkeys=4)
@@ -366,12 +358,13 @@ class TestPysatMethods(unittest.TestCase):
         isvector = list()
         for aa in added:
             pp = aa.split("_ocb")[0]
-            if pp not in self.test_inst.data.columns:
+            isvector.append(False)
+            if pp == "r_corr":
+                pp = None
+            elif pp not in self.test_inst.data.columns:
                 pp = 'dummy1'
-                isvector.append(True)
-            else:
-                isvector.append(False)
-            pysat_keys.append(pp if pp != "r_corr" else None)
+                isvector[-1] = True
+            pysat_keys.append(pp)
         
         self.test_ocb_added(test_inst=self.test_inst, added_keys=added,
                             pysat_keys=pysat_keys, isvector=isvector, nkeys=4)
@@ -395,12 +388,13 @@ class TestPysatMethods(unittest.TestCase):
         isvector = list()
         for aa in added:
             pp = aa.split("_ocb")[0]
-            if pp not in self.test_inst.data.columns:
+            isvector.append(False)
+            if pp == "r_corr":
+                pp = None
+            elif pp not in self.test_inst.data.columns:
                 pp = 'dummy1'
-                isvector.append(True)
-            else:
-                isvector.append(False)
-            pysat_keys.append(pp if pp != "r_corr" else None)
+                isvector[-1] = True
+            pysat_keys.append(pp)
         
         self.test_ocb_added(test_inst=self.test_inst, added_keys=added,
                             pysat_keys=pysat_keys, isvector=isvector, nkeys=4)
@@ -426,12 +420,13 @@ class TestPysatMethods(unittest.TestCase):
         isvector = list()
         for aa in added:
             pp = aa.split("_ocb")[0]
-            if pp not in self.test_inst.data.columns:
+            isvector.append(False)
+            if pp == "r_corr":
+                pp = None
+            elif pp not in self.test_inst.data.columns:
                 pp = 'dummy1'
-                isvector.append(True)
-            else:
-                isvector.append(False)
-            pysat_keys.append(pp if pp != "r_corr" else None)
+                isvector[-1] = True
+            pysat_keys.append(pp)
         
         self.test_ocb_added(test_inst=self.test_inst, added_keys=added,
                             pysat_keys=pysat_keys, isvector=isvector, nkeys=6)
