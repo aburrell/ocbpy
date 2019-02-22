@@ -406,7 +406,7 @@ class OCBoundary(object):
         elif isinstance(self.rfunc, types.FunctionType):
             self.rfunc = np.full(shape=self.records, fill_value=self.rfunc)
         elif hasattr(self.rfunc, "shape"):
-            if self.rfunc.shape != self.records:
+            if self.rfunc.shape != self.dtime.shape:
                 raise ValueError("Misshaped correction function array")
         else:
             raise ValueError("Unknown input type for correction function")
@@ -414,11 +414,11 @@ class OCBoundary(object):
         # Set the boundary function keyword inputs
         if self.rfunc_kwargs is None:
             self.rfunc_kwargs = np.full(shape=self.records, fill_value={})
-        elif isinstance(self.rfunc, dict):
+        elif isinstance(self.rfunc_kwargs, dict):
             self.rfunc_kwargs = np.full(shape=self.records,
                                         fill_value=self.rfunc_kwargs)
         elif hasattr(self.rfunc_kwargs, "shape"):
-            if len(self.rfunc_kwargs) != self.records:
+            if self.rfunc_kwargs.shape != self.dtime.shape:
                 raise ValueError("Misshaped correction function keyword array")
         else:
             raise ValueError("Unknown input type for correction keywords")

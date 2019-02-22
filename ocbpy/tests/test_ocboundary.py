@@ -555,6 +555,79 @@ class TestOCBoundaryMethodsSouth(unittest.TestCase):
                                -78.11700354013985)
         self.assertEqual(self.ocb.aacgm_boundary_lat[rind].argmax(), 4)
 
+    def test_aacgm_boundary_location_good_south_corrected_func_arr(self):
+        """ Test func array init with good, southern, corrected OCB
+        """
+        rind = 8
+        rfuncs = np.full(shape=self.ocb.r.shape,
+                         fill_value=ocbpy.ocb_correction.circular)
+        rkwargs = np.full(shape=self.ocb.r.shape, fill_value={"r_add": 1.0})
+        self.ocb = ocbpy.ocboundary.OCBoundary(filename=self.test_south,
+                                               instrument="Ampere",
+                                               hemisphere=-1, rfunc=rfuncs,
+                                               rfunc_kwargs=rkwargs)
+
+        # Add the attribute at the good location
+        self.ocb.get_aacgm_boundary_lat(aacgm_lon=self.lon, rec_ind=rind)
+
+        # Test value of latitude attribute
+        self.assertTrue(np.all(self.ocb.aacgm_boundary_lat[rind] < 0.0))
+        self.assertAlmostEqual(self.ocb.aacgm_boundary_lat[rind].min(),
+                               -80.91948884759928)
+        self.assertEqual(self.ocb.aacgm_boundary_lat[rind].argmin(), 1)
+        self.assertAlmostEqual(self.ocb.aacgm_boundary_lat[rind].max(),
+                               -77.11526278241867)
+        self.assertEqual(self.ocb.aacgm_boundary_lat[rind].argmax(), 4)
+
+        del rind, rkwargs
+
+    def test_aacgm_boundary_location_good_south_corrected_kwarg_arr(self):
+        """ Test kwarg array init with good, southern, corrected OCB
+        """
+        rind = 8
+        rkwargs = np.full(shape=self.ocb.r.shape, fill_value={"r_add": 1.0})
+        self.ocb = ocbpy.ocboundary.OCBoundary(filename=self.test_south,
+                                               instrument="Ampere",
+                                               hemisphere=-1, \
+                                            rfunc=ocbpy.ocb_correction.circular,
+                                               rfunc_kwargs=rkwargs)
+
+        # Add the attribute at the good location
+        self.ocb.get_aacgm_boundary_lat(aacgm_lon=self.lon, rec_ind=rind)
+
+        # Test value of latitude attribute
+        self.assertTrue(np.all(self.ocb.aacgm_boundary_lat[rind] < 0.0))
+        self.assertAlmostEqual(self.ocb.aacgm_boundary_lat[rind].min(),
+                               -80.91948884759928)
+        self.assertEqual(self.ocb.aacgm_boundary_lat[rind].argmin(), 1)
+        self.assertAlmostEqual(self.ocb.aacgm_boundary_lat[rind].max(),
+                               -77.11526278241867)
+        self.assertEqual(self.ocb.aacgm_boundary_lat[rind].argmax(), 4)
+
+        del rind, rkwargs
+
+    def test_aacgm_boundary_location_good_south_corrected_dict(self):
+        """ Test dict init with good, southern, corrected OCB
+        """
+        rind = 8
+        self.ocb = ocbpy.ocboundary.OCBoundary(filename=self.test_south,
+                                               instrument="Ampere",
+                                               hemisphere=-1, \
+                                            rfunc=ocbpy.ocb_correction.circular,
+                                               rfunc_kwargs={"r_add": 1.0})
+
+        # Add the attribute at the good location
+        self.ocb.get_aacgm_boundary_lat(aacgm_lon=self.lon, rec_ind=rind)
+
+        # Test value of latitude attribute
+        self.assertTrue(np.all(self.ocb.aacgm_boundary_lat[rind] < 0.0))
+        self.assertAlmostEqual(self.ocb.aacgm_boundary_lat[rind].min(),
+                               -80.91948884759928)
+        self.assertEqual(self.ocb.aacgm_boundary_lat[rind].argmin(), 1)
+        self.assertAlmostEqual(self.ocb.aacgm_boundary_lat[rind].max(),
+                               -77.11526278241867)
+        self.assertEqual(self.ocb.aacgm_boundary_lat[rind].argmax(), 4)
+
     def test_aacgm_boundary_location_good_south_corrected(self):
         """ Test finding the corrected OCB in AACGM coordinates in the south
         """

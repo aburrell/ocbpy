@@ -38,7 +38,7 @@ __default_file__ = "boundaries/si13_north_circle"
 #---------------------------------------------------------------------
 
 try:
-    from ocbpy import (ocboundary, ocb_scaling, ocb_time)
+    from ocbpy import (ocboundary, ocb_scaling, ocb_time, ocb_correction)
     from ocbpy.ocboundary import (OCBoundary, match_data_ocb)
 except ImportError as err:
     logging.exception('problem importing ocboundary: ' + str(err))
