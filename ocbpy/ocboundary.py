@@ -85,13 +85,16 @@ class OCBoundary(object):
     r : (numpy.ndarray or NoneType)
         Numpy array of floats that give the radius of the OCBoundary
         in degrees (default=None)
-    rfunc : (numpy.ndarray or NoneType)
+    rfunc : (numpy.ndarray, function, or NoneType)
         Non-circular boundaries must be specified by a boundary function that
         alters r at a specified AACGM MLT (in hours).  To allow the boundary
         shape to change with time, each temporal instance may have a different
-        function. (default=None)
-    rfunc_kwargs : (numpy.ndarray or NoneType)
-        Optional keyword arguements for rfunc. (default=None)
+        function. If a single function is provided, will recast as an array that
+        specifies this function for all times (default=None)
+    rfunc_kwargs : (numpy.ndarray, dict, or NoneType)
+        Array of optional keyword arguements for rfunc. If None is specified,
+        uses function defaults.  If dict is specified, recasts as an array
+        of this dict for all times (default=None)
     (more) : (numpy.ndarray or NoneType)
         Numpy array of floats that hold the remaining values in input file
 
@@ -115,7 +118,8 @@ class OCBoundary(object):
     """
 
     def __init__(self, filename="default", instrument="image", hemisphere=1,
-                 boundary_lat=None, stime=None, etime=None):
+                 boundary_lat=None, stime=None, etime=None, rfunc=None,
+                 rfunc_kwargs=None):
         """Object containing OCB data
 
         Parameters
@@ -135,6 +139,11 @@ class OCBoundary(object):
             First time to load data or beginning of file (default=None)
         etime : (datetime or NoneType)
             Last time to load data or ending of file (default=None)
+        rfunc : (np.ndarray, function, or NoneType)
+            OCB radius correction function, if None will use instrument default.
+            Function must have AACGM MLT as arguement input. (default=None) 
+        rfunc_kwargs : (np.ndarray, dict, or NoneType)
+            OCB radius correction function keyword arguements. (default={})
 
         """
         from os import path
@@ -180,8 +189,8 @@ class OCBoundary(object):
         self.phi_cent = None
         self.r_cent = None
         self.r = None
-        self.rfunc = None
-        self.rfunc_kwargs = None
+        self.rfunc = rfunc
+        self.rfunc_kwargs = rfunc_kwargs
 
         # Get the instrument defaults
         hlines, ocb_cols, datetime_fmt = self.inst_defaults()
@@ -233,6 +242,19 @@ class OCBoundary(object):
                                                   self.phi_cent[i])
                     out = "{:s} {:.2f} {:.2f}\n".format(out, self.r_cent[i],
                                                         self.r[i])
+
+                # Determine which scaling functions are used
+                if self.rfunc is not None:
+                    out = "{:s}\nUses scaling function(s):\n".format(out)
+                    fnames = list(set([ff.__name__ for ff in self.rfunc]))
+
+                    for ff in fnames:
+                        kw = list(set([self.rfunc_kwargs[i].__str__()
+                                       for i, rf in enumerate(self.rfunc)
+                                       if rf.__name__ == ff]))
+
+                        for kk in kw:
+                            out = "{:s}{:s}(**{:s})\n".format(out, ff, kk)
 
         return out
 
@@ -306,12 +328,13 @@ class OCBoundary(object):
 
         """
         import datetime as dt
+        import types
         import ocbpy.ocb_time as ocbt
         
         cols = ocb_cols.split()
         dflag = -1
         ldtype = [(k,float) if k != "num_sectors" else (k,int) for k in cols]
-        
+
         if "soy" in cols and "year" in cols:
             dflag = 0
             ldtype[cols.index('year')] = ('year',int)
@@ -377,12 +400,32 @@ class OCBoundary(object):
         self.records = len(dt_list)
         self.dtime = np.array(dt_list)
 
+        # Set the boundary function
+        if self.rfunc is None:
+            self._set_default_rfunc()
+        elif isinstance(self.rfunc, types.FunctionType):
+            self.rfunc = np.full(shape=self.records, fill_value=self.rfunc)
+        elif hasattr(self.rfunc, "shape"):
+            if self.rfunc.shape != self.records:
+                raise ValueError("Misshaped correction function array")
+        else:
+            raise ValueError("Unknown input type for correction function")
+
+        # Set the boundary function keyword inputs
+        if self.rfunc_kwargs is None:
+            self.rfunc_kwargs = np.full(shape=self.records, fill_value={})
+        elif isinstance(self.rfunc, dict):
+            self.rfunc_kwargs = np.full(shape=self.records,
+                                        fill_value=self.rfunc_kwargs)
+        elif hasattr(self.rfunc_kwargs, "shape"):
+            if len(self.rfunc_kwargs) != self.records:
+                raise ValueError("Misshaped correction function keyword array")
+        else:
+            raise ValueError("Unknown input type for correction keywords")
+
         # Load the attributes saved in odata
         for nn in oname:
             setattr(self, nn, getattr(odata, nn)[itime])
-
-        # Set the default boundary function
-        self._set_default_rfunc()
 
         return
 
@@ -489,9 +532,10 @@ class OCBoundary(object):
         # Get the distance between the OCB pole and the point location.  This
         # distance is then scaled by r, the OCB radius.  For non-circular
         # boundaries, r is a function of MLT
-        local_r = self.rfunc[self.rec_ind](self, aacgm_mlt,
-                                           **self.rfunc_kwargs[self.rec_ind])
-        scalen = (90.0 - abs(self.boundary_lat)) / local_r
+        r_corr = self.rfunc[self.rec_ind](aacgm_mlt,
+                                          **self.rfunc_kwargs[self.rec_ind])
+        scalen = (90.0 - abs(self.boundary_lat)) / (self.r[self.rec_ind]
+                                                    + r_corr)
         xn = (xp - xc) * scalen
         yn = (yp - yc) * scalen
 
@@ -501,18 +545,21 @@ class OCBoundary(object):
         if ocb_mlt < 0.0:
             ocb_mlt += 24.0
 
-        return ocb_lat, ocb_mlt
+        return ocb_lat, ocb_mlt, r_corr
 
-    def revert_coord(self, ocb_lat, ocb_mlt):
+    def revert_coord(self, ocb_lat, ocb_mlt, r_corr=0.0):
         """Converts the position of a measurement in normalised co-ordinates
         relative to the OCB into AACGM co-ordinates
 
         Parameters
         -----------
         ocb_lat : (float)
-            Input OCB latitude (degrees)
+            Input OCB latitude in degrees
         ocb_mlt : (float)
-            Input OCB local time (hours)
+            Input OCB local time in hours
+        r_corr : (float)
+            Input OCB radial correction in degrees, may be a function of
+            AACGM MLT (default=0.0)
 
         Returns
         --------
@@ -542,9 +589,8 @@ class OCBoundary(object):
         xn = rn * np.cos(thetan)
         yn = rn * np.sin(thetan)
 
-        local_r = self.rfunc[self.rec_ind](self, ocb_mlt, mlt_coords="ocb",
-                                           **self.rfunc_kwargs[self.rec_ind])
-        scale_ocb = local_r / (90.0 - self.hemisphere * self.boundary_lat)
+        scale_ocb = (self.r[self.rec_ind]
+                     + r_corr) / (90.0 - self.hemisphere * self.boundary_lat)
         xp = xn * scale_ocb + xc
         yp = yn * scale_ocb + yc
 
@@ -591,9 +637,6 @@ class OCBoundary(object):
         """
         from ocbpy.ocb_time import deg2hr
 
-        # Save the input rec_ind
-        in_rec_ind = self.rec_ind
-
         # Ensure the boundary longitudes span from 0-360 degrees
         aacgm_lon = np.array(aacgm_lon)
         aacgm_lon[aacgm_lon < 0.0] += 360.0
@@ -626,9 +669,9 @@ class OCBoundary(object):
                 del_lon = np.radians(aacgm_lon - self.phi_cent[i])
 
                 # Calculate the radius of the OCB in degrees
-                self.rec_ind = i
-                scale_r = self.rfunc[i](self, deg2hr(aacgm_lon),
-                                        **self.rfunc_kwargs[i])
+                r_corr = self.rfunc[i](deg2hr(aacgm_lon),
+                                       **self.rfunc_kwargs[i])
+                scale_r = self.r[i] + r_corr
                 rad = self.r_cent[i] * np.cos(del_lon) + \
                 np.sqrt(scale_r**2 - (self.r_cent[i] * np.sin(del_lon))**2)
 
@@ -647,24 +690,24 @@ class OCBoundary(object):
                 logging.warn("unable to update AACGM boundary latitude at " +
                              "{:}, overwrite blocked".format(self.dtime[i]))
 
-        # Reset the record index to the initial value
-        self.rec_ind = in_rec_ind
         return
 
     def _set_default_rfunc(self):
-        """Set the default instrument OCB boundary function """
-        import ocbpy.ocb_correction as ocbcor
+        """Set the default instrument OCB boundary function 
 
+        Notes
+        -----
+        Assign a function for each time in case we have a data set with a
+        correction that changes with UT
+
+        """
+        import ocbpy.ocb_correction as ocbcor
 
         if self.instrument == "image":
             self.rfunc = np.full(shape=self.records, fill_value=ocbcor.circular)
-            self.rfunc_kwargs = np.full(shape=self.records,
-                                        fill_value={'r_add':0.0})
         elif self.instrument == "ampere":
             self.rfunc = np.full(shape=self.records,
                                  fill_value=ocbcor.ampere_harmonic)
-            self.rfunc_kwargs = np.full(shape=self.records,
-                                        fill_value={'method':'median'})
         else:
             raise ValueError("unknown instrument")
 
