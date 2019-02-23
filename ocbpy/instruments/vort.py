@@ -133,10 +133,10 @@ def vort2ascii_ocb(vortfile, outfile, ocb=None, ocbfile=None, max_sdiff=600,
             if ivort < num_vort and ocb.rec_ind < ocb.records:
                 # Use the indexed OCB to convert the AACGM grid coordinate to
                 # one related to the OCB
-                nlat, nmlt = ocb.normal_coord(vdata['CENTRE_MLAT'][ivort],
-                                              vdata['MLT'][ivort])
+                nlat, nmlt, ncor = ocb.normal_coord(vdata['CENTRE_MLAT'][ivort],
+                                                    vdata['MLT'][ivort])
                 nvort = ocbscal.normal_curl_evar(vdata['VORTICITY'][ivort],
-                                                 ocb.r[ocb.rec_ind], ref_r)
+                                                 ocb.r[ocb.rec_ind]+ncor, ref_r)
 
                 # Format the output line
                 #    DATE TIME (SAVE_ALL) OCB_LAT OCB_MLT NORM_VORT

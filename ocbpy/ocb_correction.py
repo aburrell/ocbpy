@@ -19,64 +19,46 @@ Burrell paper in prep
 """
 import numpy as np
 
-def circular(ocb, mlt, mlt_coords="aacgm", r_add=0.0):
-    """Return a circular boundary
+def circular(mlt, r_add=0.0):
+    """Return a circular boundary correction
 
     Parameters
     ----------
-    ocb : (OCBoundary)
-        OCBoundary object
     mlt : (float)
         Magnetic local time in hours (not actually used)
-    mlt_coords : (str)
-        Coordinates of the MLT.  Accepts 'aacgm' and 'ocb' (default='aacgm')
-        (not used here)
     r_add : (float)
-        Offset added to default radius (default=0.0)
+        Offset added to default radius in degrees (default=0.0)
 
     Returns
     -------
-    r : (float)
-        Radius at this MLT and time (as specified by ocb.rec_ind)
+    r_corr : (float)
+        Radius correction in degrees at this MLT
 
     """
 
-    if ocb.rec_ind < 0 or ocb.rec_ind >= ocb.records:
-        r = np.nan
-    else:
-        r = ocb.r[ocb.rec_ind] + r_add
-
-    return r
+    return r_add
 
 
-def ampere_harmonic(ocb, mlt, mlt_coords="aacgm", method='median'):
+def ampere_harmonic(mlt, method='median'):
     """Return the results of a 3rd order harmonic fit to AMPERE/DMSP differences
 
     Parameters
     ----------
-    ocb : (OCBoundary)
-        OCBoundary object
     mlt : (float or array-like)
-        Magnetic local time in hours (not actually used)
-    mlt_coords : (str)
-        Coordinates of the MLT.  Accepts 'aacgm' and 'ocb' (default='aacgm')
+        Magnetic local time in hours
     method : (str)
         Method used to determine coefficients; accepts median or gaussian
         (default='median')
 
     Returns
     -------
-    r : (float)
-        Radius at this MLT and time (as specified by ocb.rec_ind)
+    r_corr : (float)
+        Radius correction in degrees at this MLT
 
     """
     from ocbpy.ocb_time import hr2rad
 
-    mlt_coods = mlt_coords.lower()
-    
-    if mlt_coords == "ocb":
-        raise ValueError("routine lacks OCB to AACGM conversion")
-
+    method = method.lower()
     coeff = {'median': [3.10, -0.10, -0.08, 1.83, -0.73, -0.80, -0.07, 0.28,
                         -0.67, 0.93, -0.12, -0.21, 0.08],
              'gaussian': [3.61, -0.19, 0.15, 1.74, -0.67, -0.85, -0.13, 0.26,
@@ -85,17 +67,13 @@ def ampere_harmonic(ocb, mlt, mlt_coords="aacgm", method='median'):
     if method not in coeff.keys():
         raise ValueError("unknown coefficient computation method")
 
-    if ocb.rec_ind < 0 or ocb.rec_ind >= ocb.records:
-        r = np.nan
-    else:
-        rad_mlt = hr2rad(mlt)
-        r_add = coeff[method][0] \
-            + coeff[method][1] * np.cos(rad_mlt+coeff[method][2]) \
-            + coeff[method][3] * np.sin(rad_mlt+coeff[method][4]) \
-            + coeff[method][5] * np.cos(2.0 * (rad_mlt+coeff[method][6])) \
-            + coeff[method][7] * np.sin(2.0 * (rad_mlt+coeff[method][8])) \
-            + coeff[method][9] * np.cos(3.0 * (rad_mlt+coeff[method][10])) \
-            + coeff[method][11] * np.sin(3.0 * (rad_mlt+coeff[method][12]))
-        r = ocb.r[ocb.rec_ind] + r_add
+    rad_mlt = hr2rad(mlt)
+    r_corr = coeff[method][0] \
+                + coeff[method][1] * np.cos(rad_mlt+coeff[method][2]) \
+                + coeff[method][3] * np.sin(rad_mlt+coeff[method][4]) \
+                + coeff[method][5] * np.cos(2.0 * (rad_mlt+coeff[method][6])) \
+                + coeff[method][7] * np.sin(2.0 * (rad_mlt+coeff[method][8])) \
+                + coeff[method][9] * np.cos(3.0 * (rad_mlt+coeff[method][10])) \
+                + coeff[method][11] * np.sin(3.0 * (rad_mlt+coeff[method][12]))
 
-    return r
+    return r_corr

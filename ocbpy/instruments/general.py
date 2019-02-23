@@ -7,10 +7,11 @@ test_file(filename)
     Test to see whether file exists and is small enough to load
 load_ascii_data(filename, hlines, kwargs)
     Load time-sorted ascii data file
+
 """
+import datetime as dt
 import numpy as np
 import logbook as logging
-import datetime as dt
 
 def test_file(filename):
     """Test to ensure the file is small enough to read in.  Python can only
@@ -25,6 +26,7 @@ def test_file(filename):
     ---------
     good_flag : (bool)
         True if good, bad if false
+
     """
     from os import path
 
@@ -101,6 +103,7 @@ def load_ascii_data(filename, hlines, miss=None, fill=np.nan, hsplit=None,
     Notes
     -------
     Data is assumed to be float unless otherwise stated.
+
     """
     import ocbpy.ocb_time as ocbt
 

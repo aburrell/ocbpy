@@ -146,6 +146,13 @@ class TestOCBoundaryMethodsNorth(unittest.TestCase):
     def tearDown(self):
         del self.ocb, self.test_north, self.lon
 
+    def test_bad_rfunc_inst(self):
+        """Test failure setting default rfunc for unknown instrument"""
+        with self.assertRaisesRegexp(ValueError, "unknown instrument"):
+            self.ocb.instrument = "bad"
+            self.ocb.rfunc = None
+            self.ocb.load()
+        
     def test_default_repr(self):
         """ Test the default class representation """
         out = self.ocb.__repr__()
@@ -261,21 +268,22 @@ class TestOCBoundaryMethodsNorth(unittest.TestCase):
         """
         self.ocb.rec_ind = 27
         
-        ocb_lat, ocb_mlt = self.ocb.normal_coord(90.0, 0.0)
+        ocb_lat, ocb_mlt, r_corr = self.ocb.normal_coord(90.0, 0.0)
         self.assertAlmostEqual(ocb_lat, 86.8658623137)
         self.assertAlmostEqual(ocb_mlt, 17.832)
-        del ocb_lat, ocb_mlt
+        self.assertEqual(r_corr, 0.0)
+        del ocb_lat, ocb_mlt, r_corr
 
     def test_revert_coord_north(self):
         """ Test the reversion to AACGM coordinates in the north
         """
         self.ocb.rec_ind = 27
         
-        ocb_lat, ocb_mlt = self.ocb.normal_coord(80.0, 0.0)
-        aacgm_lat, aacgm_mlt = self.ocb.revert_coord(ocb_lat, ocb_mlt)
+        ocb_lat, ocb_mlt, r_corr = self.ocb.normal_coord(80.0, 0.0)
+        aacgm_lat, aacgm_mlt = self.ocb.revert_coord(ocb_lat, ocb_mlt, r_corr)
         self.assertAlmostEqual(aacgm_lat, 80.0)
         self.assertAlmostEqual(aacgm_mlt, 0.0)
-        del ocb_lat, ocb_mlt, aacgm_lat, aacgm_mlt
+        del ocb_lat, ocb_mlt, r_corr, aacgm_lat, aacgm_mlt
 
     def test_default_boundary_input(self):
         """ Test to see that the boundary latitude has the correct sign
@@ -444,12 +452,9 @@ class TestOCBoundaryMethodsSouth(unittest.TestCase):
                                     "test_south_circle")
         self.assertTrue(path.isfile(self.test_south))
         self.ocb = ocbpy.ocboundary.OCBoundary(filename=self.test_south,
-                                                     instrument="Ampere",
-                                                     hemisphere=-1)
-        # Set a custom correction for AMPERE
-        for i in range(self.ocb.records):
-            self.ocb.rfunc[i] = ocbpy.ocb_correction.circular
-            self.ocb.rfunc_kwargs[i] = {"r_add": 0.0}
+                                               instrument="Ampere",
+                                               hemisphere=-1, \
+                                            rfunc=ocbpy.ocb_correction.circular)
         
         self.lon = np.linspace(0.0, 360.0, num=6)
 
@@ -501,10 +506,11 @@ class TestOCBoundaryMethodsSouth(unittest.TestCase):
         """
         self.ocb.rec_ind = 8
 
-        ocb_lat, ocb_mlt = self.ocb.normal_coord(-90.0, 0.0)
+        ocb_lat, ocb_mlt, r_corr = self.ocb.normal_coord(-90.0, 0.0)
         self.assertAlmostEqual(ocb_lat, -86.4)
         self.assertAlmostEqual(ocb_mlt, 6.0)
-        del ocb_lat, ocb_mlt
+        self.assertEqual(r_corr, 0.0)
+        del ocb_lat, ocb_mlt, r_corr
 
     def test_normal_coord_south_corrected(self):
         """ Test the normalisation calculation in the south with a corrected OCB
@@ -512,10 +518,11 @@ class TestOCBoundaryMethodsSouth(unittest.TestCase):
         self.ocb.rec_ind = 8
         self.ocb.rfunc_kwargs[self.ocb.rec_ind]['r_add'] = 1.0
 
-        ocb_lat, ocb_mlt = self.ocb.normal_coord(-90.0, 0.0)
+        ocb_lat, ocb_mlt, r_corr = self.ocb.normal_coord(-90.0, 0.0)
         self.assertAlmostEqual(ocb_lat, -86.72727272)
         self.assertAlmostEqual(ocb_mlt, 6.0)
-        del ocb_lat, ocb_mlt
+        self.assertEqual(r_corr, 1.0)
+        del ocb_lat, ocb_mlt, r_corr
 
     def test_default_boundary_input(self):
         """ Test to see that the boundary latitude has the correct sign
@@ -548,6 +555,79 @@ class TestOCBoundaryMethodsSouth(unittest.TestCase):
                                -78.11700354013985)
         self.assertEqual(self.ocb.aacgm_boundary_lat[rind].argmax(), 4)
 
+    def test_aacgm_boundary_location_good_south_corrected_func_arr(self):
+        """ Test func array init with good, southern, corrected OCB
+        """
+        rind = 8
+        rfuncs = np.full(shape=self.ocb.r.shape,
+                         fill_value=ocbpy.ocb_correction.circular)
+        rkwargs = np.full(shape=self.ocb.r.shape, fill_value={"r_add": 1.0})
+        self.ocb = ocbpy.ocboundary.OCBoundary(filename=self.test_south,
+                                               instrument="Ampere",
+                                               hemisphere=-1, rfunc=rfuncs,
+                                               rfunc_kwargs=rkwargs)
+
+        # Add the attribute at the good location
+        self.ocb.get_aacgm_boundary_lat(aacgm_lon=self.lon, rec_ind=rind)
+
+        # Test value of latitude attribute
+        self.assertTrue(np.all(self.ocb.aacgm_boundary_lat[rind] < 0.0))
+        self.assertAlmostEqual(self.ocb.aacgm_boundary_lat[rind].min(),
+                               -80.91948884759928)
+        self.assertEqual(self.ocb.aacgm_boundary_lat[rind].argmin(), 1)
+        self.assertAlmostEqual(self.ocb.aacgm_boundary_lat[rind].max(),
+                               -77.11526278241867)
+        self.assertEqual(self.ocb.aacgm_boundary_lat[rind].argmax(), 4)
+
+        del rind, rkwargs
+
+    def test_aacgm_boundary_location_good_south_corrected_kwarg_arr(self):
+        """ Test kwarg array init with good, southern, corrected OCB
+        """
+        rind = 8
+        rkwargs = np.full(shape=self.ocb.r.shape, fill_value={"r_add": 1.0})
+        self.ocb = ocbpy.ocboundary.OCBoundary(filename=self.test_south,
+                                               instrument="Ampere",
+                                               hemisphere=-1, \
+                                            rfunc=ocbpy.ocb_correction.circular,
+                                               rfunc_kwargs=rkwargs)
+
+        # Add the attribute at the good location
+        self.ocb.get_aacgm_boundary_lat(aacgm_lon=self.lon, rec_ind=rind)
+
+        # Test value of latitude attribute
+        self.assertTrue(np.all(self.ocb.aacgm_boundary_lat[rind] < 0.0))
+        self.assertAlmostEqual(self.ocb.aacgm_boundary_lat[rind].min(),
+                               -80.91948884759928)
+        self.assertEqual(self.ocb.aacgm_boundary_lat[rind].argmin(), 1)
+        self.assertAlmostEqual(self.ocb.aacgm_boundary_lat[rind].max(),
+                               -77.11526278241867)
+        self.assertEqual(self.ocb.aacgm_boundary_lat[rind].argmax(), 4)
+
+        del rind, rkwargs
+
+    def test_aacgm_boundary_location_good_south_corrected_dict(self):
+        """ Test dict init with good, southern, corrected OCB
+        """
+        rind = 8
+        self.ocb = ocbpy.ocboundary.OCBoundary(filename=self.test_south,
+                                               instrument="Ampere",
+                                               hemisphere=-1, \
+                                            rfunc=ocbpy.ocb_correction.circular,
+                                               rfunc_kwargs={"r_add": 1.0})
+
+        # Add the attribute at the good location
+        self.ocb.get_aacgm_boundary_lat(aacgm_lon=self.lon, rec_ind=rind)
+
+        # Test value of latitude attribute
+        self.assertTrue(np.all(self.ocb.aacgm_boundary_lat[rind] < 0.0))
+        self.assertAlmostEqual(self.ocb.aacgm_boundary_lat[rind].min(),
+                               -80.91948884759928)
+        self.assertEqual(self.ocb.aacgm_boundary_lat[rind].argmin(), 1)
+        self.assertAlmostEqual(self.ocb.aacgm_boundary_lat[rind].max(),
+                               -77.11526278241867)
+        self.assertEqual(self.ocb.aacgm_boundary_lat[rind].argmax(), 4)
+
     def test_aacgm_boundary_location_good_south_corrected(self):
         """ Test finding the corrected OCB in AACGM coordinates in the south
         """
@@ -560,10 +640,10 @@ class TestOCBoundaryMethodsSouth(unittest.TestCase):
         # Test value of latitude attribute
         self.assertTrue(np.all(self.ocb.aacgm_boundary_lat[rind] < 0.0))
         self.assertAlmostEqual(self.ocb.aacgm_boundary_lat[rind].min(),
-                               -81.92122960532046)
+                               -80.91948884759928)
         self.assertEqual(self.ocb.aacgm_boundary_lat[rind].argmin(), 1)
         self.assertAlmostEqual(self.ocb.aacgm_boundary_lat[rind].max(),
-                               -78.11700354013985)
+                               -77.11526278241867)
         self.assertEqual(self.ocb.aacgm_boundary_lat[rind].argmax(), 4)
 
     def test_aacgm_boundary_location_partial_fill(self):
@@ -705,6 +785,44 @@ class TestOCBoundaryMatchData(unittest.TestCase):
 
         del test_times, idat, log_rec
 
+class TestOCBoundaryFailure(unittest.TestCase):
+    def setUp(self):
+        """ Initialize the OCBoundary object using the test file
+        """
+        pass
+
+    def tearDown(self):
+        pass
+
+    def test_bad_hemisphere_input(self):
+        """ Test failure when incorrect hemisphere value is input"""
+        with self.assertRaisesRegexp(ValueError, "hemisphere must be 1"):
+            ocbpy.ocboundary.OCBoundary(hemisphere=0)
+
+    def test_bad_shape_rfunc_input(self):
+        """ Test failure when badly shaped radial correction function"""
+        with self.assertRaisesRegexp(ValueError,
+                                     "Misshaped correction function array"):
+            ocbpy.ocboundary.OCBoundary(rfunc= \
+                                np.array([ocbpy.ocb_correction.circular]))
+
+    def test_bad_shape_rfunc_kwarg_input(self):
+        """ Test failure when badly shaped radial correction function kwargs"""
+        with self.assertRaisesRegexp(ValueError,
+                                     "Misshaped correction function keyword"):
+            ocbpy.ocboundary.OCBoundary(rfunc_kwargs=np.array([{}]))
+
+    def test_bad_rfunc_input(self):
+        """ Test failure with bad radial correction function input"""
+        with self.assertRaisesRegexp(ValueError, \
+                                "Unknown input type for correction function"):
+            ocbpy.ocboundary.OCBoundary(rfunc="rfunc")
+
+    def test_bad_rfunc_kwarg_input(self):
+        """ Test failure with bad radial correction function kwarg input"""
+        with self.assertRaisesRegexp(ValueError, \
+                                "Unknown input type for correction keywords"):
+            ocbpy.ocboundary.OCBoundary(rfunc_kwargs="rfunc")
 
 if __name__ == '__main__':
     unittest.main()
