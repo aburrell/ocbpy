@@ -913,7 +913,7 @@ class TestPysatCustMethods(unittest.TestCase):
         """
         self.test_inst.custom.add(ocb_pysat.add_ocb_to_data, 'modify',
                                   mlat_name='latitude', mlt_name='mlt',
-                                  evar_name=['bad'],
+                                  evar_names=['bad'],
                                   vector_names={'bad': {'aacgm_n': 'bad_n',
                                                         'aacgm_e': 'dummy1',
                                                         'dat_name': 'bad',
