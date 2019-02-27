@@ -95,6 +95,18 @@ class TestOCBScalingMethods(unittest.TestCase):
             self.assertRegex(out, "Vector data:")
             self.assertRegex(out, "Scaling function")
 
+    def test_vector_bad_lat(self):
+        """ Test the VectorData output with data from the wrong hemisphere """
+        self.vdata.aacgm_lat *= -1.0
+        self.vdata.set_ocb(self.ocb, scale_func=ocbpy.ocb_scaling.normal_evar)
+
+        self.assertTrue(np.isnan(self.vdata.ocb_lat))
+        self.assertTrue(np.isnan(self.vdata.ocb_mlt))
+        self.assertTrue(np.isnan(self.vdata.r_corr))
+        self.assertTrue(np.isnan(self.vdata.ocb_n))
+        self.assertTrue(np.isnan(self.vdata.ocb_e))
+        self.assertTrue(np.isnan(self.vdata.ocb_z))
+
     def test_haversine(self):
         """ Test implimentation of the haversine
         """

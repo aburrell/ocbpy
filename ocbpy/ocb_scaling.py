@@ -406,6 +406,11 @@ class VectorData(object):
             (self.ocb_lat, self.ocb_mlt,
              self.r_corr) = ocb.normal_coord(self.aacgm_lat, self.aacgm_mlt)
 
+        # Exit if the OCB coordinates can't be calculated at this location
+        if(np.isnan(self.ocb_lat) or np.isnan(self.ocb_mlt) or
+           np.isnan(self.r_corr)):
+            return
+
         # Set the AACGM coordinates of the OCB pole
         self.unscaled_r = ocb.r[self.ocb_ind] + self.r_corr
         self.scaled_r = 90.0 - abs(ocb.boundary_lat)
