@@ -274,6 +274,45 @@ class TestOCBoundaryMethodsNorth(unittest.TestCase):
         self.assertEqual(r_corr, 0.0)
         del ocb_lat, ocb_mlt, r_corr
 
+    def test_normal_coord_north_w_south(self):
+        """ Test the normalisation calculation in the north with southern lat
+        """
+        self.ocb.rec_ind = 27
+        
+        out = self.ocb.normal_coord(-80.0, 0.0)
+        self.assertEqual(len(out), 3)
+
+        for val in out:
+            self.assertTrue(np.isnan(val))
+
+        del out, val
+
+    def test_normal_coord_low_rec_ind(self):
+        """ Test the normalization calculation failure with low record index
+        """
+        self.ocb.rec_ind = -1
+        
+        out = self.ocb.normal_coord(80.0, 0.0)
+        self.assertEqual(len(out), 3)
+
+        for val in out:
+            self.assertTrue(np.isnan(val))
+
+        del out, val
+
+    def test_normal_coord_high_rec_ind(self):
+        """ Test the normalization calculation failure with high record index
+        """
+        self.ocb.rec_ind = self.ocb.records + 1
+        
+        out = self.ocb.normal_coord(80.0, 0.0)
+        self.assertEqual(len(out), 3)
+
+        for val in out:
+            self.assertTrue(np.isnan(val))
+
+        del out, val
+
     def test_revert_coord_north(self):
         """ Test the reversion to AACGM coordinates in the north
         """
@@ -284,6 +323,45 @@ class TestOCBoundaryMethodsNorth(unittest.TestCase):
         self.assertAlmostEqual(aacgm_lat, 80.0)
         self.assertAlmostEqual(aacgm_mlt, 0.0)
         del ocb_lat, ocb_mlt, r_corr, aacgm_lat, aacgm_mlt
+
+    def test_revert_coord_north_w_south(self):
+        """ Test the reversion calculation in the north with southern lat
+        """
+        self.ocb.rec_ind = 27
+        
+        out = self.ocb.revert_coord(-80.0, 0.0)
+        self.assertEqual(len(out), 2)
+
+        for val in out:
+            self.assertTrue(np.isnan(val))
+
+        del out, val
+
+    def test_revert_coord_low_rec_ind(self):
+        """ Test the reversion calculation failure with low record index
+        """
+        self.ocb.rec_ind = -1
+        
+        out = self.ocb.revert_coord(80.0, 0.0)
+        self.assertEqual(len(out), 2)
+
+        for val in out:
+            self.assertTrue(np.isnan(val))
+
+        del out, val
+
+    def test_revert_coord_high_rec_ind(self):
+        """ Test the reversion calculation failure with high record index
+        """
+        self.ocb.rec_ind = self.ocb.records + 1
+        
+        out = self.ocb.revert_coord(80.0, 0.0)
+        self.assertEqual(len(out), 2)
+
+        for val in out:
+            self.assertTrue(np.isnan(val))
+
+        del out, val
 
     def test_default_boundary_input(self):
         """ Test to see that the boundary latitude has the correct sign

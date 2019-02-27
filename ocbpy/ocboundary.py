@@ -507,6 +507,8 @@ class OCBoundary(object):
             Magnetic latitude relative to OCB (degrees)
         ocb_mlt : (float)
             Magnetic local time relative to OCB (hours)
+        r_corr : (float)
+            Radius correction to OCB (degrees)
  
         Comments
         ---------
@@ -514,10 +516,10 @@ class OCBoundary(object):
 
         """
         if self.rec_ind < 0 or self.rec_ind >= self.records:
-            return np.nan, np.nan
+            return np.nan, np.nan, np.nan
 
         if np.sign(aacgm_lat) != self.hemisphere:
-            return np.nan, np.nan
+            return np.nan, np.nan, np.nan
 
         # Calculate the center of the OCB
         phi_cent_rad = np.radians(self.phi_cent[self.rec_ind])
