@@ -25,7 +25,7 @@ except ImportError as ierr:
     err += 'https://github.com/rstoneback/pysat'
     raise ImportError("{:s}\n{:}".format(err, ierr))
 
-def add_ocb_to_data(pysat_inst, mlat_name, mlt_name, evar_names=list(),
+def add_ocb_to_data(pysat_inst, mlat_name='', mlt_name='', evar_names=list(),
                     curl_evar_names=list(), vector_names=dict(), dat_ind=list(),
                     ocb=None, ocbfile=None, max_sdiff=600, min_sectors=7,
                     rcent_dev=8.0, max_r=23.0, min_r=10.0, min_j=0.15):
@@ -38,9 +38,9 @@ def add_ocb_to_data(pysat_inst, mlat_name, mlt_name, evar_names=list(),
     pysat_inst : (pysat.Instrument)
         pysat.Instrument class object containing magnetic coordinates
     mlat_name : (str)
-        Instrument data key or column for magnetic latitudes
+        Instrument data key or column for magnetic latitudes (default='')
     mlt_name : (str)
-        Instrument data key or column formagnetic longitudes
+        Instrument data key or column formagnetic longitudes (default='')
     evar_names : (list)
         List of Instrument data keys or columns pointing to measurements that
         are proportional to the electric field (E); e.g. ion drift. (default=[])
@@ -86,9 +86,14 @@ def add_ocb_to_data(pysat_inst, mlat_name, mlt_name, evar_names=list(),
 
     Returns
     ---------
-    ocb_names : (list)
-        List of names added to pysat_inst containing the OCB coordinates
-        and any scaled measurements.
+    Void
+        Adds the OCB coordinates and any scaled measurements to the pysat
+        Instrument object
+
+    Notes
+    --------
+    This may be run on a pysat instrument or as a custom function
+    (using 'modify') when loading pysat data.
 
     """
     import datetime as dt
@@ -287,7 +292,7 @@ def add_ocb_to_data(pysat_inst, mlat_name, mlt_name, evar_names=list(),
         add_ocb_to_metadata(pysat_inst, oattr, eattr, notes=notes,
                             isvector=isvector)
 
-    return ocb_output.keys()
+    return
 
 def add_ocb_to_metadata(pysat_inst, ocb_name, pysat_name, overwrite=False,
                         notes='', isvector=False):
