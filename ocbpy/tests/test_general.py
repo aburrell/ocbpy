@@ -6,10 +6,14 @@
 """ Tests the ocb_scaling class and functions
 """
 
-import ocbpy.instruments.general as ocb_igen
-import unittest
 import numpy as np
+import unittest
+import os
+
 import logbook
+
+import ocbpy
+import ocbpy.instruments.general as ocb_igen
 
 class TestGeneralMethods(unittest.TestCase):
 
@@ -17,20 +21,17 @@ class TestGeneralMethods(unittest.TestCase):
         """ Initialize the OCBoundary object using the test file, as well as
         the VectorData object
         """
-        from os import path
-        import ocbpy
         
-        ocb_dir = path.split(ocbpy.__file__)[0]
-        self.test_file = path.join(ocb_dir, "tests", "test_data",
+        ocb_dir = os.path.split(ocbpy.__file__)[0]
+        self.test_file = os.path.join(ocb_dir, "tests", "test_data",
                                    "test_north_circle")
-        self.assertTrue(path.isfile(self.test_file))
-        self.temp_output = path.join(ocb_dir, "tests", "test_data",
+        self.assertTrue(os.path.isfile(self.test_file))
+        self.temp_output = os.path.join(ocb_dir, "tests", "test_data",
                                      "temp_gen")
         self.log_handler = logbook.TestHandler()
         self.log_handler.push_thread()
 
     def tearDown(self):
-        import os
 
         if os.path.isfile(self.temp_output):
             os.remove(self.temp_output)

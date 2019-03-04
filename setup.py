@@ -56,7 +56,8 @@ setup(name='ocbpy',
       ],
       install_requires=[
           'numpy',
-          'logbook'
+          'logbook',
+          'aacgmv2',
       ],
       extras_require = {'pysat_instruments': ['pysat>=1.2.1']},
       include_package_data=True,

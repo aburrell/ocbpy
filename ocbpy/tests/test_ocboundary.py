@@ -152,7 +152,7 @@ class TestOCBoundaryMethodsNorth(unittest.TestCase):
             self.ocb.instrument = "bad"
             self.ocb.rfunc = None
             self.ocb.load()
-        
+
     def test_default_repr(self):
         """ Test the default class representation """
         out = self.ocb.__repr__()
@@ -274,6 +274,42 @@ class TestOCBoundaryMethodsNorth(unittest.TestCase):
         self.assertEqual(r_corr, 0.0)
         del ocb_lat, ocb_mlt, r_corr
 
+    def test_normal_coord_north_alt_mag_label(self):
+        """ Test the normalisation calculation with good, but odd coord label
+        """
+        self.ocb.rec_ind = 27
+        
+        ocb_lat, ocb_mlt, r_corr = self.ocb.normal_coord(90.0, 0.0,
+                                                         coords='Mag')
+        self.assertAlmostEqual(ocb_lat, 86.8658623137)
+        self.assertAlmostEqual(ocb_mlt, 17.832)
+        self.assertEqual(r_corr, 0.0)
+        del ocb_lat, ocb_mlt, r_corr
+
+    def test_normal_coord_north_geodetic(self):
+        """ Test the geodetic normalisation calculation in the north
+        """
+        self.ocb.rec_ind = 27
+        
+        ocb_lat, ocb_mlt, r_corr = self.ocb.normal_coord(90.0, 0.0,
+                                                         coords='geodetic')
+        self.assertAlmostEqual(ocb_lat, 79.25810046492204)
+        self.assertAlmostEqual(ocb_mlt, 19.384093408859393)
+        self.assertEqual(r_corr, 0.0)
+        del ocb_lat, ocb_mlt, r_corr
+
+    def test_normal_coord_north_geocentric(self):
+        """ Test the geocentric normalisation calculation in the north
+        """
+        self.ocb.rec_ind = 27
+        
+        ocb_lat, ocb_mlt, r_corr = self.ocb.normal_coord(90.0, 0.0,
+                                                         coords='geocentric')
+        self.assertAlmostEqual(ocb_lat, 79.26043482539038)
+        self.assertAlmostEqual(ocb_mlt, 19.385477161591105)
+        self.assertEqual(r_corr, 0.0)
+        del ocb_lat, ocb_mlt, r_corr
+
     def test_normal_coord_north_w_south(self):
         """ Test the normalisation calculation in the north with southern lat
         """
@@ -324,6 +360,44 @@ class TestOCBoundaryMethodsNorth(unittest.TestCase):
         self.assertAlmostEqual(aacgm_mlt, 0.0)
         del ocb_lat, ocb_mlt, r_corr, aacgm_lat, aacgm_mlt
 
+    def test_revert_coord_north_coord_label(self):
+        """ Test the reversion to AACGM coordinates in the north with Mag label
+        """
+        self.ocb.rec_ind = 27
+        
+        ocb_lat, ocb_mlt, r_corr = self.ocb.normal_coord(80.0, 0.0)
+        aacgm_lat, aacgm_mlt = self.ocb.revert_coord(ocb_lat, ocb_mlt, r_corr,
+                                                     coords='MAG')
+        self.assertAlmostEqual(aacgm_lat, 80.0)
+        self.assertAlmostEqual(aacgm_mlt, 0.0)
+        del ocb_lat, ocb_mlt, r_corr, aacgm_lat, aacgm_mlt
+
+    def test_revert_coord_north_geodetic(self):
+        """ Test the reversion to geodetic coordinates in the north
+        """
+        self.ocb.rec_ind = 27
+        
+        ocb_lat, ocb_mlt, r_corr = self.ocb.normal_coord(80.0, 5.0,
+                                                         coords='geodetic')
+        lat, slt = self.ocb.revert_coord(ocb_lat, ocb_mlt, r_corr,
+                                         coords='geodetic', height=336.202)
+        self.assertAlmostEqual(lat, 80.0, places=5)
+        self.assertAlmostEqual(slt, 5.0, places=5)
+        del ocb_lat, ocb_mlt, r_corr, lat, slt
+
+    def test_revert_coord_north_geocentric(self):
+        """ Test the reversion to geocentric coordinates in the north
+        """
+        self.ocb.rec_ind = 27
+        
+        ocb_lat, ocb_mlt, r_corr = self.ocb.normal_coord(80.0, 5.0,
+                                                         coords='geocentric')
+        lat, slt = self.ocb.revert_coord(ocb_lat, ocb_mlt, r_corr,
+                                         coords='geocentric')
+        self.assertAlmostEqual(lat, 80.0, places=5)
+        self.assertAlmostEqual(slt, 5.0, places=5)
+        del ocb_lat, ocb_mlt, r_corr, lat, slt
+
     def test_revert_coord_north_w_south(self):
         """ Test the reversion calculation in the north with southern lat
         """
@@ -369,11 +443,19 @@ class TestOCBoundaryMethodsNorth(unittest.TestCase):
         self.assertEqual(self.ocb.boundary_lat, 74.0)
 
     def test_mismatched_boundary_input(self):
-        """ Test to see that the boundary latitude has the correct sign
+        """ Test to see that the boundary latitude has the incorrect sign
         """
         ocb_n = ocbpy.ocboundary.OCBoundary(filename=self.test_north,
                                             hemisphere=-1)
         self.assertEqual(ocb_n.boundary_lat, -74.0)
+        del ocb_n
+
+    def test_mismatched_boundary_input_correction(self):
+        """ Test to see that the boundary latitude corrects the sign
+        """
+        ocb_n = ocbpy.ocboundary.OCBoundary(filename=self.test_north,
+                                            hemisphere=1, boundary_lat=-70.0)
+        self.assertEqual(ocb_n.boundary_lat, 70.0)
         del ocb_n
 
     def test_retrieve_all_good_ind(self):
@@ -590,6 +672,30 @@ class TestOCBoundaryMethodsSouth(unittest.TestCase):
         self.assertEqual(r_corr, 0.0)
         del ocb_lat, ocb_mlt, r_corr
 
+    def test_normal_coord_south_geocentric(self):
+        """ Test the geocentric normalisation calculation in the south
+        """
+        self.ocb.rec_ind = 8
+
+        ocb_lat, ocb_mlt, r_corr = self.ocb.normal_coord(-90.0, 0.0,
+                                                         coords='geocentric')
+        self.assertAlmostEqual(ocb_lat, -65.90643532697186)
+        self.assertAlmostEqual(ocb_mlt, 20.569209220280655)
+        self.assertEqual(r_corr, 0.0)
+        del ocb_lat, ocb_mlt, r_corr
+
+    def test_normal_coord_south_geodetic(self):
+        """ Test the geodetic normalisation calculation in the south
+        """
+        self.ocb.rec_ind = 8
+
+        ocb_lat, ocb_mlt, r_corr = self.ocb.normal_coord(-90.0, 0.0,
+                                                         coords='geodetic')
+        self.assertAlmostEqual(ocb_lat, -65.84776584896471)
+        self.assertAlmostEqual(ocb_mlt, 20.572091814257913)
+        self.assertEqual(r_corr, 0.0)
+        del ocb_lat, ocb_mlt, r_corr
+
     def test_normal_coord_south_corrected(self):
         """ Test the normalisation calculation in the south with a corrected OCB
         """
@@ -601,6 +707,68 @@ class TestOCBoundaryMethodsSouth(unittest.TestCase):
         self.assertAlmostEqual(ocb_mlt, 6.0)
         self.assertEqual(r_corr, 1.0)
         del ocb_lat, ocb_mlt, r_corr
+
+    def test_revert_coord_south(self):
+        """ Test the reversion to AACGM coordinates in the south
+        """
+        self.ocb.rec_ind = 8
+        
+        ocb_lat, ocb_mlt, r_corr = self.ocb.normal_coord(-80.0, 0.0)
+        aacgm_lat, aacgm_mlt = self.ocb.revert_coord(ocb_lat, ocb_mlt, r_corr)
+        self.assertAlmostEqual(aacgm_lat, -80.0)
+        self.assertAlmostEqual(aacgm_mlt, 0.0)
+        del ocb_lat, ocb_mlt, r_corr, aacgm_lat, aacgm_mlt
+
+    def test_revert_coord_south_coord_label(self):
+        """ Test the reversion to AACGM coordinates in the south with Mag label
+        """
+        self.ocb.rec_ind = 8
+        
+        ocb_lat, ocb_mlt, r_corr = self.ocb.normal_coord(-80.0, 0.0)
+        aacgm_lat, aacgm_mlt = self.ocb.revert_coord(ocb_lat, ocb_mlt, r_corr,
+                                                     coords='MAG')
+        self.assertAlmostEqual(aacgm_lat, -80.0)
+        self.assertAlmostEqual(aacgm_mlt, 0.0)
+        del ocb_lat, ocb_mlt, r_corr, aacgm_lat, aacgm_mlt
+
+    def test_revert_coord_south_geodetic(self):
+        """ Test the reversion to geodetic coordinates in the south
+        """
+        self.ocb.rec_ind = 8
+        
+        ocb_lat, ocb_mlt, r_corr = self.ocb.normal_coord(-80.0, 5.0,
+                                                         coords='geodetic')
+        lat, slt = self.ocb.revert_coord(ocb_lat, ocb_mlt, r_corr,
+                                         coords='geodetic', height=336.202)
+        self.assertAlmostEqual(lat, -80.0, places=5)
+        self.assertAlmostEqual(slt, 5.0, places=5)
+        del ocb_lat, ocb_mlt, r_corr, lat, slt
+
+    def test_revert_coord_south_geocentric(self):
+        """ Test the reversion to geocentric coordinates in the south
+        """
+        self.ocb.rec_ind = 8
+        
+        ocb_lat, ocb_mlt, r_corr = self.ocb.normal_coord(-80.0, 5.0,
+                                                         coords='geocentric')
+        lat, slt = self.ocb.revert_coord(ocb_lat, ocb_mlt, r_corr,
+                                         coords='geocentric')
+        self.assertAlmostEqual(lat, -80.0, places=5)
+        self.assertAlmostEqual(slt, 5.0, places=5)
+        del ocb_lat, ocb_mlt, r_corr, lat, slt
+
+    def test_revert_coord_north_w_south(self):
+        """ Test the reversion calculation in the north with southern lat
+        """
+        self.ocb.rec_ind = 27
+        
+        out = self.ocb.revert_coord(-80.0, 0.0)
+        self.assertEqual(len(out), 2)
+
+        for val in out:
+            self.assertTrue(np.isnan(val))
+
+        del out, val
 
     def test_default_boundary_input(self):
         """ Test to see that the boundary latitude has the correct sign
@@ -763,7 +931,6 @@ class TestOCBoundaryMatchData(unittest.TestCase):
     def test_match(self):
         """ Test to see that the data matching works properly
         """
-        import numpy as np
         import datetime as dt
     
         # Build a array of times for a test dataset
@@ -872,6 +1039,17 @@ class TestOCBoundaryFailure(unittest.TestCase):
     def tearDown(self):
         pass
 
+    def test_bad_instrument_input(self):
+        """ Test failure when bad instrument value is input"""
+        from os import path
+        test_north = path.join(path.split(ocbpy.__file__)[0], "tests",
+                               "test_data", "test_north_circle")
+        self.assertTrue(path.isfile(test_north))
+        with self.assertRaisesRegexp(ValueError, "unknown instrument"):
+            ocbpy.ocboundary.OCBoundary(instrument="", filename=test_north)
+
+        del test_north
+            
     def test_bad_hemisphere_input(self):
         """ Test failure when incorrect hemisphere value is input"""
         with self.assertRaisesRegexp(ValueError, "hemisphere must be 1"):
@@ -901,6 +1079,8 @@ class TestOCBoundaryFailure(unittest.TestCase):
         with self.assertRaisesRegexp(ValueError, \
                                 "Unknown input type for correction keywords"):
             ocbpy.ocboundary.OCBoundary(rfunc_kwargs="rfunc")
+
+
 
 if __name__ == '__main__':
     unittest.main()
