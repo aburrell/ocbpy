@@ -21,6 +21,12 @@ rad2hr(lon)
     Convert from radians to hours
 hr2rad(lt)
     Convert from hours to radians
+datetime2hr(dtime)
+    Calculate fractional hours of day from timestamp
+slt2glon(slt, dtime)
+    Convert from solar local time to geographic longitude
+glon2slt(glon, dtime)
+    Convert from geographic longitude to solar local time
 
 Moduleauthor
 -------------------------------------------------------------------------------
@@ -259,4 +265,86 @@ def rad2hr(lon):
 
     return lt
 
+def datetime2hr(dtime):
+    """ Calculate hours of day from datetime
+
+    Parameters
+    ----------
+    dtime : (dt.datetime)
+        Universal time as a timestamp
+
+    Returns
+    -------
+    uth : (float)
+        Hours of day, includes fractional hours
+
+    """
+
+    uth = dtime.hour + dtime.minute / 60.0 \
+        + (dtime.second + dtime.microsecond * 1.0e-6) / 3600.0
+
+    return uth
     
+
+def slt2glon(slt, dtime):
+    """ Convert from solar local time to geographic longitude
+
+    Parameters
+    ----------
+    slt : (float)
+        Solar local time in hours
+    dtime : (dt.datetime)
+        Universal time as a timestamp
+
+    Returns
+    -------
+    glon : (float)
+        Geographic longitude in degrees
+
+    """
+
+    # Calculate universal time of day in hours
+    uth = datetime2hr(dtime)
+
+    # Calculate the longitude in degrees
+    glon = hr2deg(lt - uth)
+
+    # Ensure the longitude is not above 360 or below -180
+    while glon >= 360.0:
+        glon -= 360.0
+
+    while glon <= -180.0:
+        glon += 360.0
+
+    return glon
+
+
+def glon2slt(glon, dtime):
+    """ Convert from geographic longitude to solar local time
+
+    Parameters
+    ----------
+    glon : (float)
+        Geographic longitude in degrees
+    dtime : (dt.datetime)
+        Universal time as a timestamp
+
+    Returns
+    -------
+    slt : (float)
+        Solar local time in hours
+
+    """
+
+
+    # Calculate the longitude in degrees
+    slt = deg2hr(glon) + datetime2hr(dtime)
+
+    # Ensure the local time is between 0 and 24 h
+    while slt >= 24.0:
+        slt -= 24.0
+
+    while slt < 0.0:
+        slt += 24.0
+
+    return slt
