@@ -8,11 +8,10 @@
 
 import numpy as np
 import unittest
-from unittest import TestCase
 
 from ocbpy import ocb_time
 
-class TestOCBTimeMethods(TestCase):
+class TestOCBTimeMethods(unittest.TestCase):
     def setUp(self):
         """ Set up test runs """
         import datetime as dt
@@ -161,7 +160,7 @@ class TestOCBTimeMethods(TestCase):
             ocb_time.datetime2hr(5.0)
 
 
-class TestOCBTimeUnits(TestCase):
+class TestOCBTimeUnits(unittest.TestCase):
     def setUp(self):
         """ Set up test runs """
 
@@ -242,7 +241,7 @@ class TestOCBTimeUnits(TestCase):
         del out
 
 
-class TestOCBGeographicTime(TestCase):
+class TestOCBGeographicTime(unittest.TestCase):
     def setUp(self):
         """ Set up test runs """
         import datetime as dt
