@@ -41,6 +41,7 @@ This module has been tested on python version 2.7, 3.4 - 3.6.  Local testing on
 The listed dependecies were tested with the following versions:
   * numpy
   * logbook
+  * aacgmv2
   * pysat (1.2.1 - currently being developed)
 
 Testing is performed using the python module, unittest.  To limit dependency
