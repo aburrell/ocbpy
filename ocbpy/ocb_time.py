@@ -307,7 +307,7 @@ def slt2glon(slt, dtime):
     uth = datetime2hr(dtime)
 
     # Calculate the longitude in degrees
-    glon = hr2deg(lt - uth)
+    glon = hr2deg(slt - uth)
 
     # Ensure the longitude is not above 360 or below -180
     while glon >= 360.0:
