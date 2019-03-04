@@ -200,7 +200,7 @@ class OCBoundary(object):
 
             # Ensure that the boundary is in the correct hemisphere
             if np.sign(boundary_lat) != np.sign(hemisphere):
-                self.boundary_lat += -1.0
+                self.boundary_lat *= -1.0
 
         # If possible, load the data
         if self.filename is not None:
@@ -595,8 +595,9 @@ class OCBoundary(object):
             Output coordiate system.  Accepts 'magnetic', 'geocentric', or
             'geodetic' (default='magnetic')
         height : (float)
-            Height (km) at which AACGMV2 coordinates will be calculated, if
-            geographic coordinates are desired (default=350.0)
+            Geocentric height above sea level (km) at which AACGMV2 coordinates
+            will be calculated, if geographic coordinates are desired
+            (default=350.0)
         method : (str)
             String denoting which type(s) of conversion to perform, if
             geographic coordinates are provided.  Expects either 'TRACE' or
@@ -643,6 +644,9 @@ class OCBoundary(object):
 
         if aacgm_mlt < 0.0:
             aacgm_mlt += 24.0
+
+        if aacgm_mlt >= 24.0:
+            aacgm_mlt -= 24.0
 
         # If needed, convert from magnetic to geographic coordinates
         if coords.lower().find('mag') < 0:
