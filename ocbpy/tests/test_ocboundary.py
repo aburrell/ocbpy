@@ -931,7 +931,6 @@ class TestOCBoundaryMatchData(unittest.TestCase):
     def test_match(self):
         """ Test to see that the data matching works properly
         """
-        import numpy as np
         import datetime as dt
     
         # Build a array of times for a test dataset

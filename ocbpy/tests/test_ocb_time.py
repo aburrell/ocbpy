@@ -6,11 +6,13 @@
 """ Tests the ocboundary class and functions
 """
 
+import numpy as np
 import unittest
+from unittest import TestCase
 
 from ocbpy import ocb_time
 
-class TestOCBTimeMethods(unittest.TestCase):
+class TestOCBTimeMethods(TestCase):
     def setUp(self):
         """ Set up test runs """
         import datetime as dt
@@ -159,10 +161,9 @@ class TestOCBTimeMethods(unittest.TestCase):
             ocb_time.datetime2hr(5.0)
 
 
-class TestOCBTimeUnits(unittest.TestCase):
+class TestOCBTimeUnits(TestCase):
     def setUp(self):
         """ Set up test runs """
-        import numpy as np
 
         self.lon = np.linspace(0.0, 360.0, 37)
         self.lt = np.linspace(0.0, 24.0, 37)
@@ -208,7 +209,6 @@ class TestOCBTimeUnits(unittest.TestCase):
 
     def test_hr2rad_array(self):
         """ Test hour to radian conversion for an array"""
-        import numpy as np
 
         out = ocb_time.hr2rad(self.lt)
 
@@ -218,7 +218,6 @@ class TestOCBTimeUnits(unittest.TestCase):
 
     def test_hr2rad_value(self):
         """ Test hour to radian conversion for a single value"""
-        import numpy as np
 
         out = ocb_time.hr2rad(self.lt[0])
 
@@ -227,7 +226,6 @@ class TestOCBTimeUnits(unittest.TestCase):
 
     def test_rad2hr_array(self):
         """ Test radian to hour conversion for an array"""
-        import numpy as np
 
         out = list(ocb_time.rad2hr(np.radians(self.lon)))
 
@@ -237,7 +235,6 @@ class TestOCBTimeUnits(unittest.TestCase):
 
     def test_rad2hr_value(self):
         """ Test radian to hour conversion for a single value"""
-        import numpy as np
 
         out = ocb_time.rad2hr(np.radians(self.lon[0]))
 
@@ -245,7 +242,7 @@ class TestOCBTimeUnits(unittest.TestCase):
         del out
 
 
-class TestOCBGeographicTime(unittest.TestCase):
+class TestOCBGeographicTime(TestCase):
     def setUp(self):
         """ Set up test runs """
         import datetime as dt
@@ -282,7 +279,6 @@ class TestOCBGeographicTime(unittest.TestCase):
 
     def test_slt2glon_array_failure(self):
         """ Test local time to longtiude conversion with array input"""
-        import numpy as np
         with self.assertRaises(ValueError):
             ocb_time.slt2glon(np.array(self.lt), self.dtime)
 
@@ -293,7 +289,6 @@ class TestOCBGeographicTime(unittest.TestCase):
 
     def test_glon2slt_array_failure(self):
         """ Test longtiude to lt conversion with array input"""
-        import numpy as np
         with self.assertRaises(ValueError):
             ocb_time.glon2slt(np.array(self.lon), self.dtime)
 
