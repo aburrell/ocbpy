@@ -36,6 +36,14 @@ class TestOCBTimeMethods(unittest.TestCase):
                                                tod="00:00:00"),
                          self.dtime)
 
+    def test_convert_time_date_tod_uncoverted(self):
+        """ Test the datetime construction with unconverted data
+        """
+        # Test the default date implimentation
+        self.assertEqual(ocb_time.convert_time(date="2001-01-01",
+                                               tod="00:00:00.000001"),
+                         self.dtime)
+
     def test_convert_time_date_tod_fmt(self):
         """ Test to see that the datetime construction works with custom format
         """
@@ -57,11 +65,35 @@ class TestOCBTimeMethods(unittest.TestCase):
         self.assertEqual(ocb_time.convert_time(yyddd="101001", tod="00:00:00"),
                          self.dtime)
 
+    def test_convert_time_yyddd_tod_w_fmt(self):
+        """ Test the datetime construction with yyddd, tod, and datetime_fmt
+        """
+        # Test the year-soy implimentation
+        self.assertEqual(ocb_time.convert_time(yyddd="101001", tod="00 00 00",
+                                               datetime_fmt="YYDDD %H %M %S"),
+                         self.dtime)
+
+    def test_convert_time_yyddd_tod_w_time_fmt(self):
+        """ Test the datetime construction with yyddd, tod, and time fmt
+        """
+        # Test the year-soy implimentation
+        self.assertEqual(ocb_time.convert_time(yyddd="101001", tod="00 00 00",
+                                               datetime_fmt="%H %M %S"),
+                         self.dtime)
+
     def test_convert_time_yyddd_sod(self):
         """ Test to see that the datetime construction works  with yyddd and sod
         """
         # Test the year-soy implimentation
         self.assertEqual(ocb_time.convert_time(yyddd="101001", sod=0),
+                         self.dtime)
+
+    def test_convert_time_yyddd_sod_ms(self):
+        """ Test the datetime construction works with yyddd, sod, and ms
+        """
+        self.dtime = self.dtime.replace(microsecond=1)
+        # Test the year-soy implimentation
+        self.assertEqual(ocb_time.convert_time(yyddd="101001", sod=1.0e-6),
                          self.dtime)
 
     def test_convert_time_dict_input(self):
@@ -110,6 +142,22 @@ class TestOCBTimeMethods(unittest.TestCase):
         """
         with self.assertRaisesRegexp(ValueError, "YYDDD must be a string"):
             ocb_time.yyddd_to_date(yyddd=101001)
+
+    def test_datetime2hr(self):
+        """ Test datetime to hour of day conversion"""
+        self.assertEqual(ocb_time.datetime2hr(self.dtime), 0.0)
+
+    def test_datetime2hr_all_fracs(self):
+        """ Test datetime to hour of day conversion for a time with h,m,s,ms"""
+        self.dtime = self.dtime.replace(hour=1, minute=1, second=1,
+                                        microsecond=1)
+        self.assertAlmostEqual(ocb_time.datetime2hr(self.dtime), 1.01694444472)
+
+    def test_datetime2hr_input_failure(self):
+        """ Test datetime to hour of day conversion with bad input"""
+        with self.assertRaises(AttributeError):
+            ocb_time.datetime2hr(5.0)
+
 
 class TestOCBTimeUnits(unittest.TestCase):
     def setUp(self):
@@ -195,6 +243,60 @@ class TestOCBTimeUnits(unittest.TestCase):
 
         self.assertAlmostEqual(out, self.lt[0])
         del out
+
+
+class TestOCBGeographicTime(unittest.TestCase):
+    def setUp(self):
+        """ Set up test runs """
+        import datetime as dt
+
+        self.dtime = dt.datetime(2001, 1, 1, 1)
+        self.lon = [359.0, 90.0, -15.0]
+        self.lt = [0.9333333333333336, 7.0, 0.0]
+
+    def tearDown(self):
+        """ Clean up after each test """
+
+        del self.lon, self.lt, self.dtime
+
+    def test_glon2slt(self):
+        """ Test longitude to slt conversion for a range of values"""
+
+        for i, lon in enumerate(self.lon):
+            self.assertAlmostEqual(ocb_time.glon2slt(lon, self.dtime),
+                                   self.lt[i])
+        del i, lon
+            
+    def test_slt2glon(self):
+        """ Test slt to longitude conversion for a range of values"""
+
+        for i, lt in enumerate(self.lt):
+            lon = self.lon[i] if self.lon[i] < 180.0 else self.lon[i] - 360.0
+            self.assertAlmostEqual(ocb_time.slt2glon(lt, self.dtime), lon)
+        del i, lt, lon
+
+    def test_slt2glon_list_failure(self):
+        """ Test local time to longtiude conversion with list input"""
+        with self.assertRaises(TypeError):
+            ocb_time.slt2glon(self.lt, self.dtime)
+
+    def test_slt2glon_array_failure(self):
+        """ Test local time to longtiude conversion with array input"""
+        import numpy as np
+        with self.assertRaises(ValueError):
+            ocb_time.slt2glon(np.array(self.lt), self.dtime)
+
+    def test_glon2slt_list_failure(self):
+        """ Test longtiude to lt  conversion with list input"""
+        with self.assertRaises(TypeError):
+            ocb_time.glon2slt(self.lon, self.dtime)
+
+    def test_glon2slt_array_failure(self):
+        """ Test longtiude to lt conversion with array input"""
+        import numpy as np
+        with self.assertRaises(ValueError):
+            ocb_time.glon2slt(np.array(self.lon), self.dtime)
+
 
 if __name__ == '__main__':
     unittest.main()
