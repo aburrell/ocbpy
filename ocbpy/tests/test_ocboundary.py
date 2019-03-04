@@ -377,12 +377,12 @@ class TestOCBoundaryMethodsNorth(unittest.TestCase):
         """
         self.ocb.rec_ind = 27
         
-        ocb_lat, ocb_mlt, r_corr = self.ocb.normal_coord(80.0, 0.0,
+        ocb_lat, ocb_mlt, r_corr = self.ocb.normal_coord(80.0, 5.0,
                                                          coords='geodetic')
         lat, slt = self.ocb.revert_coord(ocb_lat, ocb_mlt, r_corr,
                                          coords='geodetic', height=336.202)
         self.assertAlmostEqual(lat, 80.0, places=5)
-        self.assertAlmostEqual(slt, 0.0, places=5)
+        self.assertAlmostEqual(slt, 5.0, places=5)
         del ocb_lat, ocb_mlt, r_corr, lat, slt
 
     def test_revert_coord_north_geocentric(self):
@@ -390,12 +390,12 @@ class TestOCBoundaryMethodsNorth(unittest.TestCase):
         """
         self.ocb.rec_ind = 27
         
-        ocb_lat, ocb_mlt, r_corr = self.ocb.normal_coord(80.0, 0.0,
+        ocb_lat, ocb_mlt, r_corr = self.ocb.normal_coord(80.0, 5.0,
                                                          coords='geocentric')
         lat, slt = self.ocb.revert_coord(ocb_lat, ocb_mlt, r_corr,
                                          coords='geocentric')
         self.assertAlmostEqual(lat, 80.0, places=5)
-        self.assertAlmostEqual(slt, 0.0, places=5)
+        self.assertAlmostEqual(slt, 5.0, places=5)
         del ocb_lat, ocb_mlt, r_corr, lat, slt
 
     def test_revert_coord_north_w_south(self):
@@ -736,12 +736,12 @@ class TestOCBoundaryMethodsSouth(unittest.TestCase):
         """
         self.ocb.rec_ind = 8
         
-        ocb_lat, ocb_mlt, r_corr = self.ocb.normal_coord(-80.0, 0.0,
+        ocb_lat, ocb_mlt, r_corr = self.ocb.normal_coord(-80.0, 5.0,
                                                          coords='geodetic')
         lat, slt = self.ocb.revert_coord(ocb_lat, ocb_mlt, r_corr,
                                          coords='geodetic', height=336.202)
         self.assertAlmostEqual(lat, -80.0, places=5)
-        self.assertAlmostEqual(slt, 24.0, places=5)
+        self.assertAlmostEqual(slt, 5.0, places=5)
         del ocb_lat, ocb_mlt, r_corr, lat, slt
 
     def test_revert_coord_south_geocentric(self):
@@ -749,12 +749,12 @@ class TestOCBoundaryMethodsSouth(unittest.TestCase):
         """
         self.ocb.rec_ind = 8
         
-        ocb_lat, ocb_mlt, r_corr = self.ocb.normal_coord(-80.0, 0.0,
+        ocb_lat, ocb_mlt, r_corr = self.ocb.normal_coord(-80.0, 5.0,
                                                          coords='geocentric')
         lat, slt = self.ocb.revert_coord(ocb_lat, ocb_mlt, r_corr,
                                          coords='geocentric')
         self.assertAlmostEqual(lat, -80.0, places=5)
-        self.assertAlmostEqual(slt, 0.0, places=5)
+        self.assertAlmostEqual(slt, 5.0, places=5)
         del ocb_lat, ocb_mlt, r_corr, lat, slt
 
     def test_revert_coord_north_w_south(self):
