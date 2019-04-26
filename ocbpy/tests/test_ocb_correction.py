@@ -42,12 +42,12 @@ class TestOCBCorrection(unittest.TestCase):
         """ Test the default_ampere_harmonic boundary function for a value"""
 
         self.assertAlmostEqual(ocb_cor.ampere_harmonic(self.aacgm_mlt_val),
-                               1.53566642)
+                               -1.53566642)
 
     def test_ampere_harmonic_arr(self):
         """ Test the default ampere_harmonic boundary function for an array"""
 
-        href = np.array([1.53566642, 2.53483664])
+        href = np.array([-1.53566642, -2.53483664])
         
         self.assertTrue(np.all(abs(ocb_cor.ampere_harmonic(self.aacgm_mlt_arr)
                                    - href) < 1.0e-7))
@@ -57,7 +57,7 @@ class TestOCBCorrection(unittest.TestCase):
 
         self.assertAlmostEqual(ocb_cor.ampere_harmonic(self.aacgm_mlt_val,
                                                        method="gaussian"),
-                               2.27203636)
+                               -2.27203636)
 
 
 if __name__ == '__main__':
