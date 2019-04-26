@@ -27,7 +27,9 @@ def circular(mlt, r_add=0.0):
     mlt : (float)
         Magnetic local time in hours (not actually used)
     r_add : (float)
-        Offset added to default radius in degrees (default=0.0)
+        Offset added to default radius in degrees.  Positive values shift the
+        boundary equatorward, whilst negative values shift the boundary
+        poleward.  (default=0.0)
 
     Returns
     -------
@@ -76,4 +78,5 @@ def ampere_harmonic(mlt, method='median'):
                 + coeff[method][9] * np.cos(3.0 * (rad_mlt+coeff[method][10])) \
                 + coeff[method][11] * np.sin(3.0 * (rad_mlt+coeff[method][12]))
 
-    return r_corr
+    # Because this is a poleward shift, return the negative of the correction
+    return -r_corr
