@@ -5,9 +5,15 @@
 #-----------------------------------------------------------------------------
 """ Tests the ocboundary class and functions
 """
+from __future__ import print_function
 
-import numpy as np
+
 import unittest
+
+try:
+    import numpy as np
+except ImportError as err:
+    print("WHAT? {:}", err)
 
 from ocbpy import ocb_correction as ocb_cor
 
