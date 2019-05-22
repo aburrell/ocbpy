@@ -1,0 +1,4 @@
+numpy
+logbook
+aacgmv2
+coveralls
