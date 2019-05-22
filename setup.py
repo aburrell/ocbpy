@@ -55,7 +55,7 @@ setup(name='ocbpy',
           "Operating System :: POSIX",
       ],
       install_requires=[
-          'numpy',
+          'numpy<=1.15.4',
           'logbook',
           'aacgmv2',
       ],
