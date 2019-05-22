@@ -5,21 +5,15 @@
 #-----------------------------------------------------------------------------
 """ Tests the ocboundary class and functions
 """
-from __future__ import print_function
-
 
 import unittest
-
-try:
-    import numpy as np
-except ImportError as err:
-    print("WHAT? {:}", err)
 
 from ocbpy import ocb_correction as ocb_cor
 
 class TestOCBCorrection(unittest.TestCase):
     def setUp(self):
         """ Set up test runs """
+        import numpy as np
 
         self.aacgm_mlt_val = 0.0
         self.aacgm_mlt_arr = np.arange(0.0, 24.0, 12.0)
@@ -35,7 +29,8 @@ class TestOCBCorrection(unittest.TestCase):
 
     def test_circular_default_arr(self):
         """ Test the default circular boundary function with an array"""
-
+        import numpy as np
+        
         self.assertTrue(np.all(ocb_cor.circular(self.aacgm_mlt_arr) ==
                                np.zeros(shape=self.aacgm_mlt_arr.shape)))
 
@@ -52,7 +47,8 @@ class TestOCBCorrection(unittest.TestCase):
 
     def test_ampere_harmonic_arr(self):
         """ Test the default ampere_harmonic boundary function for an array"""
-
+        import numpy as np
+        
         href = np.array([-1.53566642, -2.53483664])
         
         self.assertTrue(np.all(abs(ocb_cor.ampere_harmonic(self.aacgm_mlt_arr)
