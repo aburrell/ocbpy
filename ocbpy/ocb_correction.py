@@ -49,8 +49,8 @@ def ampere_harmonic(mlt, method='median'):
     mlt : (float or array-like)
         Magnetic local time in hours
     method : (str)
-        Method used to determine coefficients; accepts median or gaussian
-        (default='median')
+        Method used to determine coefficients; accepts median or
+        smoothed_gaussian (default='median')
 
     Returns
     -------
@@ -61,10 +61,14 @@ def ampere_harmonic(mlt, method='median'):
     from ocbpy.ocb_time import hr2rad
 
     method = method.lower()
-    coeff = {'median': [3.10, -0.10, -0.08, 1.83, -0.73, -0.80, -0.07, 0.28,
-                        -0.67, 0.93, -0.12, -0.21, 0.08],
-             'gaussian': [3.61, -0.19, 0.15, 1.74, -0.67, -0.85, -0.13, 0.26,
-                          -0.42, 0.86, 0.05, 0.27, 0.12]}
+    coeff = {'median': [3.31000535, -0.5452934, -1.24389141, 2.42619653,
+                        -0.66677988, -1.03467488, -0.30763009, 0.52426756,
+                        0.04359299, 0.60201848, 0.50618522, 1.04360529,
+                        0.25186405],
+             'gaussian': [3.80100827, 0.98555723, -3.43760943, 1.85084271,
+                          -0.36730751, -0.81975654, -1.02823832, 1.30637288,
+                          -0.53599218, 0.40380183, -1.22462708, -1.2733629,
+                          -0.62743381]}
 
     if method not in coeff.keys():
         raise ValueError("unknown coefficient computation method")
