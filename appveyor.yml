@@ -41,7 +41,7 @@ configuration: Release
 
 install:
   - '%PYTHON%\\python.exe -m pip install --upgrade pip'
-  - '%PYTHON%\\python.exe -m pip install logbook wheel numpy setuptools aacgmv2'
+  - '%PYTHON%\\python.exe -m pip install logbook wheel numpy<=1.15.4 setuptools aacgmv2 pysat>=2.0.0'
 
 artifacts:
   - path: dist/*
