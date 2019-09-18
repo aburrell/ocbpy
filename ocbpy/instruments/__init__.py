@@ -14,12 +14,12 @@ pysat       General pysat Instrument loading routines: https://github.com/pysat
 from __future__ import (absolute_import)
 import logbook as logging
 
-from ocbpy.instruments import (general)
-from ocbpy.instruments.general import (test_file)
-from ocbpy.instruments import (supermag)
-from ocbpy.instruments import (vort)
+from . import (general)
+from .general import (test_file)
+from . import (supermag)
+from . import (vort)
 
 try:
-    from ocbpy.instruments import (pysat_instruments)
+    from . import (pysat_instruments)
 except ImportError as ierr:
     logging.warning(ierr)
