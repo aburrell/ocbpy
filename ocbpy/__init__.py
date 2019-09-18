@@ -29,7 +29,7 @@ instruments    Instrument-specific OCB gridding functions
 ocb_time       Time manipulation routines
 ---------------------------------------------------------------------------
 """
-from __future__ import (absolute_imports)
+from __future__ import (absolute_import)
 
 from . import (ocboundary, ocb_scaling, ocb_time, ocb_correction)
 from .ocboundary import (OCBoundary, match_data_ocb)
