@@ -31,9 +31,9 @@ ocb_time       Time manipulation routines
 """
 from __future__ import (absolute_imports)
 
-from ocbpy import (ocboundary, ocb_scaling, ocb_time, ocb_correction)
-from ocbpy.ocboundary import (OCBoundary, match_data_ocb)
-from ocbpy import (instruments)
+from . import (ocboundary, ocb_scaling, ocb_time, ocb_correction)
+from .ocboundary import (OCBoundary, match_data_ocb)
+from . import (instruments)
 
 __version__ = str('0.2b2')
 __default_file__ = "boundaries/si13_north_circle"
