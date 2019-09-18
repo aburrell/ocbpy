@@ -42,10 +42,10 @@ The listed dependecies were tested with the following versions:
   * numpy
   * logbook
   * aacgmv2
-  * pysat (1.2.1 - currently being developed)
+  * pysat (2.0.0)
 
 Testing is performed using the python module, unittest.  To limit dependency
-issues, pysat is an optional dependency.
+issues, pysat (>=2.0.0) is an optional dependency.
 
 # Installation
 
