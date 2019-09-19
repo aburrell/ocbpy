@@ -29,8 +29,17 @@ Chisham, G. (2017), A new methodology for the development of high-latitude
  Research: Space Physics, 122, doi:10.1002/2016JA023235.
 
 """
-import numpy as np
+import datetime as dt
 import logbook as logging
+import numpy as np
+from os import path
+import types
+
+import aacgmv2
+
+import ocbpy
+import ocbpy.ocb_correction as ocbcor
+from ocbpy.ocb_time import slt2glon, convert_time, glon2slt, deg2hr
 
 class OCBoundary(object):
     """ Object containing open-closed field-line boundary (OCB) data
@@ -146,8 +155,6 @@ class OCBoundary(object):
             OCB radius correction function keyword arguements. (default={})
 
         """
-        from os import path
-        import ocbpy
 
         if not isinstance(instrument, str):
             estr = "OCB instrument must be a string [{:}]".format(instrument)
@@ -327,9 +334,6 @@ class OCBoundary(object):
         self
 
         """
-        import datetime as dt
-        import types
-        import ocbpy.ocb_time as ocbt
         
         cols = ocb_cols.split()
         dflag = -1
@@ -369,8 +373,8 @@ class OCBoundary(object):
             date = None if dflag == 0 else odata.date[i]
             tod = None if dflag == 0 else odata.time[i]
                 
-            dtime = ocbt.convert_time(year=year, soy=soy, date=date, tod=tod,
-                                      datetime_fmt=datetime_fmt)
+            dtime = convert_time(year=year, soy=soy, date=date, tod=tod,
+                                 datetime_fmt=datetime_fmt)
 
             if stime is None and etime is None:
                 dt_list.append(dtime)
@@ -525,8 +529,6 @@ class OCBoundary(object):
         Approximation - Conversion assumes a planar surface
 
         """
-        import aacgmv2
-        from ocbpy.ocb_time import slt2glon
 
         if self.rec_ind < 0 or self.rec_ind >= self.records:
             return np.nan, np.nan, np.nan
@@ -615,8 +617,6 @@ class OCBoundary(object):
         Approximation - Conversion assumes a planar surface
 
         """
-        import aacgmv2
-        from ocbpy.ocb_time import glon2slt
         
         if self.rec_ind < 0 or self.rec_ind >= self.records:
             return np.nan, np.nan
@@ -702,7 +702,6 @@ class OCBoundary(object):
         easy comparison with satellite passes.
 
         """
-        from ocbpy.ocb_time import deg2hr
 
         # Ensure the boundary longitudes span from 0-360 degrees
         aacgm_lon = np.array(aacgm_lon)
@@ -768,13 +767,12 @@ class OCBoundary(object):
         correction that changes with UT
 
         """
-        import ocbpy.ocb_correction as ocbcor
 
         if self.instrument == "image":
             self.rfunc = np.full(shape=self.records, fill_value=ocbcor.circular)
         elif self.instrument == "ampere":
             self.rfunc = np.full(shape=self.records,
-                                 fill_value=ocbcor.ampere_harmonic)
+                                 fill_value=ocbcor.elliptical)
         else:
             raise ValueError("unknown instrument")
 
@@ -858,8 +856,6 @@ def match_data_ocb(ocb, dat_dtime, idat=0, max_tol=600, min_sectors=7,
     boundaries have been searched.
 
     """
-    import datetime as dt
-    import ocbpy.ocboundary as ocboundary
 
     dat_records = len(dat_dtime)
 

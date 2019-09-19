@@ -17,12 +17,17 @@ Data
 Specialised SuperDARN data product, available from: gchi@bas.ac.uk
 
 """
+import datetime as dt
 import numpy as np
 import logbook as logging
 
-def vort2ascii_ocb(vortfile, outfile, ocb=None, ocbfile=None, max_sdiff=600,
-                   save_all=False, min_sectors=7, rcent_dev=8.0, max_r=23.0,
-                   min_r=10.0, min_j=0.15):
+import ocbpy
+import ocbpy.ocb_scaling as ocbscal
+
+
+def vort2ascii_ocb(vortfile, outfile, ocb=None, ocbfile='default',
+                   max_sdiff=600, save_all=False, min_sectors=7, rcent_dev=8.0,
+                   max_r=23.0, min_r=10.0, min_j=0.15):
     """ Coverts the location of vorticity data in AACGM coordinates into a frame
     that is relative to the open-closed field-line boundary (OCB) as determined
     from a circle fit to the poleward boundary of the auroral oval
@@ -35,9 +40,9 @@ def vort2ascii_ocb(vortfile, outfile, ocb=None, ocbfile=None, max_sdiff=600,
         filename for the output data
     ocb : (ocbpy.ocboundary.OCBoundary or NoneType)
         Object containing open closed boundary data or None to load from file
-    ocbfile : (str or NoneType)
-        file containing the required OC boundary data sorted by time, or None
-        to use ocb object or IMAGE WIC file (default=None)
+    ocbfile : (str)
+        file containing the required OC boundary data sorted by time, ignorned
+        if OCBoundary object supplied. (default='default')
     max_sdiff : (int)
         maximum seconds between OCB and data record in sec (default=600)
     save_all : (bool)
@@ -66,9 +71,6 @@ def vort2ascii_ocb(vortfile, outfile, ocb=None, ocbfile=None, max_sdiff=600,
     Input header or col_names must include the names in the default string.
 
     """
-    import datetime as dt
-    import ocbpy
-    import ocbpy.ocb_scaling as ocbscal
 
     if not ocbpy.instruments.test_file(vortfile):
         raise IOError("vorticity file cannot be opened [{:s}]".format(vortfile))
@@ -82,8 +84,7 @@ def vort2ascii_ocb(vortfile, outfile, ocb=None, ocbfile=None, max_sdiff=600,
     
     if vdata is None or not all([kk in vdata.keys() for kk in need_keys]):
         estr = "unable to load necessary data from [{:s}]".format(vortfile)
-        logging.error(estr)
-        return
+        raise ValueError(estr)
 
     # Load the OCB data
     if ocb is None or not isinstance(ocb, ocbpy.ocboundary.OCBoundary):
@@ -109,14 +110,7 @@ def vort2ascii_ocb(vortfile, outfile, ocb=None, ocbfile=None, max_sdiff=600,
             outline += "{:s} ".format(" ".join(vkeys))
 
         outline += "OCB_LAT OCB_MLT NORM_VORT\n"
-
-        try:
-            fout.write(outline)
-        except IOError as err:
-            estr = "unable to write [{:s}] because of error ".format(outline)
-            estr += "[{:}]".format(err)
-            logging.error(estr)
-            return
+        fout.write(outline)
 
         # Initialise the ocb and vorticity indices
         ivort = 0
@@ -147,14 +141,7 @@ def vort2ascii_ocb(vortfile, outfile, ocb=None, ocbfile=None, max_sdiff=600,
                         outline += "{:} ".format(vdata[k][ivort])
 
                 outline += "{:.2f} {:.6f} {:.6f}\n".format(nlat, nmlt, nvort)
-
-                try:
-                    fout.write(outline)
-                except IOError as err:
-                    estr = "unable to write [{:s}] ".format(outline)
-                    estr += "because of error [{:}]".format(err)
-                    logging.error(estr)
-                    return
+                fout.write(outline)
 
                 # Move to next line
                 ivort += 1
@@ -178,10 +165,8 @@ def load_vorticity_ascii_data(vortfile, save_all=False):
         Dictionary of numpy arrays
 
     """
-    import datetime as dt
-    from ocbpy.instruments import test_file
 
-    if not test_file(vortfile):
+    if not ocbpy.instruments.test_file(vortfile):
         return None
 
     # Open the data file
