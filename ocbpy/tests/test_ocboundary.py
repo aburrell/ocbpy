@@ -5,10 +5,11 @@
 #-----------------------------------------------------------------------------
 """ Tests the ocboundary class and functions
 """
-
+import datetime as dt
 import unittest
 import numpy as np
 import sys
+from os import path
 
 import logbook
 
@@ -108,7 +109,6 @@ class TestOCBoundaryLogFailure(unittest.TestCase):
     def test_bad_time_structure(self):
         """ Test OCB initialization without complete time data in file
         """
-        from os import path
 
         # Initialize without a file so that custom loading is performed
         ocb = ocbpy.OCBoundary(filename=None)
@@ -129,12 +129,84 @@ class TestOCBoundaryLogFailure(unittest.TestCase):
 
         del log_rec, ocb
 
+class TestOCBoundaryMethodsGeneral(unittest.TestCase):
+    def setUp(self):
+        """ Initialize the OCBoundary object using the empty file
+        """
+        ocb_dir = path.split(ocbpy.__file__)
+        self.empty_file = path.join(ocb_dir[0], "tests", "test_data",
+                                    "test_empty")
+        self.assertTrue(path.isfile(self.empty_file))
+        self.ocb = None
+
+    def tearDown(self):
+        del self.empty_file, self.ocb
+
+    def test_default_repr(self):
+        """ Test the default class representation """
+        self.ocb = ocbpy.ocboundary.OCBoundary()
+
+        if sys.version_info.major == 2:
+            self.assertRegexpMatches(self.ocb.__repr__(),
+                                     "Open-Closed Boundary file:")
+        else:
+            self.assertRegex(self.ocb.__repr__(), "Open-Closed Boundary file:")
+
+        self.assertTrue(self.ocb.__str__() == self.ocb.__repr__())
+
+    def test_bad_rfunc_inst(self):
+        """Test failure setting default rfunc for unknown instrument"""
+
+        with self.assertRaisesRegexp(ValueError, "unknown instrument"):
+            self.ocb = ocbpy.ocboundary.OCBoundary(filename=self.empty_file,
+                                                   instrument='bad', rfunc=None)
+
+    def test_no_file_repr(self):
+        """ Test the unset class representation """
+
+        self.ocb = ocbpy.ocboundary.OCBoundary(filename=None)
+
+        if sys.version_info.major == 2:
+            self.assertRegexpMatches(self.ocb.__repr__(),
+                                     "No Open-Closed Boundary file specified")
+        else:
+            self.assertRegex(self.ocb.__repr__(),
+                             "No Open-Closed Boundary file specified")
+
+    def test_empty_file_repr(self):
+        """ Test the class representation with an empty data file"""
+
+        self.ocb = ocbpy.ocboundary.OCBoundary(filename=self.empty_file)
+
+        if sys.version_info.major == 2:
+            self.assertRegexpMatches(self.ocb.__repr__(), "No data loaded")
+        else:
+            self.assertRegex(self.ocb.__repr__(), "No data loaded")
+
+    def test_nofile_init(self):
+        """ Ensure that the class can be initialised without loading a file.
+        """
+        self.ocb = ocbpy.ocboundary.OCBoundary(filename=None)
+
+        self.assertIsNone(self.ocb.filename)
+        self.assertIsNone(self.ocb.dtime)
+        self.assertEqual(self.ocb.records, 0)
+
+    def test_wrong_instrument(self):
+        """ test failure when default file and instrument disagree
+        """
+
+        self.ocb = ocbpy.ocboundary.OCBoundary(instrument="AMPERE")
+
+        self.assertIsNone(self.ocb.filename)
+        self.assertIsNone(self.ocb.dtime)
+        self.assertEqual(self.ocb.records, 0)
+
+
 class TestOCBoundaryMethodsNorth(unittest.TestCase):
     def setUp(self):
         """ Initialize the OCBoundary object using the test file
         """
-        from os import path
-
         ocb_dir = path.split(ocbpy.__file__)
         self.test_north = path.join(ocb_dir[0], "tests", "test_data",
                                     "test_north_circle")
@@ -145,42 +217,6 @@ class TestOCBoundaryMethodsNorth(unittest.TestCase):
 
     def tearDown(self):
         del self.ocb, self.test_north, self.lon
-
-    def test_bad_rfunc_inst(self):
-        """Test failure setting default rfunc for unknown instrument"""
-        with self.assertRaisesRegexp(ValueError, "unknown instrument"):
-            self.ocb.instrument = "bad"
-            self.ocb.rfunc = None
-            self.ocb.load()
-
-    def test_default_repr(self):
-        """ Test the default class representation """
-        out = self.ocb.__repr__()
-
-        if sys.version_info.major == 2:
-            self.assertRegexpMatches(out, "Open-Closed Boundary file:")
-        else:
-            self.assertRegex(out, "Open-Closed Boundary file:")
-
-        del out
-
-    def test_empty_repr(self):
-        """ Test the unset class representation """
-
-        self.ocb = ocbpy.ocboundary.OCBoundary(filename=None)
-        out = self.ocb.__repr__()
-
-        if sys.version_info.major == 2:
-            self.assertRegexpMatches(out, "No Open-Closed Boundary file ")
-        else:
-            self.assertRegex(out, "No Open-Closed Boundary file specified")
-
-        del out
-
-    def test_default_str(self):
-        """ Test the default class representation for string output"""
-
-        self.assertTrue(self.ocb.__str__() == self.ocb.__repr__())
 
     def test_attrs(self):
         """ Test the default attributes in the north
@@ -209,27 +245,6 @@ class TestOCBoundaryMethodsNorth(unittest.TestCase):
         for tattr in ['date', 'time', 'x', 'y', 'j_mag']:
             self.assertFalse(hasattr(self.ocb, tattr))
         
-    def test_nofile_init(self):
-        """ Ensure that the class can be initialised without loading a file.
-        """
-        nofile_ocb = ocbpy.ocboundary.OCBoundary(filename=None)
-
-        self.assertIsNone(nofile_ocb.filename)
-        self.assertIsNone(nofile_ocb.dtime)
-        self.assertEqual(nofile_ocb.records, 0)
-        del nofile_ocb
-
-    def test_wrong_instrument(self):
-        """ test failure when default file and instrument disagree
-        """
-
-        nofile_ocb = ocbpy.ocboundary.OCBoundary(instrument="AMPERE")
-
-        self.assertIsNone(nofile_ocb.filename)
-        self.assertIsNone(nofile_ocb.dtime)
-        self.assertEqual(nofile_ocb.records, 0)
-        del nofile_ocb
-        
     def test_load(self):
         """ Ensure correctly loaded defaults in the north
         """
@@ -239,7 +254,6 @@ class TestOCBoundaryMethodsNorth(unittest.TestCase):
     def test_partial_load(self):
         """ Ensure limited sections of a file can be loaded in the north
         """
-        import datetime as dt
 
         stime = self.ocb.dtime[0] + dt.timedelta(seconds=1)
         etime = self.ocb.dtime[-1] - dt.timedelta(seconds=1)
@@ -293,8 +307,8 @@ class TestOCBoundaryMethodsNorth(unittest.TestCase):
         
         ocb_lat, ocb_mlt, r_corr = self.ocb.normal_coord(90.0, 0.0,
                                                          coords='geodetic')
-        self.assertAlmostEqual(ocb_lat, 79.25810046492204)
-        self.assertAlmostEqual(ocb_mlt, 19.384093408859393)
+        self.assertAlmostEqual(ocb_lat, 79.25819412333894, places=5)
+        self.assertAlmostEqual(ocb_mlt, 19.38408688469573, places=5)
         self.assertEqual(r_corr, 0.0)
         del ocb_lat, ocb_mlt, r_corr
 
@@ -305,8 +319,8 @@ class TestOCBoundaryMethodsNorth(unittest.TestCase):
         
         ocb_lat, ocb_mlt, r_corr = self.ocb.normal_coord(90.0, 0.0,
                                                          coords='geocentric')
-        self.assertAlmostEqual(ocb_lat, 79.26043482539038)
-        self.assertAlmostEqual(ocb_mlt, 19.385477161591105)
+        self.assertAlmostEqual(ocb_lat, 79.26052835701783, places=5)
+        self.assertAlmostEqual(ocb_mlt, 19.38547065448836, places=5)
         self.assertEqual(r_corr, 0.0)
         del ocb_lat, ocb_mlt, r_corr
 
@@ -605,7 +619,6 @@ class TestOCBoundaryMethodsSouth(unittest.TestCase):
     def setUp(self):
         """ Initialize the OCBoundary object using the test file
         """
-        from os import path
 
         ocb_dir = path.split(ocbpy.__file__)
         self.test_south = path.join(ocb_dir[0], "tests", "test_data",
@@ -679,8 +692,8 @@ class TestOCBoundaryMethodsSouth(unittest.TestCase):
 
         ocb_lat, ocb_mlt, r_corr = self.ocb.normal_coord(-90.0, 0.0,
                                                          coords='geocentric')
-        self.assertAlmostEqual(ocb_lat, -65.90643532697186)
-        self.assertAlmostEqual(ocb_mlt, 20.569209220280655)
+        self.assertAlmostEqual(ocb_lat, -65.90643532697186, places=5)
+        self.assertAlmostEqual(ocb_mlt, 20.569209220280655, places=5)
         self.assertEqual(r_corr, 0.0)
         del ocb_lat, ocb_mlt, r_corr
 
@@ -691,8 +704,8 @@ class TestOCBoundaryMethodsSouth(unittest.TestCase):
 
         ocb_lat, ocb_mlt, r_corr = self.ocb.normal_coord(-90.0, 0.0,
                                                          coords='geodetic')
-        self.assertAlmostEqual(ocb_lat, -65.84776584896471)
-        self.assertAlmostEqual(ocb_mlt, 20.572091814257913)
+        self.assertAlmostEqual(ocb_lat, -65.84776584896471, places=5)
+        self.assertAlmostEqual(ocb_mlt, 20.572091814257913, places=5)
         self.assertEqual(r_corr, 0.0)
         del ocb_lat, ocb_mlt, r_corr
 
@@ -912,7 +925,6 @@ class TestOCBoundaryMatchData(unittest.TestCase):
     def setUp(self):
         """ Initialize the OCBoundary object using the test file
         """
-        from os import path
 
         ocb_dir = path.split(ocbpy.__file__)
         self.test_north = path.join(ocb_dir[0], "tests", "test_data",
@@ -931,7 +943,6 @@ class TestOCBoundaryMatchData(unittest.TestCase):
     def test_match(self):
         """ Test to see that the data matching works properly
         """
-        import datetime as dt
     
         # Build a array of times for a test dataset
         self.ocb.rec_ind = 27
@@ -991,7 +1002,6 @@ class TestOCBoundaryMatchData(unittest.TestCase):
     def test_late_data_time_alignment(self):
         """ Test failure when data occurs after boundaries
         """
-        import datetime as dt
 
         # Build a array of times for a test dataset
         test_times = [self.ocb.dtime[self.ocb.records-1] + dt.timedelta(days=2)]
@@ -1012,7 +1022,6 @@ class TestOCBoundaryMatchData(unittest.TestCase):
     def test_no_data_time_alignment(self):
         """ Test failure when data occurs between boundaries
         """
-        import datetime as dt
 
         # Build a array of times for a test dataset
         test_times = [self.ocb.dtime[37] - dt.timedelta(seconds=601)]
@@ -1041,7 +1050,7 @@ class TestOCBoundaryFailure(unittest.TestCase):
 
     def test_bad_instrument_input(self):
         """ Test failure when bad instrument value is input"""
-        from os import path
+
         test_north = path.join(path.split(ocbpy.__file__)[0], "tests",
                                "test_data", "test_north_circle")
         self.assertTrue(path.isfile(test_north))
