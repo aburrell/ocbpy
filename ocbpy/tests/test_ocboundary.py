@@ -133,18 +133,21 @@ class TestOCBoundaryMethodsGeneral(unittest.TestCase):
     def setUp(self):
         """ Initialize the OCBoundary object using the empty file
         """
-        ocb_dir = path.split(ocbpy.__file__)
-        self.empty_file = path.join(ocb_dir[0], "tests", "test_data",
+        ocb_dir = path.split(ocbpy.__file__)[0]
+        self.empty_file = path.join(ocb_dir, "tests", "test_data",
                                     "test_empty")
+        self.default_file = path.join(ocb_dir, "tests", "test_data",
+                                      "test_north_circle")
         self.assertTrue(path.isfile(self.empty_file))
+        self.assertTrue(path.isfile(self.default_file))
         self.ocb = None
 
     def tearDown(self):
-        del self.empty_file, self.ocb
+        del self.empty_file, self.default_file, self.ocb
 
     def test_default_repr(self):
         """ Test the default class representation """
-        self.ocb = ocbpy.ocboundary.OCBoundary(filename='default' )
+        self.ocb = ocbpy.ocboundary.OCBoundary(filename=self.default_file)
 
         if sys.version_info.major == 2:
             self.assertRegexpMatches(self.ocb.__repr__(),
