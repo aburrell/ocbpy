@@ -15,8 +15,11 @@ The three auroral instruments are the IMAGE FUV
 The OCB datasets can be found in ``ocbpy/boundaries``.
 
 OCB datasets can also be obtained from AMPERE (Active Magnetosphere and
-Planetary Electrodynamics Response Experiment) data.  This data is not currently
-publically available, but may be in the near future.  One benefit of this
-dataset is that OCBs can be obtained for both hemispheres.  More information
-about the method behind the identification of these boundaries can be found in
-`Milan et al. (2015) <http://doi.wiley.com/10.1002/2015JA021680>`_,.
+Planetary Electrodynamics Response Experiment) R1/R2 Field-Aligned Current
+boundary data.  This data is not currently publically available, but may be in
+the near future.  One benefit of this data set is that OCBs can be obtained for
+both hemispheres.  However, a correction is required to transform from R1/R2 FAC
+boundaries to OCBs.  More information about the method behind the identification
+of these boundaries and their offset can be found in
+`Milan et al. (2015) <http://doi.wiley.com/10.1002/2015JA021680>`_ and
+`Burrell et al. (2019) <https://doi.org/10.5194/angeo-2019-113>`_.
