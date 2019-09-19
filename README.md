@@ -22,6 +22,11 @@ from three auroral instruments provide northern hemisphere OCB locations
 for 3 May 2000 03:01:42 UT - 22 Aug 2002 00:01:28, though not all of the times
 included in these files contain high-quality estimations of the OCB.
 Recommended selection criteria are included as defaults in the OCBoundary class.
+OCBpy also supports boundaries provided by AMPERE, as discussed in:
+
+  * Burrell, A. G. et al.: AMPERE Polar Cap Boundaries, Ann. Geophys. Discuss.,
+    [doi:10.5194/angeo-2019-113](https://doi.org/10.5194/angeo-2019-113),
+    in review, 2019.
 
 Currently, support is included for files from the following datasets:
 
@@ -33,8 +38,8 @@ These routines may be used as a guide to write routines for other datasets.
 
 # Python versions
 
-This module has been tested on python version 2.7, 3.4 - 3.6.  Local testing on
-3.3 was also performed, but may not be supported in the next version.
+This module has been tested on python version 2.7, 3.5 - 3.7.  Support for 2.7
+will be dropped in 2020.
 
 # Dependencies
 
