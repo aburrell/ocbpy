@@ -7,17 +7,22 @@
 
 Functions
 -------------------------------------------------------------------------------
-circular(ocb, mlt, r_add)
-    Return a circular boundary
-ampere_harmonic(ocb, mlt)
-    Return the results of a 3rd order harmonic fit to AMPERE/DMSP differences
+circular(mlt, [r_add])
+    Return a circular boundary correction for a specified offset
+elliptical(mlt, [instrument, method])
+    Return the ellptical boundary correction for a data set and method
+harmonic(mlt, [instrument, method])
+    Return the harmonic boundary correction for a data set and method
 
 References
 -------------------------------------------------------------------------------
-Burrell paper in prep
+Burrell, A. G. et al.: AMPERE Polar Cap Boundaries, Ann. Geophys. Discuss.,
+https://doi.org/10.5194/angeo-2019-113, in review, 2019.
 
 """
 import numpy as np
+
+from ocbpy.ocb_time import hr2rad
 
 def circular(mlt, r_add=0.0):
     """Return a circular boundary correction
@@ -41,24 +46,75 @@ def circular(mlt, r_add=0.0):
     return r_add
 
 
-def ampere_harmonic(mlt, method='median'):
-    """Return the results of a 3rd order harmonic fit to AMPERE/DMSP differences
+def elliptical(mlt, instrument='ampere', method='median'):
+    """ Return the results of an elliptical correction to the data boundary
 
     Parameters
     ----------
-    mlt : (float or array-like)
+    mlt : (float)
         Magnetic local time in hours
+    instrument : (str)
+        Data set's instrument name (default='ampere')
     method : (str)
-        Method used to determine coefficients; accepts median or
-        smoothed_gaussian (default='median')
+        Method used to calculate the elliptical correction, accepts
+        'median' or 'gaussian'. (default='median')
 
     Returns
     -------
     r_corr : (float)
         Radius correction in degrees at this MLT
 
+    References
+    -----
+    Burrell, A. G. et al.: AMPERE Polar Cap Boundaries, Ann. Geophys. Discuss.,
+    https://doi.org/10.5194/angeo-2019-113, in review, 2019.
+
     """
-    from ocbpy.ocb_time import hr2rad
+
+    if instrument.lower() != 'ampere':
+        raise ValueError("no elliptical correction for {:}".format(instrument))
+
+    method = method.lower()
+    coeff = {"median": {"a": 4.01, "e": -0.55, "t": -0.92},
+             "gaussian": {"a": 4.41, "e": -0.51, "t": -0.95}}
+
+    if method not in coeff.keys():
+        raise ValueError("unknown coefficient computation method")
+
+    mlt_rad = hr2rad(mlt)
+    r_corr = (coeff[method]["a"] * (1.0-coeff[method]["e"]**2) /
+              (1.0+coeff[method]["e"] * np.cos(mlt_rad-coeff[method]["t"])))
+
+    # Because this is a poleward correction, return the negative
+    return -r_corr
+
+
+def harmonic(mlt, instrument='ampere', method='median'):
+    """Return the results of a harmonic fit correction to the data boundary
+
+    Parameters
+    ----------
+    mlt : (float or array-like)
+        Magnetic local time in hours
+    instrument : (str)
+        Data set's instrument name (default='ampere')
+    method : (str)
+        Method used to determine coefficients; accepts 'median' or
+        'gaussian' (default='median')
+
+    Returns
+    -------
+    r_corr : (float)
+        Radius correction in degrees at this MLT
+
+    References
+    -----
+    Burrell, A. G. et al.: AMPERE Polar Cap Boundaries, Ann. Geophys. Discuss.,
+    https://doi.org/10.5194/angeo-2019-113, in review, 2019.
+
+    """
+    if instrument.lower() != 'ampere':
+        raise ValueError("no harmonic correction for {:}".format(instrument))
 
     method = method.lower()
     coeff = {'median': [3.31000535, -0.5452934, -1.24389141, 2.42619653,
