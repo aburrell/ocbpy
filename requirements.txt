@@ -1,0 +1,4 @@
+numpy<=1.15.4
+logbook
+aacgmv2
+coveralls
