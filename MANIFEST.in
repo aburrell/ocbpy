@@ -1,8 +1,10 @@
 graft ocbpy/tests/test_data
 graft ocbpy/boundaries
 
+include AUTHORS.rst
 include README.md
 include README.rst
 include License.md
 include CODE_OF_CONDUCT.md
 include CONTRIBUTING.rst
+include Changelog.rst
