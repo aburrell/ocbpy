@@ -5,111 +5,203 @@
 #-----------------------------------------------------------------------------
 """ Tests the ocboundary class and functions
 """
-import datetime as dt
-import unittest
-import numpy as np
-import sys
-from os import path
+from __future__ import absolute_import, unicode_literals
 
-import logbook
+import datetime as dt
+import logging
+from io import StringIO
+import numpy as np
+from sys import version_info
+from os import path
+import unittest
 
 import ocbpy
 
 class TestOCBoundaryLogFailure(unittest.TestCase):
     def setUp(self):
         """ Initialize the test class"""
-        self.log_handler = logbook.TestHandler()
-        self.log_handler.push_thread()
+        self.lwarn = u""
+        self.lout = u""
+        self.log_capture = StringIO()
+        ocbpy.logger.addHandler(logging.StreamHandler(self.log_capture))
 
     def tearDown(self):
         """ Tear down the test case"""
-        self.log_handler.pop_thread()
+        self.log_capture.close()
 
-        del self.log_handler
+        del self.lwarn, self.lout, self.log_capture
 
+    @unittest.skipIf(version_info.major == 2,
+                     'Python 2.7 does not support subTest')
     def test_bad_instrument_name(self):
-        """ Test OCB initialization with bad instrument name
-        """
+        """ Test OCB initialization with bad instrument name """
+        self.lwarn = u"OCB instrument must be a string"
+        
         # Initialize the OCBoundary class with bad instrument names
         for val in [1, None, True]:
-            ocb = ocbpy.OCBoundary(instrument=val)
-            self.assertIsNone(ocb.filename)
-            self.assertIsNone(ocb.instrument)
+            with self.subTest(val=val):
+                ocb = ocbpy.OCBoundary(instrument=val)
+                self.assertIsNone(ocb.filename)
+                self.assertIsNone(ocb.instrument)
 
-        log_rec = self.log_handler.formatted_records
+                self.lout = self.log_capture.getvalue()
+                # Test logging error message for each bad initialization
+                self.assertTrue(self.lout.find(self.lwarn) >= 0)
+
+        del val, ocb
+
+    @unittest.skipIf(version_info.major == 3, 'Already tested, remove in 2020')
+    def test_bad_instrument_int_name(self):
+        """ Test OCB initialization with a bad integer instrument name """
+        self.lwarn = u"OCB instrument must be a string"
+        
+        # Initialize the OCBoundary class with bad instrument names
+        ocb = ocbpy.OCBoundary(instrument=1)
+        self.assertIsNone(ocb.filename)
+        self.assertIsNone(ocb.instrument)
+
+        self.lout = self.log_capture.getvalue()
         # Test logging error message for each bad initialization
-        self.assertEqual(len(log_rec), 3)
+        print(self.lout, self.lwarn)
+        if self.lout.find(self.lwarn) < 0:
+            raise AssertionError()
 
-        for val in log_rec:
-            self.assertTrue(val.find("OCB instrument must be a string") > 0)
+        del ocb
 
-        del log_rec, val, ocb
-
-    def test_bad_file_name(self):
-        """ Test OCB initialization with bad file name
-        """
+    @unittest.skipIf(version_info.major == 3, 'Already tested, remove in 2020')
+    def test_bad_instrument_none_name(self):
+        """ Test OCB initialization with a bad NoneType instrument name """
+        self.lwarn = u"OCB instrument must be a string"
+        
         # Initialize the OCBoundary class with bad instrument names
-        for val in [1, None, True]:
-            ocb = ocbpy.OCBoundary(filename=val)
-            self.assertIsNone(ocb.filename)
+        ocb = ocbpy.OCBoundary(instrument=None)
+        self.assertIsNone(ocb.filename)
+        self.assertIsNone(ocb.instrument)
 
-        log_rec = self.log_handler.formatted_records
-        # Test logging error message for the non-None bad initializations
-        self.assertEqual(len(log_rec), 2)
+        self.lout = self.log_capture.getvalue()
+        # Test logging error message for each bad initialization
+        print(self.lout, self.lwarn)
+        if self.lout.find(self.lwarn) < 0:
+            raise AssertionError()
 
-        for val in log_rec:
-            self.assertTrue(val.find("file is not a string") > 0)
+        del ocb
 
-        del log_rec, val, ocb
+    @unittest.skipIf(version_info.major == 3, 'Already tested, remove in 2020')
+    def test_bad_instrument_boolean_name(self):
+        """ Test OCB initialization with a bad Boolean instrument name """
+        self.lwarn = u"OCB instrument must be a string"
+        
+        # Initialize the OCBoundary class with bad instrument names
+        ocb = ocbpy.OCBoundary(instrument=True)
+        self.assertIsNone(ocb.filename)
+        self.assertIsNone(ocb.instrument)
 
-    def test_bad_default_file_name(self):
-        """ Test OCB initialization with a bad default file name
-        """
+        self.lout = self.log_capture.getvalue()
+        # Test logging error message for each bad initialization
+        print(self.lout, self.lwarn)
+        if self.lout.find(self.lwarn) < 0:
+            raise AssertionError()
+
+        del ocb
+
+    @unittest.skipIf(version_info.major == 2,
+                     'Python 2.7 does not support subTest')
+    def test_bad_file_name(self):
+        """ Test OCB initialization with bad file name """
+        self.lwarn = u"filename is not a string"
+
+        # Initialize the OCBoundary class with bad instrument names
+        for val in [1, True]:
+            with self.subTest(val=val):
+                ocb = ocbpy.OCBoundary(filename=val)
+                self.assertIsNone(ocb.filename)
+
+                self.lout = self.log_capture.getvalue()
+                # Test logging error message for each bad initialization
+                self.assertTrue(self.lout.find(self.lwarn) >= 0)
+
+        del val, ocb
+
+    @unittest.skipIf(version_info.major == 3, 'Already tested, remove in 2020')
+    def test_bad_file_name_int(self):
+        """ Test OCB initialization with a bad file name that's an integer"""
+        self.lwarn = u"filename is not a string"
+
+        # Initialize the OCBoundary class with bad instrument names
+        ocb = ocbpy.OCBoundary(filename=1)
+        self.assertIsNone(ocb.filename)
+
+        self.lout = self.log_capture.getvalue()
+        # Test logging error message for each bad initialization
+        self.assertTrue(self.lout.find(self.lwarn) >= 0)
+
+        del ocb
+
+    @unittest.skipIf(version_info.major == 3, 'Already tested, remove in 2020')
+    def test_bad_filename_bool(self):
+        """ Test OCB initialization with a bad file name that's a Boolean"""
+        self.lwarn = u"filename is not a string"
+
+        # Initialize the OCBoundary class with bad instrument names
+        ocb = ocbpy.OCBoundary(filename=True)
+        self.assertIsNone(ocb.filename)
+
+        self.lout = self.log_capture.getvalue()
+        # Test logging error message for each bad initialization
+        self.assertTrue(self.lout.find(self.lwarn) >= 0)
+
+        del ocb
+
+    def test_bad_default_filename(self):
+        """ Test OCB initialization with a bad default file name """
+        self.lwarn = u"problem with default OC Boundary"
+
         # Set a bad default boundary file name
         ocbpy.__default_file__ = "hi"
-
         ocb = ocbpy.OCBoundary()
         self.assertIsNone(ocb.filename)
 
-        log_rec = self.log_handler.formatted_records
-        # Test logging error message for the non-None bad initializations
-        self.assertTrue(log_rec[-1].find("problem with default OC Boundary")>0)
+        self.lout = self.log_capture.getvalue()
+        # Test logging error message for each bad initialization
+        self.assertTrue(self.lout.find(self.lwarn) >= 0)
 
-        del log_rec, ocb
+        del ocb
 
     def test_bad_default_pairing(self):
         """ Test OCB initialization with a bad default file/instrument pairing
         """
+        self.lwarn = u"default OC Boundary file uses IMAGE"
+    
         # Try to load AMPERE data with an IMAGE file
         ocb = ocbpy.OCBoundary(instrument="ampere")
         self.assertIsNone(ocb.filename)
 
-        log_rec = self.log_handler.formatted_records
-        # Test logging error message for the non-None bad initializations
-        self.assertTrue(log_rec[-1].find("default OC Boundary file uses IMAGE")
-                        > 0)
+        self.lout = self.log_capture.getvalue()
+        # Test logging error message for each bad initialization
+        self.assertTrue(self.lout.find(self.lwarn) >= 0)
 
-        del log_rec, ocb
+        del ocb
 
     def test_bad_filename(self):
         """ Test OCB initialization with a bad default file/instrument pairing
         """
+        self.lwarn = u"name provided is not a file\ncannot open OCB file [hi]"
+
         # Try to load AMPERE data with an IMAGE file
         ocb = ocbpy.OCBoundary(filename="hi")
         self.assertIsNone(ocb.filename)
 
-        log_rec = self.log_handler.formatted_records
-        # Test logging error message for the non-None bad initializations
-        self.assertEqual(len(log_rec), 2)
-        self.assertTrue(log_rec[0].find("name provided is not a file") > 0)
-        self.assertTrue(log_rec[1].find("cannot open OCB file [hi]") > 0)
+        self.lout = self.log_capture.getvalue()
+        # Test logging error message for each bad initialization
+        self.assertTrue(self.lout.find(self.lwarn) >= 0)
 
-        del log_rec, ocb
+        del ocb
 
     def test_bad_time_structure(self):
         """ Test OCB initialization without complete time data in file
         """
-
+        self.lwarn = u"missing time columns in"
+        
         # Initialize without a file so that custom loading is performed
         ocb = ocbpy.OCBoundary(filename=None)
         self.assertIsNone(ocb.filename)
@@ -122,12 +214,11 @@ class TestOCBoundaryLogFailure(unittest.TestCase):
         # Load the data, skipping the year
         ocb.load(ocb_cols="skip soy num_sectors phi_cent r_cent r a r_err")
 
-        log_rec = self.log_handler.formatted_records
+        self.lout = self.log_capture.getvalue()
         # Test logging error message for the non-None bad initializations
-        self.assertEqual(len(log_rec), 1)
-        self.assertTrue(log_rec[0].find("missing time columns in") > 0)
+        self.assertTrue(self.lout.find(self.lwarn) >= 0)
 
-        del log_rec, ocb
+        del ocb
 
 class TestOCBoundaryMethodsGeneral(unittest.TestCase):
     def setUp(self):
@@ -149,7 +240,7 @@ class TestOCBoundaryMethodsGeneral(unittest.TestCase):
         """ Test the default class representation """
         self.ocb = ocbpy.ocboundary.OCBoundary(filename=self.default_file)
 
-        if sys.version_info.major == 2:
+        if version_info.major == 2:
             self.assertRegexpMatches(self.ocb.__repr__(),
                                      "Open-Closed Boundary file:")
         else:
@@ -169,7 +260,7 @@ class TestOCBoundaryMethodsGeneral(unittest.TestCase):
 
         self.ocb = ocbpy.ocboundary.OCBoundary(filename=None)
 
-        if sys.version_info.major == 2:
+        if version_info.major == 2:
             self.assertRegexpMatches(self.ocb.__repr__(),
                                      "No Open-Closed Boundary file specified")
         else:
@@ -181,7 +272,7 @@ class TestOCBoundaryMethodsGeneral(unittest.TestCase):
 
         self.ocb = ocbpy.ocboundary.OCBoundary(filename=self.empty_file)
 
-        if sys.version_info.major == 2:
+        if version_info.major == 2:
             self.assertRegexpMatches(self.ocb.__repr__(), "No data loaded")
         else:
             self.assertRegex(self.ocb.__repr__(), "No data loaded")
@@ -572,8 +663,8 @@ class TestOCBoundaryMethodsNorth(unittest.TestCase):
     def test_aacgm_boundary_location_no_overwrite(self):
         """ Ensure no overwrite when re-calculating OCB AACGM locations
         """
-        log_handler = logbook.TestHandler()
-        log_handler.push_thread()
+        log_capture = StringIO()
+        ocbpy.logger.addHandler(logging.StreamHandler(log_capture))
 
         # Initialize the attributes with values for the good location
         rind = 27
@@ -583,13 +674,12 @@ class TestOCBoundaryMethodsNorth(unittest.TestCase):
         # This should raise a warning
         self.ocb.get_aacgm_boundary_lat(150.0, rec_ind=rind)
 
-        log_rec = log_handler.formatted_records
+        lout = log_capture.getvalue()
         # Test logging error message for only one warning about boundary update
-        self.assertEqual(len(log_rec), 1)
-        self.assertTrue(log_rec[0].find("unable to update AACGM boundary") > 0)
-        log_handler.pop_thread()
+        self.assertTrue(lout.find(u"unable to update AACGM boundary") >= 0)
+        log_capture.close()
         
-        del log_rec, log_handler
+        del lout, log_capture
 
     def test_aacgm_boundary_location_overwrite(self):
         """ Test ability to overwrite OCB AACGM location
@@ -936,12 +1026,15 @@ class TestOCBoundaryMatchData(unittest.TestCase):
         self.ocb = ocbpy.ocboundary.OCBoundary(filename=self.test_north)
         
         # Initialize logging
-        self.log_handler = logbook.TestHandler()
-        self.log_handler.push_thread()
+        self.lwarn = u""
+        self.lout = u""
+        self.log_capture = StringIO()
+        ocbpy.logger.addHandler(logging.StreamHandler(self.log_capture))
+        ocbpy.logger.setLevel(logging.INFO)
 
     def tearDown(self):
-        self.log_handler.pop_thread()
-        del self.ocb, self.test_north, self.log_handler
+        self.log_capture.close()
+        del self.ocb, self.test_north, self.lwarn, self.lout, self.log_capture
 
     def test_match(self):
         """ Test to see that the data matching works properly
@@ -979,11 +1072,11 @@ class TestOCBoundaryMatchData(unittest.TestCase):
         self.assertEqual(self.ocb.rec_ind, 27)
 
         # The first match will be announced in the log
-        log_rec = self.log_handler.formatted_records
-        self.assertEqual(len(log_rec), 1)
-        self.assertTrue(log_rec[0].find("found first good OCB record at") > 0)
+        self.lwarn = u"found first good OCB record at"
+        self.lout = self.log_capture.getvalue()
+        self.assertTrue(self.lout.find(self.lwarn) >= 0)
        
-        del idat, log_rec
+        del idat
 
     def test_bad_first_match(self):
         """ Test ability to not find a good OCB
@@ -996,15 +1089,14 @@ class TestOCBoundaryMatchData(unittest.TestCase):
         self.assertGreaterEqual(self.ocb.rec_ind, self.ocb.records)
 
         # The first match will be announced in the log
-        log_rec = self.log_handler.formatted_records
-        self.assertEqual(len(log_rec), 1)
-        self.assertTrue(log_rec[0].find("unable to find a good OCB record") > 0)
+        self.lwarn = u"unable to find a good OCB record"
+        self.lout = self.log_capture.getvalue()
+        self.assertTrue(self.lout.find(self.lwarn) >= 0)
         
-        del idat, log_rec
+        del idat
 
     def test_late_data_time_alignment(self):
-        """ Test failure when data occurs after boundaries
-        """
+        """ Test failure when data occurs after boundaries"""
 
         # Build a array of times for a test dataset
         test_times = [self.ocb.dtime[self.ocb.records-1] + dt.timedelta(days=2)]
@@ -1016,15 +1108,16 @@ class TestOCBoundaryMatchData(unittest.TestCase):
         self.assertGreaterEqual(self.ocb.rec_ind, self.ocb.records)
 
         # Check the log output
-        log_rec = self.log_handler.formatted_records
-        self.assertTrue(log_rec[-1].find("no OCB data available within") > 0)
-        self.assertTrue(log_rec[-1].find("of first measurement") > 0)
+        self.lwarn = u"no OCB data available within"
+        self.lout = self.log_capture.getvalue()
+        self.assertTrue(self.lout.find(self.lwarn) >= 0)
+        self.lwarn = u"of first measurement"
+        self.assertTrue(self.lout.find(self.lwarn) > 0)
 
-        del test_times, idat, log_rec
+        del test_times, idat
 
     def test_no_data_time_alignment(self):
-        """ Test failure when data occurs between boundaries
-        """
+        """ Test failure when data occurs between boundaries """
 
         # Build a array of times for a test dataset
         test_times = [self.ocb.dtime[37] - dt.timedelta(seconds=601)]
@@ -1036,11 +1129,13 @@ class TestOCBoundaryMatchData(unittest.TestCase):
         self.assertGreaterEqual(self.ocb.rec_ind, 37)
 
         # Check the log output
-        log_rec = self.log_handler.formatted_records
-        self.assertTrue(log_rec[-1].find("no OCB data available within") > 0)
-        self.assertTrue(log_rec[-1].find("of input measurement") > 0)
+        self.lwarn = u"no OCB data available within"
+        self.lout = self.log_capture.getvalue()
+        self.assertTrue(self.lout.find(self.lwarn) >= 0)
+        self.lwarn = u"of input measurement"
+        self.assertTrue(self.lout.find(self.lwarn) >= 0)
 
-        del test_times, idat, log_rec
+        del test_times, idat
 
 class TestOCBoundaryFailure(unittest.TestCase):
     def setUp(self):
