@@ -11,14 +11,15 @@ from io import StringIO
 import logging
 import numpy as np
 from os import path
-import pandas as pds
 from sys import version_info
 import unittest
 
 import ocbpy
 try:
+    # Import pysat first to get the correct error message
     import pysat
     import ocbpy.instruments.pysat_instruments as ocb_pysat
+    import pandas as pds
     no_pysat = False
 except ImportError:
     no_pysat = True
