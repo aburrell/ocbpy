@@ -34,7 +34,6 @@ Angeline G. Burrell (AGB), 15 April 2017, University of Texas, Dallas (UTDallas)
 
 """
 
-import logbook as logging
 import datetime as dt
 
 def year_soy_to_datetime(yyyy, soy):

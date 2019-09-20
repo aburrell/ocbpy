@@ -29,8 +29,9 @@ Chisham, G. (2017), A new methodology for the development of high-latitude
  Research: Space Physics, 122, doi:10.1002/2016JA023235.
 
 """
+from __future__ import absolute_import, unicode_literals
+
 import datetime as dt
-import logbook as logging
 import numpy as np
 from os import path
 import types
@@ -156,9 +157,9 @@ class OCBoundary(object):
 
         """
 
-        if not isinstance(instrument, str):
+        if not hasattr(instrument, "lower"):
             estr = "OCB instrument must be a string [{:}]".format(instrument)
-            logging.error(estr)
+            ocbpy.logger.error(estr)
             self.filename = None
             self.instrument = None
         else:
@@ -166,8 +167,9 @@ class OCBoundary(object):
 
             if filename is None:
                 self.filename = None
-            elif not isinstance(filename, str):
-                logging.warning("file is not a string [{:}]".format(filename))
+            elif not hasattr(filename, "lower"):
+                estr = "filename is not a string [{:}]".format(filename)
+                ocbpy.logger.warning(estr)
                 self.filename = None
             elif filename.lower() == "default":
                 if instrument.lower() == "image":
@@ -175,13 +177,16 @@ class OCBoundary(object):
                     default_file = ocbpy.__default_file__.split("/")
                     self.filename = path.join(ocb_dir, *default_file)
                     if not ocbpy.instruments.test_file(self.filename):
-                        logging.warning("problem with default OC Boundary file")
+                        estr = "problem with default OC Boundary file"
+                        ocbpy.logger.warning(estr)
                         self.filename = None
                 else:
-                    logging.warning("default OC Boundary file uses IMAGE data")
+                    estr = "default OC Boundary file uses IMAGE data"
+                    ocbpy.logger.warning(estr)
                     self.filename = None
             elif not ocbpy.instruments.test_file(filename):
-                logging.warning("cannot open OCB file [{:s}]".format(filename))
+                estr = "cannot open OCB file [{:s}]".format(filename)
+                ocbpy.logger.warning(estr)
                 self.filename = None
             else:
                 self.filename = filename
@@ -348,7 +353,8 @@ class OCBoundary(object):
             ldtype[cols.index('time')] = ('time','|U50')
 
         if dflag < 0:
-            logging.error("missing time columns in [{:s}]".format(ocb_cols))
+            estr = "missing time columns in [{:s}]".format(ocb_cols)
+            ocbpy.logger.error(estr)
             return
         
         # Read the OCB data
@@ -753,8 +759,9 @@ class OCBoundary(object):
                 # Save the longitude at this time
                 self.aacgm_boundary_lon[i] = aacgm_lon
             else:
-                logging.warn("unable to update AACGM boundary latitude at " +
-                             "{:}, overwrite blocked".format(self.dtime[i]))
+                estr = "".join(["unable to update AACGM boundary latitude at ",
+                                "{:}, overwrite blocked".format(self.dtime[i])])
+                ocbpy.logger.warning(estr)
 
         return
 
@@ -870,14 +877,14 @@ def match_data_ocb(ocb, dat_dtime, idat=0, max_tol=600, min_sectors=7,
         ocb.get_next_good_ocb_ind(min_sectors=min_sectors, rcent_dev=rcent_dev,
                                   max_r=max_r, min_r=min_r, min_j=min_j)
         if ocb.rec_ind >= ocb.records:
-            estr = "unable to find a good OCB record in "
-            estr = "{:s}{:s}".format(estr, ocb.filename)
-            logging.error(estr)
+            estr = "".join(["unable to find a good OCB record in ",
+                            ocb.filename])
+            ocbpy.logger.error(estr)
             return idat
         else:
-            estr = "found first good OCB record at "
-            estr = "{:s}{:}".format(estr, ocb.dtime[ocb.rec_ind])
-            logging.info(estr)
+            estr = "".join(["found first good OCB record at ",
+                            "{:}".format(ocb.dtime[ocb.rec_ind])])
+            ocbpy.logger.info(estr)
 
         # Cycle past data occuring before the specified OC boundary point
         first_ocb = ocb.dtime[ocb.rec_ind] - dt.timedelta(seconds=max_tol)
@@ -885,7 +892,7 @@ def match_data_ocb(ocb, dat_dtime, idat=0, max_tol=600, min_sectors=7,
             idat += 1
 
             if idat >= dat_records:
-                logging.error("no input data close enough to first record")
+                ocbpy.logger.error("no input data close enough to first record")
                 return None
 
     # If the times match, return
@@ -905,10 +912,10 @@ def match_data_ocb(ocb, dat_dtime, idat=0, max_tol=600, min_sectors=7,
                                       min_r=min_r, min_j=min_j)
         elif sdiff > max_tol:
             # Cycle to the next value if no OCB values were close enough
-            estr = "no OCB data available within [{:d} s] of".format(max_tol)
-            estr = "{:s} input measurement at ".format(estr)
-            estr = "{:s}[{:}]".format(estr, dat_dtime[idat])
-            logging.info(estr)
+            estr = "".join(["no OCB data available within ",
+                            "[{:d} s] of input measurement at ".format(max_tol),
+                            "[{:}]".format(dat_dtime[idat])])
+            ocbpy.logger.info(estr)
             idat += 1
         else:
             # Make sure this is the OCB value closest to the input record
@@ -940,8 +947,8 @@ def match_data_ocb(ocb, dat_dtime, idat=0, max_tol=600, min_sectors=7,
 
     # Return from the last loop
     if idat == 0 and abs(sdiff) > max_tol:
-        estr = "no OCB data available within [{:d} s] of".format(max_tol)
-        estr = "{:s} first measurement [{:}]".format(estr, dat_dtime[idat])
-        logging.info(estr)
+        estr = "".join(["no OCB data available within [{:d} s]".format(max_tol),
+                        " of first measurement [{:}]".format(dat_dtime[idat])])
+        ocbpy.logger.info(estr)
     
     return idat
