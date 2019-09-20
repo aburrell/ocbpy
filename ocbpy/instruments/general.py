@@ -9,9 +9,11 @@ load_ascii_data(filename, hlines, kwargs)
     Load time-sorted ascii data file
 
 """
+from __future__ import absolute_import, unicode_literals
+
 import datetime as dt
 import numpy as np
-import logbook as logging
+import ocbpy
 
 def test_file(filename):
     """Test to ensure the file is small enough to read in.  Python can only
@@ -31,16 +33,16 @@ def test_file(filename):
     from os import path
 
     if not path.isfile(filename):
-        logging.warning("name provided is not a file")
+        ocbpy.logger.warning("name provided is not a file")
         return False
     
     fsize = path.getsize(filename)
 
     if(fsize > 2.0e9):
-        logging.warning("File size [{:.2f} GB > 2 GB]".format(fsize*1e-9))
+        ocbpy.logger.warning("File size [{:.2f} GB > 2 GB]".format(fsize*1e-9))
         return False
     elif(fsize == 0):
-        logging.warning("empty file [{:s}]".format(filename))
+        ocbpy.logger.warning("empty file [{:s}]".format(filename))
         return False
 
     return True
@@ -164,7 +166,8 @@ def load_ascii_data(filename, hlines, miss=None, fill=np.nan, hsplit=None,
     #---------------------------------------------------------------------
     # Create the output dictionary keylist
     if len(header) == 0:
-        logging.error("unable to find header of [{:d}] lines".format(hlines))
+        estr = "unable to find header of [{:d}] lines".format(hlines)
+        ocbpy.logger.error(estr)
         return header, dict()
 
     keyheader = in_header if in_header is not None else header[-1]
@@ -214,7 +217,8 @@ def load_ascii_data(filename, hlines, miss=None, fill=np.nan, hsplit=None,
                              filling_values=fill, comments=inline_comment,
                              invalid_raise=False, dtype=ldtype)
     except ValueError as err:
-        logging.error("unable to read data in file [{:s}]".format(filename))
+        estr = "unable to read data in file [{:s}]".format(filename)
+        ocbpy.logger.error(estr)
         return header, out
 
     if len(temp) > 0:
@@ -255,7 +259,7 @@ def load_ascii_data(filename, hlines, miss=None, fill=np.nan, hsplit=None,
                         noff += 1
             else:
                 estr = "unknown genfromtxt output for [{:s}]".format(filename)
-                logging.error(estr)
+                ocbpy.logger.error(estr)
                 return header, dict()
 
     del temp
