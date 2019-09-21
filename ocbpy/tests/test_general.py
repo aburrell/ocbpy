@@ -49,8 +49,7 @@ class TestGeneralMethods(unittest.TestCase):
         ocb_igen.test_file("/")
         self.lout = self.log_capture.getvalue()
 
-        if self.lout.find(self.lwarn) < 0:
-            raise AssertionError()
+        self.assertTrue(self.lout.find(self.lwarn) >= 0)
 
     def test_file_test_empty_file(self):
         """ Test the general file testing routine with a bad filename """
@@ -61,8 +60,7 @@ class TestGeneralMethods(unittest.TestCase):
         ocb_igen.test_file(self.temp_output)
         self.lout = self.log_capture.getvalue()
 
-        if self.lout.find(self.lwarn) < 0:
-            raise AssertionError()
+        self.assertTrue(self.lout.find(self.lwarn) >= 0)
 
     def test_load_ascii_data_badfile(self):
         """ Test the general loading routine for ASCII data with bad input
@@ -76,8 +74,7 @@ class TestGeneralMethods(unittest.TestCase):
         self.assertIsInstance(data, dict)
         self.assertEqual(len(data.keys()), 0)
 
-        if self.lout.find(self.lwarn) < 0:
-            raise AssertionError()
+        self.assertTrue(self.lout.find(self.lwarn) >= 0)
 
     def test_file_test_true(self):
         """ Test the general file testing routine with a good file
