@@ -33,10 +33,9 @@ class TestGeneralMethods(unittest.TestCase):
         self.lout = u""
         self.log_capture = StringIO()
         ocbpy.logger.addHandler(logging.StreamHandler(self.log_capture))
+        ocbpy.logger.setLevel(logging.WARNING)
 
     def tearDown(self):
-        self.log_capture.close()
-
         if os.path.isfile(self.temp_output):
             os.remove(self.temp_output)
 

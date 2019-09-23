@@ -238,12 +238,12 @@ class TestPysatMethods(unittest.TestCase):
         self.lout = u""
         self.log_capture = StringIO()
         ocbpy.logger.addHandler(logging.StreamHandler(self.log_capture))
+        ocbpy.logger.setLevel(logging.WARNING)
 
         self.utils = TestPysatUtils("test_ocb_metadata")
         self.utils.setUp()
 
     def tearDown(self):
-        self.log_capture.close()
         self.utils.tearDown()
         del self.test_file, self.log_capture, self.test_inst, self.ocb
         del self.utils, self.lout, self.lwarn
@@ -592,12 +592,12 @@ class TestPysatCustMethods(unittest.TestCase):
         self.lout = u""
         self.log_capture = StringIO()
         ocbpy.logger.addHandler(logging.StreamHandler(self.log_capture))
+        ocbpy.logger.setLevel(logging.WARNING)
 
         self.utils = TestPysatUtils("test_ocb_metadata")
         self.utils.setUp()
 
     def tearDown(self):
-        self.log_capture.close()
         self.utils.tearDown()
         del self.test_file, self.log_capture, self.test_inst, self.ocb
         del self.utils, self.lwarn, self.lout

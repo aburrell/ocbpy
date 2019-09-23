@@ -24,11 +24,10 @@ class TestOCBoundaryLogFailure(unittest.TestCase):
         self.lout = u""
         self.log_capture = StringIO()
         ocbpy.logger.addHandler(logging.StreamHandler(self.log_capture))
+        ocbpy.logger.setLevel(logging.WARNING)
 
     def tearDown(self):
         """ Tear down the test case"""
-        self.log_capture.close()
-
         del self.lwarn, self.lout, self.log_capture
 
     @unittest.skipIf(version_info.major == 2,
@@ -665,6 +664,7 @@ class TestOCBoundaryMethodsNorth(unittest.TestCase):
         """
         log_capture = StringIO()
         ocbpy.logger.addHandler(logging.StreamHandler(log_capture))
+        ocbpy.logger.setLevel(logging.WARNING)
 
         # Initialize the attributes with values for the good location
         rind = 27
@@ -677,7 +677,6 @@ class TestOCBoundaryMethodsNorth(unittest.TestCase):
         lout = log_capture.getvalue()
         # Test logging error message for only one warning about boundary update
         self.assertTrue(lout.find(u"unable to update AACGM boundary") >= 0)
-        log_capture.close()
         
         del lout, log_capture
 
@@ -1030,10 +1029,9 @@ class TestOCBoundaryMatchData(unittest.TestCase):
         self.lout = u""
         self.log_capture = StringIO()
         ocbpy.logger.addHandler(logging.StreamHandler(self.log_capture))
-        ocbpy.logger.setLevel(logging.INFO)
+        ocbpy.logger.setLevel(logging.WARNING)
 
     def tearDown(self):
-        self.log_capture.close()
         del self.ocb, self.test_north, self.lwarn, self.lout, self.log_capture
 
     def test_match(self):
@@ -1064,6 +1062,9 @@ class TestOCBoundaryMatchData(unittest.TestCase):
     def test_good_first_match(self):
         """ Test ability to find the first good OCB
         """
+        # Change the logging level
+        ocbpy.logger.setLevel(logging.INFO)
+
         # Because the array starts at the first good OCB, will return zero
         self.ocb.rec_ind = -1
         idat = ocbpy.ocboundary.match_data_ocb(self.ocb, [self.ocb.dtime[27]],
@@ -1097,6 +1098,8 @@ class TestOCBoundaryMatchData(unittest.TestCase):
 
     def test_late_data_time_alignment(self):
         """ Test failure when data occurs after boundaries"""
+        # Change the logging level
+        ocbpy.logger.setLevel(logging.INFO)
 
         # Build a array of times for a test dataset
         test_times = [self.ocb.dtime[self.ocb.records-1] + dt.timedelta(days=2)]
@@ -1118,6 +1121,8 @@ class TestOCBoundaryMatchData(unittest.TestCase):
 
     def test_no_data_time_alignment(self):
         """ Test failure when data occurs between boundaries """
+        # Change the logging level
+        ocbpy.logger.setLevel(logging.INFO)
 
         # Build a array of times for a test dataset
         test_times = [self.ocb.dtime[37] - dt.timedelta(seconds=601)]
