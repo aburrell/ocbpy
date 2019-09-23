@@ -29,8 +29,10 @@ Chisham, G. (2017), A new methodology for the development of high-latitude
  Research: Space Physics, 122, doi:10.1002/2016JA023235.
 
 """
+from __future__ import absolute_import, unicode_literals
 import numpy as np
-import logbook as logging
+
+import ocbpy
 
 def normal_evar(evar, unscaled_r, scaled_r):
     """ Normalise a variable proportional to the electric field
@@ -429,7 +431,7 @@ class VectorData(object):
                 if scale_func is None:
                     # This is not necessarily a bad thing, if the value does not
                     # need to be scaled.
-                    logging.info("no scaling function provided")
+                    ocbpy.logger.info("no scaling function provided")
                 else:
                     self.scale_func = scale_func
 
@@ -567,7 +569,7 @@ class VectorData(object):
                 self.define_quadrants()
 
             if(self.ocb_quad == 0 or self.vec_quad == 0):
-                logging.error("unable to define OCB and vector quadrants")
+                ocbpy.logger.error("unable to define OCB and vector quadrants")
                 return
     
             # Get the unscaled 2D vector magnitude

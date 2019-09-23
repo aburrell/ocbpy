@@ -29,11 +29,17 @@ instruments    Instrument-specific OCB gridding functions
 ocb_time       Time manipulation routines
 ---------------------------------------------------------------------------
 """
-from __future__ import (absolute_import)
+from __future__ import (absolute_import, unicode_literals)
+
+import logging
 
 from . import (ocboundary, ocb_scaling, ocb_time, ocb_correction)
 from .ocboundary import (OCBoundary, match_data_ocb)
 from . import (instruments)
 
+# Define the global variables
 __version__ = str('0.2b2')
 __default_file__ = "boundaries/si13_north_circle"
+
+# Define a logger object to allow easier log handling
+logger = logging.getLogger('ocbpy_logger')

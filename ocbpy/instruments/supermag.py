@@ -15,8 +15,10 @@ Data
 ----------------------------------------------------------------------------
 SuperMAG data available at: http://supermag.jhuapl.edu/
 """
-import logbook as logging
+from __future__ import absolute_import, unicode_literals
 import numpy as np
+
+import ocbpy
 
 def supermag2ascii_ocb(smagfile, outfile, ocb=None, ocbfile=None,
                        max_sdiff=600, min_sectors=7, rcent_dev=8.0, max_r=23.0,
@@ -86,7 +88,7 @@ def supermag2ascii_ocb(smagfile, outfile, ocb=None, ocbfile=None,
 
     # Test the OCB data
     if ocb.filename is None or ocb.records == 0:
-        logging.error("no data in OCB file {:}".format(ocb.filename))
+        ocbpy.logger.error("no data in OCB file {:}".format(ocb.filename))
         return
 
     # Open and test the file to ensure it can be written
@@ -100,13 +102,7 @@ def supermag2ascii_ocb(smagfile, outfile, ocb=None, ocbfile=None,
 
         outline = "{:s}MLAT MLT BMAG BN BE BZ OCB_MLAT OCB_MLT ".format(outline)
         outline = "{:s}OCB_BMAG OCB_BN OCB_BE OCB_BZ\n".format(outline)
-        try:
-            fout.write(outline)
-        except IOError as err:
-            estr = "unable to write [{:s}] because of error ".format(outline)
-            estr = "{:s}[{:}]".format(estr, err)
-            logging.error(estr)
-            return
+        fout.write(outline)
     
         # Initialise the ocb and SuperMAG indices
         imag = 0
@@ -154,13 +150,7 @@ def supermag2ascii_ocb(smagfile, outfile, ocb=None, ocbfile=None,
                                             vdata.ocb_lat, vdata.ocb_mlt)
                 outline = "{:s}{:.2f} {:.2f} {:.2f} {:.2f}\n".format(outline, \
                     vdata.ocb_mag, vdata.ocb_n, vdata.ocb_e, vdata.ocb_z)
-                try:
-                    fout.write(outline)
-                except IOError as err:
-                    estr = "unable to write [{:s}] ".format(outline)
-                    estr = "{:s}because of error [{:}]".format(estr, err)
-                    logging.error(estr)
-                    return
+                fout.write(outline)
 
                 # Move to next line
                 imag += 1

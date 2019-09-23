@@ -5,8 +5,9 @@
 #-----------------------------------------------------------------------------
 """ Tests the ocb_scaling class and functions
 """
-import unittest
+
 import numpy as np
+import unittest
 
 import ocbpy
 

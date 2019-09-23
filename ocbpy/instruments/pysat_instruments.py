@@ -15,15 +15,17 @@ Module
 pysat is available at: http://github.com/rstoneback/pysat or pypi
 
 """
+from __future__ import absolute_import, unicode_literals
 import numpy as np
-import logbook as logging
 
 try:
     import pysat
 except ImportError as ierr:
-    err = 'unable to load the pysat modules; pysat is available at:\n'
-    err += 'https://github.com/rstoneback/pysat'
+    err = ''.join(['unable to load the pysat modules; pysat is available at:\n',
+                   'https://github.com/pysat/pysat'])
     raise ImportError("{:s}\n{:}".format(err, ierr))
+
+import ocbpy
 
 def add_ocb_to_data(pysat_inst, mlat_name='', mlt_name='', evar_names=list(),
                     curl_evar_names=list(), vector_names=dict(), dat_ind=list(),
@@ -182,7 +184,7 @@ def add_ocb_to_data(pysat_inst, mlat_name='', mlt_name='', evar_names=list(),
 
     # Test the OCB data
     if ocb.filename is None or ocb.records == 0:
-        logging.error("no data in OCB file {:s}".format(ocb.filename))
+        ocbpy.logger.error("no data in OCB file {:}".format(ocb.filename))
         return
 
     # Initialise the OCB output
@@ -321,7 +323,7 @@ def add_ocb_to_metadata(pysat_inst, ocb_name, pysat_name, overwrite=False,
 
     # Test the input
     if ocb_name in pysat_inst.meta.data.index and not overwrite:
-        logging.warning("OCB data already has metadata")
+        ocbpy.logger.warning("OCB data already has metadata")
 
     else:
         if not pysat_name in pysat_inst.meta.data.index:
@@ -336,9 +338,9 @@ def add_ocb_to_metadata(pysat_inst, ocb_name, pysat_name, overwrite=False,
             name = ("OCB_" + ocb_name.split("_ocb")[0]).replace("_", " ")
             new_meta = {pysat_inst.fill_label: None,
                         pysat_inst.name_label: name,
-                        pysat_inst.desc_label: "Open Closed field-line " \
-                        + "Boundary vector " \
-                        + pysat_inst.meta[pysat_name][pysat_inst.desc_label],
+                        pysat_inst.desc_label: "".join(["Open Closed field-",
+                                                        "line Boundary vector ",
+                           pysat_inst.meta[pysat_name][pysat_inst.desc_label]]),
                         pysat_inst.units_label:
                         pysat_inst.meta[pysat_name][pysat_inst.units_label],
                         pysat_inst.plot_label: name,
@@ -350,14 +352,15 @@ def add_ocb_to_metadata(pysat_inst, ocb_name, pysat_name, overwrite=False,
 
             # Update certain categories with OCB information
             new_meta[pysat_inst.fill_label] = np.nan
-            new_meta[pysat_inst.name_label] = "OCB " \
-                + new_meta[pysat_inst.name_label]
-            new_meta[pysat_inst.desc_label] = "Open Closed field-line " \
-                + "Boundary " + new_meta[pysat_inst.desc_label]
-            new_meta[pysat_inst.plot_label] = "OCB " \
-                + new_meta[pysat_inst.plot_label]
-            new_meta[pysat_inst.axis_label] = "OCB " \
-                + new_meta[pysat_inst.axis_label]
+            new_meta[pysat_inst.name_label] = "".join(["OCB ",
+                                            new_meta[pysat_inst.name_label]])
+            new_meta[pysat_inst.desc_label] = "".join(["Open Closed field-line",
+                                                       " Boundary ",
+                                            new_meta[pysat_inst.desc_label]])
+            new_meta[pysat_inst.plot_label] = "".join(["OCB ",
+                                            new_meta[pysat_inst.plot_label]])
+            new_meta[pysat_inst.axis_label] = "".join(["OCB ",
+                                            new_meta[pysat_inst.axis_label]])
 
         # Set the notes
         new_meta[pysat_inst.notes_label] = notes

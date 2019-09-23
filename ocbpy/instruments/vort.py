@@ -17,9 +17,9 @@ Data
 Specialised SuperDARN data product, available from: gchi@bas.ac.uk
 
 """
+from __future__ import absolute_import, unicode_literals
 import datetime as dt
 import numpy as np
-import logbook as logging
 
 import ocbpy
 import ocbpy.ocb_scaling as ocbscal
@@ -93,7 +93,7 @@ def vort2ascii_ocb(vortfile, outfile, ocb=None, ocbfile='default',
         ocb = ocbpy.ocboundary.OCBoundary(ocbfile, stime=vstart, etime=vend)
 
     if ocb.filename is None or ocb.records == 0:
-        logging.error("no data in OCB file [{:}]".format(ocb.filename))
+        ocbpy.logger.error("no data in OCB file [{:}]".format(ocb.filename))
         return
 
     # Set the reference radius
@@ -204,9 +204,9 @@ def load_vorticity_ascii_data(vortfile, save_all=False):
             if vinc == 0:
                 # This is a date line
                 if len(vsplit) != 4:
-                    estr = "unexpected line encountered when date line "
-                    estr += "expected [{:s}]".format(vline)
-                    logging.error(estr)
+                    estr = "".join(["unexpected line encountered when date ",
+                                    "line expected [{:s}]".format(vline)])
+                    ocbpy.logger.error(estr)
                     fvort.close()
                     return None
 
@@ -224,9 +224,10 @@ def load_vorticity_ascii_data(vortfile, save_all=False):
             elif vinc == 1:
                 # This is a number of entries line
                 if len(vsplit) != 1:
-                    estr = "unexpected line encountered when number of entries "
-                    estr += "line expected [{:s}]".format(vline)
-                    logging.error(estr)
+                    estr = "".join(["unexpected line encountered when number",
+                                    " of entries line expected ",
+                                    "[{:s}]".format(vline)])
+                    ocbpy.logger.error(estr)
                     fvort.close()
                     return None
 
@@ -247,9 +248,10 @@ def load_vorticity_ascii_data(vortfile, save_all=False):
                     for bklist in bkeys:
                         # Test to see that this line has the right number of col
                         if len(vsplit) != len(bklist):
-                            estr = "unexpected line encountered for a data "
-                            estr += "block [{:s}]".format(vline)
-                            logging.error(estr)
+                            estr = "".join(["unexpected line encountered ",
+                                            "for a data block ",
+                                            "[{:s}]".format(vline)])
+                            ocbpy.logger.error(estr)
                             fvort.close()
                             return None
 
