@@ -164,9 +164,9 @@ class OCBoundary(object):
 
             # If a filename is available, make sure it is good
             if self.filename is not None:
-                if not ocbpy.instruments.test_file(filename):
+                if not ocbpy.instruments.test_file(self.filename):
                     # If the filename is bad, return an uninitialized object
-                    estr = "cannot open OCB file [{:s}]".format(filename)
+                    estr = "cannot open OCB file [{:s}]".format(self.filename)
                     ocbpy.logger.warning(estr)
                     self.filename = None
 

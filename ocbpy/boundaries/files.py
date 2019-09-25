@@ -143,9 +143,9 @@ def get_default_file(stime, etime, hemisphere, instrument=''):
     good_files = list()
     for bfile, bdict in boundary_files.iteritems():
         # Select by hemisphere
-        if bdict['hemi'] == hemi:
+        if bdict['hemisphere'] == hemisphere:
             # Select by instrument
-            if bdict['inst'] in inst:
+            if bdict['instrument'] in inst:
                 # Select by time
                 if(stime is None or etime is None or
                    (stime <= bdict['etime'] and etime >= bdict['stime'])):
@@ -163,15 +163,15 @@ def get_default_file(stime, etime, hemisphere, instrument=''):
         default_file = None
     elif len(good_files) == 1:
         default_file = os.path.join(boundary_dir, good_files[0])
-        instrument = short_to_long[boundary_files[good_files[0]]['inst']]
+        instrument = short_to_long[boundary_files[good_files[0]]['instrument']]
     else:
         # Rate files by instrument
         default_inst = ['si13', 'si12', 'wic', 'amp']
-        ordered_files = {default_inst.index(boundary_files[bb]['inst']): bb
-                         for bb in good_files}
+        ordered_files = {default_inst.index(boundary_files[bb]['instrument']):
+                         bb for bb in good_files}
         bfile = ordered_files[min(ordered_files.keys())]
         default_file = os.path.join(boundary_dir, bfile)
-        instrument = short_to_long[boundary_files[bfile]['inst']]
+        instrument = short_to_long[boundary_files[bfile]['instrument']]
 
     return default_file, instrument
             
