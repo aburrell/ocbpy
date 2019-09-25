@@ -13,6 +13,7 @@ process and provides examples for usage.
    :maxdepth: 2
 
    overview.rst
+   citing.rst
    ocb_datasets.rst
    ocb_gridding.rst
    ocb_boundary_correction.rst
