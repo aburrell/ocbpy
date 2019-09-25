@@ -481,7 +481,7 @@ class OCBoundary(object):
         return
 
     def normal_coord(self, lat, lt, coords='magnetic', height=350.0,
-                     method='ALLOWTRACE'):
+                     method='TRACE'):
         """converts a position to normalised co-ordinates relative to the OCB
 
         Parameters
@@ -499,7 +499,7 @@ class OCBoundary(object):
         method : (str)
             String denoting which type(s) of conversion to perform, if
             geographic coordinates are provided.  Expects either 'TRACE' or
-            'ALLOWTRACE'.  See AACGMV2 for details.  (default='ALLOWTRACE')
+            'ALLOWTRACE'.  See AACGMV2 for details.  (default='TRACE')
 
         Returns
         --------
@@ -566,7 +566,7 @@ class OCBoundary(object):
         return ocb_lat, ocb_mlt, r_corr
 
     def revert_coord(self, ocb_lat, ocb_mlt, r_corr=0.0, coords='magnetic',
-                     height=350.0, method='ALLOWTRACE'):
+                     height=350.0, method='TRACE'):
         """Converts the position of a measurement in normalised co-ordinates
         relative to the OCB into AACGM co-ordinates
 
@@ -589,7 +589,7 @@ class OCBoundary(object):
         method : (str)
             String denoting which type(s) of conversion to perform, if
             geographic coordinates are provided.  Expects either 'TRACE' or
-            'ALLOWTRACE'.  See AACGMV2 for details.  (default='ALLOWTRACE')
+            'ALLOWTRACE'.  See AACGMV2 for details.  (default='TRACE')
 
         Returns
         --------
