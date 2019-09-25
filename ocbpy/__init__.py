@@ -45,4 +45,5 @@ from . import (boundaries)
 __version__ = str('0.2b2')
 
 # Define a logger object to allow easier log handling
+logging.raiseExceptions = False
 logger = logging.getLogger('ocbpy_logger')
