@@ -7,6 +7,8 @@
 """
 
 import numpy as np
+from os import path
+import sys
 import unittest
 
 import ocbpy
@@ -17,7 +19,6 @@ class TestOCBScalingMethods(unittest.TestCase):
         """ Initialize the OCBoundary object using the test file, as well as
         the VectorData object
         """
-        from os import path
 
         ocb_dir = path.split(ocbpy.__file__)
         test_file = path.join(ocb_dir[0], "tests", "test_data",
@@ -72,7 +73,6 @@ class TestOCBScalingMethods(unittest.TestCase):
 
     def test_vector_repr_no_scaling(self):
         """ Test the VectorData print statement without a scaling function """
-        import sys
         out = self.vdata.__repr__()
 
         if sys.version_info.major == 2:
@@ -85,7 +85,6 @@ class TestOCBScalingMethods(unittest.TestCase):
 
     def test_vector_repr_with_scaling(self):
         """ Test the VectorData print statement with a scaling function """
-        import sys
         self.vdata.set_ocb(self.ocb, scale_func=ocbpy.ocb_scaling.normal_evar)
         out = self.vdata.__repr__()
 
