@@ -24,7 +24,7 @@ class TestVortMethods(unittest.TestCase):
         the VectorData object
         """
         
-        self.ocb_dir = os.path.split(ocbpy.__file__)[0]
+        self.ocb_dir = os.path.dirname(ocbpy.__file__)
         self.test_empty = os.path.join(self.ocb_dir, "tests", "test_data",
                                        "test_empty")
         self.test_ocb = os.path.join(self.ocb_dir, "tests", "test_data",

@@ -218,10 +218,8 @@ class TestPysatMethods(unittest.TestCase):
         """ Initialize the OCBoundary object using the test file, as well as
         the VectorData object
         """
-        
-        ocb_dir = path.split(ocbpy.__file__)[0]
-        self.test_file = path.join(ocb_dir, "tests", "test_data",
-                                   "test_north_circle")
+        self.test_file = path.join(path.dirname(ocbpy.__file__), "tests",
+                                   "test_data", "test_north_circle")
         self.assertTrue(path.isfile(self.test_file))
         self.ocb = ocbpy.OCBoundary(self.test_file)
         self.ocb.rec_ind = 27
@@ -574,9 +572,8 @@ class TestPysatCustMethods(unittest.TestCase):
         """ Initialize the OCBoundary object using the test file, as well as
         the VectorData object
         """
-        ocb_dir = path.split(ocbpy.__file__)[0]
-        self.test_file = path.join(ocb_dir, "tests", "test_data",
-                                   "test_north_circle")
+        self.test_file = path.join(path.dirname(ocbpy.__file__), "tests",
+                                   "test_data", "test_north_circle")
         self.assertTrue(path.isfile(self.test_file))
         self.ocb = ocbpy.OCBoundary(self.test_file)
         self.ocb.rec_ind = 27

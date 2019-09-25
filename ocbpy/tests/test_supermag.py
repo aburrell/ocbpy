@@ -5,9 +5,18 @@
 #-----------------------------------------------------------------------------
 """ Tests the ocb_scaling class and functions
 """
-import ocbpy.instruments.supermag as ocb_ismag
-import unittest
+import datetime as dt
 import numpy as np
+import os
+import platform
+import unittest
+
+if platform.system().lower() != "windows":
+    import filecmp
+
+import ocbpy
+import ocbpy.instruments.supermag as ocb_ismag
+from ocbpy.instruments.general import test_file
 
 class TestSuperMAGMethods(unittest.TestCase):
 
@@ -15,23 +24,19 @@ class TestSuperMAGMethods(unittest.TestCase):
         """ Initialize the OCBoundary object using the test file, as well as
         the VectorData object
         """
-        from os import path
-        import ocbpy
         
-        self.ocb_dir = path.split(ocbpy.__file__)[0]
-        self.test_ocb = path.join(self.ocb_dir, "tests", "test_data",
-                                  "test_north_circle")
-        self.test_file = path.join(self.ocb_dir, "tests", "test_data",
-                                   "test_smag")
-        self.test_output = path.join(self.ocb_dir, "tests", "test_data",
-                                     "out_smag")
-        self.temp_output = path.join(self.ocb_dir, "tests", "test_data",
-                                     "temp_smag")
-        self.assertTrue(path.isfile(self.test_file))
+        self.ocb_dir = os.path.dirname(ocbpy.__file__)
+        self.test_ocb = os.path.join(self.ocb_dir, "tests", "test_data",
+                                     "test_north_circle")
+        self.test_file = os.path.join(self.ocb_dir, "tests", "test_data",
+                                      "test_smag")
+        self.test_output = os.path.join(self.ocb_dir, "tests", "test_data",
+                                        "out_smag")
+        self.temp_output = os.path.join(self.ocb_dir, "tests", "test_data",
+                                        "temp_smag")
+        self.assertTrue(os.path.isfile(self.test_file))
 
     def tearDown(self):
-        import os
-
         if os.path.isfile(self.temp_output):
             os.remove(self.temp_output)
 
@@ -40,7 +45,6 @@ class TestSuperMAGMethods(unittest.TestCase):
     def test_load_supermag_ascii_data(self):
         """ Test the routine to load the SuperMAG data
         """
-        import datetime as dt
 
         header, data = ocb_ismag.load_supermag_ascii_data(self.test_file)
 
@@ -79,8 +83,7 @@ class TestSuperMAGMethods(unittest.TestCase):
     def test_wrong_load(self):
         """ Test the routine to load the SuperMAG data
         """
-        from os.path import join
-        bad_file = join(self.ocb_dir, "test", "test_data", "test_vort")
+        bad_file = os.path.join(self.ocb_dir, "test", "test_data", "test_vort")
         header, data = ocb_ismag.load_supermag_ascii_data(bad_file)
 
         self.assertListEqual(header, list())
@@ -91,7 +94,6 @@ class TestSuperMAGMethods(unittest.TestCase):
         """ Test the conversion of SuperMAG data from AACGM coordinates into
         OCB coordinates
         """
-        import platform
 
         ocb_ismag.supermag2ascii_ocb(self.test_file, self.temp_output,
                                      ocbfile=self.test_ocb)
@@ -114,7 +116,6 @@ class TestSuperMAGMethods(unittest.TestCase):
 
             del ldtype, test_out, temp_out
         else:
-            import filecmp
             # Compare created file to stored test file
             self.assertTrue(filecmp.cmp(self.test_output, self.temp_output,
                                         shallow=False))
@@ -142,7 +143,6 @@ class TestSuperMAGMethods(unittest.TestCase):
         """ Test the conversion of SuperMAG data from AACGM coordinates into
         OCB coordinates
         """
-        from ocbpy.instruments.general import test_file
 
         with self.assertRaisesRegexp(IOError, "SuperMAG file cannot be opened"):
             ocb_ismag.supermag2ascii_ocb("fake_file", "fake_out",
@@ -152,7 +152,6 @@ class TestSuperMAGMethods(unittest.TestCase):
         """ Test the conversion of SuperMAG data from AACGM coordinates into
         OCB coordinates
         """
-        from ocbpy.instruments.general import test_file
 
         ocb_ismag.supermag2ascii_ocb(self.test_file, "fake_out",
                                      ocbfile="fake_ocb")
