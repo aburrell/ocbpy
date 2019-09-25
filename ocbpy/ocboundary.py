@@ -1,6 +1,6 @@
 #!/usr/bin/env python
 # -*- coding: utf-8 -*-
-# Copyright (C) 2017, AGB & GC
+# Copyright (C) 2019, AGB & GC
 # Full license can be found in License.md
 #-----------------------------------------------------------------------------
 """Hold, manipulate, and load the open-closed field line boundary data
@@ -41,35 +41,10 @@ import aacgmv2
 import ocbpy
 import ocbpy.ocb_correction as ocbcor
 from ocbpy.ocb_time import slt2glon, convert_time, glon2slt, deg2hr
+from ocbpy.boundaries.files import get_default_file
 
 class OCBoundary(object):
     """ Object containing open-closed field-line boundary (OCB) data
-
-    Parameters
-    ----------
-    filename : (str or NoneType)
-        File containing the required open-closed circle boundary data sorted by
-        time.  If NoneType, no file is loaded.  If 'default', the
-        default IMAGE FUV file is loaded (if available). (default='default')
-    instrument : (str)
-        Instrument providing the OCBoundaries (default='image')
-    hemisphere : (int)
-        Integer (+/- 1) denoting northern/southern hemisphere (default=1)
-    boundary_lat : (float)
-        Typical AACGM latitude of the OCBoundary or None to use
-        instrument defaults (default=None)
-    stime : (datetime or NoneType)
-        First time to load data or beginning of file.  If specifying time, be
-        sure to start before the time of the data to allow the best match within
-        the allowable time tolerance to be found. (default=None)
-    etime : (datetime or NoneType)
-        Last time to load data or ending of file.  If specifying time, be sure
-        to end after the last data point you wish to match to, to ensure the
-        best match within the allowable time tolerance is made. (default=None)
-
-    Returns
-    ---------
-    self : OCBoundary class object containing OCB file data
 
     Attributes
     -----------
@@ -127,7 +102,7 @@ class OCBoundary(object):
 
     """
 
-    def __init__(self, filename="default", instrument="image", hemisphere=1,
+    def __init__(self, filename="default", instrument='', hemisphere=1,
                  boundary_lat=None, stime=None, etime=None, rfunc=None,
                  rfunc_kwargs=None):
         """Object containing OCB data
@@ -135,25 +110,34 @@ class OCBoundary(object):
         Parameters
         ----------
         filename : (str or NoneType)
-            File containing OCB data.  If None class structure will be
-            initialised, but no file will be loaded.  If 'default', the
-            default file will be loaded.
+            File containing the required open-closed circle boundary data
+            sorted by time.  If NoneType, no file is loaded.  If 'default',
+            ocbpy.boundaries.files.get_default_file is called.
+            (default='default')
         instrument : (str)
-            Instrument providing the OCBoundaries (default='image')
+            Instrument providing the OCBoundaries.  Requires 'image' or 'ampere'
+            if a file is provided.  If using filename='default', also accepts
+            'amp', 'si12', 'si13', 'wic', and ''.  (default='')
         hemisphere : (int)
             Integer (+/- 1) denoting northern/southern hemisphere (default=1)
         boundary_lat : (float)
-            Typical AACGM latitude of the OCBoundary or None to use
+            Typical AACGM latitude of the OCBoundary or None to use the
             instrument defaults (default=None)
         stime : (datetime or NoneType)
-            First time to load data or beginning of file (default=None)
+            First time to load data or beginning of file.  If specifying time,
+            be sure to start before the time of the data to allow the best
+            match within the allowable time tolerance to be found.
+            (default=None)
         etime : (datetime or NoneType)
-            Last time to load data or ending of file (default=None)
+            Last time to load data or ending of file.  If specifying time, be
+            sure to end after the last data point you wish to match to, to
+            ensure the best match within the allowable time tolerance is made.
+            (default=None)
         rfunc : (np.ndarray, function, or NoneType)
             OCB radius correction function, if None will use instrument default.
-            Function must have AACGM MLT as arguement input. (default=None) 
+            Function must have AACGM MLT as argument input. (default=None) 
         rfunc_kwargs : (np.ndarray, dict, or NoneType)
-            OCB radius correction function keyword arguements. (default={})
+            OCB radius correction function keyword arguments. (default={})
 
         """
 
@@ -165,6 +149,7 @@ class OCBoundary(object):
         else:
             self.instrument = instrument.lower()
 
+            # If a filename wanted and not provided, get one
             if filename is None:
                 self.filename = None
             elif not hasattr(filename, "lower"):
@@ -172,24 +157,18 @@ class OCBoundary(object):
                 ocbpy.logger.warning(estr)
                 self.filename = None
             elif filename.lower() == "default":
-                if instrument.lower() == "image":
-                    ocb_dir = path.split(ocbpy.__file__)[0]
-                    default_file = ocbpy.__default_file__.split("/")
-                    self.filename = path.join(ocb_dir, *default_file)
-                    if not ocbpy.instruments.test_file(self.filename):
-                        estr = "problem with default OC Boundary file"
-                        ocbpy.logger.warning(estr)
-                        self.filename = None
-                else:
-                    estr = "default OC Boundary file uses IMAGE data"
-                    ocbpy.logger.warning(estr)
-                    self.filename = None
-            elif not ocbpy.instruments.test_file(filename):
-                estr = "cannot open OCB file [{:s}]".format(filename)
-                ocbpy.logger.warning(estr)
-                self.filename = None
+                self.filename, self.instrument = get_default_file(stime, etime,
+                                                    hemisphere, self.instrument)
             else:
                 self.filename = filename
+
+            # If a filename is available, make sure it is good
+            if self.filename is not None:
+                if not ocbpy.instruments.test_file(filename):
+                    # If the filename is bad, return an uninitialized object
+                    estr = "cannot open OCB file [{:s}]".format(filename)
+                    ocbpy.logger.warning(estr)
+                    self.filename = None
 
         if not hemisphere in [1, -1]:
             raise ValueError("hemisphere must be 1 (north) or -1 (south)")
@@ -201,12 +180,16 @@ class OCBoundary(object):
         self.phi_cent = None
         self.r_cent = None
         self.r = None
-        self.rfunc = rfunc
-        self.rfunc_kwargs = rfunc_kwargs
 
         # Get the instrument defaults
         hlines, ocb_cols, datetime_fmt = self.inst_defaults()
 
+        # Set the boundary correction function, overwritting the defaults
+        if rfunc is not None:
+            self.rfunc = rfunc
+            self.rfunc_kwargs = rfunc_kwargs
+        
+        # Set the boundary latitude, overwriting the defaults
         if boundary_lat is not None:
             self.boundary_lat = boundary_lat
 
@@ -214,7 +197,7 @@ class OCBoundary(object):
             if np.sign(boundary_lat) != np.sign(hemisphere):
                 self.boundary_lat *= -1.0
 
-        # If possible, load the data
+        # If possible, load the data.  Any boundary correction is applied here.
         if self.filename is not None:
             if len(ocb_cols) > 0:
                 self.load(hlines=hlines, ocb_cols=ocb_cols,
@@ -297,15 +280,22 @@ class OCBoundary(object):
             ocb_cols = "year soy num_sectors phi_cent r_cent r a r_err"
             datetime_fmt = ""
             self.boundary_lat = self.hemisphere * 74.0
+            self.rfunc = None
+            self.rfunc_kwargs = None
         elif self.instrument == "ampere":
             hlines = 0
             ocb_cols = "date time r x y j_mag"
             datetime_fmt = "%Y%m%d %H:%M"
-            self.boundary_lat = self.hemisphere * 72.0
+            self.boundary_lat = self.hemisphere * 74.0
+            self.rfunc = ocbpy.ocbcor.elliptical
+            self.rfunc_kwargs = {'instrument': self.instrument,
+                                 'method': 'median'}
         else:
             hlines = 0
             ocb_cols = ""
             datetime_fmt = ""
+            self.rfunc = None
+            self.rfunc_kwargs = None
 
         return hlines, ocb_cols, datetime_fmt
 
