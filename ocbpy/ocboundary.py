@@ -180,15 +180,12 @@ class OCBoundary(object):
         self.phi_cent = None
         self.r_cent = None
         self.r = None
+        self.rfunc = rfunc
+        self.rfunc_kwargs = rfunc_kwargs
 
         # Get the instrument defaults
         hlines, ocb_cols, datetime_fmt = self.inst_defaults()
 
-        # Set the boundary correction function, overwritting the defaults
-        if rfunc is not None:
-            self.rfunc = rfunc
-            self.rfunc_kwargs = rfunc_kwargs
-        
         # Set the boundary latitude, overwriting the defaults
         if boundary_lat is not None:
             self.boundary_lat = boundary_lat
@@ -280,22 +277,15 @@ class OCBoundary(object):
             ocb_cols = "year soy num_sectors phi_cent r_cent r a r_err"
             datetime_fmt = ""
             self.boundary_lat = self.hemisphere * 74.0
-            self.rfunc = None
-            self.rfunc_kwargs = None
         elif self.instrument == "ampere":
             hlines = 0
             ocb_cols = "date time r x y j_mag"
             datetime_fmt = "%Y%m%d %H:%M"
             self.boundary_lat = self.hemisphere * 74.0
-            self.rfunc = ocbpy.ocbcor.elliptical
-            self.rfunc_kwargs = {'instrument': self.instrument,
-                                 'method': 'median'}
         else:
             hlines = 0
             ocb_cols = ""
             datetime_fmt = ""
-            self.rfunc = None
-            self.rfunc_kwargs = None
 
         return hlines, ocb_cols, datetime_fmt
 
