@@ -50,7 +50,7 @@ def get_boundary_directory():
     boundary_dir = os.path.join(os.path.split(ocbpy.__file__)[0], "boundaries")
 
     if not os.path.isdir(boundary_dir):
-        raise NotADirectoryError("can't find the OCBpy boundary file directory")
+        raise OSError("can't find the OCBpy boundary file directory")
 
     return boundary_dir
 
