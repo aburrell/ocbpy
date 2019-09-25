@@ -47,7 +47,7 @@ def get_boundary_directory():
 
     """
 
-    boundary_dir = os.path.join(os.path.split(ocbpy.__file__)[0], "boundaries")
+    boundary_dir = os.path.join(os.path.dirname(ocbpy.__file__), "boundaries")
 
     if not os.path.isdir(boundary_dir):
         raise OSError("can't find the OCBpy boundary file directory")
@@ -86,7 +86,8 @@ def get_boundary_files():
     # Add the boundary files to the output dictionary
     boundary_files = dict()
     for bfile in file_list:
-        if bfile.find(".py") < 0 and bfile.find("README") < 0:
+        if(os.path.isfile(os.path.join(boundary_dir, bfile))
+           and bfile.find(".py") < 0 and bfile.find("README") < 0):
             file_info = bfile.lower().split("_")
             boundary_files[bfile] = {"instrument": file_info[0],
                                      "hemisphere": hemi[file_info[1]],
@@ -141,7 +142,7 @@ def get_default_file(stime, etime, hemisphere, instrument=''):
 
     # Make a list of appropriate boundary files
     good_files = list()
-    for bfile, bdict in boundary_files.iteritems():
+    for bfile, bdict in list(boundary_files.items()):
         # Select by hemisphere
         if bdict['hemisphere'] == hemisphere:
             # Select by instrument
