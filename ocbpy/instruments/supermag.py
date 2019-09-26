@@ -14,17 +14,22 @@ load_supermag_ascii_data(filename)
 Data
 ----------------------------------------------------------------------------
 SuperMAG data available at: http://supermag.jhuapl.edu/
+
 """
+
 from __future__ import absolute_import, unicode_literals
+import datetime as dt
 import numpy as np
 
 import ocbpy
+import ocbpy.ocb_scaling as ocbscal
 
-def supermag2ascii_ocb(smagfile, outfile, ocb=None, ocbfile=None,
-                       max_sdiff=600, min_sectors=7, rcent_dev=8.0, max_r=23.0,
-                       min_r=10.0, min_j=0.15):
+def supermag2ascii_ocb(smagfile, outfile, hemisphere=0, ocb=None,
+                       ocbfile='default', instrument='', max_sdiff=600,
+                       min_sectors=7, rcent_dev=8.0, max_r=23.0, min_r=10.0,
+                       min_j=0.15):
     """ Coverts the location of SuperMAG data into a frame that is relative to
-    the open-closed field-line boundary (OCB) as determined  from a circle fit
+    the open-closed field-line boundary (OCB) as determined from a circle fit
     to the poleward boundary of the auroral oval
 
     Parameters
@@ -33,12 +38,20 @@ def supermag2ascii_ocb(smagfile, outfile, ocb=None, ocbfile=None,
         file containing the required SuperMAG file sorted by time
     outfile : (str)
         filename for the output data
+    hemisphere : (int)
+        Hemisphere to process (can only do one at a time).  1=Northern,
+        -1=Southern, 0=Determine from data (default=0)
     ocb : (OCBoundary or NoneType)
         OCBoundary object with data loaded from an OC boundary data file.
         If None, looks to ocbfile
-    ocbfile : (str or NoneType)
-        file containing the required OC boundary data sorted by time, or None
-        to use IMAGE WIC or to pass in an OCBoundary object (default=None)
+    ocbfile : (str)
+        file containing the required OC boundary data sorted by time, or
+        'default' to load default file for time and hemisphere.  Only used if no
+        OCBoundary object is supplied (default='default')
+    instrument : (str)
+        Instrument providing the OCBoundaries.  Requires 'image' or 'ampere'
+        if a file is provided.  If using filename='default', also accepts
+        'amp', 'si12', 'si13', 'wic', and ''.  (default='')
     max_sdiff : (int)
         maximum seconds between OCB and data record in sec (default=600)
     min_sectors : (int)
@@ -55,13 +68,11 @@ def supermag2ascii_ocb(smagfile, outfile, ocb=None, ocbfile=None,
     min_j : (float)
         Minimum unitless current magnitude scale difference (default=0.15)
 
-    Returns
-    ---------
-    Void
+    Notes
+    -----
+    May only process one hemisphere at a time
+
     """
-    import ocbpy
-    import ocbpy.ocb_scaling as ocbscal
-    import datetime as dt
 
     if not ocbpy.instruments.test_file(smagfile):
         raise IOError("SuperMAG file cannot be opened [{:s}]".format(smagfile))
@@ -72,24 +83,51 @@ def supermag2ascii_ocb(smagfile, outfile, ocb=None, ocbfile=None,
     # Read the superMAG data and calculate the magnetic field magnitude
     header, mdata = load_supermag_ascii_data(smagfile)
 
-    # Remove the data with NaNs
-    igood = [i for i, mlt in enumerate(mdata['MLT']) if not np.isnan(mlt)
-             and not np.isnan(mdata['MLAT'][i]) and not np.isnan(mdata['BE'][i])
-             and not np.isnan(mdata['BN'][i]) and not np.isnan(mdata['BZ'][i])]
-
-    for k in mdata.keys():
-        mdata[k] = mdata[k][igood]
-
     # Load the OCB data for the SuperMAG data period
     if ocb is None or not isinstance(ocb, ocbpy.ocboundary.OCBoundary):
         mstart = mdata['DATETIME'][0] - dt.timedelta(seconds=max_sdiff+1)
         mend = mdata['DATETIME'][-1] + dt.timedelta(seconds=max_sdiff+1)
-        ocb = ocbpy.OCBoundary(ocbfile, stime=mstart, etime=mend)
+
+        # If hemisphere isn't specified, set it here
+        if hemisphere == 0:
+            hemisphere = np.sign(np.nanmax(mdata['MLAT']))
+
+            # Ensure that all data is in the same hemisphere
+            if hemisphere == 0:
+                hemisphere = np.sign(np.nanmin(mdata['MLAT']))
+            elif hemisphere != np.sign(np.nanmin(mdata['MLAT'])):
+                raise ValueError("".join(["cannot process observations from "
+                                          "both hemispheres at the same time."
+                                          "Set hemisphere=+/-1 to choose one"]))
+
+        # Initialize the OCBoundary object
+        ocb = ocbpy.OCBoundary(ocbfile, stime=mstart, etime=mend,
+                               hemisphere=hemisphere, instrument=instrument)
+
+    elif hemisphere == 0:
+        # If the OCBoundary object is specified and hemisphere isn't use
+        # the OCBoundary object to specify the hemisphere
+        hemisphere = ocb.hemisphere
 
     # Test the OCB data
     if ocb.filename is None or ocb.records == 0:
         ocbpy.logger.error("no data in OCB file {:}".format(ocb.filename))
         return
+
+    # Remove the data with NaNs/Inf and from the opposite hemisphere/equator
+    igood = np.where((np.isfinite(mdata['MLT'])) & (np.isfinite(mdata['MLAT']))
+                     & (np.isfinite(mdata['BE'])) & (np.isfinite(mdata['BN']))
+                     & (np.isfinite(mdata['BZ']))
+                     & (np.sign(mdata['MLAT']) == hemisphere))[0]
+
+    if igood.shape != mdata['MLT'].shape:
+        for k in mdata.keys():
+            mdata[k] = mdata[k][igood]
+
+        # Recalculate the number of stations if some data was removed
+        for tt in np.unique(mdata['DATETIME']):
+            itimes = np.where(mdata['DATETIME'] == tt)[0]
+            mdata['NST'][itimes] = len(itimes)
 
     # Open and test the file to ensure it can be written
     with open(outfile, 'w') as fout:
@@ -100,8 +138,8 @@ def supermag2ascii_ocb(smagfile, outfile, ocb=None, ocbfile=None,
             if okey in mdata.keys():
                 outline = "{:s}{:s} ".format(outline, okey)
 
-        outline = "{:s}MLAT MLT BMAG BN BE BZ OCB_MLAT OCB_MLT ".format(outline)
-        outline = "{:s}OCB_BMAG OCB_BN OCB_BE OCB_BZ\n".format(outline)
+        outline = "".join([outline, "MLAT MLT BMAG BN BE BZ OCB_MLAT OCB_MLT ",
+                           "OCB_BMAG OCB_BN OCB_BE OCB_BZ\n"])
         fout.write(outline)
     
         # Initialise the ocb and SuperMAG indices
@@ -142,14 +180,17 @@ def supermag2ascii_ocb(smagfile, outfile, ocb=None, ocbfile=None,
                     else:
                         outline = "{:s}{:d} ".format(outline, mdata[okey][imag])
 
-                outline = "{:s}{:.2f} {:.2f} {:.2f} {:.2f} ".format(outline, \
-                                            vdata.aacgm_lat, vdata.aacgm_mlt, \
-                                            vdata.aacgm_mag, vdata.aacgm_n)
-                outline = "{:s}{:.2f} {:.2f} {:.2f} {:.2f} ".format(outline, \
-                                            vdata.aacgm_e, vdata.aacgm_z, \
-                                            vdata.ocb_lat, vdata.ocb_mlt)
-                outline = "{:s}{:.2f} {:.2f} {:.2f} {:.2f}\n".format(outline, \
-                    vdata.ocb_mag, vdata.ocb_n, vdata.ocb_e, vdata.ocb_z)
+                outline = "".join([outline, "{:.2f} ".format(vdata.aacgm_lat),
+                                   "{:.2f} {:.2f} ".format(vdata.aacgm_mlt,
+                                                           vdata.aacgm_mag),
+                                   "{:.2f} {:.2f} ".format(vdata.aacgm_n,
+                                                           vdata.aacgm_e),
+                                   "{:.2f} {:.2f} {:.2f} ".format(vdata.aacgm_z,
+                                                vdata.ocb_lat, vdata.ocb_mlt),
+                                   "{:.2f} {:.2f} ".format(vdata.ocb_mag,
+                                                           vdata.ocb_n),
+                                   "{:.2f} {:.2f}\n".format(vdata.ocb_e,
+                                                            vdata.ocb_z)])
                 fout.write(outline)
 
                 # Move to next line
@@ -179,11 +220,12 @@ def load_supermag_ascii_data(filename):
     
     fill_val = 999999
     header = list()
-    ind = {"SMU":fill_val, "SML":fill_val}
-    out = {"YEAR":list(), "MONTH":list(), "DAY":list(), "HOUR":list(),
-           "MIN":list(), "SEC":list(), "DATETIME":list(), "NST":list(),
-           "SML":list(), "SMU":list(), "STID":list(), "BN":list(), "BE":list(),
-           "BZ":list(), "MLT":list(), "MLAT":list(), "DEC":list(), "SZA":list()}
+    ind = {"SMU": fill_val, "SML": fill_val}
+    out = {"YEAR": list(), "MONTH": list(), "DAY": list(), "HOUR": list(),
+           "MIN": list(), "SEC": list(), "DATETIME": list(), "NST": list(),
+           "SML": list(), "SMU": list(), "STID": list(), "BN": list(),
+           "BE": list(), "BZ": list(), "MLT": list(), "MLAT": list(),
+           "DEC": list(), "SZA": list()}
     
     if not test_file(filename):
         return header, dict()
@@ -242,7 +284,7 @@ def load_supermag_ascii_data(filename):
 
                         if n == snum:
                             n = -1
-                            ind = {"SMU":fill_val, "SML":fill_val}
+                            ind = {"SMU": fill_val, "SML": fill_val}
 
     # Recast data as numpy arrays and replace fill value with np.nan
     for k in out:
