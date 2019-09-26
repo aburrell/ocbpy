@@ -64,7 +64,7 @@ class TestSuperMAGHemiMethods(unittest.TestCase):
             ldtype = ['|U50' if i < 2 or i == 3 else float for i in range(19)]
             test_out = np.genfromtxt(self.test_output_north, skip_header=1,
                                      dtype=ldtype)
-            temp_out = np.genfromtxt(self.temp_output_north, skip_header=1,
+            temp_out = np.genfromtxt(self.temp_output, skip_header=1,
                                      dtype=ldtype)
 
             # Test the number of rows and columns
@@ -96,7 +96,7 @@ class TestSuperMAGHemiMethods(unittest.TestCase):
             ldtype = ['|U50' if i < 2 or i == 3 else float for i in range(19)]
             test_out = np.genfromtxt(self.test_output_north, skip_header=1,
                                      dtype=ldtype)
-            temp_out = np.genfromtxt(self.temp_output_north, skip_header=1,
+            temp_out = np.genfromtxt(self.temp_output, skip_header=1,
                                      dtype=ldtype)
 
             # Test the number of rows and columns
@@ -128,7 +128,7 @@ class TestSuperMAGHemiMethods(unittest.TestCase):
             ldtype = ['|U50' if i < 2 or i == 3 else float for i in range(19)]
             test_out = np.genfromtxt(self.test_output_south, skip_header=1,
                                      dtype=ldtype)
-            temp_out = np.genfromtxt(self.temp_output_south, skip_header=1,
+            temp_out = np.genfromtxt(self.temp_output, skip_header=1,
                                      dtype=ldtype)
 
             # Test the number of rows and columns
