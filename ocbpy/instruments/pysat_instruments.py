@@ -16,6 +16,8 @@ pysat is available at: http://github.com/rstoneback/pysat or pypi
 
 """
 from __future__ import absolute_import, unicode_literals
+
+import datetime as dt
 import numpy as np
 
 try:
@@ -26,11 +28,13 @@ except ImportError as ierr:
     raise ImportError("{:s}\n{:}".format(err, ierr))
 
 import ocbpy
+import ocbpy.ocb_scaling as ocbscal
 
 def add_ocb_to_data(pysat_inst, mlat_name='', mlt_name='', evar_names=list(),
-                    curl_evar_names=list(), vector_names=dict(), dat_ind=list(),
-                    ocb=None, ocbfile=None, max_sdiff=600, min_sectors=7,
-                    rcent_dev=8.0, max_r=23.0, min_r=10.0, min_j=0.15):
+                    curl_evar_names=list(), vector_names=dict(),
+                    hemisphere=0, ocb=None, ocbfile='default', instrument='',
+                    max_sdiff=600, min_sectors=7, rcent_dev=8.0, max_r=23.0,
+                    min_r=10.0, min_j=0.15):
     """ Coverts the location of pysat data into a frame that is relative to
     the open-closed field-line boundary (OCB) as determined  from a circle fit
     to the poleward boundary of the auroral oval
@@ -61,15 +65,19 @@ def add_ocb_to_data(pysat_inst, mlat_name='', mlt_name='', evar_names=list(),
                                       "dat_name":"velocity", "dat_units":"m/s"},
                                "dat":{"aacgm_n":"dat_n", "aacgm_e":"dat_e",
                                       "scale_func":local_scale_func}}
-    dat_ind : list()
-        List of indices to process.  If empty, all data should be from the same
-        hemisphere (northern or southern) and be free of NaN. (default=[])
+    hemisphere : (int)
+        Hemisphere to process (can only do one at a time).  1=Northern,
+        -1=Southern, 0=Determine from data (default=0)
     ocb : (OCBoundary or NoneType)
         OCBoundary object with data loaded from an OC boundary data file.
         If None, looks to ocbfile
-    ocbfile : (str or NoneType)
-        file containing the required OC boundary data sorted by time, or None
-        to use IMAGE WIC or to pass in an OCBoundary object (default=None)
+    ocbfile : (str)
+        file containing the required OC boundary data sorted by time, ignorned
+        if OCBoundary object supplied. (default='default')
+    instrument : (str)
+        Instrument providing the OCBoundaries.  Requires 'image' or 'ampere'
+        if a file is provided.  If using filename='default', also accepts
+        'amp', 'si12', 'si13', 'wic', and ''.  (default='')
     max_sdiff : (int)
         maximum seconds between OCB and data record in sec (default=600)
     min_sectors : (int)
@@ -98,9 +106,6 @@ def add_ocb_to_data(pysat_inst, mlat_name='', mlt_name='', evar_names=list(),
     (using 'modify') when loading pysat data.
 
     """
-    import datetime as dt
-    import ocbpy
-    import ocbpy.ocb_scaling as ocbscal
 
     # Test to see if the magnetic coordinates are present
     if mlat_name not in pysat_inst.data.columns:
@@ -124,8 +129,21 @@ def add_ocb_to_data(pysat_inst, mlat_name='', mlt_name='', evar_names=list(),
     ocor_name = "r_corr_ocb"
     ocb_names = [olat_name, omlt_name, ocor_name]
 
+    # Get a list of all necessary pysat data names
+    pysat_names = [mlat_name, mlt_name]
+
+    for pkey in evar_names:
+        if pkey in pysat_inst.data.columns and pkey not in pysat_names:
+            pysat_names.append(pkey)
+
+    for pkey in curl_evar_names:
+        if pkey in pysat_inst.data.columns and pkey not in pysat_names:
+            pysat_names.append(pkey)
+
     # Test the vector names to ensure that enough information
     # was provided and that it exists in the Instrument object
+    #
+    # Continue adding to pysat names
     nvect = len(vector_names.keys())
     vector_attrs = dict()
     if nvect > 0:
@@ -156,6 +174,9 @@ def add_ocb_to_data(pysat_inst, mlat_name='', mlt_name='', evar_names=list(),
                         raise ValueError("unknown vector name: " +
                                          vector_names[eattr][vinit])
                     else:
+                        if vector_names[eattr][vinit] not in pysat_names:
+                            pysat_names.append(vector_names[eattr][vinit])
+                        
                         if oattr not in vector_attrs.keys():
                             vector_attrs[oattr] = list()
                         vector_attrs[oattr].append(vector_names[eattr][vinit])
@@ -173,14 +194,35 @@ def add_ocb_to_data(pysat_inst, mlat_name='', mlt_name='', evar_names=list(),
     aacgm_mlt = np.array(pysat_inst[mlt_name])
     ndat = len(aacgm_lat)
 
-    if len(dat_ind) == 0:
-        dat_ind = np.arange(0, ndat, 1)
-
     # Load the OCB data for the data period, if desired
     if ocb is None or not isinstance(ocb, ocbpy.ocboundary.OCBoundary):
-        dstart = pysat_inst.index[dat_ind[0]]-dt.timedelta(seconds=max_sdiff+1)
-        dend = pysat_inst.index[dat_ind[-1]] + dt.timedelta(seconds=max_sdiff+1)
-        ocb = ocbpy.OCBoundary(ocbfile, stime=dstart, etime=dend)
+        dstart = pysat_inst.index[0] - dt.timedelta(seconds=max_sdiff+1)
+        dend = pysat_inst.index[-1] + dt.timedelta(seconds=max_sdiff+1)
+
+        # If hemisphere isn't specified, set it here
+        if hemisphere == 0:
+            hemisphere = np.sign(np.nanmax(aacgm_lat))
+
+            # Ensure that all data is in the same hemisphere
+            if hemisphere == 0:
+                hemisphere = np.sign(np.nanmin(aacgm_lat))
+            elif hemisphere != np.sign(np.nanmin(aacgm_lat)):
+                raise ValueError("".join(["cannot process observations from "
+                                          "both hemispheres at the same time."
+                                          "Set hemisphere=+/-1 to choose one"]))
+        
+        # Initialize the OCBoundary object
+        ocb = ocbpy.OCBoundary(ocbfile, stime=dstart, etime=dend,
+                               instrument=instrument, hemisphere=hemisphere)
+    elif hemisphere == 0:
+        # If the OCBoundary object is specified and hemisphere isn't use
+        # the OCBoundary object to specify the hemisphere
+        hemisphere = ocb.hemisphere
+
+    # Ensure all data is from one hemisphere and is finite
+    dat_ind = np.where((np.sign(aacgm_lat) == hemisphere) &
+                (np.isfinite(np.max(pysat_inst.data.loc[:,pysat_names].values,
+                                    axis=1))))[0]
 
     # Test the OCB data
     if ocb.filename is None or ocb.records == 0:
