@@ -62,8 +62,7 @@ class TestOCBoundaryLogFailure(unittest.TestCase):
         self.lout = self.log_capture.getvalue()
         # Test logging error message for each bad initialization
         print(self.lout, self.lwarn)
-        if self.lout.find(self.lwarn) < 0:
-            raise AssertionError()
+        self.assertTrue(self.lout.find(self.lwarn) >= 0)
 
         del ocb
 
@@ -80,8 +79,7 @@ class TestOCBoundaryLogFailure(unittest.TestCase):
         self.lout = self.log_capture.getvalue()
         # Test logging error message for each bad initialization
         print(self.lout, self.lwarn)
-        if self.lout.find(self.lwarn) < 0:
-            raise AssertionError()
+        self.assertTrue(self.lout.find(self.lwarn) >= 0)
 
         del ocb
 
@@ -98,8 +96,7 @@ class TestOCBoundaryLogFailure(unittest.TestCase):
         self.lout = self.log_capture.getvalue()
         # Test logging error message for each bad initialization
         print(self.lout, self.lwarn)
-        if self.lout.find(self.lwarn) < 0:
-            raise AssertionError()
+        self.assertTrue(self.lout.find(self.lwarn) >= 0)
 
         del ocb
 
