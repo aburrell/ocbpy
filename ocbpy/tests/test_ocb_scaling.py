@@ -23,7 +23,8 @@ class TestOCBScalingMethods(unittest.TestCase):
         test_file = path.join(path.dirname(ocbpy.__file__), "tests",
                               "test_data", "test_north_circle")
         self.assertTrue(path.isfile(test_file))
-        self.ocb = ocbpy.ocboundary.OCBoundary(filename=test_file)
+        self.ocb = ocbpy.ocboundary.OCBoundary(filename=test_file,
+                                               instrument='image')
         self.ocb.rec_ind = 27
         self.vdata = ocbpy.ocb_scaling.VectorData(0, self.ocb.rec_ind, 75.0,
                                                   22.0, aacgm_n=50.0,
