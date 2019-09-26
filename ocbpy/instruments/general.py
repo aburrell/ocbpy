@@ -13,7 +13,10 @@ from __future__ import absolute_import, unicode_literals
 
 import datetime as dt
 import numpy as np
+from os import path
+
 import ocbpy
+import ocbpy.ocb_time as ocbt
 
 def test_file(filename):
     """Test to ensure the file is small enough to read in.  Python can only
@@ -30,7 +33,6 @@ def test_file(filename):
         True if good, bad if false
 
     """
-    from os import path
 
     if not path.isfile(filename):
         ocbpy.logger.warning("name provided is not a file")
@@ -107,7 +109,6 @@ def load_ascii_data(filename, hlines, miss=None, fill=np.nan, hsplit=None,
     Data is assumed to be float unless otherwise stated.
 
     """
-    import ocbpy.ocb_time as ocbt
 
     #-----------------------------------------------------------------------
     # Test to ensure the file is small enough to read in.  Python can only
