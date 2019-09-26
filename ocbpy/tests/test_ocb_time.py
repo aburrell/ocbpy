@@ -6,6 +6,7 @@
 """ Tests the ocboundary class and functions
 """
 
+import datetime as dt
 import numpy as np
 import unittest
 
@@ -14,7 +15,6 @@ from ocbpy import ocb_time
 class TestOCBTimeMethods(unittest.TestCase):
     def setUp(self):
         """ Set up test runs """
-        import datetime as dt
 
         self.dtime = dt.datetime(2001, 1, 1)
         self.dtime2 = dt.datetime(1901, 1, 1)
@@ -244,7 +244,6 @@ class TestOCBTimeUnits(unittest.TestCase):
 class TestOCBGeographicTime(unittest.TestCase):
     def setUp(self):
         """ Set up test runs """
-        import datetime as dt
 
         self.dtime = dt.datetime(2001, 1, 1, 1)
         self.lon = [359.0, 90.0, -15.0]

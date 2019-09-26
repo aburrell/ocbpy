@@ -7,6 +7,7 @@
 """
 from __future__ import absolute_import, unicode_literals
 
+import datetime as dt
 import logging
 from io import StringIO
 import numpy as np
@@ -22,12 +23,12 @@ class TestGeneralMethods(unittest.TestCase):
         """ Initialize the OCBoundary object using the test file, as well as
         the VectorData object
         """
-        ocb_dir = os.path.split(ocbpy.__file__)[0]
+        ocb_dir = os.path.dirname(ocbpy.__file__)
         self.test_file = os.path.join(ocb_dir, "tests", "test_data",
-                                   "test_north_circle")
+                                      "test_north_circle")
         self.assertTrue(os.path.isfile(self.test_file))
         self.temp_output = os.path.join(ocb_dir, "tests", "test_data",
-                                     "temp_gen")
+                                        "temp_gen")
 
         self.lwarn = u""
         self.lout = u""
@@ -184,7 +185,6 @@ class TestGeneralMethods(unittest.TestCase):
     def test_load_ascii_data_w_datetime(self):
         """ Test the general routine to load ASCII data
         """
-        import datetime as dt
 
         hh = ["YEAR SOY NB PHICENT RCENT R A RERR"]
         header, data = ocb_igen.load_ascii_data(self.test_file, 0,

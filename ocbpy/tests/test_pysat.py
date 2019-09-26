@@ -130,7 +130,7 @@ class TestPysatUtils(unittest.TestCase):
                     if self.arevectors[i] else np.isfinite(match_data)
                 match_data = match_data[mask_data]
 
-                self.assertEqual(len(match_data), 194)
+                self.assertEqual(len(match_data), 464)
                 for ii in match_data.index:
                     check_time = abs(ii - self.ocb.dtime).min().total_seconds()
                     self.assertLessEqual(check_time, 600.0)
@@ -169,7 +169,8 @@ class TestPysatFailure(unittest.TestCase):
 class TestPysatStructure(unittest.TestCase):
     def setUp(self):
         """ No setup needed"""
-        pass
+        if version_info.major == 2:
+            self.assertRegex = self.assertRegexpMatches
 
     def tearDown(self):
         """ No teardown needed"""
@@ -183,19 +184,19 @@ class TestPysatStructure(unittest.TestCase):
         else:
             defaults = ocb_pysat.add_ocb_to_data.__defaults__
 
-        for i in [0, 1]:
-            self.assertEqual(defaults[i], '')
+        for i in [0, 1, 8]:
+            self.assertEqual(len(defaults[i]), 0)
 
-        for i in [2, 3, 5]:
+        for i in [2, 3]:
             self.assertListEqual(defaults[i], list())
 
-        for i in [6, 7]:
-            self.assertIsNone(defaults[i])
-
         for i, val in enumerate([600, 7, 8.0, 23.0, 10.0, 0.15]):
-            self.assertEqual(defaults[i+8], val)
+            self.assertEqual(defaults[i+9], val)
 
         self.assertDictEqual(defaults[4], dict())
+        self.assertEqual(defaults[5], 0)
+        self.assertIsNone(defaults[6])
+        self.assertRegex(defaults[7], 'default')
 
     def test_add_ocb_to_metadata_defaults(self):
         """ test the add_ocb_to_metadata function defaults"""
@@ -218,15 +219,17 @@ class TestPysatMethods(unittest.TestCase):
         """ Initialize the OCBoundary object using the test file, as well as
         the VectorData object
         """
-        
-        ocb_dir = path.split(ocbpy.__file__)[0]
-        self.test_file = path.join(ocb_dir, "tests", "test_data",
-                                   "test_north_circle")
+        self.test_file = path.join(path.dirname(ocbpy.__file__), "tests",
+                                   "test_data", "test_north_circle")
         self.assertTrue(path.isfile(self.test_file))
-        self.ocb = ocbpy.OCBoundary(self.test_file)
+        self.ocb_kw = {"ocbfile": self.test_file,
+                       "instrument": "image", "hemisphere": 1}
+        self.ocb = ocbpy.OCBoundary(self.test_file, instrument='image',
+                                    hemisphere=1)
         self.ocb.rec_ind = 27
 
-        self.test_inst = pysat.Instrument('pysat', 'testing', tag='50400',
+        self.test_inst = pysat.Instrument(str('pysat'), str('testing'),
+                                          tag=str('50400'),
                                           clean_level='clean',
                                           update_files=True, \
                             file_date_range=pds.date_range(self.ocb.dtime[0],
@@ -246,7 +249,7 @@ class TestPysatMethods(unittest.TestCase):
     def tearDown(self):
         self.utils.tearDown()
         del self.test_file, self.log_capture, self.test_inst, self.ocb
-        del self.utils, self.lout, self.lwarn
+        del self.utils, self.lout, self.lwarn, self.ocb_kw
 
     def test_add_ocb_to_metadata(self):
         """ Test the metadata adding routine
@@ -318,7 +321,7 @@ class TestPysatMethods(unittest.TestCase):
         """
 
         ocb_pysat.add_ocb_to_data(self.test_inst, "latitude", "mlt",
-                                  ocbfile=self.test_file)
+                                  **self.ocb_kw)
 
         self.utils.added_keys = [kk for kk in self.test_inst.meta.keys()
                                  if kk.find('_ocb') > 0]
@@ -496,8 +499,9 @@ class TestPysatMethods(unittest.TestCase):
     def test_add_ocb_to_data_no_file(self):
         """ Test adding ocb to pydat data when no OCB file or data is provided
         """
+        self.ocb_kw['ocbfile'] = None
         ocb_pysat.add_ocb_to_data(self.test_inst, "latitude", "mlt",
-                                  ocbfile=None)
+                                  **self.ocb_kw)
 
         self.lwarn = u"no data in OCB file"
         self.lout = self.log_capture.getvalue()
@@ -550,7 +554,7 @@ class TestPysatMethods(unittest.TestCase):
                                                             'aacgm_e': 'bad_e',
                                                             'dat_name': 'bad',
                                                             'dat_units':''}},
-                                     ocb=self.ocb)
+                                      ocb=self.ocb)
 
     def test_add_ocb_to_data_bad_vector_name(self):
         """ Test failure of missing scaling function in add_ocb_to_data
@@ -564,7 +568,7 @@ class TestPysatMethods(unittest.TestCase):
                                                             'aacgm_e': 'dummy1',
                                                             'dat_name': 'bad',
                                                             'dat_units':''}},
-                                     ocb=self.ocb)
+                                      ocb=self.ocb)
 
             
 @unittest.skipIf(no_pysat, "pysat not installed")
@@ -574,15 +578,15 @@ class TestPysatCustMethods(unittest.TestCase):
         """ Initialize the OCBoundary object using the test file, as well as
         the VectorData object
         """
-        ocb_dir = path.split(ocbpy.__file__)[0]
-        self.test_file = path.join(ocb_dir, "tests", "test_data",
-                                   "test_north_circle")
+        self.test_file = path.join(path.dirname(ocbpy.__file__), "tests",
+                                   "test_data", "test_north_circle")
         self.assertTrue(path.isfile(self.test_file))
-        self.ocb = ocbpy.OCBoundary(self.test_file)
+        self.ocb = ocbpy.OCBoundary(self.test_file, instrument='image',
+                                    hemisphere=1)
         self.ocb.rec_ind = 27
 
-        self.test_inst = pysat.Instrument('pysat', 'testing', tag='50400',
-                                          clean_level='clean',
+        self.test_inst = pysat.Instrument(str('pysat'), str('testing'),
+                                          tag=str('50400'), clean_level='clean',
                                           update_files=True, \
                             file_date_range=pds.date_range(self.ocb.dtime[0],
                                                            self.ocb.dtime[-1],
@@ -639,7 +643,8 @@ class TestPysatCustMethods(unittest.TestCase):
 
         self.test_inst.custom.add(ocb_pysat.add_ocb_to_data, 'modify',
                                   mlat_name='latitude', mlt_name='mlt',
-                                  ocbfile=self.test_file)
+                                  ocbfile=self.test_file, instrument='image',
+                                  hemisphere=1)
 
         self.test_load()
 
@@ -839,7 +844,8 @@ class TestPysatCustMethods(unittest.TestCase):
         """
         self.test_inst.custom.add(ocb_pysat.add_ocb_to_data, 'modify',
                                   mlat_name='latitude', mlt_name='mlt',
-                                  ocbfile=None)
+                                  ocbfile=None, instrument='image',
+                                  hemisphere=1)
 
         self.test_load()
 

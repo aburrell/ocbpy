@@ -25,9 +25,9 @@ import ocbpy
 import ocbpy.ocb_scaling as ocbscal
 
 
-def vort2ascii_ocb(vortfile, outfile, ocb=None, ocbfile='default',
-                   max_sdiff=600, save_all=False, min_sectors=7, rcent_dev=8.0,
-                   max_r=23.0, min_r=10.0, min_j=0.15):
+def vort2ascii_ocb(vortfile, outfile, hemisphere=0, ocb=None, ocbfile='default',
+                   instrument='', max_sdiff=600, save_all=False, min_sectors=7,
+                   rcent_dev=8.0, max_r=23.0, min_r=10.0, min_j=0.15):
     """ Coverts the location of vorticity data in AACGM coordinates into a frame
     that is relative to the open-closed field-line boundary (OCB) as determined
     from a circle fit to the poleward boundary of the auroral oval
@@ -38,11 +38,18 @@ def vort2ascii_ocb(vortfile, outfile, ocb=None, ocbfile='default',
         file containing the required vorticity file sorted by time
     outfile : (str)
         filename for the output data
+    hemisphere : (int)
+        Hemisphere to process (can only do one at a time).  1=Northern,
+        -1=Southern, 0=Determine from data (default=0)
     ocb : (ocbpy.ocboundary.OCBoundary or NoneType)
         Object containing open closed boundary data or None to load from file
     ocbfile : (str)
         file containing the required OC boundary data sorted by time, ignorned
         if OCBoundary object supplied. (default='default')
+    instrument : (str)
+        Instrument providing the OCBoundaries.  Requires 'image' or 'ampere'
+        if a file is provided.  If using filename='default', also accepts
+        'amp', 'si12', 'si13', 'wic', and ''.  (default='')
     max_sdiff : (int)
         maximum seconds between OCB and data record in sec (default=600)
     save_all : (bool)
@@ -90,11 +97,48 @@ def vort2ascii_ocb(vortfile, outfile, ocb=None, ocbfile='default',
     if ocb is None or not isinstance(ocb, ocbpy.ocboundary.OCBoundary):
         vstart = vdata['DATETIME'][0] - dt.timedelta(seconds=max_sdiff+1)
         vend = vdata['DATETIME'][-1] + dt.timedelta(seconds=max_sdiff+1)
-        ocb = ocbpy.ocboundary.OCBoundary(ocbfile, stime=vstart, etime=vend)
 
+        # If hemisphere isn't specified, set it here
+        if hemisphere == 0:
+            hemisphere = np.sign(np.nanmax(vdata['CENTRE_MLAT']))
+
+            # Ensure that all data is in the same hemisphere
+            if hemisphere == 0:
+                hemisphere = np.sign(np.nanmin(vdata['CENTRE_MLAT']))
+            elif hemisphere != np.sign(np.nanmin(vdata['CENTRE_MLAT'])):
+                raise ValueError("".join(["cannot process observations from "
+                                          "both hemispheres at the same time."
+                                          "Set hemisphere=+/-1 to choose one"]))
+
+        # Initialize the OCBoundary object
+        ocb = ocbpy.ocboundary.OCBoundary(ocbfile, stime=vstart, etime=vend,
+                                          instrument=instrument,
+                                          hemisphere=hemisphere)
+    elif hemisphere == 0:
+        # If the OCBoundary object is specified and hemisphere isn't use
+        # the OCBoundary object to specify the hemisphere
+        hemisphere = ocb.hemisphere
+
+    # Test the OCB data
     if ocb.filename is None or ocb.records == 0:
         ocbpy.logger.error("no data in OCB file [{:}]".format(ocb.filename))
         return
+
+    # Remove the data from the opposite hemisphere
+    igood = np.where(np.sign(vdata['CENTRE_MLAT']) == hemisphere)[0]
+
+    if igood.shape != vdata['CENTRE_MLAT'].shape:
+        if len(igood) == 0:
+            # Exit with warning if no vorticity data from this hemisphere
+            ocbpy.logger.warning("".join(["No ", "north" if hemisphere == 1
+                                          else "south",
+                                          "ern hemisphere data in file: [",
+                                          vortfile, "]"]))
+            return
+
+        # Downselect vorticity data
+        for k in vdata.keys():
+            vdata[k] = vdata[k][igood]
 
     # Set the reference radius
     ref_r = 90.0 - abs(ocb.boundary_lat)

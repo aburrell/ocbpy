@@ -1,6 +1,6 @@
 #!/usr/bin/env python
 # -*- coding: utf-8 -*-
-# Copyright (C) 2017, AGB & GC
+# Copyright (C) 2019, AGB & GC
 # Full license can be found in License.md
 #-----------------------------------------------------------------------------
 """
@@ -25,8 +25,11 @@ VectorData    Vector data point
 
 Modules
 ---------------------------------------------------------------------------
+boundaries     Boundary file utilities
 instruments    Instrument-specific OCB gridding functions
 ocb_time       Time manipulation routines
+ocb_scaling    Scaling functions for OCB gridded data
+ocb_correction Boundary correction utilities
 ---------------------------------------------------------------------------
 """
 from __future__ import (absolute_import, unicode_literals)
@@ -36,10 +39,11 @@ import logging
 from . import (ocboundary, ocb_scaling, ocb_time, ocb_correction)
 from .ocboundary import (OCBoundary, match_data_ocb)
 from . import (instruments)
+from . import (boundaries)
 
 # Define the global variables
 __version__ = str('0.2b2')
-__default_file__ = "boundaries/si13_north_circle"
 
 # Define a logger object to allow easier log handling
+logging.raiseExceptions = False
 logger = logging.getLogger('ocbpy_logger')
