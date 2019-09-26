@@ -24,8 +24,8 @@ class TestGeneralMethods(unittest.TestCase):
         the VectorData object
         """
         ocb_dir = os.path.dirname(ocbpy.__file__)
-        self.test_file = os.path.join(, "tests", "test_data",
-                                   "test_north_circle")
+        self.test_file = os.path.join(ocb_dir, "tests", "test_data",
+                                      "test_north_circle")
         self.assertTrue(os.path.isfile(self.test_file))
         self.temp_output = os.path.join(ocb_dir, "tests", "test_data",
                                         "temp_gen")
