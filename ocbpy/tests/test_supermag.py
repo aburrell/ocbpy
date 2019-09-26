@@ -145,10 +145,8 @@ class TestSuperMAGHemiMethods(unittest.TestCase):
                                         self.temp_output, shallow=False))
 
     def test_supermag2ascii_ocb_bad_hemi(self):
-        """ Test the failure caused by not choosing a hemisphere at all
-        """
-        # Run command that will fail to output a file.  Error message changes
-        # based on the operating system
+        """ Test the failure caused by not choosing a hemisphere at all """
+
         with self.assertRaisesRegex(ValueError, "from both hemispheres"):
             ocb_ismag.supermag2ascii_ocb(self.test_file, self.temp_output,
                                          ocbfile=self.test_ocb,
