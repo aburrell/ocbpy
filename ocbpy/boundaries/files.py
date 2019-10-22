@@ -90,10 +90,19 @@ def get_boundary_files():
            and bfile.find(".py") < 0 and bfile.find("README") < 0):
             file_info = bfile.lower().split("_")
             boundary_files[bfile] = {"instrument": file_info[0],
-                                     "hemisphere": hemi[file_info[1]],
-                                     "stime": stime[file_info[0]],
-                                     "etime": etime[file_info[0]]}
+                                     "hemisphere": hemi[file_info[1]]}
 
+            if file_info[0] in stime.keys():
+                boundary_files[bfile]["stime"] = stime[file_info[0]]
+                boundary_files[bfile]["etime"] = etime[file_info[0]]
+            else:
+                try:
+                    boundary_files[bfile]["stime"] = dt.datetime.strptime(file_info[2], '%Y%m%d')
+                    boundary_files[bfile]["etime"] = dt.datetime.strptime(file_info[3], '%Y%m%d')
+                except ValueError as verr:
+                    err = 'Unknown boundary file present: [{:s}]\n{:}'.format(
+                        bfile, verr)
+                    ocbpy.logger.warning(err)
 
     return boundary_files
 
@@ -105,10 +114,10 @@ def get_default_file(stime, etime, hemisphere, instrument=''):
     ----------
     stime : (dt.datetime or NoneType)
         Starting time for which the file is desired.  If None, will prioritize
-        IMAGE data over AMPERE for the northern hemisphere.
+        IMAGE data for the northern and AMERE data for the southern hemisphere.
     etime : (dt.datetime or NoneType)
         Ending time for which the file is desired.  If None, will prioritize
-        IMAGE data over AMPERE for the northern hemisphere.
+        IMAGE data for the northern and AMPERE data for the southern hemisphere.
     hemisphere : (int)
         Hemisphere for which the file is desired (1=north, -1=south)
     instrument : (str)

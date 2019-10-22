@@ -11,4 +11,4 @@ files   Boundary file utilities
 """
 from __future__ import (absolute_import)
 
-from . import (files)
+from . import (files, dmsp_ssj_files)
