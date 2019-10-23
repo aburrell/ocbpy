@@ -37,14 +37,15 @@ import datetime as dt
 import numpy as np
 import os
 
-import aacgmv2
+err = ''.join(['unable to load the DMSP SSJ module; ssj_auroral_boundary ',
+               'is available at: ',
+               'https://github.com/lkilcommons/ssj_auroral_boundary'])
 try:
-    import ssj_auroral_boundary as ssj
+    import geospacepy
     from spacepy import pycdf
+    import aacgmv2
+    import ssj_auroral_boundary as ssj
 except ImportError as ierr:
-    err = ''.join(['unable to load the DMSP SSJ module; ssj_auroral_boundary ',
-                   'is available at: ',
-                   'https://github.com/lkilcommons/ssj_auroral_boundary'])
     raise ImportError("{:s}\n{:}".format(err, ierr))
 
 import ocbpy
@@ -170,7 +171,7 @@ def create_ssj_boundary_files(cdf_files, out_dir=None, out_cols=['glat','glon'],
         plot_dir = out_dir
 
     if make_plots and not os.path.isdir(plot_dir):
-        raise ValueError("unknown plot direcotry: {:}".format(plot_dir))
+        raise ValueError("unknown plot directory: {:}".format(plot_dir))
 
     # Geographic lat and lon are currently provided through the CDF column name
     if 'glat' in out_cols:
