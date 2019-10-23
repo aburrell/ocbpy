@@ -217,7 +217,7 @@ def format_ssj_boundary_files(csv_files, ref_alt=830.0,
 
     Notes
     -----
-    Output format is 'sc bound hemi date time r x y fom lat_1 lt_1 lat_2 lt_2'
+    Output format is 'sc bound hemi date time r x y fom x_1 y_1 x_2 y_2'
     where:
 
     sc    = Spacecraft number
@@ -231,10 +231,10 @@ def format_ssj_boundary_files(csv_files, ref_alt=830.0,
     y     = distance between the midpoint of the two pass boundaries and the
             AACGMV2 pole in degrees along the midnight-noon meridian
     fom   = FOM for the boundaries found along this pass
-    lat_1 = AACGMV2 magnetic latitude of the first boundary
-    lt_1  = AACGMV2 magnetic local time of the first boundary
-    lat_2 = AACGMV2 magnetic latitude of the second boundary
-    lt_2  = AACGMV2 magnetic local time of the second boundary
+    x_1   = x coordinate of the first boundary
+    y_1   = y coordinate of the first boundary
+    x_2   = x coordinate of the second boundary
+    y_2   = y coordinate of the second boundary
 
     Because two points are not enough to define the OCB or EAB across all local
     times, a circle that intersects the two boundary pass points is defined and
@@ -258,7 +258,7 @@ def format_ssj_boundary_files(csv_files, ref_alt=830.0,
     bad_files = list()
 
     # Initialize the output header
-    out_head = "#sc bound date time r x y fom lat_1 lt_1 lat_2 lt_2\n"
+    out_head = "#sc bound date time r x y fom x_1 y_1 x_2 y_2\n"
 
     # Specify the output file information
     outfile_prefix = os.path.commonprefix(csv_files).split('-f')[0]
@@ -365,16 +365,16 @@ def format_ssj_boundary_files(csv_files, ref_alt=830.0,
                             mid_y = 0.5 * sum(y)
 
                             # Prepare the output line, which has the format:
-                            # sc bound hemi date time r x y fom lat_1 lt_1
-                            # lat_2 lt_2
+                            # sc bound hemi date time r x y fom x_1 y_1
+                            # x_2 y_2
                             out_line = " ".join(["{:d}".format(sc), bb,
                                                  "{:.0f}".format(hh),
                                         mid_time.strftime('%Y-%m-%d %H:%M:%S'),
                                                  " ".join(["{:.3f}".format(val)
                                                 for val in [rad, mid_x, mid_y,
-                                                        fom[iline], mloc[0][0],
-                                                        mloc[2][0], mloc[0][1],
-                                                        mloc[2][1]]]), "\n"])
+                                                            fom[iline], x[0],
+                                                            y[0], x[1], y[1]]]),
+                                                 "\n"])
 
                             # Write the output line to the file
                             fpout[hh][bb].write(out_line)        
