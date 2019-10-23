@@ -252,7 +252,7 @@ def format_ssj_boundary_files(csv_files, ref_alt=830.0,
 
     # Set the hemisphere suffix and boundary prefix
     hemi_suffix = {1: "north", -1: "south"}
-    bound_prefix = {'PO': '.ocb', 'EQ': '.aob'}
+    bound_prefix = {'PO': '.ocb', 'EQ': '.eab'}
 
     # Initialize the file lists
     bad_files = list()
