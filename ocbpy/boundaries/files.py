@@ -55,8 +55,13 @@ def get_boundary_directory():
     return boundary_dir
 
 
-def get_boundary_files():
+def get_boundary_files(bound='ocb'):
     """ Get boundary filenames and their spatiotemporal ranges
+
+    Parameters
+    ----------
+    bound : (str)
+        String specifying which boundary is desired (OCB or EAB) (default='ocb')
 
     Returns
     -------
@@ -87,7 +92,8 @@ def get_boundary_files():
     boundary_files = dict()
     for bfile in file_list:
         if(os.path.isfile(os.path.join(boundary_dir, bfile))
-           and bfile.find(".py") < 0 and bfile.find("README") < 0):
+           and bfile.find(".py") < 0 and bfile.find("README") < 0
+           and bfile[-3:].lower() == bound.lower()):
             file_info = bfile.lower().split("_")
             boundary_files[bfile] = {"instrument": file_info[0],
                                      "hemisphere": hemi[file_info[1]]}
@@ -107,7 +113,7 @@ def get_boundary_files():
     return boundary_files
 
 
-def get_default_file(stime, etime, hemisphere, instrument=''):
+def get_default_file(stime, etime, hemisphere, instrument='', bound='ocb'):
     """ Get the default file for a specified time and hemisphere
 
     Parameters
@@ -123,8 +129,17 @@ def get_default_file(stime, etime, hemisphere, instrument=''):
     instrument : (str)
         Instrument that provides the data.  This will override the starting
         and ending times.  Accepts 'ampere', 'amp', 'image', 'si12', 'si13',
-        'wic', and ''  (to accept instrument defaults based on time range).
+        'wic', 'dmsp-ssj', and '' (to accept instrument defaults based on time
+        range).  Will also accept the instrument name for any instrument whose
+        boundary file follows the naming convention
+        INST_HEMI_YYYYMMDD_YYYYMMDD_*.BBB, where:
+            INST     = instrument name
+            HEMI     = north or south
+            YYYYMMDD = starting and ending year, month, day
+            BBB      = ocb or eab
         (default='')
+    bound : (str)
+        String specifying which boundary is desired (OCB or EAB) (default='ocb')
 
     Returns
     -------
@@ -138,7 +153,7 @@ def get_default_file(stime, etime, hemisphere, instrument=''):
 
     # Get the boundary file information
     boundary_dir = get_boundary_directory()
-    boundary_files = get_boundary_files()
+    boundary_files = get_boundary_files(bound=bound)
 
     # Determine the list of acceptable instruments
     long_to_short = {"ampere": ["amp"], "image": ["si12", "si13", "wic"]}
@@ -173,7 +188,10 @@ def get_default_file(stime, etime, hemisphere, instrument=''):
         default_file = None
     elif len(good_files) == 1:
         default_file = os.path.join(boundary_dir, good_files[0])
-        instrument = short_to_long[boundary_files[good_files[0]]['instrument']]
+        if boundary_files[good_files[0]]['instrument'] in short_to_long.keys():
+            instrument = short_to_long[boundary_files[good_files[0]]['instrument']]
+        else:
+            instrument = boundary_files[good_files[0]]['instrument']
     else:
         # Rate files by instrument
         default_inst = ['si13', 'si12', 'wic', 'amp']
@@ -181,7 +199,10 @@ def get_default_file(stime, etime, hemisphere, instrument=''):
                          bb for bb in good_files}
         bfile = ordered_files[min(ordered_files.keys())]
         default_file = os.path.join(boundary_dir, bfile)
-        instrument = short_to_long[boundary_files[bfile]['instrument']]
+        if boundary_files[bfile]['instrument'] in short_to_long.keys():
+            instrument = short_to_long[boundary_files[bfile]['instrument']]
+        else:
+            instrument = boundary_files[bfile]['instrument']
 
     return default_file, instrument
             
