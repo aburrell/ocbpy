@@ -8,6 +8,8 @@
 from __future__ import absolute_import, unicode_literals
 
 import datetime as dt
+from io import StringIO
+import logging
 import numpy as np
 import os
 import sys
@@ -80,13 +82,13 @@ class TestSSJFetch(unittest.TestCase):
         """ Test fetch_ssj_files raising ValueError """
 
         # Cycle through the different value error raises
-        for ii in [(2, "fake_dir", "can't find the output directory"),
-                   (3, [-47], "unknown satellite ID")]:
-            with self.subTest(ii=list(ii)):
+        for ii in [[2, "fake_dir", "can't find the output directory"],
+                   [3, [-47], "unknown satellite ID"]]:
+            with self.subTest(ii=ii):
                 temp = self.in_args[ii[0]]
                 self.in_args[ii[0]] = ii[1]
                 with self.assertRaisesRegex(ValueError, ii[2]):
-                    self.out = boundaries.dmsp_ssj_files.fetch_ssj_files(*self.in_args)
+                    self.fetch_files = boundaries.dmsp_ssj_files.fetch_ssj_files(*self.in_args)
                 self.in_args[ii[0]] = temp
         del temp
 
@@ -124,26 +126,198 @@ class TestSSJFetch(unittest.TestCase):
 class TestSSJCreate(unittest.TestCase):
 
     def setUp(self):
-        """ Initialize the test class
-        """
+        """ Initialize the test class"""
         self.ocb_dir = os.path.dirname(ocbpy.__file__)
-        self.test_dir = os.path.join(self.ocb_dir, "tests", "test_data")
-        self.cdf_file = os.path.join(self.test_dir,
-                'dmsp-f16_ssj_precipitating-electrons-ions_20101231_v1.1.2.cdf')
-        self.out_cols = ['mlat', 'mlon']
-        self.out_files = list()
+        self.test_dir = os.path.join(self.ocb_dir, "tests")
+        self.comp_files = [os.path.join(self.test_dir, "test_data",
+    "dmsp-f16_ssj_precipitating-electrons-ions_20101231_v1.1.2_boundaries.csv")]
+        self.cdf_files = [os.path.join(self.test_dir, "test_data",
+            'dmsp-f16_ssj_precipitating-electrons-ions_20101231_v1.1.2.cdf')]
+        self.out_cols = ['mlat', 'mlt']
+        self.out = list()
+        self.lout = ''
+        self.log_capture = StringIO()
+        ocbpy.logger.addHandler(logging.StreamHandler(self.log_capture))
+        ocbpy.logger.setLevel(logging.WARNING)
 
         # Remove in 2020 when dropping support for 2.7
         if sys.version_info.major == 2:
             self.assertRegex = self.assertRegexpMatches
+            self.assertRaisesRegex = self.assertRaisesRegexp
 
     def tearDown(self):
-        if len(self.out_files) > 0:
-            for ff in self.out_files:
+        if len(self.out) > 0:
+            for ff in self.out:
                 os.remove(ff)
 
-        del self.ocb_dir, self.out_files, self.test_dir, self.cdf_file
-        del.out_cols
+        del self.ocb_dir, self.out, self.test_dir, self.cdf_files, self.out_cols
+        del self.comp_files, self.log_capture, self.lout
+
+    @unittest.skipIf(sys.version_info.major == 2,
+                     'Python 2.7 does not support subTest')
+    def test_create_ssj_boundary_files_failure(self):
+        """ Test create_ssj_boundary_files raising ValueError """
+
+        # Cycle through the different value error raises
+        for ii in [({"out_dir": "fake_dir"}, "unknown output directory"),
+                   ({"make_plots": True, "plot_dir": "fake_dir"},
+                    "unknown plot directory")]:
+            with self.subTest(ii=list(ii)):
+                with self.assertRaisesRegex(ValueError, ii[1]):
+                    self.out = boundaries.dmsp_ssj_files.create_ssj_boundary_files(self.cdf_files, **ii[0])
+
+    @unittest.skipIf(sys.version_info.major == 3,
+                     'Already tested, remove in 2020')
+    def test_create_ssj_boundary_files_plotdir_failure(self):
+        """ Test create_ssj_boundary_files plot directory failure """
+
+        with self.assertRaisesRegex(ValueError, "unknown plot directory"):
+            self.out = boundaries.dmsp_ssj_files.create_ssj_boundary_files(
+                self.cdf_files, make_plots=True, plot_dir='fake_dir')
+
+    @unittest.skipIf(sys.version_info.major == 3,
+                     'Already tested, remove in 2020')
+    def test_create_ssj_boundary_files_outdir_failure(self):
+        """ Test create_ssj_boundary_files output directory failure """
+
+        with self.assertRaisesRegex(ValueError, "unknown output directory"):
+            self.out = boundaries.dmsp_ssj_files.create_ssj_boundary_files(
+                self.cdf_files, out_dir='fake_dir')
+
+    @unittest.skipIf(sys.version_info.major == 3,
+                     'Already tested, remove in 2020')
+    def test_create_ssj_boundary_files_cdfname_failure(self):
+        """ Test create_ssj_boundary_files bad cdf filename failure """
+
+        # Try to read in a bad CDF filename
+        self.out = boundaries.dmsp_ssj_files.create_ssj_boundary_files(
+            self.comp_files)
+        self.assertEqual(len(self.out), 0)
+
+        # Test the logging output
+        self.lout = self.log_capture.getvalue()
+        self.assertTrue(self.lout.find("CDF") >= 0)
+
+    @unittest.skipIf(sys.version_info.major == 3,
+                     'Already tested, remove in 2020')
+    def test_create_ssj_boundary_files_notafile_failure(self):
+        """ Test create_ssj_boundary_files bad filename failure """
+
+        # Try to read in a bad CDF filename
+        self.out = boundaries.dmsp_ssj_files.create_ssj_boundary_files(
+            [self.test_dir])
+        self.assertEqual(len(self.out), 0)
+
+        # Test the logging output
+        self.lout = self.log_capture.getvalue()
+        self.assertTrue(self.lout.find("bad input file") >= 0)
+
+    def test_create_ssj_boundary_files_outcols_failure(self):
+        """ Test create_ssj_boundary_files bad outcols failure """
+
+        with self.assertRaises(TypeError):
+            self.out = boundaries.dmsp_ssj_files.create_ssj_boundary_files(
+                self.cdf_files, out_dir=self.test_dir, out_cols=['fake'])
+
+    @unittest.skipIf(sys.version_info.major == 2,
+                     'Python 2.7 does not support subTest')
+    def test_create_ssj_boundary_files_log_failure(self):
+        """ Test create_ssj_boundary_files raising logging errors """
+
+        # Cycle through the different value error raises
+        for ii in [(self.comp_files, "CDF"),
+                   ([self.test_dir], "bad input file")]:
+            with self.subTest(ii=list(ii)):
+                # Run with bad input file
+                self.out = boundaries.dmsp_ssj_files.create_ssj_boundary_files(
+                    ii[0])
+                self.assertEqual(len(self.out), 0)
+
+                # Test logging output
+                self.lout = self.log_capture.getvalue()
+                self.assertTrue(self.lout.find(ii[1]) >= 0)
+
+    def test_create_ssj_boundary_files_default(self):
+        """ Test the default implementation of create_ssj_boundary_files"""
+
+        self.out = boundaries.dmsp_ssj_files.create_ssj_boundary_files(
+            self.cdf_files, out_dir=self.test_dir)
+
+        self.assertTrue(len(self.out), len(self.comp_files))
+
+        # Compare the non-header data (since header has creation date)
+        for i, fout in enumerate(self.out):
+            test_out = np.genfromtxt(fout, skip_header=11, delimiter=',')
+            temp_out = np.genfromtxt(self.comp_files[i], skip_header=11,
+                                     delimiter=',')
+
+            # Test the number of rows and columns
+            self.assertTupleEqual(test_out.shape, temp_out.shape)
+
+            # Test the data in each row
+            for j, test_row in enumerate(test_out):
+                self.assertListEqual(list(test_row), list(temp_out[j]))
+
+        del test_out, temp_out, i, j, test_row, fout
+
+    def test_create_ssj_boundary_files_outcols(self):
+        """ Test the alternative output columns in create_ssj_boundary_files"""
+
+        self.out = boundaries.dmsp_ssj_files.create_ssj_boundary_files(
+            self.cdf_files, out_dir=self.test_dir, out_cols=self.out_cols)
+
+        self.assertTrue(len(self.out), len(self.comp_files))
+
+        for i, fout in enumerate(self.out):
+            test_out = np.genfromtxt(fout, skip_header=11, delimiter=',')
+            temp_out = np.genfromtxt(self.comp_files[i], skip_header=11,
+                                     delimiter=',')
+
+            # Test the number of rows and columns
+            self.assertTupleEqual(test_out.shape, temp_out.shape)
+
+            # Test the first eight data columns in each row
+            for j, test_row in enumerate(test_out):
+                self.assertListEqual(list(test_row[:8]), list(temp_out[j][:8]))
+
+        del test_out, temp_out, i, j, fout, test_row
+
+    def test_create_ssj_boundary_files_plots(self):
+        """ Test the plot creation in create_ssj_boundary_files"""
+
+        self.out = boundaries.dmsp_ssj_files.create_ssj_boundary_files(
+            self.cdf_files, out_dir=self.test_dir, make_plots=True)
+
+        self.assertTrue(len(self.out), len(self.comp_files))
+
+        plot_files = list()
+        for i, fout in enumerate(self.out):
+            plot_root = fout.split("_boundaries")[0]
+            test_out = np.genfromtxt(fout, skip_header=11, delimiter=',')
+            temp_out = np.genfromtxt(self.comp_files[i], skip_header=11,
+                                     delimiter=',')
+
+            # Test the number of rows and columns
+            self.assertTupleEqual(test_out.shape, temp_out.shape)
+
+            # Test the first eight data columns in each row
+            for j, test_row in enumerate(test_out):
+                self.assertListEqual(list(test_row[:8]), list(temp_out[j][:8]))
+
+                # Construct the plot filename
+                plot_name = "{:s}_{:s}pass_uts{:05d}_uts{:05d}.png".format(
+                    plot_root, "N" if test_row[2] == 1 else "S",
+                    int(test_row[0]), int(test_row[1]))
+
+                # Test the filename
+                self.assertTrue(os.path.isfile(plot_name))
+                plot_files.append(plot_name)
+
+        self.out.extend(plot_files)
+
+        del test_out, temp_out, i, j, fout, test_row, plot_name
+        del plot_files, plot_root
+
 
 @unittest.skipIf(not no_ssj,
                  "ssj_auroral_boundary installed, cannot test failure")
