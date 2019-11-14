@@ -139,7 +139,7 @@ def create_ssj_boundary_files(cdf_files, out_dir=None, out_cols=['glat','glon'],
 
     Parameters
     ----------
-    cdf_files : (list)
+    cdf_files : (array-like)
         List of daily satellite files
     out_dir : (str/NoneType)
         Output directory for the boundary files or None to use the ocbpy
@@ -159,7 +159,6 @@ def create_ssj_boundary_files(cdf_files, out_dir=None, out_cols=['glat','glon'],
         List of output .csv boundary files
 
     """
-
     # Test the directory inputs
     if out_dir is None:
         out_dir = ocbpy.boundaries.files.get_boundary_directory()
@@ -173,6 +172,11 @@ def create_ssj_boundary_files(cdf_files, out_dir=None, out_cols=['glat','glon'],
     if make_plots and not os.path.isdir(plot_dir):
         raise ValueError("unknown plot directory: {:}".format(plot_dir))
 
+    # Error catch for input being a filename
+    cdf_files = np.asarray(cdf_files)
+    if len(cdf_files.shape) == 0:
+        cdf_files = np.asarray([cdf_files])
+
     # Geographic lat and lon are currently provided through the CDF column name
     if 'glat' in out_cols:
         out_cols[out_cols.index('glat')] = 'SC_GEOCENTRIC_LAT'
@@ -181,7 +185,7 @@ def create_ssj_boundary_files(cdf_files, out_dir=None, out_cols=['glat','glon'],
 
     # Cycle through all the CDF files, creating the desired CSV files
     out_files = list()
-    for cdffn in cdf_files:
+    for cdffn in np.asarray(cdf_files):
         if os.path.isfile(cdffn):
             try:
                 absd = ssj.absatday.absatday(cdffn, csvdir=out_dir,
@@ -190,9 +194,9 @@ def create_ssj_boundary_files(cdf_files, out_dir=None, out_cols=['glat','glon'],
                                              csvvars=out_cols)
                 out_files.append(absd.csv.csvfn)
             except pycdf.CDFError as err:
-                ocbpy.logger.warn(err)
+                ocbpy.logger.warning("{:}".format(err))
         else:
-            ocbpy.logger.warn("bad input file {:}".format(cdffn))
+            ocbpy.logger.warning("bad input file {:}".format(cdffn))
 
     return out_files
 
@@ -247,6 +251,11 @@ def format_ssj_boundary_files(csv_files, ref_alt=830.0,
     spacecraft are combined.
 
     """
+
+    # Error catch for input being a filename
+    csv_files = np.asarray(csv_files)
+    if len(csv_files.shape) == 0:
+        csv_files = np.asarray([csv_files])
 
     if len(csv_files) == 0:
         raise ValueError("empty list of input CSV files")
