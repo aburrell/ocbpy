@@ -3,8 +3,7 @@
 # Copyright (C) 2019, AGB
 # Full license can be found in License.md
 #-----------------------------------------------------------------------------
-""" Tests the boundaries.dmsp_ssj_files functions
-"""
+""" Tests the boundaries.dmsp_ssj_files functions"""
 from __future__ import absolute_import, unicode_literals
 
 import datetime as dt
@@ -317,6 +316,155 @@ class TestSSJCreate(unittest.TestCase):
 
         del test_out, temp_out, i, j, fout, test_row, plot_name
         del plot_files, plot_root
+
+
+@unittest.skipIf(no_ssj,
+                 "ssj_auroral_boundary not installed, cannot test routines")
+class TestSSJFormat(unittest.TestCase):
+
+    def setUp(self):
+        """ Initialize the test class"""
+        self.ocb_dir = os.path.dirname(ocbpy.__file__)
+        self.test_dir = os.path.join(self.ocb_dir, "tests", "test_data")
+        self.comp_files = {"dmsp-ssj_north_20101231_20101231_v1.1.2.eab":
+                           os.path.join(self.test_dir,
+                                        "dmsp-ssj_north_out.eab"),
+                           "dmsp-ssj_south_20101231_20101231_v1.1.2.eab":
+                           os.path.join(self.test_dir,
+                                        "dmsp-ssj_south_out.eab"),
+                           "dmsp-ssj_north_20101231_20101231_v1.1.2.ocb":
+                           os.path.join(self.test_dir,
+                                        "dmsp-ssj_north_out.ocb"),
+                           "dmsp-ssj_south_20101231_20101231_v1.1.2.ocb":
+                           os.path.join(self.test_dir,
+                                        "dmsp-ssj_south_out.ocb")}
+        self.csv_files = [os.path.join(self.test_dir,
+    "dmsp-f16_ssj_precipitating-electrons-ions_20101231_v1.1.2_boundaries.csv")]
+        self.out = list()
+        self.ldtype = [int, '|U50', int, '|U50', '|U50', float, float, float,
+                       float, float, float, float, float]
+        self.lout = ''
+        self.log_capture = StringIO()
+        ocbpy.logger.addHandler(logging.StreamHandler(self.log_capture))
+        ocbpy.logger.setLevel(logging.WARNING)
+
+        # Remove in 2020 when dropping support for 2.7
+        if sys.version_info.major == 2:
+            self.assertRegex = self.assertRegexpMatches
+            self.assertRaisesRegex = self.assertRaisesRegexp
+
+    def tearDown(self):
+        if len(self.out) > 0:
+            for ff in self.out:
+                os.remove(ff)
+
+        del self.ocb_dir, self.out, self.test_dir, self.csv_files
+        del self.log_capture, self.lout, self.comp_files, self.ldtype
+
+    def test_format_ssj_boundary_files_default(self):
+        """ Test the default implementation of format_ssj_boundary_files"""
+
+        self.out = boundaries.dmsp_ssj_files.format_ssj_boundary_files(
+            self.csv_files)
+
+        self.assertTrue(len(self.out), len(self.comp_files))
+
+        # Compare the non-header data (since header has creation date)
+        for fout in self.out:
+            # Get the comparison filename
+            fname = os.path.split(fout)[-1]
+            self.assertTrue(fname in self.comp_files.keys())
+
+            # Load the data
+            test_out = np.genfromtxt(fout, skip_header=1, dtype=self.ldtype)
+            temp_out = np.genfromtxt(self.comp_files[fname], skip_header=1,
+                                     dtype=self.ldtype)
+
+            # Test the number of rows and columns
+            self.assertTupleEqual(test_out.shape, temp_out.shape)
+
+            # Test the data in each row
+            for j, test_row in enumerate(test_out):
+                self.assertListEqual(list(test_row), list(temp_out[j]))
+
+        del test_out, temp_out, fname, j, test_row, fout
+
+    def test_format_ssj_boundary_files_diff_alt(self):
+        """ Test format_ssj_boundary_files with a different altitude"""
+
+        self.out = boundaries.dmsp_ssj_files.format_ssj_boundary_files(
+            self.csv_files, ref_alt=300.0)
+
+        self.assertTrue(len(self.out), len(self.comp_files))
+
+        # Compare the non-header data (since header has creation date)
+        for fout in self.out:
+            # Get the comparison filename
+            fname = os.path.split(fout)[-1]
+            self.assertTrue(fname in self.comp_files.keys())
+
+            # Load the data
+            test_out = np.genfromtxt(fout, skip_header=1, dtype=self.ldtype)
+            temp_out = np.genfromtxt(self.comp_files[fname], skip_header=1,
+                                     dtype=self.ldtype)
+
+            # Test the number of rows and columns
+            self.assertTupleEqual(test_out.shape, temp_out.shape)
+
+            # Test the data in each row
+            for j, test_row in enumerate(test_out):
+                for i in range(4):
+                    self.assertTrue(test_row[i] == temp_out[j][i])
+
+        del test_out, temp_out, fname, j, i, test_row, fout
+
+    def test_format_ssj_boundary_files_diff_method(self):
+        """ Test format_ssj_boundary_files with a different method"""
+
+        self.out = boundaries.dmsp_ssj_files.format_ssj_boundary_files(
+            self.csv_files, method='GEOCENTRIC|TRACE')
+
+        self.assertTrue(len(self.out), len(self.comp_files))
+
+        # Compare the non-header data (since header has creation date)
+        for fout in self.out:
+            # Get the comparison filename
+            fname = os.path.split(fout)[-1]
+            self.assertTrue(fname in self.comp_files.keys())
+
+            # Load the data
+            test_out = np.genfromtxt(fout, skip_header=1, dtype=self.ldtype)
+            temp_out = np.genfromtxt(self.comp_files[fname], skip_header=1,
+                                     dtype=self.ldtype)
+
+            # Test the number of rows and columns
+            self.assertTupleEqual(test_out.shape, temp_out.shape)
+
+            # Test the data in each row
+            for j, test_row in enumerate(test_out):
+                for i in range(4):
+                    self.assertTrue(test_row[i] == temp_out[j][i])
+
+        del test_out, temp_out, fname, j, i, test_row, fout
+
+    def test_format_ssj_boundary_files_notafile_failure(self):
+        """ Test create_ssj_boundary_files bad filename failure """
+
+        with self.assertRaisesRegex(ValueError, "empty list of input CSV"):
+            # Try to read in a bad CDF filename
+            self.out = boundaries.dmsp_ssj_files.format_ssj_boundary_files(
+                [self.test_dir])
+            self.assertEqual(len(self.out), 0)
+
+            # Test the logging output
+            self.lout = self.log_capture.getvalue()
+            self.assertTrue(self.lout.find("bad input file") >= 0)
+
+    def test_format_ssj_boundary_files_failure(self):
+        """ Test create_ssj_boundary_files plot directory failure """
+
+        with self.assertRaisesRegex(ValueError, "empty list of input CSV"):
+            self.out = boundaries.dmsp_ssj_files.format_ssj_boundary_files([])
 
 
 @unittest.skipIf(not no_ssj,
