@@ -367,7 +367,7 @@ class TestSSJFormat(unittest.TestCase):
         self.out = boundaries.dmsp_ssj_files.format_ssj_boundary_files(
             self.csv_files)
 
-        self.assertTrue(len(self.out), len(self.comp_files))
+        self.assertTrue(len(self.out), len(self.comp_files.values()))
 
         # Compare the non-header data (since header has creation date)
         for fout in self.out:
@@ -395,7 +395,7 @@ class TestSSJFormat(unittest.TestCase):
         self.out = boundaries.dmsp_ssj_files.format_ssj_boundary_files(
             self.csv_files, ref_alt=300.0)
 
-        self.assertTrue(len(self.out), len(self.comp_files))
+        self.assertTrue(len(self.out), len(self.comp_files.values()))
 
         # Compare the non-header data (since header has creation date)
         for fout in self.out:
@@ -424,7 +424,7 @@ class TestSSJFormat(unittest.TestCase):
         self.out = boundaries.dmsp_ssj_files.format_ssj_boundary_files(
             self.csv_files, method='GEOCENTRIC|TRACE')
 
-        self.assertTrue(len(self.out), len(self.comp_files))
+        self.assertTrue(len(self.out), len(self.comp_files.values()))
 
         # Compare the non-header data (since header has creation date)
         for fout in self.out:
@@ -465,6 +465,73 @@ class TestSSJFormat(unittest.TestCase):
 
         with self.assertRaisesRegex(ValueError, "empty list of input CSV"):
             self.out = boundaries.dmsp_ssj_files.format_ssj_boundary_files([])
+
+
+@unittest.skipIf(no_ssj,
+                 "ssj_auroral_boundary not installed, cannot test routines")
+class TestSSJFetchFormat(unittest.TestCase):
+
+    def setUp(self):
+        """ Initialize the test class"""
+        self.ocb_dir = os.path.dirname(ocbpy.__file__)
+        self.test_dir = os.path.join(self.ocb_dir, "tests")
+        self.comp_files = {"dmsp-ssj_north_20101231_20101231_v1.1.2.eab":
+                           os.path.join(self.test_dir,
+                                        "dmsp-ssj_north_out.eab"),
+                           "dmsp-ssj_south_20101231_20101231_v1.1.2.eab":
+                           os.path.join(self.test_dir,
+                                        "dmsp-ssj_south_out.eab"),
+                           "dmsp-ssj_north_20101231_20101231_v1.1.2.ocb":
+                           os.path.join(self.test_dir,
+                                        "dmsp-ssj_north_out.ocb"),
+                           "dmsp-ssj_south_20101231_20101231_v1.1.2.ocb":
+                           os.path.join(self.test_dir,
+                                        "dmsp-ssj_south_out.ocb")}
+        self.in_args = [dt.datetime(2010, 12, 31), dt.datetime(2011, 1, 1),
+                        self.test_dir]
+        self.out = list()
+        self.ldtype = [int, '|U50', int, '|U50', '|U50', float, float, float,
+                       float, float, float, float, float]
+
+        # Remove in 2020 when dropping support for 2.7
+        if sys.version_info.major == 2:
+            self.assertRaisesRegex = self.assertRaisesRegexp
+
+    def tearDown(self):
+        if len(self.out) > 0:
+            for ff in self.out:
+                os.remove(ff)
+
+        del self.ocb_dir, self.out, self.test_dir, self.in_args
+        del self.comp_files, self.ldtype
+
+    def test_fetch_format_ssj_boundary_files_default(self):
+        """ Test the default implementation of format_ssj_boundary_files"""
+
+        self.out = boundaries.dmsp_ssj_files.format_ssj_boundary_files(
+            *self.in_args)
+
+        self.assertTrue(len(self.out), len(self.comp_files.values()))
+
+        # Compare the non-header data (since header has creation date)
+        for fout in self.out:
+            # Get the comparison filename
+            fname = os.path.split(fout)[-1]
+            self.assertTrue(fname in self.comp_files.keys())
+
+            # Load the data
+            test_out = np.genfromtxt(fout, skip_header=1, dtype=self.ldtype)
+            temp_out = np.genfromtxt(self.comp_files[fname], skip_header=1,
+                                     dtype=self.ldtype)
+
+            # Test the number of rows and columns
+            self.assertTupleEqual(test_out.shape, temp_out.shape)
+
+            # Test the data in each row
+            for j, test_row in enumerate(test_out):
+                self.assertListEqual(list(test_row), list(temp_out[j]))
+
+        del test_out, temp_out, fname, j, test_row, fout
 
 
 @unittest.skipIf(not no_ssj,
