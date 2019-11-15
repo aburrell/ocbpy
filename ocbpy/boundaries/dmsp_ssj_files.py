@@ -188,13 +188,17 @@ def create_ssj_boundary_files(cdf_files, out_dir=None, out_cols=['glat','glon'],
     for cdffn in np.asarray(cdf_files):
         if os.path.isfile(cdffn):
             try:
-                absd = ssj.absatday.absatday(cdffn, csvdir=out_dir,
-                                             imgdir=plot_dir,
-                                             make_plot=make_plots,
-                                             csvvars=out_cols)
-                out_files.append(absd.csv.csvfn)
+                with np.errstate(invalid='ignore', divide='ignore',
+                                 over='ignore', under='ignore'):
+                    absd = ssj.absatday.absatday(cdffn, csvdir=out_dir,
+                                                 imgdir=plot_dir,
+                                                 make_plot=make_plots,
+                                                 csvvars=out_cols)
+                    out_files.append(absd.csv.csvfn)
             except pycdf.CDFError as err:
                 ocbpy.logger.warning("{:}".format(err))
+            except Warning as war:
+                ocbpy.logger.warning("{:}".format(war))
         else:
             ocbpy.logger.warning("bad input file {:}".format(cdffn))
 
@@ -442,15 +446,15 @@ def fetch_format_ssj_boundary_files(stime, etime, out_dir=None, rm_temp=True,
     # Create CSV files with geographic coordinates for the boundary locations
     csv_files = create_ssj_boundary_files(dmsp_files, out_dir=out_dir)
 
+    # Test to see if there are any DMSP processed files
+    if len(csv_files) == 0:
+        raise ValueError("".join(["unable to process the downloaded SSJ files ",
+                                  "{:}".format(dmsp_files)]))
+
     # Remove the DMSP files, as their data has been processed
     if rm_temp:
         for tmp_file in dmsp_files:
             os.remove(tmp_file)
-
-    # Test to see if there are any DMSP processed files
-    if len(csv_files) == 0:
-        raise ValueError("".join(["unable to download any DMSP SSJ files ",
-                                  "between {:} and {:}".format(stime, etime)]))
 
     # Create the boundary files
     bound_files = format_ssj_boundary_files(csv_files, ref_alt=ref_alt,
