@@ -257,6 +257,15 @@ def format_ssj_boundary_files(csv_files, ref_alt=830.0,
     if len(csv_files.shape) == 0:
         csv_files = np.asarray([csv_files])
 
+    # Remove any bad files
+    good_files = list()
+    for i, infile in enumerate(csv_files):
+        if not os.path.isfile(infile):
+            ocbpy.logger.warning("bad input file: {:}".format(infile))
+        else:
+            good_files.append(i)
+    csv_files = csv_files[good_files]
+
     if len(csv_files) == 0:
         raise ValueError("empty list of input CSV files")
 
@@ -297,97 +306,92 @@ def format_ssj_boundary_files(csv_files, ref_alt=830.0,
         # Cycle through all the SSJ CSV files, outputing appropriate data into
         # the desired boundary and hemisphere file
         for infile in csv_files:
-            # Test the input file
-            if not os.path.isfile(infile):
-                ocbpy.logger.warning("bad input file: {:}".format(infile))
-            else:
-                # Get spacecraft number and date from filename
-                filename_sec = os.path.split(infile)[-1].split(
-                    'dmsp-f')[-1].split('_')
-                sc = int(filename_sec[0])
-                file_date = dt.datetime.strptime(filename_sec[3], '%Y%m%d')
+            # Get spacecraft number and date from filename
+            filename_sec = os.path.split(infile)[-1].split(
+                'dmsp-f')[-1].split('_')
+            sc = int(filename_sec[0])
+            file_date = dt.datetime.strptime(filename_sec[3], '%Y%m%d')
 
-                # Get the header line for the data and determine the number of
-                # comment lines preceeding the header
-                skiprows = 1
-                with open(infile, 'r') as fpin:
+            # Get the header line for the data and determine the number of
+            # comment lines preceeding the header
+            skiprows = 1
+            with open(infile, 'r') as fpin:
+                head_line = fpin.readline()
+                while head_line.find("#") == 0:
+                    skiprows += 1
                     head_line = fpin.readline()
-                    while head_line.find("#") == 0:
-                        skiprows += 1
-                        head_line = fpin.readline()
 
-                header_list = head_line.split("\n")[0].split(",")
+            header_list = head_line.split("\n")[0].split(",")
 
-                # Load the file data
-                data = np.loadtxt(infile, skiprows=skiprows, delimiter=',')
-                if data.shape[1] != len(header_list):
-                    bad_files.append(infile)
-                else:
-                    # Establish the desired data indices
-                    time_ind = {bb: [header_list.index('UTSec {:s}{:d}'.format(
-                        bb, i)) for i in [1, 2]]
-                                for bb in bound_prefix.keys()}
-                    lat_ind = {bb:
+            # Load the file data
+            data = np.loadtxt(infile, skiprows=skiprows, delimiter=',')
+            if data.shape[1] != len(header_list):
+                bad_files.append(infile)
+            else:
+                # Establish the desired data indices
+                time_ind = {bb: [header_list.index('UTSec {:s}{:d}'.format(
+                    bb, i)) for i in [1, 2]]
+                            for bb in bound_prefix.keys()}
+                lat_ind = {bb:
                         [header_list.index('SC_GEOCENTRIC_LAT {:s}{:d}'.format(
                             bb, i)) for i in [1, 2]]
-                               for bb in bound_prefix.keys()}
-                    lon_ind = {bb:
+                           for bb in bound_prefix.keys()}
+                lon_ind = {bb:
                         [header_list.index('SC_GEOCENTRIC_LON {:s}{:d}'.format(
                             bb, i)) for i in [1, 2]]
-                               for bb in bound_prefix.keys()}
+                           for bb in bound_prefix.keys()}
 
-                    # Calculate the midpoint seconds of day
-                    mid_utsec = {bb: 0.5 * (data[:,time_ind[bb][1]]
-                                            +data[:,time_ind[bb][0]])
-                                 for bb in time_ind.keys()}
+                # Calculate the midpoint seconds of day
+                mid_utsec = {bb: 0.5 * (data[:,time_ind[bb][1]]
+                                        +data[:,time_ind[bb][0]])
+                             for bb in time_ind.keys()}
 
-                    # Select the hemisphere and FOM
-                    hemi = data[:,header_list.index('hemisphere')]
-                    fom = data[:,header_list.index('FOM')]
+                # Select the hemisphere and FOM
+                hemi = data[:,header_list.index('hemisphere')]
+                fom = data[:,header_list.index('FOM')]
 
-                    # Cycle through each line of data, calculating the
-                    # necessary information
-                    for iline, data_line in enumerate(data):
-                        hh = hemi[iline]
+                # Cycle through each line of data, calculating the
+                # necessary information
+                for iline, data_line in enumerate(data):
+                    hh = hemi[iline]
 
-                        # Get the boundary locations using the midpoint time
-                        # (sufficiently accurate at current sec. var.) for each
-                        # boundary
-                        for bb in bound_prefix.keys():
-                            mid_time = file_date + dt.timedelta(seconds=
+                    # Get the boundary locations using the midpoint time
+                    # (sufficiently accurate at current sec. var.) for each
+                    # boundary
+                    for bb in bound_prefix.keys():
+                        mid_time = file_date + dt.timedelta(seconds=
                                                         mid_utsec[bb][iline])
-                            mloc = aacgmv2.get_aacgm_coord_arr(
-                                data_line[lat_ind[bb]], data_line[lon_ind[bb]],
-                                ref_alt, mid_time, method=method)
+                        mloc = np.array(aacgmv2.get_aacgm_coord_arr(
+                            data_line[lat_ind[bb]], data_line[lon_ind[bb]],
+                            ref_alt, mid_time, method=method))
 
-                            # Determine the circle radius in degrees
-                            rad = 0.5 * abs(mloc[0][0]-mloc[0][1])
+                        # Determine the circle radius in degrees
+                        rad = 0.5 * abs(mloc[0][0]-mloc[0][1])
 
-                            # Get the X-Y coordinates of each pass where X is
-                            # positive towards dawn and Y is positive towards
-                            # noon
-                            theta = np.radians(mloc[2] * 15.0 - 90.0)
-                            x = (90.0 - abs(mloc[0])) * np.cos(theta)
-                            y = (90.0 - abs(mloc[0])) * np.sin(theta)
+                        # Get the X-Y coordinates of each pass where X is
+                        # positive towards dawn and Y is positive towards noon
+                        theta = np.radians(mloc[2] * 15.0 - 90.0)
+                        x = (90.0 - abs(mloc[0])) * np.cos(theta)
+                        y = (90.0 - abs(mloc[0])) * np.sin(theta)
 
-                            # The midpoint is the center of this circle
-                            mid_x = 0.5 * sum(x)
-                            mid_y = 0.5 * sum(y)
+                        # The midpoint is the center of this circle
+                        mid_x = 0.5 * sum(x)
+                        mid_y = 0.5 * sum(y)
 
-                            # Prepare the output line, which has the format:
-                            # sc bound hemi date time r x y fom x_1 y_1
-                            # x_2 y_2
-                            out_line = " ".join(["{:d}".format(sc), bb,
-                                                 "{:.0f}".format(hh),
+                        # Prepare the output line, which has the format:
+                        # sc bound hemi date time r x y fom x_1 y_1
+                        # x_2 y_2
+                        out_line = " ".join(["{:d}".format(sc), bb,
+                                             "{:.0f}".format(hh),
                                         mid_time.strftime('%Y-%m-%d %H:%M:%S'),
-                                                 " ".join(["{:.3f}".format(val)
+                                             " ".join(["{:.3f}".format(val)
                                                 for val in [rad, mid_x, mid_y,
                                                             fom[iline], x[0],
                                                             y[0], x[1], y[1]]]),
-                                                 "\n"])
+                                             "\n"])
 
-                            # Write the output line to the file
-                            fpout[hh][bb].write(out_line)        
+                        # Write the output line to the file
+                        fpout[hh][bb].write(out_line)        
 
     # If some input files were not processed, inform the user
     if len(bad_files) > 0:
