@@ -37,6 +37,7 @@ class TestSSJFetch(unittest.TestCase):
         # Remove in 2020 when dropping support for 2.7
         if sys.version_info.major == 2:
             self.assertRegex = self.assertRegexpMatches
+            self.assertRaisesRegex = self.assertRaisesRegexp
 
     def tearDown(self):
         if len(self.fetch_files) > 0:
@@ -612,8 +613,10 @@ class TestSSJFetchFormat(unittest.TestCase):
                  "ssj_auroral_boundary installed, cannot test failure")
 class TestSSJFailure(unittest.TestCase):
     def setUp(self):
-        """ No initialization needed """
-        pass
+        """ Set up calls for python 2.7 """
+        # Remove in 2020 when dropping support for 2.7
+        if sys.version_info.major == 2:
+            self.assertRaisesRegex = self.assertRaisesRegexp
 
     def tearDown(self):
         """ No teardown needed"""
