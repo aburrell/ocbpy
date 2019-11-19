@@ -284,7 +284,7 @@ def format_ssj_boundary_files(csv_files, ref_alt=830.0,
     out_head = "#sc bound date time r x y fom x_1 y_1 x_2 y_2\n"
 
     # Specify the output file information
-    outfile_prefix = os.path.commonprefix(csv_files).split('-f')[0]
+    outfile_prefix = os.path.commonprefix(list(csv_files)).split('-f')[0]
     filename_sec = os.path.split(csv_files[0])[-1].split('dmsp-f')[-1].split('_')
     sdate = filename_sec[3]
     filename_sec = os.path.split(csv_files[-1])[-1].split('dmsp-f')[-1].split('_')
@@ -403,7 +403,8 @@ def format_ssj_boundary_files(csv_files, ref_alt=830.0,
             len(bad_files), bad_files))
 
     # Recast the output file dictionary as a flat list
-    bound_files = np.array([ff.values() for ff in bound_files.values()])
+    bound_files = np.array([[fname for fname in ff.values()]
+                            for ff in bound_files.values()])
 
     return list(bound_files.flatten())
 
