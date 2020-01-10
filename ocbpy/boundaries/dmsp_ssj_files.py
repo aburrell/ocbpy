@@ -36,6 +36,11 @@ from __future__ import absolute_import, unicode_literals
 import datetime as dt
 import numpy as np
 import os
+import sys
+
+if sys.version_info.major == 2:
+    import warnings
+    warnings.simplefilter('default')
 
 err = ''.join(['unable to load the DMSP SSJ module; ssj_auroral_boundary ',
                'is available at: ',
@@ -226,12 +231,10 @@ def format_ssj_boundary_files(csv_files, ref_alt=830.0,
 
     Notes
     -----
-    Output format is 'sc bound hemi date time r x y fom x_1 y_1 x_2 y_2'
+    Output format is 'sc date time r x y fom x_1 y_1 x_2 y_2'
     where:
 
     sc    = Spacecraft number
-    bound = Boundary prefix
-    hemi  = Flag indicating hemisphere (1=Northern, -1=Southern)
     date  = YYYY-MM-DD
     time  = HH:MM:SS of midpoint between the two measurements for this pass
     r     = Half the distance between the two pass boundaries
@@ -281,7 +284,7 @@ def format_ssj_boundary_files(csv_files, ref_alt=830.0,
     bad_files = list()
 
     # Initialize the output header
-    out_head = "#sc bound date time r x y fom x_1 y_1 x_2 y_2\n"
+    out_head = "#sc date time r x y fom x_1 y_1 x_2 y_2\n"
 
     # Specify the output file information
     outfile_prefix = os.path.commonprefix(list(csv_files)).split('-f')[0]
@@ -365,9 +368,9 @@ def format_ssj_boundary_files(csv_files, ref_alt=830.0,
                     for bb in bound_prefix.keys():
                         mid_time = file_date + dt.timedelta(seconds=
                                                         mid_utsec[bb][iline])
-                        mloc = np.array(aacgmv2.get_aacgm_coord_arr(
+                        mloc = aacgmv2.get_aacgm_coord_arr(
                             data_line[lat_ind[bb]], data_line[lon_ind[bb]],
-                            ref_alt, mid_time, method=method))
+                            ref_alt, mid_time, method=method)
 
                         # Determine the circle radius in degrees
                         rad = 0.5 * abs(mloc[0][0]-mloc[0][1])
@@ -385,8 +388,7 @@ def format_ssj_boundary_files(csv_files, ref_alt=830.0,
                         # Prepare the output line, which has the format:
                         # sc bound hemi date time r x y fom x_1 y_1
                         # x_2 y_2
-                        out_line = " ".join(["{:d}".format(sc), bb,
-                                             "{:.0f}".format(hh),
+                        out_line = " ".join(["{:d}".format(sc),
                                         mid_time.strftime('%Y-%m-%d %H:%M:%S'),
                                              " ".join(["{:.3f}".format(val)
                                                 for val in [rad, mid_x, mid_y,
