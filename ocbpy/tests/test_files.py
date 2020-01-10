@@ -46,10 +46,13 @@ class TestFilesMethods(unittest.TestCase):
                            'stime': dt.datetime(2010, 1, 1, 0, 0),
                            'etime': dt.datetime(2017, 1, 1, 0, 0)}}
         self.short_to_long = {"amp": "ampere", "si12": "image", "si13": "image",
-                              "wic": "image", "": "image"}
-        self.long_to_short = {"ampere": "amp", "image": "si13", "": "si13"}
-        self.inst = {1: ['', 'si13', 'si12', 'wic', 'amp', 'image', 'ampere'],
-                     -1: ['', 'amp', 'ampere']}
+                              "wic": "image", "": "image",
+                              "dmsp-ssj": "dmsp-ssj"}
+        self.long_to_short = {"ampere": "amp", "image": "si13", "": "si13",
+                              "dmsp-ssj": "dmsp-ssj"}
+        self.inst = {1: ['', 'si13', 'si12', 'wic', 'amp', 'image', 'ampere',
+                         'dmsp-ssj'],
+                     -1: ['', 'amp', 'ampere', 'dmsp-ssj']}
         self.hemi = 1
 
         # Remove in 2020 when dropping support for 2.7
@@ -86,6 +89,7 @@ class TestFilesMethods(unittest.TestCase):
         # Test only the files included with OCBpy, allow local boundary files
         # to exist.
         for ckey in self.comp_dict.keys():
+            print(ckey, self.out.keys())
             self.assertTrue(ckey in self.out.keys())
             self.assertDictEqual(self.out[ckey], self.comp_dict[ckey])
 
