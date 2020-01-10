@@ -343,7 +343,7 @@ class TestSSJFormat(unittest.TestCase):
         self.csv_files = [os.path.join(self.test_dir,
     "dmsp-f16_ssj_precipitating-electrons-ions_20101231_v1.1.2_boundaries.csv")]
         self.out = list()
-        self.ldtype = [int, '|U50', int, '|U50', '|U50', float, float, float,
+        self.ldtype = [int, '|U50', '|U50', float, float, float,
                        float, float, float, float, float]
         self.lout = ''
         self.log_capture = StringIO()
@@ -415,7 +415,7 @@ class TestSSJFormat(unittest.TestCase):
 
             # Test the data in each row
             for j, test_row in enumerate(test_out):
-                for i in range(4):
+                for i in range(3):
                     self.assertTrue(test_row[i] == temp_out[j][i])
 
         del test_out, temp_out, fname, j, i, test_row, fout
@@ -444,7 +444,7 @@ class TestSSJFormat(unittest.TestCase):
 
             # Test the data in each row
             for j, test_row in enumerate(test_out):
-                for i in range(4):
+                for i in range(3):
                     self.assertTrue(test_row[i] == temp_out[j][i])
 
         del test_out, temp_out, fname, j, i, test_row, fout
@@ -492,7 +492,7 @@ class TestSSJFetchFormat(unittest.TestCase):
         self.in_args = [dt.datetime(2010, 12, 31), dt.datetime(2011, 1, 1),
                         self.test_dir]
         self.out = list()
-        self.ldtype = [int, '|U50', int, '|U50', '|U50', float, float, float,
+        self.ldtype = [int, '|U50', '|U50', float, float, float,
                        float, float, float, float, float]
 
         # Remove in 2020 when dropping support for 2.7
@@ -605,7 +605,8 @@ class TestSSJFetchFormat(unittest.TestCase):
 
         self.in_args[2] = "/fake_dir/"
 
-        with self.assertRaisesRegex(ValueError, "unable to download"):
+        with self.assertRaisesRegex(ValueError,
+                                    "can't find the output directory"):
             self.out = boundaries.dmsp_ssj_files.fetch_format_ssj_boundary_files(*self.in_args)
 
 
