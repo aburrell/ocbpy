@@ -49,7 +49,7 @@ class TestFilesMethods(unittest.TestCase):
                               "wic": "image", "": "image",
                               "dmsp-ssj": "dmsp-ssj"}
         self.long_to_short = {"ampere": "amp", "image": "si13", "": "si13",
-                              "dmsp-ssj": "dmsp-ssj"}
+                              "dmsp-ssj": None}
         self.inst = {1: ['', 'si13', 'si12', 'wic', 'amp', 'image', 'ampere',
                          'dmsp-ssj'],
                      -1: ['', 'amp', 'ampere', 'dmsp-ssj']}
@@ -121,7 +121,10 @@ class TestFilesMethods(unittest.TestCase):
                                                   instrument=ii)
 
                 if ii in self.long_to_short.keys():
-                    fname = "{:s}_north".format(self.long_to_short[ii])
+                    if self.long_to_short[ii] is None:
+                        fname = None
+                    else:
+                        fname = "{:s}_north".format(self.long_to_short[ii])
                 else:
                     fname = "{:s}_north".format(ii)
 
@@ -130,7 +133,10 @@ class TestFilesMethods(unittest.TestCase):
                 else:
                     iname = ii
 
-                self.assertRegex(self.out[0], fname)
+                if fname is None:
+                    self.assertIsNone(self.out[0])
+                else:
+                    self.assertRegex(self.out[0], fname)
                 self.assertRegex(self.out[1], iname)
 
         del ii, fname, iname
@@ -142,7 +148,10 @@ class TestFilesMethods(unittest.TestCase):
         ii = ''
         self.out = files.get_default_file(None, None, self.hemi, instrument=ii)
 
-        fname = "{:s}_north".format(self.long_to_short[ii])
+        if self.long_to_short[ii] is None:
+            fname = None
+        else:
+            fname = "{:s}_north".format(self.long_to_short[ii])
 
         self.assertRegex(self.out[0], fname)
         self.assertRegex(self.out[1], self.short_to_long[ii])
@@ -242,7 +251,10 @@ class TestFilesMethods(unittest.TestCase):
                                                   instrument=ii)
 
                 if ii in self.long_to_short.keys():
-                    fname = "{:s}_south".format(self.long_to_short[ii])
+                    if self.long_to_short[ii] is None:
+                        fname = None
+                    else:
+                        fname = "{:s}_south".format(self.long_to_short[ii])
                 else:
                     fname = "{:s}_south".format(ii)
 
@@ -251,7 +263,10 @@ class TestFilesMethods(unittest.TestCase):
                 else:
                     iname = ii
 
-                self.assertRegex(self.out[0], fname)
+                if fname is None:
+                    self.assertIsNone(self.out[0])
+                else:
+                    self.assertRegex(self.out[0], fname)
                 self.assertRegex(self.out[1], iname)
 
         del ii, fname, iname
