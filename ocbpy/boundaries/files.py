@@ -78,11 +78,15 @@ def get_boundary_files(bound='ocb'):
     stime = {"amp": dt.datetime(2010, 1, 1),
              "si12": dt.datetime(2000, 5, 4),
              "si13": dt.datetime(2000, 5, 5),
-             "wic": dt.datetime(2000, 5, 3)}
+             "wic": dt.datetime(2000, 5, 3),
+             "dmsp-ssj": dt.datetime(2010, 1, 1)}
     etime = {"amp": dt.datetime(2017, 1, 1),
              "si12": dt.datetime(2002, 8, 23),
              "si13": dt.datetime(2002, 8, 23),
-             "wic": dt.datetime(2002, 8, 22)}
+             "wic": dt.datetime(2002, 8, 22),
+             "dmsp-ssj": dt.datetime.today().replace(hour=0, minute=0, second=0,
+                                                     microsecond=0)
+             + dt.timedelta(days=1)}
     
     # List all of the files in the OCBpy boundary directory
     boundary_dir = get_boundary_directory()
@@ -147,7 +151,8 @@ def get_default_file(stime, etime, hemisphere, instrument='', bound='ocb'):
         Default filename with full path defined or None if no file was
         available for the specified input constraints
     instrument : (str)
-        Instrument for the default file (either 'ampere' or 'image')
+        Instrument for the default file (either 'ampere', 'image',
+        or 'dmsp-ssj')
 
     """
 
@@ -156,7 +161,8 @@ def get_default_file(stime, etime, hemisphere, instrument='', bound='ocb'):
     boundary_files = get_boundary_files(bound=bound)
 
     # Determine the list of acceptable instruments
-    long_to_short = {"ampere": ["amp"], "image": ["si12", "si13", "wic"]}
+    long_to_short = {"ampere": ["amp"], "image": ["si12", "si13", "wic"],
+                     "dmsp-ssj": ["dmsp-ssj"]}
     if len(instrument) == 0:
         inst = list(itertools.chain.from_iterable(long_to_short.values()))
     elif instrument in long_to_short.keys():
@@ -178,7 +184,7 @@ def get_default_file(stime, etime, hemisphere, instrument='', bound='ocb'):
 
     # Get the default file and instrument (returning at most one)
     short_to_long = {"amp": "ampere", "si12": "image", "si13": "image",
-                     "wic": "image"}
+                     "wic": "image", "dmsp-ssj": "dmsp-ssj"}
     if len(good_files) == 0:
         estr = "".join(["no boundary file available for ", ", ".join(inst),
                         "northern" if hemisphere == 1 else "southern",
@@ -194,7 +200,7 @@ def get_default_file(stime, etime, hemisphere, instrument='', bound='ocb'):
             instrument = boundary_files[good_files[0]]['instrument']
     else:
         # Rate files by instrument
-        default_inst = ['si13', 'si12', 'wic', 'amp']
+        default_inst = ['si13', 'si12', 'wic', 'amp', 'dmsp-ssj']
         ordered_files = {default_inst.index(boundary_files[bb]['instrument']):
                          bb for bb in good_files}
         bfile = ordered_files[min(ordered_files.keys())]
