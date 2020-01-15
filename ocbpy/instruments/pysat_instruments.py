@@ -34,7 +34,7 @@ def add_ocb_to_data(pysat_inst, mlat_name='', mlt_name='', evar_names=list(),
                     curl_evar_names=list(), vector_names=dict(),
                     hemisphere=0, ocb=None, ocbfile='default', instrument='',
                     max_sdiff=600, min_sectors=7, rcent_dev=8.0, max_r=23.0,
-                    min_r=10.0, min_j=0.15):
+                    min_r=10.0):
     """ Coverts the location of pysat data into a frame that is relative to
     the open-closed field-line boundary (OCB) as determined  from a circle fit
     to the poleward boundary of the auroral oval
@@ -81,18 +81,16 @@ def add_ocb_to_data(pysat_inst, mlat_name='', mlt_name='', evar_names=list(),
     max_sdiff : (int)
         maximum seconds between OCB and data record in sec (default=600)
     min_sectors : (int)
-        Minimum number of MLT sectors required for good OCB (default=7).
+        Minimum number of MLT sectors required for good OCB (default=7)
     rcent_dev : (float)
         Maximum number of degrees between the new centre and the AACGM pole
-        (default=8.0).
+        (default=8.0)
     max_r : (float)
         Maximum radius for open-closed field line boundary in degrees
-        default=23.0).
+        default=23.0)
     min_r : (float)
         Minimum radius for open-closed field line boundary in degrees
-        (default=10.0).
-    min_j : (float)
-        Minimum unitless current magnitude scale difference (default=0.15)
+        (default=10.0)
 
     Returns
     ---------
@@ -247,7 +245,7 @@ def add_ocb_to_data(pysat_inst, mlat_name='', mlt_name='', evar_names=list(),
         idat = ocbpy.match_data_ocb(ocb, pysat_inst.index[dat_ind], idat=idat,
                                     max_tol=max_sdiff, min_sectors=min_sectors,
                                     rcent_dev=rcent_dev, max_r=max_r,
-                                    min_r=min_r, min_j=min_j)
+                                    min_r=min_r)
         
         if idat < ndat and ocb.rec_ind < ocb.records:
             iout = dat_ind[idat]

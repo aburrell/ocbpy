@@ -27,7 +27,7 @@ import ocbpy.ocb_scaling as ocbscal
 
 def vort2ascii_ocb(vortfile, outfile, hemisphere=0, ocb=None, ocbfile='default',
                    instrument='', max_sdiff=600, save_all=False, min_sectors=7,
-                   rcent_dev=8.0, max_r=23.0, min_r=10.0, min_j=0.15):
+                   rcent_dev=8.0, max_r=23.0, min_r=10.0):
     """ Coverts the location of vorticity data in AACGM coordinates into a frame
     that is relative to the open-closed field-line boundary (OCB) as determined
     from a circle fit to the poleward boundary of the auroral oval
@@ -66,12 +66,6 @@ def vort2ascii_ocb(vortfile, outfile, hemisphere=0, ocb=None, ocbfile='default',
     min_r : (float)
         Minimum radius for open-closed field line boundary in degrees
         (default=10.0)
-    min_j : (float)
-        Minimum unitless current magnitude scale difference (default=0.15)
-
-    Returns
-    ---------
-    Void
 
     Notes
     --------
@@ -166,7 +160,7 @@ def vort2ascii_ocb(vortfile, outfile, hemisphere=0, ocb=None, ocbfile='default',
                                          max_tol=max_sdiff,
                                          min_sectors=min_sectors,
                                          rcent_dev=rcent_dev, max_r=max_r,
-                                         min_r=min_r, min_j=min_j)
+                                         min_r=min_r)
 
             if ivort < num_vort and ocb.rec_ind < ocb.records:
                 # Use the indexed OCB to convert the AACGM grid coordinate to

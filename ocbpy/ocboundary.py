@@ -287,7 +287,7 @@ class OCBoundary(object):
             self.min_fom = 0.15 # From Milan et al. (2015)
         elif self.instrument == "dmsp-ssj":
             hlines = 1
-            ocb_cols = "sc bound hemi date time r x y fom x_1 y_1 x_2 y_2"
+            ocb_cols = "sc date time r x y fom x_1 y_1 x_2 y_2"
             datetime_fmt = "%Y-%m-%d %H:%M:%S"
             self.min_fom = 3.0 # From Burrell et al. (2019)
         else:
