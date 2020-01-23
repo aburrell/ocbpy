@@ -307,7 +307,7 @@ class TestOCBoundaryMethodsGeneral(unittest.TestCase):
         self.assertTrue(path.isfile(self.set_default['filename']))
         self.ocb = None
 
-        if version_info == 2:
+        if version_info.major == 2:
             self.assertRaisesRegex = self.assertRaisesRegexp
 
     def tearDown(self):
