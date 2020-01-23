@@ -35,9 +35,7 @@ def add_ocb_to_data(pysat_inst, mlat_name='', mlt_name='', evar_names=list(),
                     hemisphere=0, ocb=None, ocbfile='default', instrument='',
                     max_sdiff=600, min_sectors=7, rcent_dev=8.0, max_r=23.0,
                     min_r=10.0):
-    """ Coverts the location of pysat data into a frame that is relative to
-    the open-closed field-line boundary (OCB) as determined  from a circle fit
-    to the poleward boundary of the auroral oval
+    """ Coverts the location of pysat data into OCB coordinates
 
     Parameters
     ----------
@@ -92,11 +90,10 @@ def add_ocb_to_data(pysat_inst, mlat_name='', mlt_name='', evar_names=list(),
         Minimum radius for open-closed field line boundary in degrees
         (default=10.0)
 
-    Returns
-    ---------
-    Void
-        Adds the OCB coordinates and any scaled measurements to the pysat
-        Instrument object
+    Raises
+    ------
+    ValueError
+        If the pysat Instrument doesn't have the necessary data values
 
     Notes
     --------
@@ -354,10 +351,6 @@ def add_ocb_to_metadata(pysat_inst, ocb_name, pysat_name, overwrite=False,
         Notes about this OCB data (default='')
     isvector : (boolean)
         Is this vector data or not (default=False)
-
-    Returns
-    -------
-    Void - Updates pysat_inst.meta object
 
     """
 

@@ -10,7 +10,7 @@ This documentation describes the Open Closed field line Boundary (OCB) gridding
 process and provides examples for usage.
 
 .. toctree::
-   :maxdepth: 2
+   :maxdepth: -1
 
    overview.rst
    citing.rst
@@ -19,6 +19,7 @@ process and provides examples for usage.
    ocb_boundary_correction.rst
    supported_datasets.rst
    example.rst
+   
 
 
 
