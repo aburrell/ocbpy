@@ -307,6 +307,9 @@ class TestOCBoundaryMethodsGeneral(unittest.TestCase):
         self.assertTrue(path.isfile(self.set_default['filename']))
         self.ocb = None
 
+        if version_info == 2:
+            self.assertRaisesRegex = self.assertRaisesRegexp
+
     def tearDown(self):
         del self.set_empty, self.set_default, self.ocb
 
@@ -325,7 +328,7 @@ class TestOCBoundaryMethodsGeneral(unittest.TestCase):
     def test_bad_rfunc_inst(self):
         """Test failure setting default rfunc for unknown instrument"""
 
-        with self.assertRaisesRegexp(ValueError, "unknown instrument"):
+        with self.assertRaisesRegex(ValueError, "unknown instrument"):
             self.set_empty['instrument'] = 'bad'
             self.set_empty['rfunc'] = None
             self.ocb = ocbpy.ocboundary.OCBoundary(**self.set_empty)
@@ -1218,7 +1221,8 @@ class TestOCBoundaryFailure(unittest.TestCase):
     def setUp(self):
         """ Initialize the OCBoundary object using the test file
         """
-        pass
+        if version_info.major == 2:
+            self.assertRaisesRegex = self.assertRaisesRegexp
 
     def tearDown(self):
         pass
@@ -1229,38 +1233,38 @@ class TestOCBoundaryFailure(unittest.TestCase):
         test_north = path.join(path.dirname(ocbpy.__file__), "tests",
                                "test_data", "test_north_circle")
         self.assertTrue(path.isfile(test_north))
-        with self.assertRaisesRegexp(ValueError, "unknown instrument"):
+        with self.assertRaisesRegex(ValueError, "unknown instrument"):
             ocbpy.ocboundary.OCBoundary(instrument="hi", filename=test_north)
 
         del test_north
             
     def test_bad_hemisphere_input(self):
         """ Test failure when incorrect hemisphere value is input"""
-        with self.assertRaisesRegexp(ValueError, "hemisphere must be 1"):
+        with self.assertRaisesRegex(ValueError, "hemisphere must be 1"):
             ocbpy.ocboundary.OCBoundary(hemisphere=0)
 
     def test_bad_shape_rfunc_input(self):
         """ Test failure when badly shaped radial correction function"""
-        with self.assertRaisesRegexp(ValueError,
-                                     "Misshaped correction function array"):
-            ocbpy.ocboundary.OCBoundary(rfunc= \
+        with self.assertRaisesRegex(ValueError,
+                                    "Misshaped correction function array"):
+            ocbpy.ocboundary.OCBoundary(rfunc=
                                 np.array([ocbpy.ocb_correction.circular]))
 
     def test_bad_shape_rfunc_kwarg_input(self):
         """ Test failure when badly shaped radial correction function kwargs"""
-        with self.assertRaisesRegexp(ValueError,
-                                     "Misshaped correction function keyword"):
+        with self.assertRaisesRegex(ValueError,
+                                    "Misshaped correction function keyword"):
             ocbpy.ocboundary.OCBoundary(rfunc_kwargs=np.array([{}]))
 
     def test_bad_rfunc_input(self):
         """ Test failure with bad radial correction function input"""
-        with self.assertRaisesRegexp(ValueError, \
+        with self.assertRaisesRegex(ValueError,
                                 "Unknown input type for correction function"):
             ocbpy.ocboundary.OCBoundary(rfunc="rfunc")
 
     def test_bad_rfunc_kwarg_input(self):
         """ Test failure with bad radial correction function kwarg input"""
-        with self.assertRaisesRegexp(ValueError, \
+        with self.assertRaisesRegex(ValueError,
                                 "Unknown input type for correction keywords"):
             ocbpy.ocboundary.OCBoundary(rfunc_kwargs="rfunc")
 
