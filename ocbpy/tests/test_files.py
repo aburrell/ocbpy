@@ -25,31 +25,34 @@ class TestFilesMethods(unittest.TestCase):
         """
         self.out = None
         self.orig_file = ocbpy.__file__
-        self.comp_dict = {'amp_north_radii.txt':
+        self.comp_dict = {'amp_north_radii.ocb':
                           {'instrument': 'amp', 'hemisphere': 1,
                            'stime': dt.datetime(2010, 1, 1, 0, 0),
                            'etime': dt.datetime(2017, 1, 1, 0, 0)},
-                          'wic_north_circle':
+                          'wic_north_circle.ocb':
                           {'instrument': 'wic', 'hemisphere': 1,
                            'stime': dt.datetime(2000, 5, 3, 0, 0),
                            'etime': dt.datetime(2002, 8, 22, 0, 0)},
-                          'si12_north_circle':
+                          'si12_north_circle.ocb':
                           {'instrument': 'si12', 'hemisphere': 1,
                            'stime': dt.datetime(2000, 5, 4, 0, 0),
                            'etime': dt.datetime(2002, 8, 23, 0, 0)},
-                          'si13_north_circle':
+                          'si13_north_circle.ocb':
                           {'instrument': 'si13', 'hemisphere': 1,
                            'stime': dt.datetime(2000, 5, 5, 0, 0),
                            'etime': dt.datetime(2002, 8, 23, 0, 0)},
-                          'amp_south_radii.txt':
+                          'amp_south_radii.ocb':
                           {'instrument': 'amp', 'hemisphere': -1,
                            'stime': dt.datetime(2010, 1, 1, 0, 0),
                            'etime': dt.datetime(2017, 1, 1, 0, 0)}}
         self.short_to_long = {"amp": "ampere", "si12": "image", "si13": "image",
-                              "wic": "image", "": "image"}
-        self.long_to_short = {"ampere": "amp", "image": "si13", "": "si13"}
-        self.inst = {1: ['', 'si13', 'si12', 'wic', 'amp', 'image', 'ampere'],
-                     -1: ['', 'amp', 'ampere']}
+                              "wic": "image", "": "image",
+                              "dmsp-ssj": "dmsp-ssj"}
+        self.long_to_short = {"ampere": "amp", "image": "si13", "": "si13",
+                              "dmsp-ssj": None}
+        self.inst = {1: ['', 'si13', 'si12', 'wic', 'amp', 'image', 'ampere',
+                         'dmsp-ssj'],
+                     -1: ['', 'amp', 'ampere', 'dmsp-ssj']}
         self.hemi = 1
 
         # Remove in 2020 when dropping support for 2.7
@@ -74,17 +77,36 @@ class TestFilesMethods(unittest.TestCase):
         with self.assertRaisesRegexp(OSError, "boundary file directory"):
             files.get_boundary_directory()
 
+    def test_get_boundary_files_unknown_boundary(self):
+        """ Test get_boundary_files for an unknown boundary """
+        self.out = files.get_boundary_files(bound='aaa')
+        self.assertDictEqual(self.out, {})
+
     def test_get_boundary_files(self):
         """ Test the default implementation of get_boundary_files """
         self.out = files.get_boundary_files()
-        self.assertDictEqual(self.out, self.comp_dict)
+
+        # Test only the files included with OCBpy, allow local boundary files
+        # to exist.
+        for ckey in self.comp_dict.keys():
+            print(ckey, self.out.keys())
+            self.assertTrue(ckey in self.out.keys())
+            self.assertDictEqual(self.out[ckey], self.comp_dict[ckey])
+
+    def test_get_default_file_bad_bound(self):
+        """ Test get_default_file with an unknown boundary
+        """
+        self.out = files.get_default_file(None, None, self.hemi, bound='aaa')
+
+        self.assertIsNone(self.out[0])
+        self.assertEqual(len(self.out[1]), 0)
 
     def test_get_default_file_none_north_any(self):
         """ Test get_default_file with no range, northern hemisphere, any inst
         """
         self.out = files.get_default_file(None, None, self.hemi)
 
-        self.assertRegex(self.out[0], 'si13_north_circle')
+        self.assertRegex(self.out[0], 'si13_north_circle.ocb')
         self.assertRegex(self.out[1], 'image')
 
     @unittest.skipIf(version_info.major == 2,
@@ -99,7 +121,10 @@ class TestFilesMethods(unittest.TestCase):
                                                   instrument=ii)
 
                 if ii in self.long_to_short.keys():
-                    fname = "{:s}_north".format(self.long_to_short[ii])
+                    if self.long_to_short[ii] is None:
+                        fname = None
+                    else:
+                        fname = "{:s}_north".format(self.long_to_short[ii])
                 else:
                     fname = "{:s}_north".format(ii)
 
@@ -108,7 +133,10 @@ class TestFilesMethods(unittest.TestCase):
                 else:
                     iname = ii
 
-                self.assertRegex(self.out[0], fname)
+                if fname is None:
+                    self.assertIsNone(self.out[0])
+                else:
+                    self.assertRegex(self.out[0], fname)
                 self.assertRegex(self.out[1], iname)
 
         del ii, fname, iname
@@ -120,7 +148,10 @@ class TestFilesMethods(unittest.TestCase):
         ii = ''
         self.out = files.get_default_file(None, None, self.hemi, instrument=ii)
 
-        fname = "{:s}_north".format(self.long_to_short[ii])
+        if self.long_to_short[ii] is None:
+            fname = None
+        else:
+            fname = "{:s}_north".format(self.long_to_short[ii])
 
         self.assertRegex(self.out[0], fname)
         self.assertRegex(self.out[1], self.short_to_long[ii])
@@ -220,7 +251,10 @@ class TestFilesMethods(unittest.TestCase):
                                                   instrument=ii)
 
                 if ii in self.long_to_short.keys():
-                    fname = "{:s}_south".format(self.long_to_short[ii])
+                    if self.long_to_short[ii] is None:
+                        fname = None
+                    else:
+                        fname = "{:s}_south".format(self.long_to_short[ii])
                 else:
                     fname = "{:s}_south".format(ii)
 
@@ -229,7 +263,10 @@ class TestFilesMethods(unittest.TestCase):
                 else:
                     iname = ii
 
-                self.assertRegex(self.out[0], fname)
+                if fname is None:
+                    self.assertIsNone(self.out[0])
+                else:
+                    self.assertRegex(self.out[0], fname)
                 self.assertRegex(self.out[1], iname)
 
         del ii, fname, iname
@@ -294,7 +331,7 @@ class TestFilesMethods(unittest.TestCase):
         """ Test get_default_file with good ranges"""
         
         # Cycle through all possible instrument names
-        for ii in ['amp_north_radii.txt', 'si13_north_circle']:
+        for ii in ['amp_north_radii.ocb', 'si13_north_circle.ocb']:
             with self.subTest(ii=ii):
                 self.out = files.get_default_file(self.comp_dict[ii]['stime'],
                                                   self.comp_dict[ii]['etime'],
@@ -315,7 +352,7 @@ class TestFilesMethods(unittest.TestCase):
         """ Test get_default_file with good ranges for ampere
         """
 
-        ii = 'amp_north_radii.txt'
+        ii = 'amp_north_radii.ocb'
         self.out = files.get_default_file(self.comp_dict[ii]['stime'],
                                           self.comp_dict[ii]['etime'],
                                           self.hemi)
@@ -330,7 +367,7 @@ class TestFilesMethods(unittest.TestCase):
         """ Test get_default_file with good ranges for image
         """
 
-        ii = 'si13_north_circle'
+        ii = 'si13_north_circle.ocb'
         self.out = files.get_default_file(self.comp_dict[ii]['stime'],
                                           self.comp_dict[ii]['etime'],
                                           self.hemi)
@@ -344,7 +381,7 @@ class TestFilesMethods(unittest.TestCase):
         """ Test get_default_file with bad time ranges
         """
 
-        ii = 'si13_north_circle'
+        ii = 'si13_north_circle.ocb'
         self.hemi = -1
         self.out = files.get_default_file(self.comp_dict[ii]['stime'],
                                           self.comp_dict[ii]['etime'],

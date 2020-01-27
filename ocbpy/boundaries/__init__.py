@@ -5,10 +5,17 @@
 
 Contains
 -------------------------------------------------------------------------------
-files   Boundary file utilities
+files          Boundary file utilities
+dmsp_ssj_files DMSP SSJ boundary file utilities
 -------------------------------------------------------------------------------
 
 """
 from __future__ import (absolute_import)
+import logging
 
 from . import (files)
+
+try:
+    from . import (dmsp_ssj_files)
+except ImportError as ierr:
+    logging.warning(ierr)

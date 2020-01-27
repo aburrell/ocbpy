@@ -11,16 +11,16 @@ OCBpy
 * Burrell, A. G. and G. Chisham. (2018). aburrell/ocbpy:
   Beta Release (Version 0.2b1). Zenodo. doi:10.5281/zenodo.1217177.
 
-  ```
-  @Misc{ocbpy,
-        author = {Burrell, A. G. and Chisham, G.},
-	title  = {aburrell/ocbpy: Beta Release},
-	year   = {2018},
-	date   = {2018-04-12},
-	doi    = {10.5281/zenodo.1179230},
-	url    = {http://doi.org/10.5281/zenodo.1217177},
-	}
-  ```
+.. code-block:: latex
+   
+    @Misc{ocbpy,
+          author = {Burrell, A. G. and Chisham, G.},
+	  title  = {aburrell/ocbpy: Beta Release},
+  	  year   = {2018},
+	  date   = {2018-04-12},
+	  doi    = {10.5281/zenodo.1179230},
+	  url    = {http://doi.org/10.5281/zenodo.1217177},
+	  }
 
 This package was first described in the python in heliophysics over article,
 which may also be cited if a description of the package is desired.
@@ -50,9 +50,7 @@ Please follow the AMPERE data usage requirements provided by
 `APL <http://ampere.jhuapl.edu/AMPERE-README.pdf>`_ and cite the R1/R2 FAC
 boundary retrieval method and the OCB correction method.
 
-* **FAC**: Milan, S. E., et al. (2015), Principal component analysis of
-  Birkeland currents determined by the Active Magnetosphere and Planetary
-  Electrodynamics Response Experiment, J. Geophys. Res. Space Physics, 120,
-  10,415–10,424, doi:10.1002/2015JA021680.
+* **FAC**: Milan, S. E. (2019): AMPERE R1/R2 FAC radii. figshare. Dataset.
+  https://doi.org/10.25392/leicester.data.11294861.v1
 * **OCB**: Burrell, A. G., et al.: AMPERE Polar Cap Boundaries, Ann. Geophys.
   Discuss., doi:10.5194/angeo-2019-113, in review, 2019.

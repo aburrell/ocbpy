@@ -92,8 +92,7 @@ class OCBoundary(object):
     load(hlines=0, ocb_cols='year soy num_sectors phi_cent r_cent r a r_err',
          datetime_fmt='', stime=None, etime=None)
         Load the data from the OCB file specified by self.filename
-    get_next_good_ocb_ind(min_sectors=7, rcent_dev=8.0, max_r=23.0, min_r=10.0,
-                          min_j=0.15)
+    get_next_good_ocb_ind(min_sectors=7, rcent_dev=8.0, max_r=23.0, min_r=10.0)
         Cycle to the next good OCB index
     normal_coord(aacgm_lat, aacgm_mlt)
         Calculate the OCB coordinates of an AACGM location
@@ -103,7 +102,7 @@ class OCBoundary(object):
     """
 
     def __init__(self, filename="default", instrument='', hemisphere=1,
-                 boundary_lat=None, stime=None, etime=None, rfunc=None,
+                 boundary_lat=74.0, stime=None, etime=None, rfunc=None,
                  rfunc_kwargs=None):
         """Object containing OCB data
 
@@ -115,14 +114,14 @@ class OCBoundary(object):
             ocbpy.boundaries.files.get_default_file is called.
             (default='default')
         instrument : (str)
-            Instrument providing the OCBoundaries.  Requires 'image' or 'ampere'
-            if a file is provided.  If using filename='default', also accepts
-            'amp', 'si12', 'si13', 'wic', and ''.  (default='')
+            Instrument providing the OCBoundaries.  Requires 'image', 'ampere',
+            or 'dmsp-ssj' if a file is provided.  If using filename='default',
+            also accepts 'amp', 'si12', 'si13', 'wic', and ''.  (default='')
         hemisphere : (int)
             Integer (+/- 1) denoting northern/southern hemisphere (default=1)
         boundary_lat : (float)
-            Typical AACGM latitude of the OCBoundary or None to use the
-            instrument defaults (default=None)
+            Latitude of the OCBoundary, which determines the resolution of
+            data within the polar cap (default=74.0)
         stime : (datetime or NoneType)
             First time to load data or beginning of file.  If specifying time,
             be sure to start before the time of the data to allow the best
@@ -133,6 +132,8 @@ class OCBoundary(object):
             sure to end after the last data point you wish to match to, to
             ensure the best match within the allowable time tolerance is made.
             (default=None)
+        min_fom : (float)
+            Minimum acceptable figure of merit for data (default=0)
         rfunc : (np.ndarray, function, or NoneType)
             OCB radius correction function, if None will use instrument default.
             Function must have AACGM MLT as argument input. (default=None) 
@@ -182,17 +183,17 @@ class OCBoundary(object):
         self.r = None
         self.rfunc = rfunc
         self.rfunc_kwargs = rfunc_kwargs
+        self.min_fom = 0
 
         # Get the instrument defaults
         hlines, ocb_cols, datetime_fmt = self.inst_defaults()
 
-        # Set the boundary latitude, overwriting the defaults
-        if boundary_lat is not None:
-            self.boundary_lat = boundary_lat
+        # Set the boundary latitude, if supplied
+        self.boundary_lat = 74.0 if boundary_lat is None else boundary_lat
 
-            # Ensure that the boundary is in the correct hemisphere
-            if np.sign(boundary_lat) != np.sign(hemisphere):
-                self.boundary_lat *= -1.0
+        # Ensure that the boundary is in the correct hemisphere
+        if np.sign(boundary_lat) != np.sign(hemisphere):
+            self.boundary_lat *= -1.0
 
         # If possible, load the data.  Any boundary correction is applied here.
         if self.filename is not None:
@@ -258,8 +259,7 @@ class OCBoundary(object):
 
     def inst_defaults(self):
         """ Get the information needed to load an OCB file using instrument
-        specific formatting, also update the boundary latitude for a given
-        instrument type.
+        specific formatting
 
         Returns
         -------
@@ -270,18 +270,26 @@ class OCBoundary(object):
         datetime_fmt : (str)
             String containing the datetime format
 
+        Notes
+        -----
+        Updates the min_fom attribute for AMPERE and DMSP-SSJ
+
         """
 
         if self.instrument == "image":
             hlines = 0
             ocb_cols = "year soy num_sectors phi_cent r_cent r a r_err"
             datetime_fmt = ""
-            self.boundary_lat = self.hemisphere * 74.0
         elif self.instrument == "ampere":
             hlines = 0
-            ocb_cols = "date time r x y j_mag"
+            ocb_cols = "date time r x y fom"
             datetime_fmt = "%Y%m%d %H:%M"
-            self.boundary_lat = self.hemisphere * 74.0
+            self.min_fom = 0.15 # From Milan et al. (2015)
+        elif self.instrument == "dmsp-ssj":
+            hlines = 1
+            ocb_cols = "sc date time r x y fom x_1 y_1 x_2 y_2"
+            datetime_fmt = "%Y-%m-%d %H:%M:%S"
+            self.min_fom = 3.0 # From Burrell et al. (2019)
         else:
             hlines = 0
             ocb_cols = ""
@@ -313,10 +321,6 @@ class OCBoundary(object):
         etime : (datetime or NoneType)
             Time to stop loading data or None to end at the end of the file.
             (default=None)
-
-        Returns
-        --------
-        self
 
         """
         
@@ -420,7 +424,7 @@ class OCBoundary(object):
         return
 
     def get_next_good_ocb_ind(self, min_sectors=7, rcent_dev=8.0, max_r=23.0,
-                              min_r=10.0, min_j=0.15):
+                              min_r=10.0):
         """read in the next usuable OCB record from the data file.  Only uses
         the available parameters.
 
@@ -437,22 +441,22 @@ class OCBoundary(object):
         min_r : (float)
             Minimum radius for open-closed field line boundary in degrees
             (default=10.0)
-        min_j : (float)
-            Minimum unitless current magnitude scale difference (default=0.15)
 
-        Returns
-        ---------
-        self
-            updates self.rec_ind to the index of next good OCB record or a value
-            greater than self.records if there aren't any more good records
-            available after the starting point
+        Notes
+        -----
+        Updates self.rec_ind to the index of next good OCB record or a value
+        greater than self.records if there aren't any more good records
+        available after the starting point
 
         Comments
         ---------
-        Checks:
+        IMAGE FUV checks:
         - more than 6 MLT boundary values have contributed to OCB circle
         - that the OCB 'pole' is with 8 degrees of the AACGM pole
         - that the OCB 'radius' is greater than 10 and less than 23 degrees
+        AMPERE/DMSP-SSJ checks:
+        - that the Figure of Merit is greater than or equal to the specified
+          minimum
 
         """
 
@@ -466,7 +470,7 @@ class OCBoundary(object):
             if(hasattr(self, "num_sectors") and
                self.num_sectors[self.rec_ind] < min_sectors):
                 good = False
-            elif hasattr(self, "j_mag") and self.j_mag[self.rec_ind] < min_j:
+            elif hasattr(self, "fom") and self.fom[self.rec_ind] < self.min_fom:
                 good = False
 
             # Evaluate the current boundary for quality, using non-optional
@@ -755,7 +759,7 @@ class OCBoundary(object):
 
         """
 
-        if self.instrument == "image":
+        if self.instrument in ["image", "dmsp-ssj"]:
             self.rfunc = np.full(shape=self.records, fill_value=ocbcor.circular)
         elif self.instrument == "ampere":
             self.rfunc = np.full(shape=self.records,
@@ -804,7 +808,7 @@ def retrieve_all_good_indices(ocb):
 
     
 def match_data_ocb(ocb, dat_dtime, idat=0, max_tol=600, min_sectors=7,
-                   rcent_dev=8.0, max_r=23.0, min_r=10.0, min_j=0.15):
+                   rcent_dev=8.0, max_r=23.0, min_r=10.0):
     """Matches data records with OCB records, locating the closest values
     within a specified tolerance
 
@@ -829,8 +833,6 @@ def match_data_ocb(ocb, dat_dtime, idat=0, max_tol=600, min_sectors=7,
     min_r : (float)
         Minimum radius for open-closed field line boundary in degrees
         (default=10.0)
-    min_j : (float)
-        Minimum unitless current magnitude scale difference (default=0.15)
 
     Returns
     ---------
@@ -855,7 +857,7 @@ def match_data_ocb(ocb, dat_dtime, idat=0, max_tol=600, min_sectors=7,
     # Get the first reliable circle boundary estimate if none was provided
     if ocb.rec_ind < 0:
         ocb.get_next_good_ocb_ind(min_sectors=min_sectors, rcent_dev=rcent_dev,
-                                  max_r=max_r, min_r=min_r, min_j=min_j)
+                                  max_r=max_r, min_r=min_r)
         if ocb.rec_ind >= ocb.records:
             estr = "".join(["unable to find a good OCB record in ",
                             ocb.filename])
@@ -889,7 +891,7 @@ def match_data_ocb(ocb, dat_dtime, idat=0, max_tol=600, min_sectors=7,
             # is in the future
             ocb.get_next_good_ocb_ind(min_sectors=min_sectors,
                                       rcent_dev=rcent_dev, max_r=max_r,
-                                      min_r=min_r, min_j=min_j)
+                                      min_r=min_r)
         elif sdiff > max_tol:
             # Cycle to the next value if no OCB values were close enough
             estr = "".join(["no OCB data available within ",
@@ -903,7 +905,7 @@ def match_data_ocb(ocb, dat_dtime, idat=0, max_tol=600, min_sectors=7,
             last_iocb = ocb.rec_ind
             ocb.get_next_good_ocb_ind(min_sectors=min_sectors,
                                       rcent_dev=rcent_dev, max_r=max_r,
-                                      min_r=min_r, min_j=min_j)
+                                      min_r=min_r)
 
             if ocb.rec_ind < ocb.records:
                 sdiff = (ocb.dtime[ocb.rec_ind] -
@@ -914,7 +916,7 @@ def match_data_ocb(ocb, dat_dtime, idat=0, max_tol=600, min_sectors=7,
                     last_iocb = ocb.rec_ind
                     ocb.get_next_good_ocb_ind(min_sectors=min_sectors,
                                               rcent_dev=rcent_dev, max_r=max_r,
-                                              min_r=min_r, min_j=min_j)
+                                              min_r=min_r)
                     if ocb.rec_ind < ocb.records:
                         sdiff = (ocb.dtime[ocb.rec_ind] -
                                  dat_dtime[idat]).total_seconds()

@@ -283,7 +283,7 @@ class TestSuperMAGMethods(unittest.TestCase):
         OCB coordinates
         """
 
-        with self.assertRaisesRegexp(IOError, "SuperMAG file cannot be opened"):
+        with self.assertRaisesRegex(IOError, "SuperMAG file cannot be opened"):
             ocb_ismag.supermag2ascii_ocb("fake_file", "fake_out",
                                          ocbfile=self.test_ocb)
 

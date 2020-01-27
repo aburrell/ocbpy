@@ -186,6 +186,112 @@ class TestOCBoundaryLogFailure(unittest.TestCase):
 
         del ocb
 
+class TestOCBoundaryInstruments(unittest.TestCase):
+    def setUp(self):
+        """ Initialize the instrument information
+        """
+        self.test_dir = path.join(path.dirname(ocbpy.__file__), "tests",
+                                  "test_data")
+        self.inst_attrs = {"image": ["year","soy","num_sectors","a","r_err"],
+                           "ampere": ["date","time","x","y","fom"],
+                           "dmsp-ssj": ["date","time","sc","x","y","fom","x_1",
+                                        "x_2","y_1","y_2"]}
+        self.not_attrs = {"image": ["date","time","x","y","fom","x_1","x_2",
+                                    "y_1","y_2","sc"],
+                           "ampere": ["year","soy","x_1","y_1","x_2","y_2","sc",
+                                      "num_sectors","a","r_err"],
+                           "dmsp-ssj": ["year","soy","num_sectors","a","r_err"]}
+        self.inst_init = [{"instrument": "image", "hemisphere": 1,
+                           "filename": path.join(self.test_dir,
+                                                 "test_north_circle")},
+                          {"instrument": "dmsp-ssj", "hemisphere": 1,
+                           "filename": path.join(self.test_dir,
+                                                 "dmsp-ssj_north_out.ocb")},
+                          {"instrument": "dmsp-ssj", "hemisphere": -1,
+                           "filename": path.join(self.test_dir,
+                                                 "dmsp-ssj_south_out.ocb")},
+                          {"instrument": "ampere", "hemisphere": -1,
+                           "filename": path.join(self.test_dir,
+                                                 "test_south_circle")}]
+        self.ocb = None
+
+    def tearDown(self):
+        del self.test_dir, self.inst_attrs, self.inst_init, self.ocb
+
+    @unittest.skipIf(version_info.major == 2,
+                     'Python 2.7 does not support subTest')
+    def test_instrument_loading(self):
+        """ Test OCB initialization with good instrument names """
+        
+        for ocb_kwargs in self.inst_init:
+            with self.subTest(ocb_kwargs=ocb_kwargs):
+                self.ocb = ocbpy.OCBoundary(**ocb_kwargs)
+
+                for tattr in self.inst_attrs[ocb_kwargs['instrument']]:
+                    self.assertTrue(hasattr(self.ocb, tattr))
+
+                for tattr in self.not_attrs[ocb_kwargs['instrument']]:
+                    self.assertFalse(hasattr(self.ocb, tattr))
+
+        del ocb_kwargs, tattr
+
+    @unittest.skipIf(version_info.major == 3, 'Already tested, remove in 2020')
+    def test_image_loading(self):
+        """ Test OCB initialization for IMAGE names """
+        
+        self.ocb = ocbpy.OCBoundary(**self.inst_init[0])
+
+        for tattr in self.inst_attrs['image']:
+            self.assertTrue(hasattr(self.ocb, tattr))
+
+        for tattr in self.not_attrs['image']:
+            self.assertFalse(hasattr(self.ocb, tattr))
+
+        del tattr
+
+    @unittest.skipIf(version_info.major == 3, 'Already tested, remove in 2020')
+    def test_ampere_loading(self):
+        """ Test OCB initialization for AMPERE names """
+        
+        self.ocb = ocbpy.OCBoundary(**self.inst_init[3])
+
+        for tattr in self.inst_attrs['ampere']:
+            self.assertTrue(hasattr(self.ocb, tattr))
+
+        for tattr in self.not_attrs['ampere']:
+            self.assertFalse(hasattr(self.ocb, tattr))
+
+        del tattr
+
+    @unittest.skipIf(version_info.major == 3, 'Already tested, remove in 2020')
+    def test_dmsp_ssj_north_loading(self):
+        """ Test OCB initialization for DMSP-SSJ North names """
+        
+        self.ocb = ocbpy.OCBoundary(**self.inst_init[1])
+
+        for tattr in self.inst_attrs['dmsp-ssj']:
+            self.assertTrue(hasattr(self.ocb, tattr))
+
+        for tattr in self.not_attrs['dmsp-ssj']:
+            self.assertFalse(hasattr(self.ocb, tattr))
+
+        del tattr
+
+    @unittest.skipIf(version_info.major == 3, 'Already tested, remove in 2020')
+    def test_dmsp_ssj_south_loading(self):
+        """ Test OCB initialization for DMSP-SSJ South names """
+        
+        self.ocb = ocbpy.OCBoundary(**self.inst_init[2])
+
+        for tattr in self.inst_attrs['dmsp-ssj']:
+            self.assertTrue(hasattr(self.ocb, tattr))
+
+        for tattr in self.not_attrs['dmsp-ssj']:
+            self.assertFalse(hasattr(self.ocb, tattr))
+
+        del tattr
+    
+
 class TestOCBoundaryMethodsGeneral(unittest.TestCase):
     def setUp(self):
         """ Initialize the OCBoundary object using the empty file
@@ -200,6 +306,9 @@ class TestOCBoundaryMethodsGeneral(unittest.TestCase):
         self.assertTrue(path.isfile(self.set_empty['filename']))
         self.assertTrue(path.isfile(self.set_default['filename']))
         self.ocb = None
+
+        if version_info.major == 2:
+            self.assertRaisesRegex = self.assertRaisesRegexp
 
     def tearDown(self):
         del self.set_empty, self.set_default, self.ocb
@@ -219,7 +328,7 @@ class TestOCBoundaryMethodsGeneral(unittest.TestCase):
     def test_bad_rfunc_inst(self):
         """Test failure setting default rfunc for unknown instrument"""
 
-        with self.assertRaisesRegexp(ValueError, "unknown instrument"):
+        with self.assertRaisesRegex(ValueError, "unknown instrument"):
             self.set_empty['instrument'] = 'bad'
             self.set_empty['rfunc'] = None
             self.ocb = ocbpy.ocboundary.OCBoundary(**self.set_empty)
@@ -296,9 +405,17 @@ class TestOCBoundaryMethodsNorth(unittest.TestCase):
         """ Test AMPERE attributes don't exist when IMAGE is loaded
         """
 
-        for tattr in ['date', 'time', 'x', 'y', 'j_mag']:
+        for tattr in ['date', 'time', 'x', 'y', 'fom']:
             self.assertFalse(hasattr(self.ocb, tattr))
         
+    def test_dmspssj_attrs(self):
+        """ Test DMSP-SSJ attributes don't exist when IMAGE is loaded
+        """
+
+        for tattr in ['sc', 'date', 'time', 'x', 'y', 'fom', 'x_1', 'x_2',
+                      'y_1', 'y_2']:
+            self.assertFalse(hasattr(self.ocb, tattr))
+
     def test_load(self):
         """ Ensure correctly loaded defaults in the north
         """
@@ -705,10 +822,16 @@ class TestOCBoundaryMethodsSouth(unittest.TestCase):
         for tattr in ["num_sectors", "year", "soy", "r_err", "a"]:
             self.assertFalse(hasattr(self.ocb, tattr))
 
+    def test_dmspssj_attrs(self):
+        """ Test that DMSP-SSJ attributes are not available in the south"""
+
+        for tattr in ["sc", "x_1", "x_2", "y_1", "y_2"]:
+            self.assertFalse(hasattr(self.ocb, tattr))
+
     def test_ampere_attrs(self):
         """ Test that AMPERE attributes are available in the south"""
 
-        for tattr in ['date', 'time', 'x', 'y', 'j_mag']:
+        for tattr in ['date', 'time', 'x', 'y', 'fom']:
             self.assertTrue(hasattr(self.ocb, tattr))
         
     def test_load(self):
@@ -1098,7 +1221,8 @@ class TestOCBoundaryFailure(unittest.TestCase):
     def setUp(self):
         """ Initialize the OCBoundary object using the test file
         """
-        pass
+        if version_info.major == 2:
+            self.assertRaisesRegex = self.assertRaisesRegexp
 
     def tearDown(self):
         pass
@@ -1109,38 +1233,38 @@ class TestOCBoundaryFailure(unittest.TestCase):
         test_north = path.join(path.dirname(ocbpy.__file__), "tests",
                                "test_data", "test_north_circle")
         self.assertTrue(path.isfile(test_north))
-        with self.assertRaisesRegexp(ValueError, "unknown instrument"):
+        with self.assertRaisesRegex(ValueError, "unknown instrument"):
             ocbpy.ocboundary.OCBoundary(instrument="hi", filename=test_north)
 
         del test_north
             
     def test_bad_hemisphere_input(self):
         """ Test failure when incorrect hemisphere value is input"""
-        with self.assertRaisesRegexp(ValueError, "hemisphere must be 1"):
+        with self.assertRaisesRegex(ValueError, "hemisphere must be 1"):
             ocbpy.ocboundary.OCBoundary(hemisphere=0)
 
     def test_bad_shape_rfunc_input(self):
         """ Test failure when badly shaped radial correction function"""
-        with self.assertRaisesRegexp(ValueError,
-                                     "Misshaped correction function array"):
-            ocbpy.ocboundary.OCBoundary(rfunc= \
+        with self.assertRaisesRegex(ValueError,
+                                    "Misshaped correction function array"):
+            ocbpy.ocboundary.OCBoundary(rfunc=
                                 np.array([ocbpy.ocb_correction.circular]))
 
     def test_bad_shape_rfunc_kwarg_input(self):
         """ Test failure when badly shaped radial correction function kwargs"""
-        with self.assertRaisesRegexp(ValueError,
-                                     "Misshaped correction function keyword"):
+        with self.assertRaisesRegex(ValueError,
+                                    "Misshaped correction function keyword"):
             ocbpy.ocboundary.OCBoundary(rfunc_kwargs=np.array([{}]))
 
     def test_bad_rfunc_input(self):
         """ Test failure with bad radial correction function input"""
-        with self.assertRaisesRegexp(ValueError, \
+        with self.assertRaisesRegex(ValueError,
                                 "Unknown input type for correction function"):
             ocbpy.ocboundary.OCBoundary(rfunc="rfunc")
 
     def test_bad_rfunc_kwarg_input(self):
         """ Test failure with bad radial correction function kwarg input"""
-        with self.assertRaisesRegexp(ValueError, \
+        with self.assertRaisesRegex(ValueError,
                                 "Unknown input type for correction keywords"):
             ocbpy.ocboundary.OCBoundary(rfunc_kwargs="rfunc")
 
