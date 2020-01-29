@@ -62,7 +62,7 @@ Add a legend to finish the figure.
 ::
    ax.legend(loc=2, fontsize="small", title="{:}".format(ocb.dtime[ocb.rec_ind]), bbox_to_anchor=(-0.4,1.15))
 
-.. image:: example_ocb_location.png
+.. image:: ../figures/example_ocb_location.png
 
 Scaling of values dependent on the electric potential can be found in the
 **ocbpy.ocb_scaling** `module <ocb_gridding.html#ocb-scaling>`__.
