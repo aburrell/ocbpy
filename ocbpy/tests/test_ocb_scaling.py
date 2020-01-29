@@ -244,12 +244,39 @@ class TestOCBScalingMethods(unittest.TestCase):
         self.assertEqual(self.vdata.ocb_quad, 1)
         self.assertEqual(self.vdata.vec_quad, 4)
 
+    def test_define_quadrants_ocb_south(self):
+        """ Test the quadrant assignment with the OCB pole in a southern quad"""
+        self.vdata.set_ocb(self.ocb, scale_func=ocbpy.ocb_scaling.normal_evar)
+        self.vdata.ocb_aacgm_mlt = 10.0
+        self.vdata.calc_vec_pole_angle()
+        self.vdata.define_quadrants()
+        self.assertEqual(self.vdata.ocb_quad, 3)
+        self.assertEqual(self.vdata.vec_quad, 1)
+
     def test_undefinable_quadrants(self):
         """ Test OCBScaling initialization for undefinable quadrants """
         self.vdata.aacgm_lat = 0.0
         self.vdata.set_ocb(self.ocb, scale_func=ocbpy.ocb_scaling.normal_evar)
         self.assertEqual(self.vdata.ocb_quad, 0)
         self.assertEqual(self.vdata.vec_quad, 0)
+
+    def test_lost_ocb_quadrant(self):
+        """ Test OCBScaling initialization for unset quadrants """
+        self.vdata.set_ocb(self.ocb, scale_func=ocbpy.ocb_scaling.normal_evar)
+        self.assertEqual(self.vdata.ocb_quad, 1)
+        self.assertEqual(self.vdata.vec_quad, 1)
+        self.vdata.ocb_quad = 0
+        self.vdata.scale_vector()
+        self.assertEqual(self.vdata.ocb_quad, 1)
+
+    def test_lost_vec_quadrant(self):
+        """ Test OCBScaling initialization for unset quadrants """
+        self.vdata.set_ocb(self.ocb, scale_func=ocbpy.ocb_scaling.normal_evar)
+        self.assertEqual(self.vdata.ocb_quad, 1)
+        self.assertEqual(self.vdata.vec_quad, 1)
+        self.vdata.vec_quad = 0
+        self.vdata.scale_vector()
+        self.assertEqual(self.vdata.vec_quad, 1)
 
     def test_calc_ocb_vec_sign(self):
         """ Test the calculation of the OCB vector signs
