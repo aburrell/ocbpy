@@ -187,6 +187,21 @@ class TestOCBScalingMethods(unittest.TestCase):
         self.assertEqual(self.vdata.ocb_quad, 1)
         self.assertEqual(self.vdata.vec_quad, 1)
 
+    def test_define_quadrants_neg_adj_mlt(self):
+        """ Test the quadrant assignment with a negative AACGM MLT """
+        self.vdata.aacgm_mlt = -22.0
+        self.vdata.set_ocb(self.ocb, scale_func=ocbpy.ocb_scaling.normal_evar)
+        self.assertGreater(self.vdata.ocb_aacgm_mlt-self.vdata.aacgm_mlt, 24)
+        self.assertEqual(self.vdata.ocb_quad, 1)
+        self.assertEqual(self.vdata.vec_quad, 1)
+
+    def test_define_quadrants_neg_north(self):
+        """ Test the quadrant assignment with a vector pointing south """
+        self.vdata.aacgm_n *= -1.0
+        self.vdata.set_ocb(self.ocb, scale_func=ocbpy.ocb_scaling.normal_evar)
+        self.assertEqual(self.vdata.ocb_quad, 1)
+        self.assertEqual(self.vdata.vec_quad, 4)
+
     def test_calc_ocb_vec_sign(self):
         """ Test the calculation of the OCB vector signs
         """
@@ -209,7 +224,7 @@ class TestOCBScalingMethods(unittest.TestCase):
         self.assertTrue(vsigns['east'])
 
         del vmag, vsigns
-        
+
     def test_scale_vec(self):
         """ Test the calculation of the OCB vector signs
         """
@@ -239,6 +254,21 @@ class TestOCBScalingMethods(unittest.TestCase):
 
         del vmag
 
+    def test_scale_vec_z_zero(self):
+        """ Test the calculation of the OCB vector sign with no vertical aacgm_z
+        """
+        # Re-assing the necessary variable
+        self.vdata.aacmg_z = 0.0
+
+        # Run the scale_vector routine
+        self.vdata.set_ocb(self.ocb, scale_func=ocbpy.ocb_scaling.normal_evar)
+        self.vdata.scale_vector()
+
+        # Assess the ocb_z component
+        self.assertEqual(self.vdata.ocb_z,
+                         self.vdata.scale_func(0.0. self.vdata.unscaled_r,
+                                               self.vdata.scaled_r))
+        
     def test_set_ocb_zero(self):
         """ Test setting of OCB values for the VectorData object without any
         magnitude
