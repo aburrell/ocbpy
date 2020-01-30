@@ -1187,6 +1187,17 @@ class TestOCBoundaryMatchData(unittest.TestCase):
         self.assertEqual(self.idat, -1)
         self.assertGreaterEqual(self.ocb.rec_ind, self.ocb.records)
 
+    def test_bad_dat_ind(self):
+        """ Test ability to exit if data record counter is too high
+        """
+        # Set the OCB record index to the end
+        self.ocb.rec_ind = -1
+        self.idat = ocbpy.ocboundary.match_data_ocb(self.ocb,
+                                                    [self.ocb.dtime[27]],
+                                                    idat=2)
+        self.assertEqual(self.idat, 2)
+        self.assertGreaterEqual(self.ocb.rec_ind, self.ocb.records)
+
     def test_bad_first_data_time(self):
         """ Test ability to cycle past data times not close enough to match
         """
