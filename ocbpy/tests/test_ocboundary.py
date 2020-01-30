@@ -1196,7 +1196,7 @@ class TestOCBoundaryMatchData(unittest.TestCase):
                                                     [self.ocb.dtime[27]],
                                                     idat=2)
         self.assertEqual(self.idat, 2)
-        self.assertGreaterEqual(self.ocb.rec_ind, self.ocb.records)
+        self.assertGreaterEqual(self.ocb.rec_ind, -1)
 
     def test_bad_first_data_time(self):
         """ Test ability to cycle past data times not close enough to match
