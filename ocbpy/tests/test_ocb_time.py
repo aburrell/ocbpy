@@ -246,29 +246,39 @@ class TestOCBGeographicTime(unittest.TestCase):
         """ Set up test runs """
 
         self.dtime = dt.datetime(2001, 1, 1, 1)
-        self.lon = [359.0, 90.0, -15.0]
-        self.lt = [0.9333333333333336, 7.0, 0.0]
+        self.lon = [390.0, 359.0, 90.0, -15.0, -30.0]
+        self.lt = [27.0, 0.9333333333333336, 7.0, 0.0, -1.0]
+        self.out = list()
 
     def tearDown(self):
         """ Clean up after each test """
 
-        del self.lon, self.lt, self.dtime
+        del self.lon, self.lt, self.dtime, self.out
 
     def test_glon2slt(self):
         """ Test longitude to slt conversion for a range of values"""
+        # Prepare test output
+        self.out = np.array(self.lt)
+        self.out[self.out >= 24.0] -= 24.0
+        self.out[self.out < 0.0] += 24.0
 
+        # Test each value
         for i, lon in enumerate(self.lon):
             self.assertAlmostEqual(ocb_time.glon2slt(lon, self.dtime),
-                                   self.lt[i])
+                                   self.out[i])
         del i, lon
             
     def test_slt2glon(self):
         """ Test slt to longitude conversion for a range of values"""
+        # Prepare test output
+        self.out = np.array(self.lon)
+        self.out[self.out > 180.0] -= 360.0
+        self.out[self.out <= -180.0] += 360.0
 
         for i, lt in enumerate(self.lt):
-            lon = self.lon[i] if self.lon[i] < 180.0 else self.lon[i] - 360.0
-            self.assertAlmostEqual(ocb_time.slt2glon(lt, self.dtime), lon)
-        del i, lt, lon
+            self.assertAlmostEqual(ocb_time.slt2glon(lt, self.dtime),
+                                   self.out[i])
+        del i, lt
 
     def test_slt2glon_list_failure(self):
         """ Test local time to longtiude conversion with list input"""
