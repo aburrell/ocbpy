@@ -8,8 +8,8 @@
 from __future__ import absolute_import, unicode_literals
 
 import datetime as dt
-import logging
 from io import StringIO
+import logging
 import numpy as np
 from sys import version_info
 from os import path
@@ -309,6 +309,7 @@ class TestOCBoundaryMethodsGeneral(unittest.TestCase):
 
         if version_info.major == 2:
             self.assertRaisesRegex = self.assertRaisesRegexp
+            self.assertRegex = self.assertRegexpMatches
 
     def tearDown(self):
         del self.set_empty, self.set_default, self.ocb
@@ -317,12 +318,15 @@ class TestOCBoundaryMethodsGeneral(unittest.TestCase):
         """ Test the default class representation """
         self.ocb = ocbpy.ocboundary.OCBoundary(**self.set_default)
 
-        if version_info.major == 2:
-            self.assertRegexpMatches(self.ocb.__repr__(),
-                                     "Open-Closed Boundary file:")
-        else:
-            self.assertRegex(self.ocb.__repr__(), "Open-Closed Boundary file:")
+        self.assertRegex(self.ocb.__repr__(), "Open-Closed Boundary file:")
+        self.assertTrue(self.ocb.__str__() == self.ocb.__repr__())
 
+    def test_short_repr(self):
+        """ Test the default class representation """
+        self.ocb = ocbpy.ocboundary.OCBoundary(**self.set_default)
+        self.ocb.records = 1
+
+        self.assertRegex(self.ocb.__repr__(), "1 records from")
         self.assertTrue(self.ocb.__str__() == self.ocb.__repr__())
 
     def test_bad_rfunc_inst(self):
@@ -1097,6 +1101,7 @@ class TestOCBoundaryMatchData(unittest.TestCase):
                                            "test_north_circle"),
                      "instrument": "image"}
         self.ocb = ocbpy.ocboundary.OCBoundary(**set_north)
+        self.idat = 0
         
         # Initialize logging
         self.lwarn = u""
@@ -1107,7 +1112,7 @@ class TestOCBoundaryMatchData(unittest.TestCase):
         del set_north
 
     def tearDown(self):
-        del self.ocb, self.lwarn, self.lout, self.log_capture
+        del self.ocb, self.lwarn, self.lout, self.log_capture, self.idat
 
     def test_match(self):
         """ Test to see that the data matching works properly
@@ -1120,8 +1125,9 @@ class TestOCBoundaryMatchData(unittest.TestCase):
                                dt.timedelta(seconds=600)).astype(dt.datetime)
 
         # Because the array starts at the first good OCB, will return zero
-        idat = ocbpy.ocboundary.match_data_ocb(self.ocb, test_times, idat=0)
-        self.assertEqual(idat, 0)
+        self.idat = ocbpy.ocboundary.match_data_ocb(self.ocb, test_times,
+                                                    idat=self.idat)
+        self.assertEqual(self.idat, 0)
         self.assertEqual(self.ocb.rec_ind, 27)
 
         # The next test time will cause the OCB to cycle forward to a new
@@ -1132,7 +1138,7 @@ class TestOCBoundaryMatchData(unittest.TestCase):
         self.assertLess(abs((test_times[idat] -
                              self.ocb.dtime[self.ocb.rec_ind]).total_seconds()),
                         600.0)
-        del test_times, idat
+        del test_times
 
     def test_good_first_match(self):
         """ Test ability to find the first good OCB
@@ -1142,47 +1148,88 @@ class TestOCBoundaryMatchData(unittest.TestCase):
 
         # Because the array starts at the first good OCB, will return zero
         self.ocb.rec_ind = -1
-        idat = ocbpy.ocboundary.match_data_ocb(self.ocb, [self.ocb.dtime[27]],
-                                               idat=0)
-        self.assertEqual(idat, 0)
+        self.idat = ocbpy.ocboundary.match_data_ocb(self.ocb,
+                                                    [self.ocb.dtime[27]],
+                                                    idat=self.idat)
+        self.assertEqual(self.idat, 0)
         self.assertEqual(self.ocb.rec_ind, 27)
 
         # The first match will be announced in the log
         self.lwarn = u"found first good OCB record at"
         self.lout = self.log_capture.getvalue()
         self.assertTrue(self.lout.find(self.lwarn) >= 0)
-       
-        del idat
 
     def test_bad_first_match(self):
         """ Test ability to not find a good OCB
         """
         # Set requirements for good OCB so high that none will pass
         self.ocb.rec_ind = -1
-        idat = ocbpy.ocboundary.match_data_ocb(self.ocb, [self.ocb.dtime[27]],
-                                               idat=0, min_sectors=24)
-        self.assertEqual(idat, 0)
+        self.idat = ocbpy.ocboundary.match_data_ocb(self.ocb,
+                                                    [self.ocb.dtime[27]],
+                                                    idat=self.idat,
+                                                    min_sectors=24)
+        self.assertEqual(self.idat, 0)
         self.assertGreaterEqual(self.ocb.rec_ind, self.ocb.records)
 
         # The first match will be announced in the log
         self.lwarn = u"unable to find a good OCB record"
         self.lout = self.log_capture.getvalue()
         self.assertTrue(self.lout.find(self.lwarn) >= 0)
-        
-        del idat
+
+    def test_bad_ocb_ind(self):
+        """ Test ability to exit if ocb record counter is too high
+        """
+        # Set the OCB record index to the end
+        self.ocb.rec_ind = self.ocb.records
+        self.idat = ocbpy.ocboundary.match_data_ocb(self.ocb,
+                                                    [self.ocb.dtime[27]],
+                                                    idat=-1)
+        self.assertEqual(self.idat, -1)
+        self.assertGreaterEqual(self.ocb.rec_ind, self.ocb.records)
+
+    def test_bad_first_data_time(self):
+        """ Test ability to cycle past data times not close enough to match
+        """
+        # Set the OCB record index to the beginning and match
+        self.ocb.rec_ind = -1
+        self.idat = ocbpy.ocboundary.match_data_ocb(self.ocb,
+                                                    [self.ocb.dtime[27]
+                                                     - dt.timedelta(days=1),
+                                                     self.ocb.dtime[27]],
+                                                    idat=self.idat)
+        self.assertEqual(self.idat, 1)
+        self.assertEqual(self.ocb.rec_ind, 27)
+
+    def test_data_all_before_first_ocb_record(self):
+        """ Test failure when data occurs before boundaries"""
+        # Change the logging level
+        ocbpy.logger.setLevel(logging.ERROR)
+
+        # Set the OCB record index to the beginning and match
+        self.ocb.rec_ind = -1
+        self.idat = ocbpy.ocboundary.match_data_ocb(self.ocb,
+                                                    [self.ocb.dtime[27]
+                                                     - dt.timedelta(days=1)],
+                                                    idat=self.idat)
+        self.assertIsNone(self.idat)
+        self.assertGreaterEqual(self.ocb.rec_ind, 27)
+
+        # Check the log output
+        self.lwarn = u"no input data close enough to first record"
+        self.lout = self.log_capture.getvalue()
+        self.assertTrue(self.lout.find(self.lwarn) >= 0)
 
     def test_late_data_time_alignment(self):
         """ Test failure when data occurs after boundaries"""
         # Change the logging level
         ocbpy.logger.setLevel(logging.INFO)
 
-        # Build a array of times for a test dataset
-        test_times = [self.ocb.dtime[self.ocb.records-1] + dt.timedelta(days=2)]
-
-        # Set requirements for good OCB so high that none will pass
+        # Match OCB with data that occurs after the boundaries end
         self.ocb.rec_ind = -1
-        idat = ocbpy.ocboundary.match_data_ocb(self.ocb, test_times, idat=0)
-        self.assertEqual(idat, 0)
+        self.idat = ocbpy.ocboundary.match_data_ocb(self.ocb,
+                    [self.ocb.dtime[self.ocb.records-1] + dt.timedelta(days=2)],
+                                                    idat=self.idat)
+        self.assertEqual(self.idat, 0)
         self.assertGreaterEqual(self.ocb.rec_ind, self.ocb.records)
 
         # Check the log output
@@ -1192,20 +1239,18 @@ class TestOCBoundaryMatchData(unittest.TestCase):
         self.lwarn = u"of first measurement"
         self.assertTrue(self.lout.find(self.lwarn) > 0)
 
-        del test_times, idat
-
     def test_no_data_time_alignment(self):
         """ Test failure when data occurs between boundaries """
         # Change the logging level
         ocbpy.logger.setLevel(logging.INFO)
 
-        # Build a array of times for a test dataset
-        test_times = [self.ocb.dtime[37] - dt.timedelta(seconds=601)]
-
-        # Set requirements for good OCB so high that none will pass
+        # Match OCBs with misaligned input data
         self.ocb.rec_ind = -1
-        idat = ocbpy.ocboundary.match_data_ocb(self.ocb, test_times, idat=0)
-        self.assertEqual(idat, 1)
+        self.idat = ocbpy.ocboundary.match_data_ocb(self.ocb,
+                                                    [self.ocb.dtime[37]
+                                                - dt.timedelta(seconds=601)],
+                                                    idat=self.idat)
+        self.assertEqual(self.idat, 1)
         self.assertGreaterEqual(self.ocb.rec_ind, 37)
 
         # Check the log output
@@ -1214,8 +1259,6 @@ class TestOCBoundaryMatchData(unittest.TestCase):
         self.assertTrue(self.lout.find(self.lwarn) >= 0)
         self.lwarn = u"of input measurement"
         self.assertTrue(self.lout.find(self.lwarn) >= 0)
-
-        del test_times, idat
 
 class TestOCBoundaryFailure(unittest.TestCase):
     def setUp(self):
