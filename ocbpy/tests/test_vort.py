@@ -75,6 +75,8 @@ class TestVortHemiMethods(unittest.TestCase):
                                      "test_north_circle")
         self.test_file = os.path.join(self.ocb_dir, "tests", "test_data",
                                       "test_hemi_vort")
+        self.test_eq_file = os.path.join(self.ocb_dir, "tests", "test_data",
+                                      "test_eq_hemi_vort")
         self.test_output_north = os.path.join(self.ocb_dir, "tests",
                                               "test_data",  "out_vort")
         self.test_output_south = os.path.join(self.ocb_dir, "tests",
@@ -96,7 +98,7 @@ class TestVortHemiMethods(unittest.TestCase):
             os.remove(self.temp_output)
 
         del self.test_file, self.temp_output, self.test_ocb, self.ocb_dir
-        del self.test_output_north, self.test_output_south
+        del self.test_output_north, self.test_output_south, self.test_eq_file
 
     def test_vort2ascii_ocb_north(self):
         """ Test vorticity data conversion selecting just the north
@@ -159,6 +161,34 @@ class TestVortHemiMethods(unittest.TestCase):
             self.assertTrue(filecmp.cmp(self.test_output_north,
                                         self.temp_output, shallow=False))
 
+    def test_vort2ascii_south_from_vortfile(self):
+        """ Test vorticity data conversion selecting the north from OCBoundary
+        """
+
+        ocb_ivort.vort2ascii_ocb(self.test_eq_file, self.temp_output,
+                                 ocbfile=self.test_ocb, instrument='image')
+
+        if platform.system().lower() == "windows":
+            # filecmp doesn't work on windows
+
+            ldtype = ['|U50' if i < 2 else float for i in range(5)]
+            test_out = np.genfromtxt(self.test_output_south, skip_header=1,
+                                     dtype=ldtype)
+            temp_out = np.genfromtxt(self.temp_output, skip_header=1,
+                                     dtype=ldtype)
+
+            # Test the number of rows and columns
+            self.assertTupleEqual(test_out.shape, temp_out.shape)
+
+            # Test the data in each row
+            for i,test_row in enumerate(test_out):
+                self.assertListEqual(list(test_row), list(temp_out[i]))
+
+            del ldtype, test_out, temp_out
+        else:
+            # Compare created file to stored test file
+            self.assertTrue(filecmp.cmp(self.test_output_south,
+                                        self.temp_output, shallow=False))
     def test_vort2ascii_ocb_south(self):
         """ Test vorticity data conversion selecting just the south
         """
