@@ -109,7 +109,7 @@ class TestVortLogWarnings(unittest.TestCase):
         self.assertIsNone(data)
 
         del data, fout, fin
-        
+
     @unittest.skipIf(version_info.major < 3,
                      'Already tested, remove in 2020')
     def test_vort_unexpected_line(self):
@@ -322,15 +322,14 @@ class TestVort2AsciiMethods(unittest.TestCase):
                       "hemisphere": -1}),
                     (self.test_eq_file, self.test_output_south,
                      {"ocbfile": self.test_ocb, "instrument": "image"}),
-                    (self.test_file, self.test_output_north, {"ocb": None})]
+                    (self.test_file, self.test_output_north,
+                     {"ocb": ocbpy.ocboundary.OCBoundary(filename=self.test_ocb,
+                                                         instrument='image',
+                                                         hemisphere=1)})]
 
         # Initalize the vorticity run with different test files
         for val in subtests:
             with self.subTest(val=val):
-                if 'ocb' in val[2].keys():
-                    val[2]['ocb'] = ocbpy.ocboundary.OCBoundary(
-                        filename=self.test_ocb,instrument='image',hemisphere=1)
-
                 ocb_ivort.vort2ascii_ocb(val[0], self.temp_output, **val[2])
 
                 if platform.system().lower() == "windows":
