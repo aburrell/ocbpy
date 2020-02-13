@@ -157,11 +157,11 @@ def load_ascii_data(filename, hlines, miss=None, fill=np.nan, hsplit=None,
             int_cols.append(dfmt_parts.index(case_part))
 
     #----------------------------------------------
-    # Open the datafile and read the header rows
+    # Open the data file and read the header rows
     with open(filename, "r") as fin:
         in_header = str(header[-1]) if len(header) > 0 else None
 
-        for h in range(hlines):
+        for hind in range(hlines):
             header.append(fin.readline())
 
     #---------------------------------------------------------------------
@@ -204,9 +204,9 @@ def load_ascii_data(filename, hlines, miss=None, fill=np.nan, hsplit=None,
 
         # Change the datetime column input from float to string, if it is not
         # supposed to be an integer
-        for icol in datetime_cols:
+        for i, icol in enumerate(datetime_cols):
             if(not icol in int_cols and
-               dfmt_parts[icol].upper().find("SOD") < 0):
+               dfmt_parts[i].upper().find("SOD") < 0):
                 ldtype[icol] = '|U{:d}'.format(max_str_length)
     else:
         idt = len(dt_keys)
@@ -232,13 +232,13 @@ def load_ascii_data(filename, hlines, miss=None, fill=np.nan, hsplit=None,
                         if idt < len(dt_keys) and name == dt_keys[idt]:
                             # Build the convert_time input
                             for icol, dcol in enumerate(datetime_cols):
-                                if dfmt_parts[dcol].find("%") == 0:
-                                    if dfmt_parts[dcol][1] in time_formats:
+                                if dfmt_parts[icol].find("%") == 0:
+                                    if dfmt_parts[icol][1] in time_formats:
                                         ckey = "tod"
                                     else:
                                         ckey = "date"
                                 else:
-                                    ckey = dfmt_parts[dcol].lower()
+                                    ckey = dfmt_parts[icol].lower()
                                     if ckey in ['year', 'soy']:
                                         line[dcol] = int(line[dcol])
                                     elif ckey == 'sod':
