@@ -94,7 +94,7 @@ class TestGeneralLoadMethods(unittest.TestCase):
         self.headers = {self.test_file_soy:
                         [u"YEAR SOY NB PHICENT RCENT R A RERR"],
                         self.test_file_dt:
-                        [u"#sc date time r x y fom x_1 y_1 x_2 y_2\n"]}
+                        [u"#sc date time r x y fom x_1 y_1 x_2 y_2"]}
         self.test_out = {self.test_file_soy:
                          {"YEAR": 2000.0, "SOY": 11187202.0, "NB": 9.0,
                           "A": 1.302e+07, "PHICENT": 315.29, "RCENT": 2.67,
@@ -105,6 +105,10 @@ class TestGeneralLoadMethods(unittest.TestCase):
                           "x_1": -7.61, "x_2": 8.485, "y": 6.999, "y_1": 5.564,
                           "y_2": 8.433,
                           "datetime": dt.datetime(2010,12,31,23,24,53)}}
+        self.load_kwargs = {'gft_kwargs': dict(), 'hsplit': None,
+                            'datetime_cols': list(), 'datetime_fmt': None,
+                            'int_cols': list(), 'str_cols': list(),
+                            'max_str_length': 50, 'header': list()}
         self.out = None
 
         self.lwarn = u""
@@ -116,6 +120,7 @@ class TestGeneralLoadMethods(unittest.TestCase):
     def tearDown(self):
         del self.test_file_soy, self.lwarn, self.lout, self.log_capture
         del self.test_file_dt, self.headers, self.out, self.test_out
+        del self.load_kwargs
 
     def test_load_ascii_data_badfile(self):
         """ Test the general loading routine for ASCII data with bad input
@@ -135,21 +140,21 @@ class TestGeneralLoadMethods(unittest.TestCase):
         self.lwarn = u'unable to find header'
 
         self.out = ocb_igen.load_ascii_data(self.test_file_soy, 0,
-                                            header=list())
+                                            **self.load_kwargs)
         self.lout = self.log_capture.getvalue()
         self.assertListEqual(self.out[0], [])
         self.assertDictEqual(self.out[1], {})
 
         self.assertTrue(self.lout.find(self.lwarn) >= 0)
         
-    @unittest.skip("Fails when run as part of the class")
     def test_load_ascii_data_w_header(self):
         """ Test the general routine to load ASCII data that has a header
         """
+        self.load_kwargs['datetime_cols'] = [1, 2]
+        self.load_kwargs['datetime_fmt'] = "%Y-%m-%d %H:%M:%S"
+
         self.out = ocb_igen.load_ascii_data(self.test_file_dt, 1,
-                                            datetime_cols=[1, 2],
-                                            datetime_fmt="%Y-%m-%d %H:%M:%S",
-                                            header=list())
+                                            **self.load_kwargs)
 
         # Test to ensure the output header equals the input header
         self.assertListEqual(self.out[0], self.headers[self.test_file_dt])
@@ -170,8 +175,9 @@ class TestGeneralLoadMethods(unittest.TestCase):
     def test_load_ascii_data_wo_header(self):
         """ Test the general routine to load ASCII data by providing a header
         """
+        self.load_kwargs['header'] = self.headers[self.test_file_soy]
         self.out = ocb_igen.load_ascii_data(self.test_file_soy, 0,
-                                        header=self.headers[self.test_file_soy])
+                                            **self.load_kwargs)
 
         # Test to ensure the output header equals the input header
         self.assertListEqual(self.out[0], self.headers[self.test_file_soy])
@@ -195,8 +201,10 @@ class TestGeneralLoadMethods(unittest.TestCase):
         """
 
         int_keys = ["YEAR", "SOY", "NB"]
+        self.load_kwargs['header'] = self.headers[self.test_file_soy]
+        self.load_kwargs['int_cols'] = [0, 1, 2]
         self.out = ocb_igen.load_ascii_data(self.test_file_soy, 0,
-                    header=self.headers[self.test_file_soy], int_cols=[0, 1, 2])
+                                            **self.load_kwargs)
 
         # Test to ensure the output header equals the input header
         self.assertListEqual(self.out[0], self.headers[self.test_file_soy])
@@ -226,8 +234,10 @@ class TestGeneralLoadMethods(unittest.TestCase):
         """
 
         str_keys = ["YEAR", "SOY"]
+        self.load_kwargs['header'] = self.headers[self.test_file_soy]
+        self.load_kwargs['str_cols'] = [0, 1]
         self.out = ocb_igen.load_ascii_data(self.test_file_soy, 0,
-                    header=self.headers[self.test_file_soy], str_cols=[0, 1])
+                                            **self.load_kwargs)
 
         # Test to ensure the output header equals the input header
         self.assertListEqual(self.out[0], self.headers[self.test_file_soy])
@@ -255,10 +265,11 @@ class TestGeneralLoadMethods(unittest.TestCase):
         """ Test the general routine to load ASCII data
         """
 
+        self.load_kwargs['header'] = self.headers[self.test_file_soy]
+        self.load_kwargs['datetime_cols'] = [0, 1]
+        self.load_kwargs['datetime_fmt'] = "YEAR SOY"
         self.out = ocb_igen.load_ascii_data(self.test_file_soy, 0,
-                                            datetime_cols=[0,1],
-                                            datetime_fmt="YEAR SOY",
-                        header=self.headers[self.test_file_soy])
+                                            **self.load_kwargs)
 
         # Test to ensure the output header equals the input header
         self.assertListEqual(self.out[0], self.headers[self.test_file_soy])
