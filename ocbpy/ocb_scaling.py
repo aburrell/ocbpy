@@ -713,7 +713,7 @@ class VectorData(object):
         vsigns = {"north": 0, "east": 0}
 
         # If necessary, initialise quadrant dictionary
-        if not np.all(quads.keys() == quad_range):
+        if not np.all([kk in quads.keys() for kk in quad_range]):
             quads = {o: {v: True if self.ocb_quad == o and self.vec_quad == v
                          else False for v in quad_range} for o in quad_range}
 
