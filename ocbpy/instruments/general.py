@@ -191,59 +191,53 @@ def load_ascii_data(filename, hlines, gft_kwargs=dict(), hsplit=None,
     if len(temp) > 0:
         # When dtype is specified, output comes as a np.array of np.void objects
         for iline, line in enumerate(temp):
-            if len(line) == nhead:
-                # Each line may have time values that need to be combined
-                # and converted
-                convert_time_input = {"year": None, "soy": None, "yyddd": None,
-                                      "date": None, "tod": None,
-                                      "datetime_fmt": datetime_fmt}
+            # Each line may have times that need to be combined and converted
+            convert_time_input = {"year": None, "soy": None, "yyddd": None,
+                                  "date": None, "tod": None,
+                                  "datetime_fmt": datetime_fmt}
 
-                # Cycle through each of the columns in this data row
-                for num, name in enumerate(keylist):
-                    if idt < len(dt_keys) and name == dt_keys[idt]:
-                        # Build the convert_time input
-                        for icol, dcol in enumerate(datetime_cols):
-                            if dfmt_parts[icol].find("%") == 0:
-                                if dfmt_parts[icol][1] in time_formats:
-                                    ckey = "tod"
-                                else:
-                                    ckey = "date"
+            # Cycle through each of the columns in this data row
+            for num, name in enumerate(keylist):
+                if idt < len(dt_keys) and name == dt_keys[idt]:
+                    # Build the convert_time input
+                    for icol, dcol in enumerate(datetime_cols):
+                        if dfmt_parts[icol].find("%") == 0:
+                            if dfmt_parts[icol][1] in time_formats:
+                                ckey = "tod"
                             else:
-                                ckey = dfmt_parts[icol].lower()
-                                if ckey in ['year', 'soy']:
-                                    line[dcol] = int(line[dcol])
-                                elif ckey == 'sod':
-                                    line[dcol] = float(line[dcol])
+                                ckey = "date"
+                        else:
+                            ckey = dfmt_parts[icol].lower()
+                            if ckey in ['year', 'soy']:
+                                line[dcol] = int(line[dcol])
+                            elif ckey == 'sod':
+                                line[dcol] = float(line[dcol])
 
-                            if ckey not in convert_time_input.keys():
+                        if ckey not in convert_time_input.keys():
+                            convert_time_input[ckey] = line[dcol]
+                        else:
+                            if convert_time_input[ckey] is None:
                                 convert_time_input[ckey] = line[dcol]
                             else:
-                                if convert_time_input[ckey] is None:
-                                    convert_time_input[ckey] = line[dcol]
-                                else:
-                                    convert_time_input[ckey] = " ".join([
-                                        convert_time_input[ckey], line[dcol]])
-                                
-                        # Convert the string into a datetime object
-                        ftime = ocbt.convert_time(**convert_time_input)
+                                convert_time_input[ckey] = " ".join([
+                                    convert_time_input[ckey], line[dcol]])
 
-                        # Save the output data
-                        out[dt_keys[idt]].append(ftime)
-                    else:
-                        # Save the output data without any manipulation
-                        out[name].append(line[num])
-            else:
-                estr = "unknown genfromtxt output on line {:d} of {:s}".format(
-                    iline, filename)
-                logging.warn(estr)
+                    # Convert the string into a datetime object
+                    ftime = ocbt.convert_time(**convert_time_input)
 
-    del temp
+                    # Save the output data
+                    out[dt_keys[idt]].append(ftime)
+                else:
+                    # Save the output data without any manipulation
+                    out[name].append(line[num])
 
     # Cast all lists as numpy arrays, if possible
     for k in out.keys():
         try:
             out[k] = np.array(out[k], dtype=type(out[k][0]))
         except TypeError:
+            # Leave as a list if array casting doesn't work.  This was an
+            # issue before, but may have been an old numpy bug that is fixed.
             pass
 
     return header, out
