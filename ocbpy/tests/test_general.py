@@ -146,7 +146,7 @@ class TestGeneralLoadMethods(unittest.TestCase):
         self.assertDictEqual(self.out[1], {})
 
         self.assertTrue(self.lout.find(self.lwarn) >= 0)
-        
+
     def test_load_ascii_data_w_header(self):
         """ Test the general routine to load ASCII data that has a header
         """
@@ -171,6 +171,30 @@ class TestGeneralLoadMethods(unittest.TestCase):
         for kk in self.test_out[self.test_file_dt].keys():
             self.assertEqual(self.out[1][kk][-1],
                              self.test_out[self.test_file_dt][kk])
+
+    def test_load_ascii_data_w_comments(self):
+        """ Test the general routine to load ASCII data that has inline comments
+        """
+        self.load_kwargs['gft_kwargs'] = {'comments': '2010-12-31'}
+        self.load_kwargs['header'] = ['sc']
+
+        self.out = ocb_igen.load_ascii_data(self.test_file_dt, 1,
+                                            **self.load_kwargs)
+
+        # Test to ensure the output header equals the input header
+        self.headers[self.test_file_dt].insert(0, 'sc')
+        self.assertListEqual(self.out[0], self.headers[self.test_file_dt])
+
+        # Test to see that the data keys contain only the element declared
+        # to be a comment
+        self.assertListEqual(sorted([kk for kk in self.out[1].keys()]), ['sc'])
+
+        # Test the length of the data file
+        self.assertTupleEqual(self.out[1]['sc'].shape, (7,))
+
+        # Test the values of the last data line
+        self.assertEqual(self.out[1]['sc'][-1],
+                         self.test_out[self.test_file_dt]['sc'])
 
     def test_load_ascii_data_wo_header(self):
         """ Test the general routine to load ASCII data by providing a header
