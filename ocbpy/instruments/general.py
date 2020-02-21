@@ -49,10 +49,9 @@ def test_file(filename):
 
     return True
 
-def load_ascii_data(filename, hlines, miss=None, fill=np.nan, hsplit=None,
-                    inline_comment=None, invalid_raise=False, datetime_cols=[],
-                    datetime_fmt=None, int_cols=[], str_cols=[],
-                    max_str_length=50, header=list()):
+def load_ascii_data(filename, hlines, gft_kwargs=dict(), hsplit=None,
+                    datetime_cols=list(), datetime_fmt=None, int_cols=list(),
+                    str_cols=list(), max_str_length=50, header=list()):
     """ Load an ascii data file into a dict of numpy array. 
 
     Parameters
@@ -61,21 +60,12 @@ def load_ascii_data(filename, hlines, miss=None, fill=np.nan, hsplit=None,
         data file name
     hlines : (int)
         number of lines in header.  If zero, must include header.
-    miss : (str, sequence, or dict)
-        Denotes missing value options (default=None)
-    fill : (value, sequence, or dict)
-        fill value (default=NaN)
+    gft_kwargs : (dict)
+        Dictionary holding optional keyword arguments for the numpy genfromtxt
+        routine (default=dict())
     hsplit : (str, NoneType)
         character seperating data labels in header.  None splits on all
         whitespace characters. (default=None)
-    inline_comment : (str or NoneType)
-        If there are comments inline, denote the charater that indicates it has
-        begun. If there are no comments inline, leave as the default.
-        (default=None)
-    invalid_raise : (bool)
-        Should the routine fail if a row of data with a different number of
-        columns is encountered?  If false, these lines will be skipped and
-        all other lines will be read in.  (default=False)
     datetime_cols : (list of ints)
         If there are date strings or values that should be converted to a
         datetime object, list them in order here. Not processed as floats.
@@ -162,7 +152,7 @@ def load_ascii_data(filename, hlines, miss=None, fill=np.nan, hsplit=None,
         in_header = str(header[-1]) if len(header) > 0 else None
 
         for hind in range(hlines):
-            header.append(fin.readline())
+            header.append(fin.readline().strip())
 
     #---------------------------------------------------------------------
     # Create the output dictionary keylist
@@ -173,10 +163,10 @@ def load_ascii_data(filename, hlines, miss=None, fill=np.nan, hsplit=None,
 
     keyheader = in_header if in_header is not None else header[-1]
 
-    if inline_comment is not None:
-        keyheader = keyheader.split(inline_comment)[0]
+    if 'comment' in gft_kwargs.keys() and gft_kwargs['comment'] is not None:
+        keyheader = keyheader.split(gft_kwargs['comment'])[0]
 
-    keyheader = keyheader.replace("#", "")
+    keyheader = keyheader.replace("#", "").strip()
     keylist = keyheader.split(hsplit)
     nhead = len(keylist)
     out = {okey: list() for okey in keylist}
@@ -213,14 +203,8 @@ def load_ascii_data(filename, hlines, miss=None, fill=np.nan, hsplit=None,
 
     #-------------------------------------------
     # Open the datafile and read the data rows
-    try:
-        temp = np.genfromtxt(filename, skip_header=hlines, missing_values=miss,
-                             filling_values=fill, comments=inline_comment,
-                             invalid_raise=False, dtype=ldtype)
-    except ValueError as err:
-        estr = "unable to read data in file [{:s}]".format(filename)
-        ocbpy.logger.error(estr)
-        return header, out
+    temp = np.genfromtxt(filename, skip_header=hlines, dtype=ldtype,
+                         **gft_kwargs)
 
     if len(temp) > 0:
         noff = 0
@@ -265,7 +249,7 @@ def load_ascii_data(filename, hlines, miss=None, fill=np.nan, hsplit=None,
 
     del temp
 
-    # Cast all lists and numpy arrays
+    # Cast all lists as numpy arrays, if possible
     for k in out.keys():
         try:
             out[k] = np.array(out[k], dtype=type(out[k][0]))
