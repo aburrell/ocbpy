@@ -45,10 +45,6 @@ class TestDMSPFileMethods(unittest.TestCase):
         ocbpy.logger.addHandler(logging.StreamHandler(self.log_capture))
         ocbpy.logger.setLevel(logging.WARNING)
 
-        # Remove in 2020 when dropping support for 2.7
-        if version_info.major == 2:
-            self.assertRegex = self.assertRegexpMatches
-
     def tearDown(self):
         for self.tfile in self.temp_files:
             if os.path.isfile(self.tfile):
@@ -66,8 +62,8 @@ class TestDMSPFileMethods(unittest.TestCase):
         # Get the default file and instrument
         self.out = files.get_default_file(**self.comp_dict)
         
-        self.assertRegex(self.out[0], self.temp_files[0])
-        self.assertRegex(self.out[1], self.comp_dict['instrument'])
+        self.assertEqual(self.out[0], self.temp_files[0])
+        self.assertEqual(self.out[1], self.comp_dict['instrument'])
 
     def test_no_short_name_mult_files(self):
         """ Test get_default_file for dmsp-ssj with one boundary file"""
@@ -80,7 +76,7 @@ class TestDMSPFileMethods(unittest.TestCase):
         self.out = files.get_default_file(**self.comp_dict)
         
         self.assertTrue(self.out[0] in self.temp_files)
-        self.assertRegex(self.out[1], self.comp_dict['instrument'])
+        self.assertEqual(self.out[1], self.comp_dict['instrument'])
 
     def test_good_unknown_inst_file(self):
         """ Test get_boundary_file for a good unknown instrument file"""
