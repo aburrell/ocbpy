@@ -244,6 +244,25 @@ class TestOCBScalingMethods(unittest.TestCase):
         self.assertEqual(self.vdata.ocb_quad, 1)
         self.assertEqual(self.vdata.vec_quad, 4)
 
+    def test_define_quadrants_noon_north(self):
+        """ Test the quadrant assignment with a vector pointing north from noon
+        """
+        self.vdata.aacgm_mlt = 12.0
+        self.vdata.set_ocb(self.ocb, scale_func=ocbpy.ocb_scaling.normal_evar)
+        self.assertEqual(self.vdata.ocb_quad, 2)
+        self.assertEqual(self.vdata.vec_quad, 1)
+
+    def test_define_quadrants_opposite_south(self):
+        """ Test the quadrant assignment with a vector pointing south from the
+        opposite sector
+        """
+        self.vdata.set_ocb(self.ocb, scale_func=ocbpy.ocb_scaling.normal_evar)
+        self.vdata.aacgm_mlt = self.vdata.ocb_aacgmv_mlt + 12.0
+        self.vdata.aacgm_n = -10.0
+        self.vdata.set_ocb(self.ocb, scale_func=ocbpy.ocb_scaling.normal_evar)
+        self.assertEqual(self.vdata.ocb_quad, 3)
+        self.assertEqual(self.vdata.vec_quad, 4)
+
     def test_define_quadrants_ocb_south(self):
         """ Test the quadrant assignment with the OCB pole in a southern quad"""
         self.vdata.set_ocb(self.ocb, scale_func=ocbpy.ocb_scaling.normal_evar)
