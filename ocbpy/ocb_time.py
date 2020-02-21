@@ -7,6 +7,8 @@
 
 Functions
 -------------------------------------------------------------------------------
+get_datetime_fmt_len(datetime_fmt)
+    Gets the length of a string line needed to hold a specified datetime format
 year_soy_to_datetime(yyyy, soy)
     Converts from seconds of year to datetime
 yyddd_to_date(yyddd)
@@ -35,6 +37,41 @@ Angeline G. Burrell (AGB), 15 April 2017, University of Texas, Dallas (UTDallas)
 """
 
 import datetime as dt
+
+
+def get_datetime_fmt_len(datetime_fmt):
+    """ Get the lenght of a string line needed for a specific datetime format
+
+    Parameters
+    ----------
+    datetime_fmt : (str)
+        Formatting string used to convert between datetime and string object
+
+    Returns
+    -------
+    str_len : (int)
+        Minimum length of a string needed to hold the specified data
+
+    Notes
+    -----
+    See the datetime documentation for meanings of the datetime directives
+
+    """
+
+    # Start by setting the base length.  This accounts for any non-datetime
+    # directives in the string length.
+    str_len = len(datetime_fmt)
+
+    # Each of the directives have character lengths that they fill.  Add the
+    # appropriate number of spaces.
+    add_len = {'%a': 1, '%A': 10, '%b': 1, '%B': 8, '%Y': 2, '%f': 4, '%z': 3,
+               '%Z': 1, '%j': 1, '%c': 22, '%x': 8, '%X': 7}
+
+    for dt_dir in add_len.keys():
+        if datetime_fmt.find(dt_dir) >= 0:
+            str_len += add_len[dt_dir]
+
+    return str_len
 
 def year_soy_to_datetime(yyyy, soy):
     """Converts year and soy to datetime
