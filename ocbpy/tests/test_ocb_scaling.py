@@ -257,7 +257,7 @@ class TestOCBScalingMethods(unittest.TestCase):
         opposite sector
         """
         self.vdata.set_ocb(self.ocb, scale_func=ocbpy.ocb_scaling.normal_evar)
-        self.vdata.aacgm_mlt = self.vdata.ocb_aacgmv_mlt + 12.0
+        self.vdata.aacgm_mlt = self.vdata.ocb_aacgm_mlt + 12.0
         self.vdata.aacgm_n = -10.0
         self.vdata.set_ocb(self.ocb, scale_func=ocbpy.ocb_scaling.normal_evar)
         self.assertEqual(self.vdata.ocb_quad, 3)
