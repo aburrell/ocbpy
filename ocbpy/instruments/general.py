@@ -163,8 +163,8 @@ def load_ascii_data(filename, hlines, gft_kwargs=dict(), hsplit=None,
 
     keyheader = in_header if in_header is not None else header[-1]
 
-    if 'comment' in gft_kwargs.keys() and gft_kwargs['comment'] is not None:
-        keyheader = keyheader.split(gft_kwargs['comment'])[0]
+    if 'comments' in gft_kwargs.keys() and gft_kwargs['comments'] is not None:
+        keyheader = keyheader.split(gft_kwargs['comments'])[0]
 
     keyheader = keyheader.replace("#", "").strip()
     keylist = keyheader.split(hsplit)
@@ -231,10 +231,7 @@ def load_ascii_data(filename, hlines, gft_kwargs=dict(), hsplit=None,
                                 convert_time_input[ckey] = line[dcol]
                                 
                             # Convert the string into a datetime object
-                            try:
-                                ftime = ocbt.convert_time(**convert_time_input)
-                            except ValueError as verr:
-                                raise verr
+                            ftime = ocbt.convert_time(**convert_time_input)
 
                             # Save the output data
                             out[dt_keys[idt]].append(ftime)
