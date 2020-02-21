@@ -91,14 +91,23 @@ class TestGeneralLoadMethods(unittest.TestCase):
                                           "test_north_circle")
         self.test_file_dt = os.path.join(ocb_dir, "tests", "test_data",
                                          "dmsp-ssj_north_out.ocb")
+        self.test_file_sod = os.path.join(ocb_dir, "tests", "test_data",
+                                          "test_sod")
         self.headers = {self.test_file_soy:
                         [u"YEAR SOY NB PHICENT RCENT R A RERR"],
+                        self.test_file_sod:
+                        [u"YEAR DOY SOD NB PHICENT RCENT R A RERR"],
                         self.test_file_dt:
                         [u"#sc date time r x y fom x_1 y_1 x_2 y_2"]}
         self.test_out = {self.test_file_soy:
                          {"YEAR": 2000.0, "SOY": 11187202.0, "NB": 9.0,
                           "A": 1.302e+07, "PHICENT": 315.29, "RCENT": 2.67,
                           "R": 18.38, "RERR": 0.47},
+                         self.test_file_sod:
+                         {"YEAR": '2000', "DOY": '108', "SOD": 43945.0,
+                          "NB": 5.0, "A": 4078000.0, "PHICENT": 32.55,
+                          "RCENT": 11.81, "R": 10.26, "RERR": 1.19,
+                          "datetime": dt.datetime(2000, 4, 17, 12, 12, 25)},
                          self.test_file_dt:
                          {"sc": 16.0, "date": u"2010-12-31", "fom": 3.192,
                           "r": 1.268, "time": u"23:24:53", "x": 0.437,
@@ -152,6 +161,7 @@ class TestGeneralLoadMethods(unittest.TestCase):
         """
         self.load_kwargs['datetime_cols'] = [1, 2]
         self.load_kwargs['datetime_fmt'] = "%Y-%m-%d %H:%M:%S"
+        self.load_kwargs['max_str_length'] = 0
 
         self.out = ocb_igen.load_ascii_data(self.test_file_dt, 1,
                                             **self.load_kwargs)
@@ -218,6 +228,32 @@ class TestGeneralLoadMethods(unittest.TestCase):
         for kk in self.test_out[self.test_file_soy].keys():
             self.assertEqual(self.out[1][kk][-1],
                              self.test_out[self.test_file_soy][kk])
+
+    def test_load_ascii_data_w_sod(self):
+        """ Test the general routine to load ASCII data that uses seconds of day
+        """
+        self.load_kwargs['datetime_cols'] = [0, 1, 2]
+        self.load_kwargs['datetime_fmt'] = "%Y %j SOD"
+        self.load_kwargs['header'] = self.headers[self.test_file_sod]
+
+        self.out = ocb_igen.load_ascii_data(self.test_file_sod, 0,
+                                            **self.load_kwargs)
+
+        # Test to ensure the output header equals the input header
+        self.assertListEqual(self.out[0], self.headers[self.test_file_sod])
+
+        # Test to see that the data keys are all in the header
+        self.assertListEqual(sorted([kk for kk in self.test_out[
+            self.test_file_sod].keys()]),
+                             sorted([kk for kk in self.out[1].keys()]))
+
+        # Test the length of the data file
+        self.assertTupleEqual(self.out[1]['A'].shape, (9,))
+
+        # Test the values of the last data line
+        for kk in self.test_out[self.test_file_sod].keys():
+            self.assertEqual(self.out[1][kk][-1],
+                             self.test_out[self.test_file_sod][kk])
 
     def test_load_ascii_data_int_cols(self):
         """ Test the general routine to load ASCII data assigning some
