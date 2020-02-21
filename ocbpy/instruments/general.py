@@ -109,9 +109,6 @@ def load_ascii_data(filename, hlines, gft_kwargs=dict(), hsplit=None,
     #--------------------------------------------------
     # Initialize the convert_time input dictionary
     dfmt_parts = list() if datetime_fmt is None else datetime_fmt.split(" ")
-    convert_time_input = {"year": None, "soy": None, "yyddd": None,
-                          "date": None, "tod": None,
-                          "datetime_fmt": datetime_fmt}
     time_formats = ["H", "I", "p", "M", "S", "f", "z", "Z"]
 
     #----------------------------------------------------------------------
@@ -195,6 +192,13 @@ def load_ascii_data(filename, hlines, gft_kwargs=dict(), hsplit=None,
         # When dtype is specified, output comes as a np.array of np.void objects
         for iline, line in enumerate(temp):
             if len(line) == nhead:
+                # Each line may have time values that need to be combined
+                # and converted
+                convert_time_input = {"year": None, "soy": None, "yyddd": None,
+                                      "date": None, "tod": None,
+                                      "datetime_fmt": datetime_fmt}
+
+                # Cycle through each of the columns in this data row
                 for num, name in enumerate(keylist):
                     if idt < len(dt_keys) and name == dt_keys[idt]:
                         # Build the convert_time input
@@ -211,7 +215,14 @@ def load_ascii_data(filename, hlines, gft_kwargs=dict(), hsplit=None,
                                 elif ckey == 'sod':
                                     line[dcol] = float(line[dcol])
 
-                            convert_time_input[ckey] = line[dcol]
+                            if ckey not in convert_time_input.keys():
+                                convert_time_input[ckey] = line[dcol]
+                            else:
+                                if convert_time_input[ckey] is None:
+                                    convert_time_input[ckey] = line[dcol]
+                                else:
+                                    convert_time_input[ckey] = " ".join([
+                                        convert_time_input[ckey], line[dcol]])
                                 
                         # Convert the string into a datetime object
                         ftime = ocbt.convert_time(**convert_time_input)
