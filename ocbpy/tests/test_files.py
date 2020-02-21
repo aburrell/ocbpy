@@ -9,6 +9,7 @@ from __future__ import absolute_import, unicode_literals
 
 
 import datetime as dt
+from io import StringIO
 import logging
 import numpy as np
 import os
@@ -17,6 +18,103 @@ import unittest
 
 import ocbpy
 from ocbpy.boundaries import files
+
+class TestDMSPFileMethods(unittest.TestCase):
+    def setUp(self):
+        """ Initialize the test case by copying over necessary files
+        """
+        self.test_dmsp = os.path.join(os.path.dirname(ocbpy.__file__), "tests",
+                                      "test_data", "dmsp-ssj_north_out.ocb")
+        self.temp_files = [os.path.join(files.get_boundary_directory(),
+                                        "dmsp-ssj_north_out1.ocb"),
+                           os.path.join(files.get_boundary_directory(),
+                                        "dmsp-ssj_north_out2.ocb"),
+                           os.path.join(files.get_boundary_directory(),
+                                        "unknown_north_20090101_20100101.ocb"),
+                           os.path.join(files.get_boundary_directory(),
+                                        "unknown_north_out.ocb")]
+        self.comp_dict = {"instrument": "dmsp-ssj", "hemisphere": 1,
+                          "stime": dt.datetime(2010, 12, 31),
+                          "etime": dt.datetime(2011, 1, 1)}
+        self.out = list()
+        self.tfile = u''
+
+        self.lwarn = u''
+        self.lout = u''
+        self.log_capture = StringIO()
+        ocbpy.logger.addHandler(logging.StreamHandler(self.log_capture))
+        ocbpy.logger.setLevel(logging.WARNING)
+
+        # Remove in 2020 when dropping support for 2.7
+        if version_info.major == 2:
+            self.assertRegex = self.assertRegexpMatches
+
+    def tearDown(self):
+        for self.tfile in self.temp_files:
+            if os.path.isfile(self.tfile):
+                os.remove(self.tfile)
+
+        del self.tfile, self.temp_files, self.test_dmsp, self.comp_dict
+        del self.out, self.lwarn, self.lout, self.log_capture
+
+    def test_no_short_name_one_file(self):
+        """ Test get_default_file for dmsp-ssj with one boundary file"""
+        
+        # Copy over one temporary file to the boundary directory
+        os.system("cp {:s} {:s}".format(self.test_dmsp, self.temp_files[0]))
+
+        # Get the default file and instrument
+        self.out = files.get_default_file(**self.comp_dict)
+        
+        self.assertRegex(self.out[0], self.temp_files[0])
+        self.assertRegex(self.out[1], self.comp_dict['instrument'])
+
+    def test_no_short_name_mult_files(self):
+        """ Test get_default_file for dmsp-ssj with one boundary file"""
+        
+        # Copy over one temporary file to the boundary directory
+        for self.tfile in self.temp_files[:2]:
+            os.system("cp {:s} {:s}".format(self.test_dmsp, self.tfile))
+
+        # Get the default file and instrument
+        self.out = files.get_default_file(**self.comp_dict)
+        
+        self.assertTrue(self.out[0] in self.temp_files)
+        self.assertRegex(self.out[1], self.comp_dict['instrument'])
+
+    def test_good_unknown_inst_file(self):
+        """ Test get_boundary_file for a good unknown instrument file"""
+        
+        # Copy over one temporary file to the boundary directory
+        os.system("cp {:s} {:s}".format(self.test_dmsp, self.temp_files[2]))
+        self.tfile = os.path.basename(self.temp_files[2])
+
+        # Get the default file and instrument
+        self.out = files.get_boundary_files()
+        
+        self.assertTrue(self.tfile in self.out.keys())
+        self.assertListEqual(sorted([kk for kk in self.out[self.tfile].keys()]),
+                             [u'etime', u'hemisphere', u'instrument', u'stime'])
+        
+    def test_bad_unknown_inst_file(self):
+        """ Test get_boundary_file for a bad unknown instrument file"""
+        self.lwarn = u'Unknown boundary file present'
+        
+        # Copy over one temporary file to the boundary directory
+        os.system("cp {:s} {:s}".format(self.test_dmsp, self.temp_files[3]))
+        self.tfile = os.path.basename(self.temp_files[3])
+
+        # Get the default file and instrument
+        self.out = files.get_boundary_files()
+        self.lout = self.log_capture.getvalue()
+
+        # Test logging error message and data output
+        self.assertTrue(self.lout.find(self.lwarn) >= 0)
+        self.assertTrue(self.tfile in self.out.keys())
+        self.assertListEqual(sorted([kk for kk in self.out[self.tfile].keys()]),
+                             [u'hemisphere', u'instrument'])
+
+
 
 class TestFilesMethods(unittest.TestCase):
 
@@ -46,8 +144,7 @@ class TestFilesMethods(unittest.TestCase):
                            'stime': dt.datetime(2010, 1, 1, 0, 0),
                            'etime': dt.datetime(2017, 1, 1, 0, 0)}}
         self.short_to_long = {"amp": "ampere", "si12": "image", "si13": "image",
-                              "wic": "image", "": "image",
-                              "dmsp-ssj": "dmsp-ssj"}
+                              "wic": "image", "": "image"}
         self.long_to_short = {"ampere": "amp", "image": "si13", "": "si13",
                               "dmsp-ssj": None}
         self.inst = {1: ['', 'si13', 'si12', 'wic', 'amp', 'image', 'ampere',
