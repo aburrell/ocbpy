@@ -49,6 +49,7 @@ def test_file(filename):
 
     return True
 
+
 def load_ascii_data(filename, hlines, gft_kwargs=dict(), hsplit=None,
                     datetime_cols=list(), datetime_fmt=None, int_cols=list(),
                     str_cols=list(), max_str_length=50, header=list()):
@@ -72,10 +73,9 @@ def load_ascii_data(filename, hlines, gft_kwargs=dict(), hsplit=None,
         (default=[])
     datetime_fmt : (str or NoneType)
         Format needed to convert the datetime_cols entries into a datetime
-        object.  Special formats permitted are: 'YEAR SOY', 'YYDDD', 'SOD'.
-        'YEAR SOY' must be used together; 'YYDDD' indicates years since 1900 and
-        day of year, and may be used with any time format; 'SOD' indicates
-        seconds of day, and may be used with any date format (default=None)
+        object.  Special formats permitted are: 'YEAR SOY', 'SOD'.
+        'YEAR SOY' must be used together; 'SOD' indicates seconds of day, and
+        may be used with any date format (default=None)
     int_cols : (list of ints)
         Data that should be processed as integers, not floats. (default=[])
     str_cols : (list of ints)
@@ -118,24 +118,9 @@ def load_ascii_data(filename, hlines, gft_kwargs=dict(), hsplit=None,
     # Make sure the max_str_length is long enough to read datetime and that
     # the time data will be cast in the correct format
     if datetime_fmt is not None:
-        if max_str_length < len(datetime_fmt):
-            max_str_length = len(datetime_fmt)
-            if datetime_fmt.find("%y") >= 0 or datetime_fmt.find("%j") >= 0:
-                max_str_length += 2
-            if(datetime_fmt.find("%a") >= 0 or datetime_fmt.find("%b") >= 0 or
-            datetime_fmt.find("%Z") >= 0):
-                max_str_length += 1
-            if(datetime_fmt.find("%B") >= 0 or datetime_fmt.find("%X") >= 0 or
-            datetime_fmt.find("%x") >= 0):
-                max_str_length += 10
-            if datetime_fmt.find("%f") >= 0 or datetime_fmt.find("%Y") >= 0:
-                max_str_length += 4
-            if datetime_fmt.find("%z") >= 0:
-                max_str_length += 3
-            if datetime_fmt.find("%c") >= 0:
-                max_str_length += 20
-            if datetime_fmt.upper().find("YYDDD"):
-                max_str_length += 8
+        dt_str_len = ocbt.get_datetime_fmt_len(datetime_fmt)
+        if max_str_length < dt_str_len:
+            max_str_length = dt_str_len
 
         if datetime_fmt.upper().find("YEAR") >= 0:
             ipart = datetime_fmt.upper().find("YEAR")
@@ -167,7 +152,7 @@ def load_ascii_data(filename, hlines, gft_kwargs=dict(), hsplit=None,
         keyheader = keyheader.split(gft_kwargs['comments'])[0]
 
     keyheader = keyheader.replace("#", "").strip()
-    keylist = keyheader.split(hsplit)
+    keylist = [okey for okey in keyheader.split(hsplit) if len(okey) > 0]
     nhead = len(keylist)
     out = {okey: list() for okey in keylist}
 
@@ -207,42 +192,39 @@ def load_ascii_data(filename, hlines, gft_kwargs=dict(), hsplit=None,
                          **gft_kwargs)
 
     if len(temp) > 0:
-        noff = 0
         # When dtype is specified, output comes as a np.array of np.void objects
-        for line in temp:
+        for iline, line in enumerate(temp):
             if len(line) == nhead:
-                for num,name in enumerate(keylist):
-                    if len(name) > 0:
-                        if idt < len(dt_keys) and name == dt_keys[idt]:
-                            # Build the convert_time input
-                            for icol, dcol in enumerate(datetime_cols):
-                                if dfmt_parts[icol].find("%") == 0:
-                                    if dfmt_parts[icol][1] in time_formats:
-                                        ckey = "tod"
-                                    else:
-                                        ckey = "date"
+                for num, name in enumerate(keylist):
+                    if idt < len(dt_keys) and name == dt_keys[idt]:
+                        # Build the convert_time input
+                        for icol, dcol in enumerate(datetime_cols):
+                            if dfmt_parts[icol].find("%") == 0:
+                                if dfmt_parts[icol][1] in time_formats:
+                                    ckey = "tod"
                                 else:
-                                    ckey = dfmt_parts[icol].lower()
-                                    if ckey in ['year', 'soy']:
-                                        line[dcol] = int(line[dcol])
-                                    elif ckey == 'sod':
-                                        line[dcol] = float(line[dcol])
-                                        
-                                convert_time_input[ckey] = line[dcol]
-                                
-                            # Convert the string into a datetime object
-                            ftime = ocbt.convert_time(**convert_time_input)
+                                    ckey = "date"
+                            else:
+                                ckey = dfmt_parts[icol].lower()
+                                if ckey in ['year', 'soy']:
+                                    line[dcol] = int(line[dcol])
+                                elif ckey == 'sod':
+                                    line[dcol] = float(line[dcol])
 
-                            # Save the output data
-                            out[dt_keys[idt]].append(ftime)
-                        else:
-                            out[name].append(line[num-noff])
+                            convert_time_input[ckey] = line[dcol]
+                                
+                        # Convert the string into a datetime object
+                        ftime = ocbt.convert_time(**convert_time_input)
+
+                        # Save the output data
+                        out[dt_keys[idt]].append(ftime)
                     else:
-                        noff += 1
+                        # Save the output data without any manipulation
+                        out[name].append(line[num])
             else:
-                estr = "unknown genfromtxt output for [{:s}]".format(filename)
-                ocbpy.logger.error(estr)
-                return header, dict()
+                estr = "unknown genfromtxt output on line {:d} of {:s}".format(
+                    iline, filename)
+                logging.warn(estr)
 
     del temp
 
