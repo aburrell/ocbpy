@@ -85,11 +85,11 @@ class TestOCBCorrection(unittest.TestCase):
                           'harmonic': ocb_cor.harmonic}
         self.mlt = np.arange(0.0, 24.0, 12.0)
         self.def_results = {'circular': np.zeros(shape=self.mlt.shape),
-                            'elliptical': np.array([-4.194630407939705,
-                                                    -2.0979393349197415]),
+                            'elliptical': np.array([-2.097939334919742,
+                                                    -4.194630407939707]),
                             'harmonic': np.array([-1.5821694271422921,
                                                   -3.4392638193624325])}
-        self.gaus_results = {'elliptical': -4.639223510917398,
+        self.gaus_results = {'elliptical': -2.51643691301747,
                              'harmonic': -2.293294645880221}
 
     def tearDown(self):
