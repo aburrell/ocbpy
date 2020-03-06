@@ -75,15 +75,15 @@ def elliptical(mlt, instrument='ampere', method='median'):
         raise ValueError("no elliptical correction for {:}".format(instrument))
 
     method = method.lower()
-    coeff = {"median": {"a": 4.01, "e": -0.55, "t": -0.92},
-             "gaussian": {"a": 4.41, "e": -0.51, "t": -0.95}}
+    coeff = {"median": {"a": 4.01, "e": 0.55, "t": -0.92},
+             "gaussian": {"a": 4.41, "e": 0.51, "t": -0.95}}
 
     if method not in coeff.keys():
         raise ValueError("unknown coefficient computation method")
 
     mlt_rad = hr2rad(mlt)
     r_corr = (coeff[method]["a"] * (1.0-coeff[method]["e"]**2) /
-              (1.0+coeff[method]["e"] * np.cos(mlt_rad-coeff[method]["t"])))
+              (1.0 + coeff[method]["e"]*np.cos(mlt_rad-coeff[method]["t"])))
 
     # Because this is a poleward correction, return the negative
     return -r_corr
