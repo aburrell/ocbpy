@@ -875,7 +875,7 @@ def archav(hav):
     if np.isnan(hav):
         # Propagate NaNs
         alpha = np.nan
-    if hav >= 1.0e-16:
+    elif hav >= 1.0e-16:
         # The number is positive, calculate the angle
         alpha = 2.0 * np.arcsin(np.sqrt(hav))
     elif abs(hav) < 1.0e-16:
