@@ -173,7 +173,7 @@ class TestOCBScalingMethods(unittest.TestCase):
     def test_inverse_haversine_nan(self):
         """ Test implimentation of the inverse haversine with NaN
         """
-        self.assertTrue(np.isnan(ocbpy.ocb_scaling.archav(np.nan))
+        self.assertTrue(np.isnan(ocbpy.ocb_scaling.archav(np.nan)))
 
     def test_calc_large_pole_angle(self):
         """ Test to see that the OCB polar angle calculation is performed
