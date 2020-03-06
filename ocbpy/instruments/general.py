@@ -49,10 +49,10 @@ def test_file(filename):
 
     return True
 
-def load_ascii_data(filename, hlines, miss=None, fill=np.nan, hsplit=None,
-                    inline_comment=None, invalid_raise=False, datetime_cols=[],
-                    datetime_fmt=None, int_cols=[], str_cols=[],
-                    max_str_length=50, header=list()):
+
+def load_ascii_data(filename, hlines, gft_kwargs=dict(), hsplit=None,
+                    datetime_cols=list(), datetime_fmt=None, int_cols=list(),
+                    str_cols=list(), max_str_length=50, header=list()):
     """ Load an ascii data file into a dict of numpy array. 
 
     Parameters
@@ -61,31 +61,21 @@ def load_ascii_data(filename, hlines, miss=None, fill=np.nan, hsplit=None,
         data file name
     hlines : (int)
         number of lines in header.  If zero, must include header.
-    miss : (str, sequence, or dict)
-        Denotes missing value options (default=None)
-    fill : (value, sequence, or dict)
-        fill value (default=NaN)
+    gft_kwargs : (dict)
+        Dictionary holding optional keyword arguments for the numpy genfromtxt
+        routine (default=dict())
     hsplit : (str, NoneType)
         character seperating data labels in header.  None splits on all
         whitespace characters. (default=None)
-    inline_comment : (str or NoneType)
-        If there are comments inline, denote the charater that indicates it has
-        begun. If there are no comments inline, leave as the default.
-        (default=None)
-    invalid_raise : (bool)
-        Should the routine fail if a row of data with a different number of
-        columns is encountered?  If false, these lines will be skipped and
-        all other lines will be read in.  (default=False)
     datetime_cols : (list of ints)
         If there are date strings or values that should be converted to a
         datetime object, list them in order here. Not processed as floats.
         (default=[])
     datetime_fmt : (str or NoneType)
         Format needed to convert the datetime_cols entries into a datetime
-        object.  Special formats permitted are: 'YEAR SOY', 'YYDDD', 'SOD'.
-        'YEAR SOY' must be used together; 'YYDDD' indicates years since 1900 and
-        day of year, and may be used with any time format; 'SOD' indicates
-        seconds of day, and may be used with any date format (default=None)
+        object.  Special formats permitted are: 'YEAR SOY', 'SOD'.
+        'YEAR SOY' must be used together; 'SOD' indicates seconds of day, and
+        may be used with any date format (default=None)
     int_cols : (list of ints)
         Data that should be processed as integers, not floats. (default=[])
     str_cols : (list of ints)
@@ -119,33 +109,15 @@ def load_ascii_data(filename, hlines, miss=None, fill=np.nan, hsplit=None,
     #--------------------------------------------------
     # Initialize the convert_time input dictionary
     dfmt_parts = list() if datetime_fmt is None else datetime_fmt.split(" ")
-    convert_time_input = {"year": None, "soy": None, "yyddd": None,
-                          "date": None, "tod": None,
-                          "datetime_fmt": datetime_fmt}
     time_formats = ["H", "I", "p", "M", "S", "f", "z", "Z"]
 
     #----------------------------------------------------------------------
     # Make sure the max_str_length is long enough to read datetime and that
     # the time data will be cast in the correct format
     if datetime_fmt is not None:
-        if max_str_length < len(datetime_fmt):
-            max_str_length = len(datetime_fmt)
-            if datetime_fmt.find("%y") >= 0 or datetime_fmt.find("%j") >= 0:
-                max_str_length += 2
-            if(datetime_fmt.find("%a") >= 0 or datetime_fmt.find("%b") >= 0 or
-            datetime_fmt.find("%Z") >= 0):
-                max_str_length += 1
-            if(datetime_fmt.find("%B") >= 0 or datetime_fmt.find("%X") >= 0 or
-            datetime_fmt.find("%x") >= 0):
-                max_str_length += 10
-            if datetime_fmt.find("%f") >= 0 or datetime_fmt.find("%Y") >= 0:
-                max_str_length += 4
-            if datetime_fmt.find("%z") >= 0:
-                max_str_length += 3
-            if datetime_fmt.find("%c") >= 0:
-                max_str_length += 20
-            if datetime_fmt.upper().find("YYDDD"):
-                max_str_length += 8
+        dt_str_len = ocbt.get_datetime_fmt_len(datetime_fmt)
+        if max_str_length < dt_str_len:
+            max_str_length = dt_str_len
 
         if datetime_fmt.upper().find("YEAR") >= 0:
             ipart = datetime_fmt.upper().find("YEAR")
@@ -157,12 +129,12 @@ def load_ascii_data(filename, hlines, miss=None, fill=np.nan, hsplit=None,
             int_cols.append(dfmt_parts.index(case_part))
 
     #----------------------------------------------
-    # Open the datafile and read the header rows
+    # Open the data file and read the header rows
     with open(filename, "r") as fin:
         in_header = str(header[-1]) if len(header) > 0 else None
 
-        for h in range(hlines):
-            header.append(fin.readline())
+        for hind in range(hlines):
+            header.append(fin.readline().strip())
 
     #---------------------------------------------------------------------
     # Create the output dictionary keylist
@@ -173,11 +145,11 @@ def load_ascii_data(filename, hlines, miss=None, fill=np.nan, hsplit=None,
 
     keyheader = in_header if in_header is not None else header[-1]
 
-    if inline_comment is not None:
-        keyheader = keyheader.split(inline_comment)[0]
+    if 'comments' in gft_kwargs.keys() and gft_kwargs['comments'] is not None:
+        keyheader = keyheader.split(gft_kwargs['comments'])[0]
 
-    keyheader = keyheader.replace("#", "")
-    keylist = keyheader.split(hsplit)
+    keyheader = keyheader.replace("#", "").strip()
+    keylist = [okey for okey in keyheader.split(hsplit) if len(okey) > 0]
     nhead = len(keylist)
     out = {okey: list() for okey in keylist}
 
@@ -204,72 +176,68 @@ def load_ascii_data(filename, hlines, miss=None, fill=np.nan, hsplit=None,
 
         # Change the datetime column input from float to string, if it is not
         # supposed to be an integer
-        for icol in datetime_cols:
+        for i, icol in enumerate(datetime_cols):
             if(not icol in int_cols and
-               dfmt_parts[icol].upper().find("SOD") < 0):
+               dfmt_parts[i].upper().find("SOD") < 0):
                 ldtype[icol] = '|U{:d}'.format(max_str_length)
     else:
         idt = len(dt_keys)
 
     #-------------------------------------------
     # Open the datafile and read the data rows
-    try:
-        temp = np.genfromtxt(filename, skip_header=hlines, missing_values=miss,
-                             filling_values=fill, comments=inline_comment,
-                             invalid_raise=False, dtype=ldtype)
-    except ValueError as err:
-        estr = "unable to read data in file [{:s}]".format(filename)
-        ocbpy.logger.error(estr)
-        return header, out
+    temp = np.genfromtxt(filename, skip_header=hlines, dtype=ldtype,
+                         **gft_kwargs)
 
     if len(temp) > 0:
-        noff = 0
         # When dtype is specified, output comes as a np.array of np.void objects
-        for line in temp:
-            if len(line) == nhead:
-                for num,name in enumerate(keylist):
-                    if len(name) > 0:
-                        if idt < len(dt_keys) and name == dt_keys[idt]:
-                            # Build the convert_time input
-                            for icol, dcol in enumerate(datetime_cols):
-                                if dfmt_parts[dcol].find("%") == 0:
-                                    if dfmt_parts[dcol][1] in time_formats:
-                                        ckey = "tod"
-                                    else:
-                                        ckey = "date"
-                                else:
-                                    ckey = dfmt_parts[dcol].lower()
-                                    if ckey in ['year', 'soy']:
-                                        line[dcol] = int(line[dcol])
-                                    elif ckey == 'sod':
-                                        line[dcol] = float(line[dcol])
-                                        
-                                convert_time_input[ckey] = line[dcol]
-                                
-                            # Convert the string into a datetime object
-                            try:
-                                ftime = ocbt.convert_time(**convert_time_input)
-                            except ValueError as verr:
-                                raise verr
+        for iline, line in enumerate(temp):
+            # Each line may have times that need to be combined and converted
+            convert_time_input = {"year": None, "soy": None, "yyddd": None,
+                                  "date": None, "tod": None,
+                                  "datetime_fmt": datetime_fmt}
 
-                            # Save the output data
-                            out[dt_keys[idt]].append(ftime)
+            # Cycle through each of the columns in this data row
+            for num, name in enumerate(keylist):
+                if idt < len(dt_keys) and name == dt_keys[idt]:
+                    # Build the convert_time input
+                    for icol, dcol in enumerate(datetime_cols):
+                        if dfmt_parts[icol].find("%") == 0:
+                            if dfmt_parts[icol][1] in time_formats:
+                                ckey = "tod"
+                            else:
+                                ckey = "date"
                         else:
-                            out[name].append(line[num-noff])
-                    else:
-                        noff += 1
-            else:
-                estr = "unknown genfromtxt output for [{:s}]".format(filename)
-                ocbpy.logger.error(estr)
-                return header, dict()
+                            ckey = dfmt_parts[icol].lower()
+                            if ckey in ['year', 'soy']:
+                                line[dcol] = int(line[dcol])
+                            elif ckey == 'sod':
+                                line[dcol] = float(line[dcol])
 
-    del temp
+                        if ckey not in convert_time_input.keys():
+                            convert_time_input[ckey] = line[dcol]
+                        else:
+                            if convert_time_input[ckey] is None:
+                                convert_time_input[ckey] = line[dcol]
+                            else:
+                                convert_time_input[ckey] = " ".join([
+                                    convert_time_input[ckey], line[dcol]])
 
-    # Cast all lists and numpy arrays
+                    # Convert the string into a datetime object
+                    ftime = ocbt.convert_time(**convert_time_input)
+
+                    # Save the output data
+                    out[dt_keys[idt]].append(ftime)
+                else:
+                    # Save the output data without any manipulation
+                    out[name].append(line[num])
+
+    # Cast all lists as numpy arrays, if possible
     for k in out.keys():
         try:
             out[k] = np.array(out[k], dtype=type(out[k][0]))
         except TypeError:
+            # Leave as a list if array casting doesn't work.  This was an
+            # issue before, but may have been an old numpy bug that is fixed.
             pass
 
     return header, out

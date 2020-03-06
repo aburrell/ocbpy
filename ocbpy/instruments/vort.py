@@ -140,14 +140,13 @@ def vort2ascii_ocb(vortfile, outfile, hemisphere=0, ocb=None, ocbfile='default',
     # Open the output file for writting
     with open(outfile, 'w') as fout:
         # Write header line
-        outline = "#DATE TIME "
+        outline = "#DATE TIME"
 
         if save_all:
-            vkeys = vdata.keys()
-            vkeys.pop(vkeys.index("DATETIME"))
-            outline += "{:s} ".format(" ".join(vkeys))
+            vkeys = [kk for kk in vdata.keys() if kk != "DATETIME"]
+            outline = " ".join([outline, " ".join(vkeys)])
 
-        outline += "OCB_LAT OCB_MLT NORM_VORT\n"
+        outline = " ".join([outline, "OCB_LAT OCB_MLT NORM_VORT\n"])
         fout.write(outline)
 
         # Initialise the ocb and vorticity indices
@@ -175,8 +174,8 @@ def vort2ascii_ocb(vortfile, outfile, hemisphere=0, ocb=None, ocbfile='default',
                 outline = "{:} ".format(vdata['DATETIME'][ivort])
 
                 if save_all:
-                    for k in vkeys:
-                        outline += "{:} ".format(vdata[k][ivort])
+                    for kk in vkeys:
+                        outline += "{:} ".format(vdata[kk][ivort])
 
                 outline += "{:.2f} {:.6f} {:.6f}\n".format(nlat, nmlt, nvort)
                 fout.write(outline)

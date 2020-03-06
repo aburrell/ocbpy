@@ -567,10 +567,6 @@ class VectorData(object):
             # If not defined, get the OCB and vector quadrants
             if(self.ocb_quad == 0 or self.vec_quad == 0):
                 self.define_quadrants()
-
-            if(self.ocb_quad == 0 or self.vec_quad == 0):
-                ocbpy.logger.error("unable to define OCB and vector quadrants")
-                return
     
             # Get the unscaled 2D vector magnitude
             vmag = np.sqrt(self.aacgm_n**2 + self.aacgm_e**2)
@@ -717,7 +713,7 @@ class VectorData(object):
         vsigns = {"north": 0, "east": 0}
 
         # If necessary, initialise quadrant dictionary
-        if not np.all(quads.keys() == quad_range):
+        if not np.all([kk in quads.keys() for kk in quad_range]):
             quads = {o: {v: True if self.ocb_quad == o and self.vec_quad == v
                          else False for v in quad_range} for o in quad_range}
 

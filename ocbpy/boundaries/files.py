@@ -72,6 +72,8 @@ def get_boundary_files(bound='ocb'):
     Notes
     -----
     IMAGE instruments are separated into WIC, SI12, and SI13
+    Unknown instruments should have filenames of the format:
+        instrument_hemisphere_%Y%m%d_%Y%m%d.boundary
 
     """
     hemi = {"north": 1, "south": -1}
@@ -98,7 +100,7 @@ def get_boundary_files(bound='ocb'):
         if(os.path.isfile(os.path.join(boundary_dir, bfile))
            and bfile.find(".py") < 0 and bfile.find("README") < 0
            and bfile[-3:].lower() == bound.lower()):
-            file_info = bfile.lower().split("_")
+            file_info = bfile.lower()[:-4].split("_")
             boundary_files[bfile] = {"instrument": file_info[0],
                                      "hemisphere": hemi[file_info[1]]}
 
@@ -107,8 +109,10 @@ def get_boundary_files(bound='ocb'):
                 boundary_files[bfile]["etime"] = etime[file_info[0]]
             else:
                 try:
-                    boundary_files[bfile]["stime"] = dt.datetime.strptime(file_info[2], '%Y%m%d')
-                    boundary_files[bfile]["etime"] = dt.datetime.strptime(file_info[3], '%Y%m%d')
+                    boundary_files[bfile]["stime"] = dt.datetime.strptime(
+                        file_info[2], '%Y%m%d')
+                    boundary_files[bfile]["etime"] = dt.datetime.strptime(
+                        file_info[3], '%Y%m%d')
                 except ValueError as verr:
                     err = 'Unknown boundary file present: [{:s}]\n{:}'.format(
                         bfile, verr)
@@ -184,10 +188,10 @@ def get_default_file(stime, etime, hemisphere, instrument='', bound='ocb'):
 
     # Get the default file and instrument (returning at most one)
     short_to_long = {"amp": "ampere", "si12": "image", "si13": "image",
-                     "wic": "image", "dmsp-ssj": "dmsp-ssj"}
+                     "wic": "image"}
     if len(good_files) == 0:
         estr = "".join(["no boundary file available for ", ", ".join(inst),
-                        "northern" if hemisphere == 1 else "southern",
+                        " northern" if hemisphere == 1 else " southern",
                         " hemisphere, {:} to {:}".format(stime, etime)])
         ocbpy.logger.info(estr)
 
@@ -195,7 +199,8 @@ def get_default_file(stime, etime, hemisphere, instrument='', bound='ocb'):
     elif len(good_files) == 1:
         default_file = os.path.join(boundary_dir, good_files[0])
         if boundary_files[good_files[0]]['instrument'] in short_to_long.keys():
-            instrument = short_to_long[boundary_files[good_files[0]]['instrument']]
+            instrument = short_to_long[boundary_files[good_files[0]][
+                'instrument']]
         else:
             instrument = boundary_files[good_files[0]]['instrument']
     else:

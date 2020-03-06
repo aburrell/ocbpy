@@ -8,6 +8,7 @@
 
 import datetime as dt
 import numpy as np
+from sys import version_info
 import unittest
 
 from ocbpy import ocb_time
@@ -246,29 +247,39 @@ class TestOCBGeographicTime(unittest.TestCase):
         """ Set up test runs """
 
         self.dtime = dt.datetime(2001, 1, 1, 1)
-        self.lon = [359.0, 90.0, -15.0]
-        self.lt = [0.9333333333333336, 7.0, 0.0]
+        self.lon = [390.0, 359.0, 90.0, -15.0, -30.0]
+        self.lt = [27.0, 0.9333333333333336, 7.0, 0.0, -1.0]
+        self.out = list()
 
     def tearDown(self):
         """ Clean up after each test """
 
-        del self.lon, self.lt, self.dtime
+        del self.lon, self.lt, self.dtime, self.out
 
     def test_glon2slt(self):
         """ Test longitude to slt conversion for a range of values"""
+        # Prepare test output
+        self.out = np.array(self.lt)
+        self.out[self.out >= 24.0] -= 24.0
+        self.out[self.out < 0.0] += 24.0
 
+        # Test each value
         for i, lon in enumerate(self.lon):
             self.assertAlmostEqual(ocb_time.glon2slt(lon, self.dtime),
-                                   self.lt[i])
+                                   self.out[i])
         del i, lon
             
     def test_slt2glon(self):
         """ Test slt to longitude conversion for a range of values"""
+        # Prepare test output
+        self.out = np.array(self.lon)
+        self.out[self.out > 180.0] -= 360.0
+        self.out[self.out <= -180.0] += 360.0
 
         for i, lt in enumerate(self.lt):
-            lon = self.lon[i] if self.lon[i] < 180.0 else self.lon[i] - 360.0
-            self.assertAlmostEqual(ocb_time.slt2glon(lt, self.dtime), lon)
-        del i, lt, lon
+            self.assertAlmostEqual(ocb_time.slt2glon(lt, self.dtime),
+                                   self.out[i])
+        del i, lt
 
     def test_slt2glon_list_failure(self):
         """ Test local time to longtiude conversion with list input"""
@@ -289,6 +300,136 @@ class TestOCBGeographicTime(unittest.TestCase):
         """ Test longtiude to lt conversion with array input"""
         with self.assertRaises(ValueError):
             ocb_time.glon2slt(np.array(self.lon), self.dtime)
+
+class TestTimeFormatMethods(unittest.TestCase):
+    def setUp(self):
+        """ Set up test runs """
+
+        self.dtime = dt.datetime(2001, 1, 1)
+        self.dt_formats = ['No Directives', '%y-%m-%d %H:%M:%S', '%a %b %Y %f',
+                           '%A %B %z %Z', '%c', '%j %x', '%X']
+        self.out_fmt = u''
+        self.out_len = 0
+
+    def tearDown(self):
+        """ Clean up after each test """
+
+        del self.dt_formats, self.dtime, self.out_fmt, self.out_len
+
+    @unittest.skipIf(version_info.major < 3,
+                     'Already tested, remove in 2020')
+    def test_get_datetime_fmt_len(self):
+        """ Test the datetime format length determination"""
+
+        # Cycle through the different formatting options
+        for val in self.dt_formats:
+            with self.subTest(val=val):
+                # Get the function format string length maximum
+                self.out_len = ocb_time.get_datetime_fmt_len(val)
+
+                # Get the formatted time string
+                self.out_fmt = self.dtime.strftime(val)
+
+                # Test to see that the returned length is greater than or
+                # equal to the formatted time string
+                self.assertGreaterEqual(self.out_len, len(self.out_fmt))
+
+    @unittest.skipIf(version_info.major > 2,
+                     'Python 2.7 does not support subTest')
+    def test_get_datetime_fmt_len_nodate(self):
+        """ Test the datetime format length determination for string w/o date"""
+        # Get the function format string length maximum
+        self.out_len = ocb_time.get_datetime_fmt_len(self.dt_formats[0])
+
+        # Get the formatted time string
+        self.out_fmt = self.dtime.strftime(self.dt_formats[0])
+
+        # Test to see that the returned length equalsthe formatted time string
+        self.assertEqual(self.out_len, len(self.out_fmt))
+
+    @unittest.skipIf(version_info.major > 2,
+                     'Python 2.7 does not support subTest')
+    def test_get_datetime_fmt_len_samelength(self):
+        """ Test the datetime format length cal for a string of the same length
+        """
+        # Get the function format string length maximum
+        self.out_len = ocb_time.get_datetime_fmt_len(self.dt_formats[1])
+
+        # Get the formatted time string
+        self.out_fmt = self.dtime.strftime(self.dt_formats[1])
+
+        # Test to see that the returned length equalsthe formatted time string
+        self.assertEqual(self.out_len, len(self.out_fmt))
+
+    @unittest.skipIf(version_info.major > 2,
+                     'Python 2.7 does not support subTest')
+    def test_get_datetime_fmt_len_abYf(self):
+        """ Test the datetime format length calc for the %a %b %Y %f directives
+        """
+        # Get the function format string length maximum
+        self.out_len = ocb_time.get_datetime_fmt_len(self.dt_formats[2])
+
+        # Get the formatted time string
+        self.out_fmt = self.dtime.strftime(self.dt_formats[2])
+
+        # Test to see that the returned length equalsthe formatted time string
+        self.assertGreaterEqual(self.out_len, len(self.out_fmt))
+
+    @unittest.skipIf(version_info.major > 2,
+                     'Python 2.7 does not support subTest')
+    def test_get_datetime_fmt_len_ABzZ(self):
+        """ Test the datetime format length calc for the %A %B %z %Z directives
+        """
+        # Get the function format string length maximum
+        self.out_len = ocb_time.get_datetime_fmt_len(self.dt_formats[3])
+
+        # Get the formatted time string
+        self.out_fmt = self.dtime.strftime(self.dt_formats[3])
+
+        # Test to see that the returned length equalsthe formatted time string
+        self.assertGreaterEqual(self.out_len, len(self.out_fmt))
+
+    @unittest.skipIf(version_info.major > 2,
+                     'Python 2.7 does not support subTest')
+    def test_get_datetime_fmt_len_c(self):
+        """ Test the datetime format length calc for the %c directive
+        """
+        # Get the function format string length maximum
+        self.out_len = ocb_time.get_datetime_fmt_len(self.dt_formats[4])
+
+        # Get the formatted time string
+        self.out_fmt = self.dtime.strftime(self.dt_formats[4])
+
+        # Test to see that the returned length equalsthe formatted time string
+        self.assertGreaterEqual(self.out_len, len(self.out_fmt))
+
+    @unittest.skipIf(version_info.major > 2,
+                     'Python 2.7 does not support subTest')
+    def test_get_datetime_fmt_len_x(self):
+        """ Test the datetime format length calc for the %x directive
+        """
+        # Get the function format string length maximum
+        self.out_len = ocb_time.get_datetime_fmt_len(self.dt_formats[5])
+
+        # Get the formatted time string
+        self.out_fmt = self.dtime.strftime(self.dt_formats[5])
+
+        # Test to see that the returned length equalsthe formatted time string
+        self.assertGreaterEqual(self.out_len, len(self.out_fmt))
+
+    @unittest.skipIf(version_info.major > 2,
+                     'Python 2.7 does not support subTest')
+    def test_get_datetime_fmt_len_X(self):
+        """ Test the datetime format length calc for the %X directive
+        """
+        # Get the function format string length maximum
+        self.out_len = ocb_time.get_datetime_fmt_len(self.dt_formats[6])
+
+        # Get the formatted time string
+        self.out_fmt = self.dtime.strftime(self.dt_formats[6])
+
+        # Test to see that the returned length equalsthe formatted time string
+        self.assertGreaterEqual(self.out_len, len(self.out_fmt))
 
 
 if __name__ == '__main__':

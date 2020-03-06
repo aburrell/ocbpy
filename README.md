@@ -186,5 +186,5 @@ ax.legend(loc=2, fontsize="small", title="{:}".format(ocb.dtime[ocb.rec_ind]), b
 The figure should now look like:
 <div align="center">
         <img height="0" width="0px">
-        <img width="80%" src="/docs/example_ocb_location.png" alt="OCB Example" title="OCB Example"</img>
+        <img width="80%" src="/docs/figures/example_ocb_location.png" alt="OCB Example" title="OCB Example"</img>
 </div>

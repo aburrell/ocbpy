@@ -224,9 +224,10 @@ class OCBoundary(object):
                                                          self.dtime[0])
                 out = "{:s} to {:}\n\n".format(out, self.dtime[-1])
 
-                irep = sorted(set([0, 1, self.records - 2, self.records - 1]))
-                while irep[0] < 0:
-                    irep.pop(0)
+                if self.records == 1:
+                    irep = [0]
+                else:
+                    irep = np.unique(np.arange(0,self.records,1)[[0,1,-2,-1]])
 
                 head = "YYYY-MM-DD HH:MM:SS Phi_Centre R_Centre R"
                 out = "{:s}{:s}\n{:-<77s}\n".format(out, head, "")
@@ -632,11 +633,10 @@ class OCBoundary(object):
         aacgm_lat = self.hemisphere * (90.0 - np.sqrt(xp**2 + yp**2))
         aacgm_mlt = np.degrees(np.arctan2(yp, xp)) / 15.0
 
+        # Don't need to test for values above 24.0 because np.arctan2 is
+        # restricted to a range of +/- pi
         if aacgm_mlt < 0.0:
             aacgm_mlt += 24.0
-
-        if aacgm_mlt >= 24.0:
-            aacgm_mlt -= 24.0
 
         # If needed, convert from magnetic to geographic coordinates
         if coords.lower().find('mag') < 0:
