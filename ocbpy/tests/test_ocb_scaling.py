@@ -163,7 +163,18 @@ class TestOCBScalingMethods(unittest.TestCase):
         """
         self.assertEqual(ocbpy.ocb_scaling.archav(0.0), 0.0)
         self.assertEqual(ocbpy.ocb_scaling.archav(1.0), np.pi)
-        
+
+    def test_inverse_haversine_small(self):
+        """ Test implimentation of the inverse haversine with very small numbers
+        """
+        self.assertEqual(ocbpy.ocb_scaling.archav(1.0e-17), 0.0)
+        self.assertEqual(ocbpy.ocb_scaling.archav(-1.0e-17), 0.0)
+
+    def test_inverse_haversine_nan(self):
+        """ Test implimentation of the inverse haversine with NaN
+        """
+        self.assertTrue(np.isnan(ocbpy.ocb_scaling.archav(np.nan))
+
     def test_calc_large_pole_angle(self):
         """ Test to see that the OCB polar angle calculation is performed
         properly when the angle is greater than 90 degrees
@@ -516,7 +527,7 @@ class TestOCBScalingMethods(unittest.TestCase):
         self.vdata.set_ocb(self.ocb, None)
         self.vdata.pole_angle = np.nan
         
-        with self.assertRaisesRegexp(ValueError, \
+        with self.assertRaisesRegexp(ValueError,
                             "vector angle in poles-vector triangle required"):
             self.vdata.scale_vector()
 
@@ -666,9 +677,16 @@ class TestOCBScalingMethods(unittest.TestCase):
         self.vdata.set_ocb(self.ocb, None)
         self.vdata.pole_angle = np.nan
         
-        with self.assertRaisesRegexp(ValueError, \
+        with self.assertRaisesRegexp(ValueError,
                             "vector angle in poles-vector triangle required"):
             self.vdata.define_quadrants()
+
+    def test_negative_angle_archav(self):
+        """Test inverse haversine failure with a negative angle"""
+
+        with self.assertRaisesRegexp(ValueError,
+                            "Inverse Haversine requires a positive input"):
+            ocbpy.ocb_scaling.archav(-1.0)
 
 if __name__ == '__main__':
     unittest.main()
