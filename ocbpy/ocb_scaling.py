@@ -865,7 +865,25 @@ def archav(hav):
     alpha : (float)
         Angle in radians
 
+    Notes
+    -----
+    The input must be positive.  However, any number with a magnitude below
+    10-16 will be rounded to zero.
+
     """
-    alpha = 2.0 * np.arcsin(np.sqrt(hav))
+
+    if np.isnan(hav):
+        # Propagate NaNs
+        alpha = np.nan
+    elif hav >= 1.0e-16:
+        # The number is positive, calculate the angle
+        alpha = 2.0 * np.arcsin(np.sqrt(hav))
+    elif abs(hav) < 1.0e-16:
+        # The number is small enough that machine precision may have changed
+        # the sign, but it's a single-precission zero
+        alpha = 0
+    else:
+        # The input is negative
+        raise ValueError('Inverse Haversine requires a positive input')
 
     return alpha
