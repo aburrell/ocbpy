@@ -738,20 +738,20 @@ class VectorData(object):
             minus_pole = 180.0 - self.pole_angle
 
             if(quads[1][4] or quads[2][1] or quads[3][2] or quads[4][3] or
-               (quads[1][1] and self.aacgm_naz > self.pole_angle) or
-               (quads[1][3] and self.aacgm_naz > minus_pole) or
+               ((quads[1][1] or quads[2][4])
+                and self.aacgm_naz > self.pole_angle) or
                ((quads[4][4] or quads[3][1]) and self.aacgm_naz <= minus_pole)
-               or (quads[2][4] and self.aacgm_naz > self.pole_angle) or
-               ((quads[4][2] or quads[3][3]) and self.aacgm_naz > minus_pole)
+               or ((quads[4][2] or quads[3][3] or quads[1][3])
+                and self.aacgm_naz > minus_pole)
                or (quads[2][2] and self.aacgm_naz <= self.pole_angle)):
                 vsigns["east"] = 1
             elif(quads[1][2] or quads[2][3] or quads[3][4] or quads[4][1] or
                  ((quads[4][4] or quads[3][1]) and self.aacgm_naz > minus_pole)
                  or (quads[2][2] and self.aacgm_naz > self.pole_angle) or
-                 ((quads[4][2] or quads[3][3])and self.aacgm_naz <= minus_pole)
-                 or (quads[1][3] and self.aacgm_naz <= minus_pole) or
-                 ((quads[1][1] or quads[2][4])
-                  and self.aacgm_naz <= self.pole_angle)):
+                 ((quads[4][2] or quads[3][3] or quads[1][3])
+                  and self.aacgm_naz <= minus_pole)
+                 or ((quads[1][1] or quads[2][4])
+                     and self.aacgm_naz <= self.pole_angle)):
                 vsigns["east"] = -1
 
         return vsigns
