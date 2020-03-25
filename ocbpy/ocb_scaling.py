@@ -867,16 +867,16 @@ def hav(alpha):
 
     Parameters
     ----------
-    alpha : (float)
+    alpha : (float or array-like)
         Angle in radians
 
     Returns
     --------
-    hav_alpha : (float)
+    hav_alpha : (float or array-like)
         Haversine of alpha, equal to the square of the sine of half-alpha
 
     """
-
+    alpha = np.asarray(alpha)
     hav_alpha = np.sin(alpha * 0.5)**2
 
     return hav_alpha
@@ -886,12 +886,12 @@ def archav(hav):
 
     Parameters
     -----------
-    hav : (float)
+    hav : (float or array-like)
         Haversine of an angle
 
     Returns
     ---------
-    alpha : (float)
+    alpha : (float or array-like)
         Angle in radians
 
     Notes
