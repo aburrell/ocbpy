@@ -85,6 +85,9 @@ class TestOCBScalingMethods(unittest.TestCase):
                                                   dat_name="Test Zero",
                                                   dat_units="$m s^{-1}$")
 
+        if version_info.major == 2:
+            self.assertRegex = self.assertRegexpMatches
+
     def tearDown(self):
         del self.ocb, self.vdata, self.wdata, self.zdata
 
@@ -117,12 +120,8 @@ class TestOCBScalingMethods(unittest.TestCase):
         """ Test the VectorData print statement without a scaling function """
         out = self.vdata.__repr__()
 
-        if version_info.major == 2:
-            self.assertRegexpMatches(out, "Vector data:")
-            self.assertRegexpMatches(out, "No magnitude scaling function")
-        else:
-            self.assertRegex(out, "Vector data:")
-            self.assertRegex(out, "No magnitude scaling function")
+        self.assertRegex(out, "Vector data:")
+        self.assertRegex(out, "No magnitude scaling function")
         del out
 
     def test_vector_repr_with_scaling(self):
@@ -130,12 +129,10 @@ class TestOCBScalingMethods(unittest.TestCase):
         self.vdata.set_ocb(self.ocb, scale_func=ocbpy.ocb_scaling.normal_evar)
         out = self.vdata.__repr__()
 
-        if version_info.major == 2:
-            self.assertRegexpMatches(out, "Vector data:")
-            self.assertRegexpMatches(out, "Scaling function")
-        else:
-            self.assertRegex(out, "Vector data:")
-            self.assertRegex(out, "Scaling function")
+        print(out)
+
+        self.assertRegex(out, "Vector data:")
+        self.assertRegex(out, "Scaling function")
 
     def test_vector_bad_lat(self):
         """ Test the VectorData output with data from the wrong hemisphere """
