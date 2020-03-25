@@ -808,57 +808,78 @@ class VectorData(object):
         Raises
         ------
         ValueError
-            If the input is undefined
+            If the input is undefined or inappropriately sized arrays
 
         """
-        
+
+        # Cast inputs as arrays
+        self.aacgm_mlt = np.asarray(self.aacgm_mlt)
+        self.aacgm_lat = np.asarray(self.aacgm_lat)
+        self.ocb_aacgm_mlt = np.asarray(self.ocb_aacgm_mlt)
+        self.ocb_aacgm_lat = np.asarray(self.ocb_aacgm_lat)
+
         # Test input
-        if np.isnan(self.aacgm_mlt):
-            raise ValueError("AACGM MLT of Vector undefinded")
+        if np.all(np.isnan(self.aacgm_mlt)):
+            raise ValueError("AACGM MLT of Vector(s) undefinded")
 
-        if np.isnan(self.ocb_aacgm_mlt):
-            raise ValueError("AACGM MLT of OCB pole is undefined")
+        if np.all(np.isnan(self.aacgm_lat)):
+            raise ValueError("AACGM latitude of Vector(s) undefined")
 
-        if np.isnan(self.ocb_aacgm_lat):
-            raise ValueError("AACGM latitude of OCB pole is undefined")
+        if np.all(np.isnan(self.ocb_aacgm_mlt)):
+            raise ValueError("AACGM MLT of OCB pole(s) undefined")
 
-        if np.isnan(self.aacgm_lat):
-            raise ValueError("AACGM latitude of Vector undefined")
+        if np.all(np.isnan(self.ocb_aacgm_lat)):
+            raise ValueError("AACGM latitude of OCB pole(s) undefined")
 
         # Convert the AACGM MLT of the observation and OCB pole to radians,
         # then calculate the difference between them.
-        del_long = ocbpy.ocb_time.hr2rad(self.ocb_aacgm_mlt - self.aacgm_mlt)
+        try:
+            del_long = ocbpy.ocb_time.hr2rad(self.ocb_aacgm_mlt-self.aacgm_mlt)
+        except ValueError:
+            raise ValueError("".join(["Vector input must have either a single",
+                                      " OCB or an equal number of vectors ",
+                                      "and OCBs"]))
 
-        if del_long < 0.0:
+        if del_long.shape == () and del_long < 0.0:
             del_long += 2.0 * np.pi
+        else:
+            del_long[del_lon < 0.0] += 2.0 * np.pi
 
-        if del_long == 0.0:
-            self.pole_angle = 0.0
-            return
+        # Initalize the output
+        self.pole_angle = np.full(shape=del_long.shape, fill_value=np.nan)
 
-        if del_long == np.pi:
-            self.pole_angle = 180.0
-            return
+        # Assign the extreme values
+        if del_long.shape == ():
+            if del_long in [0.0, np.pi]:
+                self.pole_angle = np.degrees(del_long)
+                return
+        else:
+            self.pole_angle[del_long == 0.0] = 0.0
+            self.pole_angle[del_long == np.pi] = 180.0
+        calc_mask = (np.isnan(self.pole_angle))
 
         # Find the distance in radians between the two poles
-        hemisphere = np.sign(self.ocb_aacgm_lat)
+        hemisphere = np.sign(self.ocb_aacgm_lat[calc_mask])
         rad_pole = hemisphere * np.pi * 0.5
-        del_pole = hemisphere * (rad_pole - np.radians(self.ocb_aacgm_lat))
+        del_pole = hemisphere*(rad_pole
+                               - np.radians(self.ocb_aacgm_lat[calc_mask]))
 
         # Get the distance in radians between the AACGM pole and the data point
-        del_vect = hemisphere * (rad_pole - np.radians(self.aacgm_lat))
+        del_vect = hemisphere*(rad_pole
+                               - np.radians(self.aacgm_lat[calc_mask]))
 
         # Use the law of haversines, which goes to the spherical trigonometric
         # cosine rule for sides at large angles, but is more robust at small
         # angles, to find the length of the last side of the spherical triangle.
         del_ocb = archav(hav(del_pole - del_vect) +
-                         np.sin(del_pole) * np.sin(del_vect) * hav(del_long))
+                         np.sin(del_pole) * np.sin(del_vect)
+                         * hav(del_long[calc_mask]))
 
         # Again use law of haversines, this time to find the polar angle
         hav_pole_angle = (hav(del_pole) - hav(del_vect - del_ocb)) \
                          / (np.sin(del_vect) * np.sin(del_ocb))
 
-        self.pole_angle = np.degrees(archav(hav_pole_angle))
+        self.pole_angle[calc_mask] = np.degrees(archav(hav_pole_angle))
 
         return
 
