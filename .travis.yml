@@ -3,11 +3,16 @@ os:
     - linux
 python:
     - "2.7"
-    - "3.4"
     - "3.5"
     - "3.6"
+    - "3.7"
+env:
+    - INSTALL_EXTRA=1
+    - INSTALL_EXTRA=2
+before_install:
+    - pip install -r requirements.txt
+    - bash requirements.extra $INSTALL_EXTRA
 install:
-    - pip install coveralls
     - "python setup.py install"
 script:
     - "coverage run --source=ocbpy setup.py test"

@@ -7,20 +7,71 @@
 
 Functions
 -------------------------------------------------------------------------------
+get_datetime_fmt_len(datetime_fmt)
+    Gets the length of a string line needed to hold a specified datetime format
 year_soy_to_datetime(yyyy, soy)
     Converts from seconds of year to datetime
 yyddd_to_date(yyddd)
     Converts from years since 1900 and day of year to datetime
 convert_time(kwargs)
     Convert to datetime from multiple time formats
+deg2hr(lon)
+    Convert from degrees to hours
+hr2deg(lt)
+    Convert from hours to degrees
+rad2hr(lon)
+    Convert from radians to hours
+hr2rad(lt)
+    Convert from hours to radians
+datetime2hr(dtime)
+    Calculate fractional hours of day from timestamp
+slt2glon(slt, dtime)
+    Convert from solar local time to geographic longitude
+glon2slt(glon, dtime)
+    Convert from geographic longitude to solar local time
 
 Moduleauthor
 -------------------------------------------------------------------------------
 Angeline G. Burrell (AGB), 15 April 2017, University of Texas, Dallas (UTDallas)
+
 """
 
-import logbook as logging
 import datetime as dt
+
+
+def get_datetime_fmt_len(datetime_fmt):
+    """ Get the lenght of a string line needed for a specific datetime format
+
+    Parameters
+    ----------
+    datetime_fmt : (str)
+        Formatting string used to convert between datetime and string object
+
+    Returns
+    -------
+    str_len : (int)
+        Minimum length of a string needed to hold the specified data
+
+    Notes
+    -----
+    See the datetime documentation for meanings of the datetime directives
+
+    """
+
+    # Start by setting the base length.  This accounts for any non-datetime
+    # directives in the string length.
+    str_len = len(datetime_fmt)
+
+    # Each of the directives have character lengths that they fill.  Add the
+    # appropriate number of spaces.
+    add_len = {'%a': 1, '%A': 10, '%b': 1, '%B': 8, '%Y': 2, '%f': 4, '%z': 3,
+               '%Z': 1, '%j': 1, '%c': 22, '%x': 8, '%X': 7}
+
+    for dt_dir in add_len.keys():
+        if datetime_fmt.find(dt_dir) >= 0:
+            str_len += add_len[dt_dir]
+
+    return str_len
 
 def year_soy_to_datetime(yyyy, soy):
     """Converts year and soy to datetime
@@ -36,6 +87,7 @@ def year_soy_to_datetime(yyyy, soy):
     ---------
     dtime : (dt.datetime)
         datetime object
+
     """
     import numpy as np
                 
@@ -72,9 +124,11 @@ def yyddd_to_date(yyddd):
     -------
     dtime : (dt.datetime)
         Datetime object containing date information
+
     """
-    assert isinstance(yyddd, str), logging.error("YYDDD must be a string")
-    
+    if not isinstance(yyddd, str):
+        raise ValueError("YYDDD must be a string")
+
     # Remove any decimal data
     yyddd = yyddd.split(".")[0]
 
@@ -115,6 +169,7 @@ def convert_time(year=None, soy=None, yyddd=None, sod=None, date=None, tod=None,
     --------
     dtime : (datetime)
         Datetime object
+
     """
     import numpy as np
 
@@ -156,14 +211,176 @@ def convert_time(year=None, soy=None, yyddd=None, sod=None, date=None, tod=None,
                     # Add the microseconds to dtime
                     microsec = np.ceil(microsec * 1.0e6)
                     dtime += dt.timedelta(microseconds=int(microsec))
-                
-    except ValueError as v:
-        if(len(v.args) > 0 and
-           v.args[0].startswith('unconverted data remains: ')):
-            vsplit = v.args[0].split(" ")
+
+    except ValueError as verr:
+        if(len(verr.args) > 0 and
+           verr.args[0].startswith('unconverted data remains: ')):
+            vsplit = verr.args[0].split(" ")
             dtime = dt.datetime.strptime(str_time[:-(len(vsplit[-1]))],
                                          datetime_fmt)
         else:
-            raise v
+            raise ValueError(verr)
 
     return dtime
+
+def deg2hr(lon):
+    """ Convert from degrees to hours
+
+    Parameters
+    ----------
+    lon : (float or array-like)
+        Longitude-like value in degrees
+
+    Returns
+    -------
+    lt : (float or array-like)
+        Local time-like value in hours
+
+    """
+
+    lt = lon / 15.0 # 12 hr/180 deg = 1/15 hr/deg
+
+    return lt
+
+def hr2deg(lt):
+    """ Convert from degrees to hours
+
+    Parameters
+    ----------
+    lt : (float or array-like)
+        Local time-like value in hours
+
+    Returns
+    -------
+    lon : (float or array-like)
+        Longitude-like value in degrees
+
+    """
+
+    lon = lt * 15.0 # 180 deg/12 hr = 15 deg/hr
+
+    return lon
+
+def hr2rad(lt):
+    """ Convert from hours to radians
+
+    Parameters
+    ----------
+    lt : (float or array-like)
+        Local time-like value in hours
+
+    Returns
+    -------
+    lon : (float or array-like)
+        Longitude-like value in radians
+
+    """
+    import numpy as np
+
+    lon = lt * np.pi / 12.0
+
+    return lon
+
+def rad2hr(lon):
+    """ Convert from radians to hours
+
+    Parameters
+    ----------
+    lon : (float or array-like)
+        Longitude-like value in radians
+
+    Returns
+    -------
+    lt : (float or array-like)
+        Local time-like value in hours
+
+    """
+    import numpy as np
+
+    lt = lon * 12.0 / np.pi
+
+    return lt
+
+def datetime2hr(dtime):
+    """ Calculate hours of day from datetime
+
+    Parameters
+    ----------
+    dtime : (dt.datetime)
+        Universal time as a timestamp
+
+    Returns
+    -------
+    uth : (float)
+        Hours of day, includes fractional hours
+
+    """
+
+    uth = dtime.hour + dtime.minute / 60.0 \
+        + (dtime.second + dtime.microsecond * 1.0e-6) / 3600.0
+
+    return uth
+    
+
+def slt2glon(slt, dtime):
+    """ Convert from solar local time to geographic longitude
+
+    Parameters
+    ----------
+    slt : (float)
+        Solar local time in hours
+    dtime : (dt.datetime)
+        Universal time as a timestamp
+
+    Returns
+    -------
+    glon : (float)
+        Geographic longitude in degrees
+
+    """
+
+    # Calculate universal time of day in hours
+    uth = datetime2hr(dtime)
+
+    # Calculate the longitude in degrees
+    glon = hr2deg(slt - uth)
+
+    # Ensure the longitude is not above 360 or below -180
+    while glon >= 360.0:
+        glon -= 360.0
+
+    while glon <= -180.0:
+        glon += 360.0
+
+    return glon
+
+
+def glon2slt(glon, dtime):
+    """ Convert from geographic longitude to solar local time
+
+    Parameters
+    ----------
+    glon : (float)
+        Geographic longitude in degrees
+    dtime : (dt.datetime)
+        Universal time as a timestamp
+
+    Returns
+    -------
+    slt : (float)
+        Solar local time in hours
+
+    """
+
+
+    # Calculate the longitude in degrees
+    slt = deg2hr(glon) + datetime2hr(dtime)
+
+    # Ensure the local time is between 0 and 24 h
+    while slt >= 24.0:
+        slt -= 24.0
+
+    while slt < 0.0:
+        slt += 24.0
+
+    return slt

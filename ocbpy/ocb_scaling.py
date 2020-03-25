@@ -27,9 +27,12 @@ References
 Chisham, G. (2017), A new methodology for the development of high-latitude
  ionospheric climatologies and empirical models, Journal of Geophysical
  Research: Space Physics, 122, doi:10.1002/2016JA023235.
+
 """
-import logbook as logging
+from __future__ import absolute_import, unicode_literals
 import numpy as np
+
+import ocbpy
 
 def normal_evar(evar, unscaled_r, scaled_r):
     """ Normalise a variable proportional to the electric field
@@ -61,6 +64,7 @@ def normal_evar(evar, unscaled_r, scaled_r):
     Chisham, G. (2017), A new methodology for the development of high‐latitude
     ionospheric climatologies and empirical models, Journal of Geophysical
     Research: Space Physics, doi:10.1002/2016JA023235.
+
     """
 
     nvar = evar * unscaled_r / scaled_r
@@ -97,6 +101,7 @@ def normal_curl_evar(curl_evar, unscaled_r, scaled_r):
     Chisham, G. (2017), A new methodology for the development of high‐latitude
     ionospheric climatologies and empirical models, Journal of Geophysical
     Research: Space Physics, doi:10.1002/2016JA023235.
+
     """
 
     nvar = curl_evar * (unscaled_r / scaled_r)**2
@@ -208,11 +213,12 @@ class VectorData(object):
         calculate the signs of the OCB scaled vector components
     calc_vec_pole_angle(angular_res=1.0e-3)
         calculate the vector angle of the vector-poles triangle
+
     """
 
     def __init__(self, dat_ind, ocb_ind, aacgm_lat, aacgm_mlt, ocb_lat=np.nan,
-                 ocb_mlt=np.nan, aacgm_n=0.0, aacgm_e=0.0, aacgm_z=0.0,
-                 aacgm_mag=np.nan, dat_name=None, dat_units=None,
+                 ocb_mlt=np.nan, r_corr=np.nan, aacgm_n=0.0, aacgm_e=0.0,
+                 aacgm_z=0.0, aacgm_mag=np.nan, dat_name=None, dat_units=None,
                  scale_func=None):
         """ Initialize VectorData object
 
@@ -249,10 +255,13 @@ class VectorData(object):
             mesurement OCB latitude (degrees)]
             Not necessary if no magnitude scaling is needed. (default=None)
 
-        Returns
-        --------
-            self : Initialised VectorData class object by setting AACGM values
+        Raises
+        ------
+        ValueError
+            If the vector magnitude and AACGM components are inconsistent
+
         """
+
         # Assign the vector data name and units
         self.dat_name = dat_name
         self.dat_units = dat_units
@@ -271,6 +280,9 @@ class VectorData(object):
         if np.isnan(aacgm_mag):
             self.aacgm_mag = np.sqrt(aacgm_n**2 + aacgm_e**2 + aacgm_z**2)
         else:
+            if abs(aacgm_mag -
+                   np.sqrt(aacgm_n**2+aacgm_e**2+aacgm_z**2)) > 1.0e-3:
+                raise ValueError("inconsistent AACGM components")
             self.aacgm_mag = aacgm_mag
 
         # Assign the OCB vector default values and location
@@ -280,6 +292,7 @@ class VectorData(object):
         self.ocb_mag = np.nan
         self.ocb_lat = ocb_lat
         self.ocb_mlt = ocb_mlt
+        self.r_corr = r_corr
 
         # Assign the default pole locations, relative angles, and quadrants
         self.ocb_quad = 0
@@ -295,47 +308,41 @@ class VectorData(object):
         return
 
     def __repr__(self):
-        """ Provide readable representation of the DataVector object
-        """
+        """ Provide readable representation of the DataVector object """
         
         out = "Vector data:"
         if self.dat_name is not None:
-            out = "{:s} {:s}".format(out, self.dat_name)
+            out += " {:s}".format(self.dat_name)
         if self.dat_units is not None:
-            out = "{:s} ({:s})".format(out, self.dat_units)
-        out = "{:s}\nData Index {:d}\tOCB Index {:d}\n".format(out,
-                                                               self.dat_ind,
-                                                               self.ocb_ind)
-        out = "{:s}-------------------------------------------\n".format(out)
-        out = "{:s}Location: [Mag. Lat. (degrees), MLT (hours)]\n".format(out)
-        out = "{:s}   AACGM: [{:.3f}, {:.3f}]\n".format(out, self.aacgm_lat,
-                                                       self.aacgm_mlt)
+            out += " ({:s})".format(self.dat_units)
+        out += "\nData Index {:d}\tOCB Index {:d}\n".format(self.dat_ind,
+                                                            self.ocb_ind)
+        out += "-------------------------------------------\n"
+        out += "Location: [Mag. Lat. (degrees), MLT (hours)]\n"
+        out += "   AACGM: [{:.3f}, {:.3f}]\n".format(self.aacgm_lat,
+                                                     self.aacgm_mlt)
         if not np.isnan(self.ocb_lat) and not np.isnan(self.ocb_mlt):
-            out = "{:s}     OCB: [{:.3f}, {:.3f}]\n".format(out, self.ocb_lat,
-                                                           self.ocb_mlt)
+            out += "     OCB: [{:.3f}, {:.3f}]\n".format(self.ocb_lat,
+                                                         self.ocb_mlt)
 
-        out = "\n{:s}-------------------------------------------\n".format(out)
-        out = "{:s}Value: Magnitude [N, E, Z]\n".format(out)
-        out = "{:s}AACGM: {:.3g} [".format(out, self.aacgm_mag)
-        out = "{:s}{:.3g}, {:.3g}, {:.3g}]\n".format(out, self.aacgm_n,
-                                                     self.aacgm_e, self.aacgm_z)
+        out += "\n-------------------------------------------\n"
+        out += "Value: Magnitude [N, E, Z]\n"
+        out += "AACGM: {:.3g} [{:.3g}, ".format(self.aacgm_mag, self.aacgm_n)
+        out += "{:.3g}, {:.3g}]\n".format(self.aacgm_e, self.aacgm_z)
         if not np.isnan(self.ocb_mag):
-            out = "{:s}  OCB: {:.3g} [".format(out, self.ocb_mag)
-            out = "{:s}{:.3g}, {:.3g}, {:.3g}]\n".format(out, self.ocb_n,
-                                                         self.ocb_e, self.ocb_z)
+            out += "  OCB: {:.3g} [{:.3g}, ".format(self.ocb_mag, self.ocb_n)
+            out += "{:.3g}, {:.3g}]\n".format(self.ocb_e, self.ocb_z)
 
-        out = "\n{:s}-------------------------------------------\n".format(out)
+        out += "\n-------------------------------------------\n"
         if self.scale_func is None:
-            out = "{:s}No magnitude scaling function provided\n".format(out)
+            out += "No magnitude scaling function provided\n"
         else:
-            out = "{:s}Scaling function: ".format(out)
-            out = "{:s}{:s}\n".format(out, self.scale_func.__name__)
+            out += "Scaling function: {:s}\n".format(self.scale_func.__name__)
 
         return out
 
     def __str__(self):
-        """ Provide readable representation of the DataVector object
-        """
+        """ Provide readable representation of the DataVector object """
         
         out = self.__repr__()
         return out
@@ -372,6 +379,8 @@ class VectorData(object):
             Vector OCB latitude, if not updated already (degrees)
         self.ocb_mlt : (float)
             Vector OCB MLT, if not updated already (hours)
+        self.r_corr : (float)
+            OCB radius correction for vector location (degrees)
         self.ocb_quad : (int)
             OCB pole AACGM quadrant
         self.vec_quad : (int)
@@ -390,19 +399,26 @@ class VectorData(object):
             [measurement value, unscaled polar cap radius (degrees),
             scaled polar cap radius (degrees)]
             Not necessary if defined earlier or if no scaling is needed.
-        """
 
-        # Set the AACGM coordinates of the OCB pole
-        self.unscaled_r = ocb.r[self.ocb_ind]
-        self.scaled_r = 90.0 - abs(ocb.boundary_lat)
-        self.ocb_aacgm_mlt = ocb.phi_cent[self.ocb_ind] / 15.0
-        self.ocb_aacgm_lat = 90.0 - ocb.r_cent[self.ocb_ind]
+        """
 
         # If the OCB vector coordinates weren't included in the initial info,
         # update them here
-        if np.isnan(self.ocb_lat) or np.isnan(self.ocb_mlt):
-            self.ocb_lat, self.ocb_mlt = ocb.normal_coord(self.aacgm_lat,
-                                                          self.aacgm_mlt)
+        if(np.isnan(self.ocb_lat) or np.isnan(self.ocb_mlt) or
+           np.isnan(self.r_corr)):
+            (self.ocb_lat, self.ocb_mlt,
+             self.r_corr) = ocb.normal_coord(self.aacgm_lat, self.aacgm_mlt)
+
+        # Exit if the OCB coordinates can't be calculated at this location
+        if(np.isnan(self.ocb_lat) or np.isnan(self.ocb_mlt) or
+           np.isnan(self.r_corr)):
+            return
+
+        # Set the AACGM coordinates of the OCB pole
+        self.unscaled_r = ocb.r[self.ocb_ind] + self.r_corr
+        self.scaled_r = 90.0 - abs(ocb.boundary_lat)
+        self.ocb_aacgm_mlt = ocbpy.ocb_time.deg2hr(ocb.phi_cent[self.ocb_ind])
+        self.ocb_aacgm_lat = 90.0 - ocb.r_cent[self.ocb_ind]
 
         # Get the angle at the data vector appended by the AACGM and OCB poles
         self.calc_vec_pole_angle()
@@ -416,7 +432,7 @@ class VectorData(object):
                 if scale_func is None:
                     # This is not necessarily a bad thing, if the value does not
                     # need to be scaled.
-                    logging.info("no scaling function provided")
+                    ocbpy.logger.info("no scaling function provided")
                 else:
                     self.scale_func = scale_func
 
@@ -450,15 +466,23 @@ class VectorData(object):
         North (N) and East (E) are defined by the AACGM directions centred on
         the data vector location, assuming vertical is positive downwards
         Quadrants: 1 [N, E]; 2 [N, W]; 3 [S, W]; 4 [S, E]
+
+        Raises
+        ------
+        ValueError
+            If the required input is undefined
+
         """
 
         # Test input
-        assert(not np.isnan(self.ocb_aacgm_mlt)), \
-            logging.error("OCB pole location required")
-        assert(not np.isnan(self.aacgm_mlt)), \
-            logging.error("Vector AACGM location required")
-        assert(not np.isnan(self.pole_angle)), \
-            logging.error("vector angle in poles-vector triangle required")
+        if np.isnan(self.ocb_aacgm_mlt):
+            raise ValueError("OCB pole location required")
+
+        if np.isnan(self.aacgm_mlt):
+            raise ValueError("Vector AACGM location required")
+
+        if np.isnan(self.pole_angle):
+            raise ValueError("vector angle in poles-vector triangle required")
 
         # Determine where the OCB pole is relative to the data vector
         ocb_adj_mlt = self.ocb_aacgm_mlt - self.aacgm_mlt
@@ -506,15 +530,23 @@ class VectorData(object):
             OCB scaled vertical component
         ocb_mag : (float)
             OCB scaled magnitude
+
+        Raises
+        ------
+        ValueError
+            If the required input is not defined
+
         """
 
         # Test input
-        assert(not np.isnan(self.ocb_lat) and not np.isnan(self.ocb_mlt)), \
-            logging.error("OCB coordinates required")
-        assert(not np.isnan(self.ocb_aacgm_mlt)), \
-            logging.error("OCB pole location required")
-        assert(not np.isnan(self.pole_angle)), \
-            logging.error("vector angle in poles-vector triangle required")
+        if np.isnan(self.ocb_lat) or np.isnan(self.ocb_mlt):
+            raise ValueError("OCB coordinates required")
+
+        if np.isnan(self.ocb_aacgm_mlt):
+            raise ValueError("OCB pole location required")
+
+        if np.isnan(self.pole_angle):
+            raise ValueError("vector angle in poles-vector triangle required")
 
         # Scale vertical component
         if self.scale_func is None or self.aacgm_z != 0.0:
@@ -546,10 +578,6 @@ class VectorData(object):
             # If not defined, get the OCB and vector quadrants
             if(self.ocb_quad == 0 or self.vec_quad == 0):
                 self.define_quadrants()
-
-            if(self.ocb_quad == 0 or self.vec_quad == 0):
-                logging.error("unable to define OCB and vector quadrants")
-                return
     
             # Get the unscaled 2D vector magnitude
             vmag = np.sqrt(self.aacgm_n**2 + self.aacgm_e**2)
@@ -594,22 +622,33 @@ class VectorData(object):
         --------
         ocb_naz : (float)
             Angle between measurement vector and OCB pole in degrees
+
+        Raises
+        ------
+        ValueError
+            If the required input is undefined
+
         """
+
         quad_range = np.arange(1, 5)
 
-        assert self.ocb_quad in quad_range, \
-            logging.error("OCB quadrant undefined")
-        assert self.vec_quad in quad_range, \
-            logging.error("Vector quadrant undefined")
-        assert not np.isnan(self.aacgm_naz), \
-            logging.error("AACGM polar angle undefined")
-        assert not np.isnan(self.pole_angle), \
-            logging.error("Vector angle undefined")
+        # Test input
+        if self.ocb_quad not in quad_range:
+            raise ValueError("OCB quadrant undefined")
+
+        if self.vec_quad not in quad_range:
+            raise ValueError("Vector quadrant undefined")
+
+        if np.isnan(self.aacgm_naz):
+            raise ValueError("AACGM polar angle undefined")
+
+        if np.isnan(self.pole_angle):
+            raise ValueError("Vector angle undefined")
 
         # Initialise the output and set the quadrant dictionary
         ocb_naz = np.nan
-        quads = {o:{v:True if self.ocb_quad == o and self.vec_quad == v
-                    else False for v in quad_range} for o in quad_range}
+        quads = {o: {v: True if self.ocb_quad == o and self.vec_quad == v
+                     else False for v in quad_range} for o in quad_range}
 
         # Calculate OCB polar angle based on quadrants and other angles
         if(((quads[2][4] or quads[2][2]) and self.aacgm_naz > self.pole_angle)
@@ -668,27 +707,39 @@ class VectorData(object):
         ---------
         vsigns : (dict)
             Dictionary with keys 'north' and 'east' containing the desired signs
+
+        Raises
+        ------
+        ValueError
+            If the required input is undefined
+
         """
+
         quad_range = np.arange(1, 5)
 
         # Test input
-        assert north or east, logging.warning("must set at least one direction")
-        assert self.ocb_quad in quad_range, \
-            logging.error("OCB quadrant undefined")
-        assert self.vec_quad in quad_range, \
-            logging.error("Vector quadrant undefined")
-        assert not np.isnan(self.aacgm_naz), \
-            logging.error("AACGM polar angle undefined")
-        assert not np.isnan(self.pole_angle), \
-            logging.error("Vector angle undefined")
+        if not np.any([north, east]):
+            raise ValueError("must set at least one direction")
+
+        if self.ocb_quad not in quad_range:
+            raise ValueError("OCB quadrant undefined")
+
+        if self.vec_quad not in quad_range:
+            raise ValueError("Vector quadrant undefined")
+
+        if np.isnan(self.aacgm_naz):
+            raise ValueError("AACGM polar angle undefined")
+
+        if np.isnan(self.pole_angle):
+            raise ValueError("Vector angle undefined")
 
         # Initialise output
-        vsigns = {"north":0, "east":0}
+        vsigns = {"north": 0, "east": 0}
 
         # If necessary, initialise quadrant dictionary
-        if not np.all(quads.keys() == quad_range):
-            quads = {o:{v:True if self.ocb_quad == o and self.vec_quad == v
-                        else False for v in quad_range} for o in quad_range}
+        if not np.all([kk in quads.keys() for kk in quad_range]):
+            quads = {o: {v: True if self.ocb_quad == o and self.vec_quad == v
+                         else False for v in quad_range} for o in quad_range}
 
         if north:
             pole_minus = self.pole_angle - 90.0
@@ -697,15 +748,15 @@ class VectorData(object):
             
             if(quads[1][1] or quads[2][2] or quads[3][3] or quads[4][4] or
                (quads[1][4] and self.aacgm_naz <= pole_plus) or
-               (quads[1][2] and self.aacgm_naz > minus_pole) or
-               (quads[2][1] and self.aacgm_naz <= minus_pole) or 
-               ((quads[3][4] or quads[4][3]) and self.aacgm_naz <= pole_minus)
-               or ((quads[3][2] or quads[4][1]) and self.aacgm_naz > pole_minus)
+               ((quads[1][2] or quads[2][1])
+                and self.aacgm_naz <= minus_pole) or
+               ((quads[3][4] or quads[4][3])
+                and self.aacgm_naz <= pole_minus) or
+               ((quads[3][2] or quads[4][1]) and self.aacgm_naz > pole_minus)
                or (quads[2][3] and self.aacgm_naz > minus_pole)):
                 vsigns["north"] = 1
-            elif((quads[1][2] and self.aacgm_naz > minus_pole) or
-                 (quads[1][4] and self.aacgm_naz > pole_plus) or
-                 (quads[2][1] and self.aacgm_naz > minus_pole) or
+            elif(((quads[1][2] or quads[2][1]) and self.aacgm_naz > minus_pole)
+                 or (quads[1][4] and self.aacgm_naz > pole_plus) or
                  ((quads[4][1] or quads[3][2]) and self.aacgm_naz <= pole_minus)
                  or (quads[2][3] and self.aacgm_naz <= minus_pole) or
                  ((quads[4][3] or quads[3][4]) and self.aacgm_naz > pole_minus)
@@ -716,26 +767,26 @@ class VectorData(object):
             minus_pole = 180.0 - self.pole_angle
 
             if(quads[1][4] or quads[2][1] or quads[3][2] or quads[4][3] or
-               (quads[1][1] and self.aacgm_naz > self.pole_angle) or
-               (quads[1][3] and self.aacgm_naz > minus_pole) or
+               ((quads[1][1] or quads[2][4])
+                and self.aacgm_naz > self.pole_angle) or
                ((quads[4][4] or quads[3][1]) and self.aacgm_naz <= minus_pole)
-               or (quads[2][4] and self.aacgm_naz > self.pole_angle) or
-               ((quads[4][2] or quads[3][3]) and self.aacgm_naz > minus_pole)
+               or ((quads[4][2] or quads[3][3] or quads[1][3])
+                and self.aacgm_naz > minus_pole)
                or (quads[2][2] and self.aacgm_naz <= self.pole_angle)):
                 vsigns["east"] = 1
             elif(quads[1][2] or quads[2][3] or quads[3][4] or quads[4][1] or
                  ((quads[4][4] or quads[3][1]) and self.aacgm_naz > minus_pole)
                  or (quads[2][2] and self.aacgm_naz > self.pole_angle) or
-                 ((quads[4][2] or quads[3][3])and self.aacgm_naz <= minus_pole)
-                 or (quads[1][3] and self.aacgm_naz <= minus_pole) or
-                 ((quads[1][1] or quads[2][4])
-                  and self.aacgm_naz <= self.pole_angle)):
+                 ((quads[4][2] or quads[3][3] or quads[1][3])
+                  and self.aacgm_naz <= minus_pole)
+                 or ((quads[1][1] or quads[2][4])
+                     and self.aacgm_naz <= self.pole_angle)):
                 vsigns["east"] = -1
 
         return vsigns
 
     def calc_vec_pole_angle(self):
-        """calculates the angle between the AACGM pole, a measurement, and the
+        """Calculate the angle between the AACGM pole, a measurement, and the
         OCB pole using spherical triginometry
 
         Requires
@@ -753,20 +804,30 @@ class VectorData(object):
         --------
         self.pole_angle : (float)
             Angle in degrees between AACGM north, a measurement, and OCB north
+
+        Raises
+        ------
+        ValueError
+            If the input is undefined
+
         """
+        
         # Test input
-        assert(not np.isnan(self.aacgm_mlt)), \
-            logging.error("AACGM MLT of Vector undefinded")
-        assert(not np.isnan(self.ocb_aacgm_mlt)), \
-            logging.error("AACGM MLT of OCB pole is undefined")
-        assert(not np.isnan(self.ocb_aacgm_lat)), \
-            logging.error("AACGM latitude of OCB pole is undefined")
-        assert(not np.isnan(self.aacgm_lat)), \
-            logging.error("AACGM latitude of Vector undefined")
+        if np.isnan(self.aacgm_mlt):
+            raise ValueError("AACGM MLT of Vector undefinded")
+
+        if np.isnan(self.ocb_aacgm_mlt):
+            raise ValueError("AACGM MLT of OCB pole is undefined")
+
+        if np.isnan(self.ocb_aacgm_lat):
+            raise ValueError("AACGM latitude of OCB pole is undefined")
+
+        if np.isnan(self.aacgm_lat):
+            raise ValueError("AACGM latitude of Vector undefined")
 
         # Convert the AACGM MLT of the observation and OCB pole to radians,
         # then calculate the difference between them.
-        del_long = (self.ocb_aacgm_mlt - self.aacgm_mlt) * np.pi / 12.0
+        del_long = ocbpy.ocb_time.hr2rad(self.ocb_aacgm_mlt - self.aacgm_mlt)
 
         if del_long < 0.0:
             del_long += 2.0 * np.pi
@@ -813,7 +874,9 @@ def hav(alpha):
     --------
     hav_alpha : (float)
         Haversine of alpha, equal to the square of the sine of half-alpha
+
     """
+
     hav_alpha = np.sin(alpha * 0.5)**2
 
     return hav_alpha
@@ -830,7 +893,32 @@ def archav(hav):
     ---------
     alpha : (float)
         Angle in radians
+
+    Notes
+    -----
+    The input must be positive.  However, any number with a magnitude below
+    10-16 will be rounded to zero.
+
+    Raises
+    ------
+    ValueError
+        If the input is negative beyond the limits of very small numbers
+        near zero.
+
     """
-    alpha = 2.0 * np.arcsin(np.sqrt(hav))
+
+    if np.isnan(hav):
+        # Propagate NaNs
+        alpha = np.nan
+    elif hav >= 1.0e-16:
+        # The number is positive, calculate the angle
+        alpha = 2.0 * np.arcsin(np.sqrt(hav))
+    elif abs(hav) < 1.0e-16:
+        # The number is small enough that machine precision may have changed
+        # the sign, but it's a single-precission zero
+        alpha = 0
+    else:
+        # The input is negative
+        raise ValueError('Inverse Haversine requires a positive input')
 
     return alpha

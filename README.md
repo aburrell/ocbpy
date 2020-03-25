@@ -22,28 +22,35 @@ from three auroral instruments provide northern hemisphere OCB locations
 for 3 May 2000 03:01:42 UT - 22 Aug 2002 00:01:28, though not all of the times
 included in these files contain high-quality estimations of the OCB.
 Recommended selection criteria are included as defaults in the OCBoundary class.
+OCBpy also supports boundaries provided by AMPERE, as discussed in:
+
+  * Burrell, A. G. et al.: AMPERE Polar Cap Boundaries, Ann. Geophys. Discuss.,
+    [doi:10.5194/angeo-2019-113](https://doi.org/10.5194/angeo-2019-113),
+    in review, 2019.
 
 Currently, support is included for files from the following datasets:
 
   * SuperMAG (available at http://supermag.jhuapl.edu)
   * SuperDARN Vorticity (contact GC at gchi@bas.ac.uk)
+  * Any pysat Instrument (available at https://github.com/rstoneback/pysat)
 
 These routines may be used as a guide to write routines for other datasets.
 
 # Python versions
 
-This module has been tested on python version 2.7, 3.4 - 3.6.  Local testing on
-3.3 was also performed, but may not be supported in the next version.
+This module has been tested on python version 2.7, 3.5 - 3.7.  Support for 2.7
+will be dropped in 2020.
 
 # Dependencies
 
 The listed dependecies were tested with the following versions:
-  * datetime 
-  * numpy (1.11.3, 1.12.1, 1.14.1)
+  * numpy
   * logbook
-  * setuptools (36.0.1)
+  * aacgmv2
+  * pysat (2.0.0)
 
-Testing is performed using the python module, unittest
+Testing is performed using the python module, unittest.  To limit dependency
+issues, pysat (>=2.0.0) is an optional dependency.
 
 # Installation
 
@@ -133,16 +140,14 @@ ax.yaxis.set_ticklabels(["85$^\circ$","80$^\circ$","75$^\circ$","70$^\circ$"])
 
 Mark the location of the circle centre in AACGM coordinates
 ```
-phi_cent_rad = np.radians(ocb.phi_cent[ocb.rec_ind])
-ax.plot([phi_cent_rad], [ocb.r_cent[ocb.rec_ind]], "mx", ms=10, label="OCB Pole")
+ax.plot(np.radians(ocb.phi_cent[ocb.rec_ind]), ocb.r_cent[ocb.rec_ind], "mx", ms=10, label="OCB Pole")
 ```
 
 Calculate at plot the location of the OCB in AACGM coordinates
 ```
-lon = np.arange(0.0, 2.0 * np.pi + 0.1, 0.1)
-del_lon = lon - phi_cent_rad
-lat = ocb.r_cent[ocb.rec_ind] * np.cos(del_lon) + np.sqrt(ocb.r[ocb.rec_ind]**2 - (ocb.r_cent[ocb.rec_ind] * np.sin(del_lon))**2)
-ax.plot(lon, lat, "m-", linewidth=2, label="OCB")
+lon = np.linspace(0.0, 2.0 * np.pi, num=64)
+ocb.get_aacgm_boundary_lat(aacgm_lon=np.degrees(lon), rec_ind=ocb.rec_ind)
+ax.plot(lon, 90.0-ocb.aacgm_boundary_lat[ocb.rec_ind], "m-", linewidth=2, label="OCB")
 ax.text(lon[35], lat[35]+1.5, "74$^\circ$", fontsize="medium", color="m")
 ```
 
@@ -181,5 +186,5 @@ ax.legend(loc=2, fontsize="small", title="{:}".format(ocb.dtime[ocb.rec_ind]), b
 The figure should now look like:
 <div align="center">
         <img height="0" width="0px">
-        <img width="80%" src="/docs/example_ocb_location.png" alt="OCB Example" title="OCB Example"</img>
+        <img width="80%" src="/docs/figures/example_ocb_location.png" alt="OCB Example" title="OCB Example"</img>
 </div>

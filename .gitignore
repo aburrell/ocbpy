@@ -18,3 +18,7 @@
 docs/.build
 docs/.static
 docs/.templates
+
+# DMSP SSJ files
+ocbpy/boundaries/dmsp-ssj*.???
+ocbpy/boundaries/dmsp-f*.c??
