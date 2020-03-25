@@ -897,28 +897,34 @@ def archav(hav):
     Notes
     -----
     The input must be positive.  However, any number with a magnitude below
-    10-16 will be rounded to zero.
-
-    Raises
-    ------
-    ValueError
-        If the input is negative beyond the limits of very small numbers
-        near zero.
+    10-16 will be rounded to zero.  More negative numbers will return NaN.
 
     """
 
-    if np.isnan(hav):
-        # Propagate NaNs
-        alpha = np.nan
-    elif hav >= 1.0e-16:
-        # The number is positive, calculate the angle
-        alpha = 2.0 * np.arcsin(np.sqrt(hav))
-    elif abs(hav) < 1.0e-16:
-        # The number is small enough that machine precision may have changed
-        # the sign, but it's a single-precission zero
-        alpha = 0
-    else:
-        # The input is negative
-        raise ValueError('Inverse Haversine requires a positive input')
+    # Cast the output as array-like
+    hav = np.asarray(hav)
+
+    # Initialize the output to NaN, so that values of NaN or negative
+    # numbers will return NaN
+    alpha = np.full(shape=hav.shape, fill_value=np.nan)
+
+    # If the number is positive, calculate the angle
+    norm_ind = np.where(np.greater_equal(hav, 1.0e-16, where=~np.isnan(hav))
+                        & ~np.isnan(hav))
+    if len(norm_ind[0]) > 0:
+        if hav.shape == ():
+            alpha = 2.0 * np.arcsin(np.sqrt(hav))
+        else:
+            alpha[norm_ind] = 2.0 * np.arcsin(np.sqrt(hav[norm_ind]))
+
+    #  The number is small enough that machine precision may have changed
+    # the sign, but it's a single-precission zero
+    small_ind = np.where(np.less(abs(hav), 1.0e-16, where=~np.isnan(hav))
+                         & ~np.isnan(hav))
+    if len(small_ind[0]) > 0:
+        if hav.shape == ():
+            alpha = 0.0
+        else:
+            alpha[small_ind] = 0.0
 
     return alpha
