@@ -255,7 +255,13 @@ class VectorData(object):
             mesurement OCB latitude (degrees)]
             Not necessary if no magnitude scaling is needed. (default=None)
 
+        Raises
+        ------
+        ValueError
+            If the vector magnitude and AACGM components are inconsistent
+
         """
+
         # Assign the vector data name and units
         self.dat_name = dat_name
         self.dat_units = dat_units
@@ -461,6 +467,11 @@ class VectorData(object):
         the data vector location, assuming vertical is positive downwards
         Quadrants: 1 [N, E]; 2 [N, W]; 3 [S, W]; 4 [S, E]
 
+        Raises
+        ------
+        ValueError
+            If the required input is undefined
+
         """
 
         # Test input
@@ -519,6 +530,11 @@ class VectorData(object):
             OCB scaled vertical component
         ocb_mag : (float)
             OCB scaled magnitude
+
+        Raises
+        ------
+        ValueError
+            If the required input is not defined
 
         """
 
@@ -607,7 +623,13 @@ class VectorData(object):
         ocb_naz : (float)
             Angle between measurement vector and OCB pole in degrees
 
+        Raises
+        ------
+        ValueError
+            If the required input is undefined
+
         """
+
         quad_range = np.arange(1, 5)
 
         # Test input
@@ -685,7 +707,14 @@ class VectorData(object):
         ---------
         vsigns : (dict)
             Dictionary with keys 'north' and 'east' containing the desired signs
+
+        Raises
+        ------
+        ValueError
+            If the required input is undefined
+
         """
+
         quad_range = np.arange(1, 5)
 
         # Test input
@@ -757,7 +786,7 @@ class VectorData(object):
         return vsigns
 
     def calc_vec_pole_angle(self):
-        """calculates the angle between the AACGM pole, a measurement, and the
+        """Calculate the angle between the AACGM pole, a measurement, and the
         OCB pole using spherical triginometry
 
         Requires
@@ -775,6 +804,11 @@ class VectorData(object):
         --------
         self.pole_angle : (float)
             Angle in degrees between AACGM north, a measurement, and OCB north
+
+        Raises
+        ------
+        ValueError
+            If the input is undefined
 
         """
         
@@ -842,6 +876,7 @@ def hav(alpha):
         Haversine of alpha, equal to the square of the sine of half-alpha
 
     """
+
     hav_alpha = np.sin(alpha * 0.5)**2
 
     return hav_alpha
@@ -863,6 +898,12 @@ def archav(hav):
     -----
     The input must be positive.  However, any number with a magnitude below
     10-16 will be rounded to zero.
+
+    Raises
+    ------
+    ValueError
+        If the input is negative beyond the limits of very small numbers
+        near zero.
 
     """
 
