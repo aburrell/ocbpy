@@ -29,7 +29,7 @@ def circular(mlt, r_add=0.0):
 
     Parameters
     ----------
-    mlt : (float)
+    mlt : (float or array-like)
         Magnetic local time in hours (not actually used)
     r_add : (float)
         Offset added to default radius in degrees.  Positive values shift the
@@ -38,12 +38,12 @@ def circular(mlt, r_add=0.0):
 
     Returns
     -------
-    r_corr : (float)
+    r_corr : (float or array-like)
         Radius correction in degrees at this MLT
 
     """
 
-    return r_add
+    return np.full(shape=np.asarray(mlt).shape, fill_value=r_add)
 
 
 def elliptical(mlt, instrument='ampere', method='median'):
@@ -51,7 +51,7 @@ def elliptical(mlt, instrument='ampere', method='median'):
 
     Parameters
     ----------
-    mlt : (float)
+    mlt : (float or array-like)
         Magnetic local time in hours
     instrument : (str)
         Data set's instrument name (default='ampere')
@@ -61,7 +61,7 @@ def elliptical(mlt, instrument='ampere', method='median'):
 
     Returns
     -------
-    r_corr : (float)
+    r_corr : (float or array-like)
         Radius correction in degrees at this MLT
 
     References
@@ -104,7 +104,7 @@ def harmonic(mlt, instrument='ampere', method='median'):
 
     Returns
     -------
-    r_corr : (float)
+    r_corr : (float or array-like)
         Radius correction in degrees at this MLT
 
     References
