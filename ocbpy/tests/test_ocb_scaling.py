@@ -87,7 +87,6 @@ class TestOCBScalingMethods(unittest.TestCase):
 
         if version_info.major == 2:
             self.assertRegex = self.assertRegexpMatches
-            self.assertRaisesRegex = self.assertRaisesRegexp
 
     def tearDown(self):
         del self.ocb, self.vdata, self.wdata, self.zdata
@@ -102,16 +101,6 @@ class TestOCBScalingMethods(unittest.TestCase):
         """ Test the initialisation of the VectorData object with magnitude
         """
         self.assertAlmostEqual(self.wdata.aacgm_mag, 100.036243432)
-
-    def test_init_failure(self):
-        """ Test the initialisation of the VectorData object with inconsistent
-        AACGM components
-        """
-        with self.assertRaisesRegex(ValueError, "inconsistent AACGM"):
-            self.wdata = ocbpy.ocb_scaling.VectorData(0, self.ocb.rec_ind, 75.0,
-                                                      22.0, aacgm_mag=100.0,
-                                                      dat_name="Test",
-                                                      dat_units="$m s^{-1}$")
 
     def test_vector_repr_str(self):
         """ Test the VectorData print statement using repr and str """
@@ -466,6 +455,148 @@ class TestOCBScalingMethods(unittest.TestCase):
         self.vdata.set_ocb(self.ocb, None)
         self.assertEqual(self.vdata.unscaled_r, 14.09)
 
+
+class TestVectorDataRaises(unittest.TestCase):
+    def setUp(self):
+        """ Initialize the tests for calc_vec_pole_angle
+        """
+        test_file = path.join(path.dirname(ocbpy.__file__), "tests",
+                              "test_data", "test_north_circle")
+        self.assertTrue(path.isfile(test_file))
+        self.ocb = ocbpy.ocboundary.OCBoundary(filename=test_file,
+                                               instrument='image')
+        self.ocb.rec_ind = 27
+        self.vdata = ocbpy.ocb_scaling.VectorData(0, self.ocb.rec_ind, 75.0,
+                                                  22.0, aacgm_n=50.0,
+                                                  aacgm_e=86.5, aacgm_z=5.0,
+                                                  dat_name="Test",
+                                                  dat_units="$m s^{-1}$")
+        self.input_attrs = list()
+        self.bad_input = [np.nan, np.full(shape=2, fill_value=np.nan)]
+        self.raise_out = list()
+        self.hold_val = None
+
+        if version_info.major == 2:
+            self.assertRaisesRegex = self.assertRaisesRegexp
+
+    def tearDown(self):
+        del self.ocb, self.vdata, self.input_attrs, self.bad_input
+        del self.raise_out, self.hold_val
+
+    def test_init_failure(self):
+        """ Test the initialisation of the VectorData object with inconsistent
+        AACGM components
+        """
+        with self.assertRaisesRegex(ValueError, "inconsistent AACGM"):
+            self.vdata = ocbpy.ocb_scaling.VectorData(0, self.ocb.rec_ind, 75.0,
+                                                      22.0, aacgm_mag=100.0,
+                                                      dat_name="Test",
+                                                      dat_units="$m s^{-1}$")
+
+    @unittest.skipIf(version_info.major == 2,
+                     'Python 2.7 does not support subTest')
+    def test_bad_calc_vec_pole_angle(self):
+        """Test calc_vec_pole_angle failure with bad input"""
+        self.input_attrs = ['aacgm_mlt', 'ocb_aacgm_mlt', 'aacgm_lat',
+                            'ocb_aacgm_lat']
+        self.raise_out = ["AACGM MLT of Vector", "AACGM MLT of OCB pole",
+                          "AACGM latitude of Vector",
+                          "AACGM latitude of OCB pole"]
+        tsets = [(iattrs, bi, self.raise_out[i])
+                 for i, iattrs in enumerate(self.input_attrs)
+                 for bi in self.bad_input]
+        self.vdata.set_ocb(self.ocb, None)
+
+        for tset in tsets:
+            with self.subTest(tset=tset):
+                self.hold_val = getattr(self.vdata, tset[0])
+                setattr(self.vdata, tset[0], tset[1])
+
+                with self.assertRaisesRegex(ValueError, tset[2]):
+                    self.vdata.calc_vec_pole_angle()
+
+                setattr(self.vdata, tset[0], self.hold_val)
+
+    @unittest.skipIf(version_info.major > 2, 'Already tested with subTest')
+    def test_bad_calc_vec_pole_angle_mlt_float(self):
+        """Test calc_vec_pole_angle failure with bad AACGM MLT"""
+
+        self.vdata.set_ocb(self.ocb, None)
+        self.vdata.aacgm_mlt = self.bad_input[0]
+        
+        with self.assertRaisesRegex(ValueError, "AACGM MLT of Vector"):
+            self.vdata.calc_vec_pole_angle()
+
+    @unittest.skipIf(version_info.major > 2, 'Already tested with subTest')
+    def test_bad_calc_vec_pole_angle_ocb_mlt_float(self):
+        """Test calc_vec_pole_angle failure with bad OCB MLT"""
+
+        self.vdata.set_ocb(self.ocb, None)
+        self.vdata.ocb_aacgm_mlt = self.bad_input[0]
+        
+        with self.assertRaisesRegex(ValueError, "AACGM MLT of OCB pole"):
+            self.vdata.calc_vec_pole_angle()
+
+    @unittest.skipIf(version_info.major > 2, 'Already tested with subTest')
+    def test_bad_calc_vec_pole_angle_ocb_mlat_float(self):
+        """Test calc_vec_pole_angle failure with bad OCB latitude"""
+
+        self.vdata.set_ocb(self.ocb, None)
+        self.vdata.ocb_aacgm_lat = self.bad_input[0]
+        
+        with self.assertRaisesRegex(ValueError, "AACGM latitude of OCB pole"):
+            self.vdata.calc_vec_pole_angle()
+
+    @unittest.skipIf(version_info.major > 2, 'Already tested with subTest')
+    def test_bad_calc_vec_pole_angle_vec_mlat_float(self):
+        """Test calc_vec_pole_angle failure with bad vector latitude"""
+
+        self.vdata.set_ocb(self.ocb, None)
+        self.vdata.aacgm_lat = self.bad_input[0]
+        
+        with self.assertRaisesRegex(ValueError, "AACGM latitude of Vector"):
+            self.vdata.calc_vec_pole_angle()
+            
+    @unittest.skipIf(version_info.major > 2, 'Already tested with subTest')
+    def test_bad_calc_vec_pole_angle_mlt_array(self):
+        """Test calc_vec_pole_angle failure with bad AACGM MLT"""
+
+        self.vdata.set_ocb(self.ocb, None)
+        self.vdata.aacgm_mlt = self.bad_input[1]
+        
+        with self.assertRaisesRegex(ValueError, "AACGM MLT of Vector"):
+            self.vdata.calc_vec_pole_angle()
+
+    @unittest.skipIf(version_info.major > 2, 'Already tested with subTest')
+    def test_bad_calc_vec_pole_angle_ocb_mlt_float(self):
+        """Test calc_vec_pole_angle failure with bad OCB MLT"""
+
+        self.vdata.set_ocb(self.ocb, None)
+        self.vdata.ocb_aacgm_mlt = self.bad_input[1]
+        
+        with self.assertRaisesRegex(ValueError, "AACGM MLT of OCB pole"):
+            self.vdata.calc_vec_pole_angle()
+
+    @unittest.skipIf(version_info.major > 2, 'Already tested with subTest')
+    def test_bad_calc_vec_pole_angle_ocb_mlat_float(self):
+        """Test calc_vec_pole_angle failure with bad OCB latitude"""
+
+        self.vdata.set_ocb(self.ocb, None)
+        self.vdata.ocb_aacgm_lat = self.bad_input[1]
+        
+        with self.assertRaisesRegex(ValueError, "AACGM latitude of OCB pole"):
+            self.vdata.calc_vec_pole_angle()
+
+    @unittest.skipIf(version_info.major > 2, 'Already tested with subTest')
+    def test_bad_calc_vec_pole_angle_vec_mlat_float(self):
+        """Test calc_vec_pole_angle failure with bad vector latitude"""
+
+        self.vdata.set_ocb(self.ocb, None)
+        self.vdata.aacgm_lat = self.bad_input[1]
+        
+        with self.assertRaisesRegex(ValueError, "AACGM latitude of Vector"):
+            self.vdata.calc_vec_pole_angle()
+
     def test_no_ocb_lat(self):
         """ Test failure when OCB latitude is not available"""
 
@@ -584,42 +715,6 @@ class TestOCBScalingMethods(unittest.TestCase):
         with self.assertRaisesRegex(ValueError, "Vector angle undefined"):
             self.vdata.calc_ocb_vec_sign(north=True)
 
-    def test_bad_calc_vec_pole_angle_mlt(self):
-        """Test calc_vec_pole_angle failure with bad AACGM MLT"""
-
-        self.vdata.set_ocb(self.ocb, None)
-        self.vdata.aacgm_mlt = np.nan
-        
-        with self.assertRaisesRegex(ValueError, "AACGM MLT of Vector"):
-            self.vdata.calc_vec_pole_angle()
-
-    def test_bad_calc_vec_pole_angle_ocb_mlt(self):
-        """Test calc_vec_pole_angle failure with bad OCB MLT"""
-
-        self.vdata.set_ocb(self.ocb, None)
-        self.vdata.ocb_aacgm_mlt = np.nan
-        
-        with self.assertRaisesRegex(ValueError, "AACGM MLT of OCB pole"):
-            self.vdata.calc_vec_pole_angle()
-
-    def test_bad_calc_vec_pole_angle_ocb_mlat(self):
-        """Test calc_vec_pole_angle failure with bad OCB latitude"""
-
-        self.vdata.set_ocb(self.ocb, None)
-        self.vdata.ocb_aacgm_lat = np.nan
-        
-        with self.assertRaisesRegex(ValueError, "AACGM latitude of OCB pole"):
-            self.vdata.calc_vec_pole_angle()
-
-    def test_bad_calc_vec_pole_angle_vec_mlat(self):
-        """Test calc_vec_pole_angle failure with bad vector latitude"""
-
-        self.vdata.set_ocb(self.ocb, None)
-        self.vdata.aacgm_lat = np.nan
-        
-        with self.assertRaisesRegex(ValueError, "AACGM latitude of Vector"):
-            self.vdata.calc_vec_pole_angle()
-
     def test_bad_define_quandrants_pole_mlt(self):
         """Test define_quadrants failure with bad pole MLT"""
 
@@ -648,6 +743,7 @@ class TestOCBScalingMethods(unittest.TestCase):
         with self.assertRaisesRegex(ValueError,
                             "vector angle in poles-vector triangle required"):
             self.vdata.define_quadrants()
+
 
 
 class TestHaversine(unittest.TestCase):
@@ -680,8 +776,7 @@ class TestHaversine(unittest.TestCase):
                 if i == 0:
                     self.assertAlmostEqual(self.out, tset[1])
                 else:
-                    for j, hout in enumerate(self.out):
-                        self.assertAlmostEqual(hout, tset[1][j])
+                    self.assertTrue(np.all(abs(self.out - tset[1]) < 1.0e-17))
 
         del tset
 
@@ -699,16 +794,14 @@ class TestHaversine(unittest.TestCase):
         """ Test implimentation of the haversine with a list input
         """
         self.out = ocbpy.ocb_scaling.hav(list(self.input_angles))
-        for i, hout in enumerate(self.out):
-            self.assertAlmostEqual(hout, self.hav_out[i])
+        self.assertTrue(np.all(abs(self.out - self.hav_out) < 1.0e-17))
 
     @unittest.skipIf(version_info.major > 2, 'Already tested with subTest')
     def test_haversine_array(self):
         """ Test implimentation of the haversine with a array input
         """
         self.out = ocbpy.ocb_scaling.hav(self.input_angles)
-        for i, hout in enumerate(self.out):
-            self.assertAlmostEqual(hout, self.hav_out[i])
+        self.assertTrue(np.all(abs(self.out - self.hav_out) < 1.0e-17))
 
     @unittest.skipIf(version_info.major == 2,
                      'Python 2.7 does not support subTest')
@@ -730,8 +823,7 @@ class TestHaversine(unittest.TestCase):
                 if i == 0:
                     self.assertEqual(self.out, tset[1])
                 else:
-                    for k, hout in enumerate(self.out):
-                        self.assertAlmostEqual(hout, tset[1][k])
+                    self.assertTrue(np.all(abs(self.out - tset[1]) < 1.0e-17))
 
         del tset
 
@@ -751,8 +843,8 @@ class TestHaversine(unittest.TestCase):
         """
         self.out = ocbpy.ocb_scaling.archav([self.hav_out[i]
                                              for i in self.iarchav])
-        for i, hout in enumerate(self.out):
-            self.assertEqual(hout, self.input_angles[self.iarchav[i]])
+        self.assertTrue(np.all(abs(self.out - self.input_angles[self.iarchav])
+                               < 1.0e-17))
 
     @unittest.skipIf(version_info.major > 2,
                      'Python 2.7 does not support subTest')
@@ -760,8 +852,8 @@ class TestHaversine(unittest.TestCase):
         """ Test implimentation of the inverse haversine with array input
         """
         self.out = ocbpy.ocb_scaling.archav(self.hav_out[self.iarchav])
-        for i, hout in enumerate(self.out):
-            self.assertEqual(hout, self.input_angles[self.iarchav[i]])
+        self.assertTrue(np.all(abs(self.out - self.input_angles[self.iarchav])
+                               < 1.0e-17))
 
     def test_inverse_haversine_small_float(self):
         """ Test implimentation of the inverse haversine with very small numbers
