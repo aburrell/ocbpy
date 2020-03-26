@@ -37,6 +37,7 @@ Angeline G. Burrell (AGB), 15 April 2017, University of Texas, Dallas (UTDallas)
 """
 
 import datetime as dt
+import numpy as np
 
 
 def get_datetime_fmt_len(datetime_fmt):
@@ -238,6 +239,7 @@ def deg2hr(lon):
 
     """
 
+    lon = np.asarray(lon)
     lt = lon / 15.0 # 12 hr/180 deg = 1/15 hr/deg
 
     return lt
@@ -257,6 +259,7 @@ def hr2deg(lt):
 
     """
 
+    lon = np.asarray(lon)
     lon = lt * 15.0 # 180 deg/12 hr = 15 deg/hr
 
     return lon
@@ -275,8 +278,8 @@ def hr2rad(lt):
         Longitude-like value in radians
 
     """
-    import numpy as np
 
+    lt = np.asarray(lt)
     lon = lt * np.pi / 12.0
 
     return lon
@@ -295,8 +298,8 @@ def rad2hr(lon):
         Local time-like value in hours
 
     """
-    import numpy as np
 
+    lt = np.asarray(lt)
     lt = lon * 12.0 / np.pi
 
     return lt
@@ -327,14 +330,14 @@ def slt2glon(slt, dtime):
 
     Parameters
     ----------
-    slt : (float)
+    slt : (float or array-like)
         Solar local time in hours
     dtime : (dt.datetime)
         Universal time as a timestamp
 
     Returns
     -------
-    glon : (float)
+    glon : (float or array-like)
         Geographic longitude in degrees
 
     """
@@ -343,14 +346,30 @@ def slt2glon(slt, dtime):
     uth = datetime2hr(dtime)
 
     # Calculate the longitude in degrees
+    slt = np.asarray(slt)
     glon = hr2deg(slt - uth)
 
-    # Ensure the longitude is not above 360 or below -180
-    while glon >= 360.0:
-        glon -= 360.0
+    # Ensure the longitude is not at or above 360 or at or below -180
+    if glon.shape == () and not np.isnan(glon):
+        while glon >= 360.0:
+            glon -= 360.0
 
-    while glon <= -180.0:
-        glon += 360.0
+        while glon <= -180.0:
+            glon += 360.0
+    else:
+        ibad = (np.greater_equal(glon, 360.0, where=~np.isnan(glon))
+                & ~np.isnan(glon))
+        while np.any(ibad):
+            glon[ibad] -= 360.0
+            ibad = (np.greater_equal(glon, 360.0, where=~np.isnan(glon))
+                    & ~np.isnan(glon))
+
+        ibad = (np.less_equal(glon, -180.0, where=~np.isnan(glon))
+                & ~np.isnan(glon))
+        while np.any(ibad):
+            glon[ibad] += 360.0
+            ibad = (np.less_equal(glon, -180.0, where=~np.isnan(glon))
+                    & ~np.isnan(glon))
 
     return glon
 
@@ -360,27 +379,39 @@ def glon2slt(glon, dtime):
 
     Parameters
     ----------
-    glon : (float)
+    glon : (float or array-like)
         Geographic longitude in degrees
     dtime : (dt.datetime)
         Universal time as a timestamp
 
     Returns
     -------
-    slt : (float)
+    slt : (float or array-like)
         Solar local time in hours
 
     """
-
 
     # Calculate the longitude in degrees
     slt = deg2hr(glon) + datetime2hr(dtime)
 
     # Ensure the local time is between 0 and 24 h
-    while slt >= 24.0:
-        slt -= 24.0
+    if slt.shape == () and not np.isnan(slt):
+        while slt >= 24.0:
+            slt -= 24.0
 
-    while slt < 0.0:
-        slt += 24.0
+        while slt < 0.0:
+            slt += 24.0
+    else:
+        ibad = (np.greater_equal(slt, 24.0, where=~np.isnan(slt))
+                & ~np.isnan(slt))
+        while np.any(ibad):
+            slt[ibad] -= 24.0
+            ibad = (np.greater_equal(slt, 24.0, where=~np.isnan(slt))
+                    & ~np.isnan(slt))
+
+        ibad = (np.less(slt, 0.0, where=~np.isnan(slt)) & ~np.isnan(slt))
+        while np.any(ibad):
+            slt[ibad] += 24.0
+            ibad = (np.less(slt, 0.0, where=~np.isnan(slt)) & ~np.isnan(slt))
 
     return slt
