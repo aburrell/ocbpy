@@ -259,7 +259,7 @@ def hr2deg(lt):
 
     """
 
-    lon = np.asarray(lon)
+    lt = np.asarray(lt)
     lon = lt * 15.0 # 180 deg/12 hr = 15 deg/hr
 
     return lon
@@ -299,7 +299,7 @@ def rad2hr(lon):
 
     """
 
-    lt = np.asarray(lt)
+    lon = np.asarray(lon)
     lt = lon * 12.0 / np.pi
 
     return lt

@@ -268,7 +268,7 @@ class TestOCBGeographicTime(unittest.TestCase):
             self.assertAlmostEqual(ocb_time.glon2slt(lon, self.dtime),
                                    self.out[i])
         del i, lon
-            
+
     def test_slt2glon(self):
         """ Test slt to longitude conversion for a range of values"""
         # Prepare test output
@@ -281,25 +281,54 @@ class TestOCBGeographicTime(unittest.TestCase):
                                    self.out[i])
         del i, lt
 
-    def test_slt2glon_list_failure(self):
-        """ Test local time to longtiude conversion with list input"""
-        with self.assertRaises(TypeError):
-            ocb_time.slt2glon(self.lt, self.dtime)
+    def test_slt2glon_list(self):
+        """ Test slt to longitude conversion for a list of values"""
+        # Prepare test output
+        self.lon = np.asarray(self.lon)
+        self.lon[self.lon > 180.0] -= 360.0
+        self.lon[self.lon <= -180.0] += 360.0
 
-    def test_slt2glon_array_failure(self):
-        """ Test local time to longtiude conversion with array input"""
-        with self.assertRaises(ValueError):
-            ocb_time.slt2glon(np.array(self.lt), self.dtime)
+        self.out = ocb_time.slt2glon(self.lt, self.dtime)
 
-    def test_glon2slt_list_failure(self):
-        """ Test longtiude to lt  conversion with list input"""
-        with self.assertRaises(TypeError):
-            ocb_time.glon2slt(self.lon, self.dtime)
+        for i, ll in enumerate(self.out):
+            self.assertAlmostEqual(ll, self.lon[i])
 
-    def test_glon2slt_array_failure(self):
+    def test_slt2glon_array(self):
+        """ Test slt to longitude conversion for an array of values"""
+        # Prepare test output
+        self.lon = np.asarray(self.lon)
+        self.lon[self.lon > 180.0] -= 360.0
+        self.lon[self.lon <= -180.0] += 360.0
+
+        self.out = ocb_time.slt2glon(np.asarray(self.lt), self.dtime)
+
+        for i, ll in enumerate(self.out):
+            self.assertAlmostEqual(ll, self.lon[i])
+
+    def test_glon2slt_list(self):
+        """ Test longtiude to lt conversion with list input"""
+        # Prepare test output
+        self.lt = np.asarray(self.lt)
+        self.lt[self.lt >= 24.0] -= 24.0
+        self.lt[self.lt < -0.0] += 24.0
+
+        self.out = ocb_time.glon2slt(self.lon, self.dtime)
+
+        for i, ll in enumerate(self.out):
+            self.assertAlmostEqual(ll, self.lt[i])
+
+    def test_glon2slt_array(self):
         """ Test longtiude to lt conversion with array input"""
-        with self.assertRaises(ValueError):
-            ocb_time.glon2slt(np.array(self.lon), self.dtime)
+        # Prepare test output
+        self.lt = np.asarray(self.lt)
+        self.lt[self.lt >= 24.0] -= 24.0
+        self.lt[self.lt < -0.0] += 24.0
+
+        self.out = ocb_time.glon2slt(np.asarray(self.lon), self.dtime)
+
+        for i, ll in enumerate(self.out):
+            self.assertAlmostEqual(ll, self.lt[i])
+
 
 class TestTimeFormatMethods(unittest.TestCase):
     def setUp(self):
