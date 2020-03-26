@@ -42,8 +42,10 @@ def circular(mlt, r_add=0.0):
         Radius correction in degrees at this MLT
 
     """
+    mlt = np.asarray(mlt)
+    r_corr = np.full(shape=mlt.shape, fill_value=r_add)
 
-    return np.full(shape=np.asarray(mlt).shape, fill_value=r_add)
+    return r_corr
 
 
 def elliptical(mlt, instrument='ampere', method='median'):
