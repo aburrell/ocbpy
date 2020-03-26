@@ -20,6 +20,9 @@ class TestOCBTimeMethods(unittest.TestCase):
         self.dtime = dt.datetime(2001, 1, 1)
         self.dtime2 = dt.datetime(1901, 1, 1)
 
+        if version_info.major == 2:
+            self.assertRaisesRegex = self.assertRaisesRegexp
+
     def tearDown(self):
         """ Clean up after each test """
 
@@ -117,19 +120,19 @@ class TestOCBTimeMethods(unittest.TestCase):
     def test_convert_time_failure_yyddd(self):
         """ Test convert_time failure with non-string input for yyddd
         """
-        with self.assertRaisesRegexp(ValueError, "YYDDD must be a string"):
+        with self.assertRaisesRegex(ValueError, "YYDDD must be a string"):
             ocb_time.convert_time(yyddd=101001)
 
     def test_convert_time_failure_soy(self):
         """ Test convert_time failure with bad input for year-soy
         """
-        with self.assertRaisesRegexp(ValueError, "does not match format"):
+        with self.assertRaisesRegex(ValueError, "does not match format"):
             ocb_time.convert_time(soy=200)
 
     def test_convert_time_failure_bad_date_fmt(self):
         """ Test convert_time failure with bad input for incorrect date format
         """
-        with self.assertRaisesRegexp(ValueError, "does not match format"):
+        with self.assertRaisesRegex(ValueError, "does not match format"):
             ocb_time.convert_time(date="2000", tod="00")
 
     def test_yyddd_to_date(self):
@@ -459,6 +462,94 @@ class TestTimeFormatMethods(unittest.TestCase):
 
         # Test to see that the returned length equalsthe formatted time string
         self.assertGreaterEqual(self.out_len, len(self.out_fmt))
+
+
+class TestFixRange(unittest.TestCase):
+    def setUp(self):
+        """ Set up test runs """
+
+        self.vals = np.linspace(-190.0, 360.0, 37)
+        self.out = None
+
+        if version_info.major == 2:
+            self.assertRaisesRegex = self.assertRaisesRegexp
+
+    def tearDown(self):
+        """ Clean up after each test """
+
+        del self.vals, self.out
+
+    def test_fix_range_max_min_failure(self):
+        """Test fix_range failure with bad max/min input"""
+        with self.assertRaisesRegex(ValueError, "Minimum is not less than"):
+            ocb_time.fix_range(self.vals, 10.0, -10.0)
+
+    def test_fix_range_range_failure(self):
+        """Test fix_range failure with bad value range input"""
+        with self.assertRaisesRegex(ValueError, "Value range must be greater"):
+            ocb_time.fix_range(self.vals, -10.0, 10.0, 0.0)
+
+
+    @unittest.skipIf(version_info.major < 3,
+                     'Already tested, remove in 2020')
+    def test_fix_range(self):
+        """ Test fix_range success """
+
+        for tset in [([self.vals, 0.0, 360.0], {}),
+                     ([list(self.vals), 0.0, 360.0], {}),
+                     ([self.vals, -180.0, 360.0], {'val_range': 360.0}),
+                     ([self.vals, 0.0, 24.0], {}),
+                     ([self.vals[0], 0.0, 360.0], {})]:
+            with self.subTest(tset=tset):
+                self.out = ocb_time.fix_range(*tset[0], **tset[1])
+
+                self.assertTrue(np.all(np.greater_equal(self.out, tset[0][1])))
+                self.assertTrue(np.all(np.less(self.out, tset[0][2])))
+
+    @unittest.skipIf(version_info.major > 2,
+                     'Python 2.7 does not support subTest')
+    def test_fix_range_default_array(self):
+        """ Test fix_range success for array input and default value range
+        """
+        self.out = ocb_time.fix_range(self.vals, 0.0, 360.0)
+        self.assertTrue(np.all(np.greater_equal(self.out, 0.0)))
+        self.assertTrue(np.all(np.less(self.out, 360.0)))
+
+    @unittest.skipIf(version_info.major > 2,
+                     'Python 2.7 does not support subTest')
+    def test_fix_range_default_list(self):
+        """ Test fix_range success for list input and default value range
+        """
+        self.out = ocb_time.fix_range(list(self.vals), 0.0, 360.0)
+        self.assertTrue(np.all(np.greater_equal(self.out, 0.0)))
+        self.assertTrue(np.all(np.less(self.out, 360.0)))
+
+    @unittest.skipIf(version_info.major > 2,
+                     'Python 2.7 does not support subTest')
+    def test_fix_range_set_range_array(self):
+        """ Test fix_range success for array input and specified value range
+        """
+        self.out = ocb_time.fix_range(self.vals, -180.0, 360.0, 360.0)
+        self.assertTrue(np.all(np.greater_equal(self.out, -180.0)))
+        self.assertTrue(np.all(np.less(self.out, 360.0)))
+
+    @unittest.skipIf(version_info.major > 2,
+                     'Python 2.7 does not support subTest')
+    def test_fix_range_large_range(self):
+        """ Test fix_range success for input that deviates far from max/min
+        """
+        self.out = ocb_time.fix_range(self.vals, 0.0, 24.0)
+        self.assertTrue(np.all(np.greater_equal(self.out, 0.0)))
+        self.assertTrue(np.all(np.less(self.out, 24.0)))
+
+    @unittest.skipIf(version_info.major > 2,
+                     'Python 2.7 does not support subTest')
+    def test_fix_range_default_float(self):
+        """ Test fix_range success for a single value
+        """
+        self.out = ocb_time.fix_range(self.vals[0], 0.0, 360.0)
+        self.assertGreaterEqual(self.out, 0.0)
+        self.assertLess(self.out, 360.0)
 
 
 if __name__ == '__main__':
