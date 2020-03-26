@@ -840,10 +840,11 @@ class VectorData(object):
                                       " OCB or an equal number of vectors ",
                                       "and OCBs"]))
 
-        if del_long.shape == () and del_long < 0.0:
-            del_long += 2.0 * np.pi
+        if del_long.shape == ():
+            if del_long < 0.0:
+                del_long += 2.0 * np.pi
         else:
-            del_long[del_lon < 0.0] += 2.0 * np.pi
+            del_long[del_long < 0.0] += 2.0 * np.pi
 
         # Initalize the output
         self.pole_angle = np.full(shape=del_long.shape, fill_value=np.nan)
