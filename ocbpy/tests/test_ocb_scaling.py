@@ -223,8 +223,7 @@ class TestOCBScalingMethods(unittest.TestCase):
         self.assertEqual(self.vdata.vec_quad, 1)
 
     def test_define_quadrants_opposite_south(self):
-        """ Test the quadrant assignment with a vector pointing south from the
-        opposite sector
+        """ Test quad assignment w/vector pointing south from the opp. sector
         """
         self.vdata.set_ocb(self.ocb, scale_func=ocbpy.ocb_scaling.normal_evar)
         self.vdata.aacgm_mlt = self.vdata.ocb_aacgm_mlt + 12.0
@@ -431,7 +430,7 @@ class TestOCBScalingMethods(unittest.TestCase):
         # Set the OCB values with scaling for a variable proportional to
         # the electric field
         self.vdata.set_ocb(self.ocb, scale_func=ocbpy.ocb_scaling.normal_evar)
-        self.assertAlmostEqual(self.vdata.ocb_mag, 88.1262660863)
+        self.assertAlmostEqual(self.vdata.ocb_mag, 88.094416872365)
         
     def test_set_ocb_curl_evar(self):
         """ Test setting of OCB values for the VectorData object
@@ -441,7 +440,7 @@ class TestOCBScalingMethods(unittest.TestCase):
         # the curl of the electric field
         self.vdata.set_ocb(self.ocb,
                            scale_func=ocbpy.ocb_scaling.normal_curl_evar)
-        self.assertAlmostEqual(self.vdata.ocb_mag, 77.6423447186)
+        self.assertAlmostEqual(self.vdata.ocb_mag, 77.57814585822645)
 
     def test_scaled_r(self):
         """ Test that the scaled radius is correct
