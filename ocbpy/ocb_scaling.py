@@ -327,34 +327,21 @@ class VectorData(object):
         out += "\nData Index {:}\tOCB Index {:}\n".format(self.dat_ind,
                                                           self.ocb_ind)
         out += "-------------------------------------------\n"
-        out += "Locations: [Mag. Lat. (degrees), MLT (hours), (Index)]\n"
 
+        # Print AACGM vector location(s)
         if self.dat_ind.shape == ():
-            out += "   AACGM: [{:.3f}, {:.3f}]\n".format(self.aacgm_lat,
-                                                         self.aacgm_mlt)
-
-            out += "\n-------------------------------------------\n"
-            out += "Value: Magnitude [N, E, Z]\n"
-            out += "AACGM: {:.3g} [{:.3g},".format(self.aacgm_mag, self.aacgm_n)
-            out += " {:.3g}, {:.3g}]\n".format(self.aacgm_e, self.aacgm_z)
-            if not np.isnan(self.ocb_mag):
-                out += "  OCB: {:.3g} [{:.3g},".format(self.ocb_mag, self.ocb_n)
-                out += " {:.3g}, {:.3g}]\n".format(self.ocb_e, self.ocb_z)
+            out += "Locations: [Mag. Lat. (degrees), MLT (hours)]\n"
+            out += "    AACGM: [{:.3f}, {:.3f}]\n".format(self.aacgm_lat,
+                                                          self.aacgm_mlt)
+            out += "      OCB: [{:.3f}, {:.3f}]\n".format(self.ocb_lat,
+                                                          self.ocb_mlt)
         else:
-            
+            out += "Locations: [Mag. Lat. (degrees), MLT (hours), (Index)]\n"
             for i in self.dat_ind:
-                out += "   AACGM: [{:.3f}, {:.3f}, {:d}]\n".format(
+                out += "    AACGM: [{:.3f}, {:.3f}, {:d}]\n".format(
                     self.aacgm_lat[i], self.aacgm_mlt[i], i)
-
-        if not (np.all(np.isnan(self.ocb_lat))
-                and np.all(np.isnan(self.ocb_mlt))):
-            if self.ocb_ind.shape == ():
-                out += "     OCB: [{:.3f}, {:.3f}]\n".format(self.ocb_lat,
-                                                             self.ocb_mlt)
-            else:
-                for i in self.ocb_ind:
-                    out += "     OCB: [{:.3f}, {:.3f}, {:d}]\n".format(
-                        self.ocb_lat[i], self.ocb_mlt[i], i)
+                out += "     OCB: [{:.3f}, {:.3f}, {:d}]\n".format(
+                    self.ocb_lat[i], self.ocb_mlt[i], i)
 
         out += "\n-------------------------------------------\n"
         if self.aacgm_mag.shape == ():
@@ -534,7 +521,7 @@ class VectorData(object):
         # Determine where the OCB pole is relative to the data vector
         ocb_adj_mlt = self.ocb_aacgm_mlt - self.aacgm_mlt
 
-        neg_mask = (np.less(ocb_adj_mlt, 0.0, where=~np.isnan(obj_adj_mlt))
+        neg_mask = (np.less(ocb_adj_mlt, 0.0, where=~np.isnan(ocb_adj_mlt))
                     & ~np.isnan(ocb_adj_mlt))
         while np.any(neg_mask):
             if ocb_adj_mlt.shape == ():
@@ -543,11 +530,11 @@ class VectorData(object):
             else:
                 ocb_adj_mlt[neg_mask] += 24.0
                 neg_mask = (np.less(ocb_adj_mlt, 0.0,
-                                    where=~np.isnan(obj_adj_mlt))
+                                    where=~np.isnan(ocb_adj_mlt))
                             & ~np.isnan(ocb_adj_mlt))
 
         large_mask = (np.greater_equal(abs(ocb_adj_mlt), 24.0,
-                                       where=~np.isnan(obj_adj_mlt))
+                                       where=~np.isnan(ocb_adj_mlt))
                       & ~np.isnan(ocb_adj_mlt))
         if np.any(large_mask):
             if ocb_adj_mlt.shape == ():
@@ -673,6 +660,11 @@ class VectorData(object):
         self.ocb_mlt = np.asarray(self.ocb_mlt)
         self.ocb_aacgm_mlt = np.asarray(self.ocb_aacgm_mlt)
         self.pole_angle = np.asarray(self.pole_angle)
+        self.aacgm_n = np.asarray(self.aacgm_n)
+        self.aacgm_e = np.asarray(self.aacgm_e)
+        self.aacgm_z = np.asarray(self.aacgm_z)
+        self.ocb_quad = np.asarray(self.ocb_quad)
+        self.vec_quad = np.asarray(self.vec_quad)
 
         # Test input
         if np.all(np.isnan(self.ocb_lat)) or np.all(np.isnan(self.ocb_mlt)):
@@ -735,7 +727,7 @@ class VectorData(object):
 
             # Determine if the measurement is on or between the poles
             sign_mask = ((self.pole_angle == 0.0) &
-                         np.greater_Equal(self.aacgm_lat, self.ocb_aacgm_lat,
+                         np.greater_equal(self.aacgm_lat, self.ocb_aacgm_lat,
                                           where=~np.isnan(self.aacgm_lat)) &
                          ~np.isnan(self.aacgm_lat))
             if np.any(sign_mask):
