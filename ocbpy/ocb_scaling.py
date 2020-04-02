@@ -255,11 +255,13 @@ class VectorData(object):
             mesurement OCB latitude (degrees)]
             Not necessary if no magnitude scaling is needed. (default=None)
 
-        Returns
-        --------
-            self : Initialised VectorData class object by setting AACGM values
+        Raises
+        ------
+        ValueError
+            If the vector magnitude and AACGM components are inconsistent
 
         """
+
         # Assign the vector data name and units
         self.dat_name = dat_name
         self.dat_units = dat_units
@@ -399,7 +401,6 @@ class VectorData(object):
             Not necessary if defined earlier or if no scaling is needed.
 
         """
-        from ocbpy.ocb_time import deg2hr
 
         # If the OCB vector coordinates weren't included in the initial info,
         # update them here
@@ -416,7 +417,7 @@ class VectorData(object):
         # Set the AACGM coordinates of the OCB pole
         self.unscaled_r = ocb.r[self.ocb_ind] + self.r_corr
         self.scaled_r = 90.0 - abs(ocb.boundary_lat)
-        self.ocb_aacgm_mlt = deg2hr(ocb.phi_cent[self.ocb_ind])
+        self.ocb_aacgm_mlt = ocbpy.ocb_time.deg2hr(ocb.phi_cent[self.ocb_ind])
         self.ocb_aacgm_lat = 90.0 - ocb.r_cent[self.ocb_ind]
 
         # Get the angle at the data vector appended by the AACGM and OCB poles
@@ -465,6 +466,11 @@ class VectorData(object):
         North (N) and East (E) are defined by the AACGM directions centred on
         the data vector location, assuming vertical is positive downwards
         Quadrants: 1 [N, E]; 2 [N, W]; 3 [S, W]; 4 [S, E]
+
+        Raises
+        ------
+        ValueError
+            If the required input is undefined
 
         """
 
@@ -524,6 +530,11 @@ class VectorData(object):
             OCB scaled vertical component
         ocb_mag : (float)
             OCB scaled magnitude
+
+        Raises
+        ------
+        ValueError
+            If the required input is not defined
 
         """
 
@@ -612,7 +623,13 @@ class VectorData(object):
         ocb_naz : (float)
             Angle between measurement vector and OCB pole in degrees
 
+        Raises
+        ------
+        ValueError
+            If the required input is undefined
+
         """
+
         quad_range = np.arange(1, 5)
 
         # Test input
@@ -690,7 +707,14 @@ class VectorData(object):
         ---------
         vsigns : (dict)
             Dictionary with keys 'north' and 'east' containing the desired signs
+
+        Raises
+        ------
+        ValueError
+            If the required input is undefined
+
         """
+
         quad_range = np.arange(1, 5)
 
         # Test input
@@ -724,15 +748,15 @@ class VectorData(object):
             
             if(quads[1][1] or quads[2][2] or quads[3][3] or quads[4][4] or
                (quads[1][4] and self.aacgm_naz <= pole_plus) or
-               (quads[1][2] and self.aacgm_naz > minus_pole) or
-               (quads[2][1] and self.aacgm_naz <= minus_pole) or 
-               ((quads[3][4] or quads[4][3]) and self.aacgm_naz <= pole_minus)
-               or ((quads[3][2] or quads[4][1]) and self.aacgm_naz > pole_minus)
+               ((quads[1][2] or quads[2][1])
+                and self.aacgm_naz <= minus_pole) or
+               ((quads[3][4] or quads[4][3])
+                and self.aacgm_naz <= pole_minus) or
+               ((quads[3][2] or quads[4][1]) and self.aacgm_naz > pole_minus)
                or (quads[2][3] and self.aacgm_naz > minus_pole)):
                 vsigns["north"] = 1
-            elif((quads[1][2] and self.aacgm_naz > minus_pole) or
-                 (quads[1][4] and self.aacgm_naz > pole_plus) or
-                 (quads[2][1] and self.aacgm_naz > minus_pole) or
+            elif(((quads[1][2] or quads[2][1]) and self.aacgm_naz > minus_pole)
+                 or (quads[1][4] and self.aacgm_naz > pole_plus) or
                  ((quads[4][1] or quads[3][2]) and self.aacgm_naz <= pole_minus)
                  or (quads[2][3] and self.aacgm_naz <= minus_pole) or
                  ((quads[4][3] or quads[3][4]) and self.aacgm_naz > pole_minus)
@@ -743,26 +767,26 @@ class VectorData(object):
             minus_pole = 180.0 - self.pole_angle
 
             if(quads[1][4] or quads[2][1] or quads[3][2] or quads[4][3] or
-               (quads[1][1] and self.aacgm_naz > self.pole_angle) or
-               (quads[1][3] and self.aacgm_naz > minus_pole) or
+               ((quads[1][1] or quads[2][4])
+                and self.aacgm_naz > self.pole_angle) or
                ((quads[4][4] or quads[3][1]) and self.aacgm_naz <= minus_pole)
-               or (quads[2][4] and self.aacgm_naz > self.pole_angle) or
-               ((quads[4][2] or quads[3][3]) and self.aacgm_naz > minus_pole)
+               or ((quads[4][2] or quads[3][3] or quads[1][3])
+                and self.aacgm_naz > minus_pole)
                or (quads[2][2] and self.aacgm_naz <= self.pole_angle)):
                 vsigns["east"] = 1
             elif(quads[1][2] or quads[2][3] or quads[3][4] or quads[4][1] or
                  ((quads[4][4] or quads[3][1]) and self.aacgm_naz > minus_pole)
                  or (quads[2][2] and self.aacgm_naz > self.pole_angle) or
-                 ((quads[4][2] or quads[3][3])and self.aacgm_naz <= minus_pole)
-                 or (quads[1][3] and self.aacgm_naz <= minus_pole) or
-                 ((quads[1][1] or quads[2][4])
-                  and self.aacgm_naz <= self.pole_angle)):
+                 ((quads[4][2] or quads[3][3] or quads[1][3])
+                  and self.aacgm_naz <= minus_pole)
+                 or ((quads[1][1] or quads[2][4])
+                     and self.aacgm_naz <= self.pole_angle)):
                 vsigns["east"] = -1
 
         return vsigns
 
     def calc_vec_pole_angle(self):
-        """calculates the angle between the AACGM pole, a measurement, and the
+        """Calculate the angle between the AACGM pole, a measurement, and the
         OCB pole using spherical triginometry
 
         Requires
@@ -781,8 +805,12 @@ class VectorData(object):
         self.pole_angle : (float)
             Angle in degrees between AACGM north, a measurement, and OCB north
 
+        Raises
+        ------
+        ValueError
+            If the input is undefined
+
         """
-        from ocbpy.ocb_time import hr2rad
         
         # Test input
         if np.isnan(self.aacgm_mlt):
@@ -799,7 +827,7 @@ class VectorData(object):
 
         # Convert the AACGM MLT of the observation and OCB pole to radians,
         # then calculate the difference between them.
-        del_long = hr2rad(self.ocb_aacgm_mlt - self.aacgm_mlt)
+        del_long = ocbpy.ocb_time.hr2rad(self.ocb_aacgm_mlt - self.aacgm_mlt)
 
         if del_long < 0.0:
             del_long += 2.0 * np.pi
@@ -848,6 +876,7 @@ def hav(alpha):
         Haversine of alpha, equal to the square of the sine of half-alpha
 
     """
+
     hav_alpha = np.sin(alpha * 0.5)**2
 
     return hav_alpha
@@ -869,6 +898,12 @@ def archav(hav):
     -----
     The input must be positive.  However, any number with a magnitude below
     10-16 will be rounded to zero.
+
+    Raises
+    ------
+    ValueError
+        If the input is negative beyond the limits of very small numbers
+        near zero.
 
     """
 
