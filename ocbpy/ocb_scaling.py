@@ -295,13 +295,17 @@ class VectorData(object):
 
         # Assign the vector magnitudes
         if np.all(np.isnan(aacgm_mag)):
-            self.aacgm_mag = np.sqrt(aacgm_n**2 + aacgm_e**2 + aacgm_z**2)
+            self.aacgm_mag = np.sqrt(np.asarray(aacgm_n)**2
+                                     + np.asarray(aacgm_e)**2
+                                     + np.asarray(aacgm_z)**2)
         else:
-            aacgm_sqrt = np.sqrt(aacgm_n**2+aacgm_e**2+aacgm_z**2)
+            aacgm_sqrt = np.sqrt(np.asarray(aacgm_n)**2
+                                 + np.asarray(aacgm_e)**2
+                                 + np.asarray(aacgm_z)**2)
             if np.any(np.greater(abs(aacgm_mag - aacgm_sqrt), 1.0e-3,
                                  where=~np.isnan(aacgm_mag))):
                 raise ValueError("inconsistent AACGM components")
-            self.aacgm_mag = np.asarray(aacgm_mag)
+            self.aacgm_mag = aacgm_mag
 
         # Assign the OCB vector default values
         self.ocb_lat = np.asarray(ocb_lat)
