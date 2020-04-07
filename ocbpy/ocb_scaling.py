@@ -233,7 +233,7 @@ class VectorData(object):
         -----------
         dat_ind : (int or array-like)
             Data index (zero offset)
-        ocb_ind : (int)
+        ocb_ind : (int or array-like)
             OCBoundary record index matched to this data index (zero offset)
         aacgm_lat : (float or array-like)
             Vector AACGM latitude (degrees)
@@ -284,31 +284,68 @@ class VectorData(object):
         self.aacgm_lat = np.asarray(aacgm_lat)
         self.aacgm_mlt = np.asarray(aacgm_mlt)
 
+        # Test the initalization shape
+        vshapes = np.unique([self.aacgm_lat.shape, self.aacgm_mlt.shape,
+                             self.aacgm_n.shape, self.aacgm_e.shape,
+                             self.aacgm_z.shape])
+        vshape = () if len(vshapes) == 0 else vshapes.max()
+        if(vshape != self.dat_ind.shape or len(vshapes) > 2
+           or (len(vshapes) == 2 and min(vshapes) != ())):
+            raise ValueError('Data index and vector input shapes mismatched')
+
+        # Assign the vector magnitudes
         if np.all(np.isnan(aacgm_mag)):
             self.aacgm_mag = np.sqrt(aacgm_n**2 + aacgm_e**2 + aacgm_z**2)
         else:
-            if np.any(np.greater(abs(aacgm_mag -
-                                     np.sqrt(aacgm_n**2+aacgm_e**2+aacgm_z**2)),
-                                 1.0e-3, where=~np.isnan(aacgm_mag))):
+            aacgm_sqrt = np.sqrt(aacgm_n**2+aacgm_e**2+aacgm_z**2)
+            if np.any(np.greater(abs(aacgm_mag - aacgm_sqrt), 1.0e-3,
+                                 where=~np.isnan(aacgm_mag))):
                 raise ValueError("inconsistent AACGM components")
             self.aacgm_mag = np.asarray(aacgm_mag)
 
-        # Assign the OCB vector default values and location
-        self.ocb_n = np.asarray(np.nan)
-        self.ocb_e = np.asarray(np.nan)
-        self.ocb_z = np.asarray(np.nan)
-        self.ocb_mag = np.asarray(np.nan)
+        # Assign the OCB vector default values
         self.ocb_lat = np.asarray(ocb_lat)
         self.ocb_mlt = np.asarray(ocb_mlt)
         self.r_corr = np.asarray(r_corr)
 
+        if self.ocb_lat.shape == () and self.ocb_ind.shape != ():
+            self.ocb_lat = np.full(shape=self.ocb_ind.shape, fill_value=ocb_lat)
+
+        if self.ocb_mlt.shape == () and self.ocb_ind.shape != ():
+            self.ocb_mlt = np.full(shape=self.ocb_ind.shape, fill_value=ocb_mlt)
+
+        if self.r_corr.shape == () and self.ocb_ind.shape != ():
+            self.r_corr = np.full(shape=self.ocb_ind.shape, fill_value=r_corr)
+
+        # Test the OCB input shape
+        oshapes = np.unique([self.ocb_lat.shape, self.ocb_mlt.shape,
+                             self.r_corr.shape])
+        oshape = () if len(oshapes) == 0 else oshapes.max()
+        if(oshape != self.ocb_ind.shape or len(oshapes) > 2
+           or (len(oshapes) == 2 and min(oshapes) != ())):
+            raise ValueError('OCB index and input shapes mismatched')
+
+        if self.ocb_ind.shape == ():
+            oshape = vshape
+        elif self.dat_ind.shape == ():
+            vshape = oshape
+
+        if oshape != vshape:
+            raise ValueError('Mismatched OCB and Vector input shapes')
+
+        # Assign the OCB vector default values and location
+        self.ocb_n = np.full(shape=vshape, fill_value=np.nan)
+        self.ocb_e = np.full(shape=vshape, fill_value=np.nan)
+        self.ocb_z = np.full(shape=vshape, fill_value=np.nan)
+        self.ocb_mag = np.full(shape=vshape, fill_value=np.nan)
+
         # Assign the default pole locations, relative angles, and quadrants
-        self.ocb_quad = np.zeros(shape=self.aacgm_mag.shape)
-        self.vec_quad = np.zeros(shape=self.aacgm_mag.shape)
-        self.pole_angle = np.asarray(np.nan)
-        self.aacgm_naz = np.asarray(np.nan)
-        self.ocb_aacgm_lat = np.asarray(np.nan)
-        self.ocb_aacgm_mlt = np.asarray(np.nan)
+        self.ocb_quad = np.zeros(shape=vshape)
+        self.vec_quad = np.zeros(shape=vshape)
+        self.pole_angle = np.full(shape=vshape, fill_value=np.nan)
+        self.aacgm_naz = np.full(shape=vshape, fill_value=np.nan)
+        self.ocb_aacgm_lat = np.full(shape=vshape, fill_value=np.nan)
+        self.ocb_aacgm_mlt = np.full(shape=vshape, fill_value=np.nan)
 
         # Assign the vector scaling function
         self.scale_func = scale_func
@@ -329,22 +366,39 @@ class VectorData(object):
         out += "-------------------------------------------\n"
 
         # Print AACGM vector location(s)
-        if self.dat_ind.shape == ():
+        if self.dat_ind.shape == () and self.ocb_ind.shape == ():
             out += "Locations: [Mag. Lat. (degrees), MLT (hours)]\n"
             out += "    AACGM: [{:.3f}, {:.3f}]\n".format(self.aacgm_lat,
                                                           self.aacgm_mlt)
             out += "      OCB: [{:.3f}, {:.3f}]\n".format(self.ocb_lat,
                                                           self.ocb_mlt)
         else:
-            out += "Locations: [Mag. Lat. (degrees), MLT (hours), (Index)]\n"
-            for i in self.dat_ind:
+            out += "Locations: [Mag. Lat. (degrees), MLT (hours), Index]\n"
+            if self.dat_ind.shape == self.ocb_ind.shape:
+                for i, dind in enumerate(self.dat_ind):
+                    out += "    AACGM: [{:.3f}, {:.3f}, {:d}]\n".format(
+                        self.aacgm_lat[i], self.aacgm_mlt[i], dind)
+                    out += "      OCB: [{:.3f}, {:.3f}, {:d}]\n".format(
+                        self.ocb_lat[i], self.ocb_mlt[i], self.ocb_ind[i])
+            elif self.ocb_ind.shape == ():
+                for i, dind in enumerate(self.dat_ind):
+                    out += "    AACGM: [{:.3f}, {:.3f}, {:d}]\n".format(
+                        self.aacgm_lat[i], self.aacgm_mlt[i], dind)
+                    if self.ocb_lat.shape == () and np.isnan(self.ocb_lat):
+                        out += "      OCB: [nan, nan, {:d}]\n".format(
+                            self.ocb_ind)
+                    else:
+                        out += "      OCB: [{:.3f}, {:.3f}, {:d}]\n".format(
+                            self.ocb_lat[i], self.ocb_mlt[i], self.ocb_ind)
+            else:
                 out += "    AACGM: [{:.3f}, {:.3f}, {:d}]\n".format(
-                    self.aacgm_lat[i], self.aacgm_mlt[i], i)
-                out += "     OCB: [{:.3f}, {:.3f}, {:d}]\n".format(
-                    self.ocb_lat[i], self.ocb_mlt[i], i)
+                    self.aacgm_lat, self.aacgm_mlt, self.dat_ind)
+                for i, oind in enumerate(self.ocb_ind):
+                    out += "      OCB: [{:.3f}, {:.3f}, {:d}]\n".format(
+                        self.ocb_lat[i], self.ocb_mlt[i], oind)
 
         out += "\n-------------------------------------------\n"
-        if self.aacgm_mag.shape == ():
+        if self.aacgm_mag.shape == () and self.ocb_mag.shape == ():
             out += "Value: Magnitude [N, E, Z]\n"
             out += "AACGM: {:.3g} [{:.3g},".format(self.aacgm_mag, self.aacgm_n)
             out += " {:.3g}, {:.3g}]\n".format(self.aacgm_e, self.aacgm_z)
@@ -353,14 +407,23 @@ class VectorData(object):
                 out += " {:.3g}, {:.3g}]\n".format(self.ocb_e, self.ocb_z)
         else:
             out += "Value: Magnitude [N, E, Z] Index\n"
-            for i, mag in enumerate(self.aacgm_mag):
-                out += "AACGM: {:.3g} [{:.3g},".format(mag, self.aacgm_n[i])
-                out += " {:.3g}, {:.3g}] {:d}\n".format(self.aacgm_e[i],
-                                                        self.aacgm_z[i], i)
-                if not np.isnan(self.ocb_mag):
-                    out += "  OCB: {:.3g} [".format(self.ocb_mag[i])
-                    out += "{:.3g}, {:.3g}".format(self.ocb_n[i], self.ocb_e[i])
-                    out += ", {:.3g}] {:d}\n".format(self.ocb_z[i], i)
+            for i, mag in enumerate(self.ocb_mag):
+                if self.aacgm_mag.shape == () and i == 0:
+                    out += "AACGM: {:.3g} [".format(self.aacgm_mag)
+                    out += "{:.3g}, {:.3g}, {:.3g}] {:d}\n".format(
+                        self.aacgm_n, self.aacgm_e, self.aacgm_z, self.dat_ind)
+                elif self.aacgm_mag.shape != ():
+                    out += "AACGM: {:.3g} [".format(self.aacgm_mag[i])
+                    out += "{:.3g}, {:.3g}, {:.3g}] ".format(
+                        self.aacgm_n[i], self.aacgm_e[i], self.aacgm_z[i])
+                    out += "{:d}\n".format(self.dat_ind[i])
+
+                if not np.isnan(mag):
+                    out += "  OCB: {:.3g} [{:.3g}, ".format(mag, self.ocb_n[i])
+                    out += "{:.3g}, ".format(self.ocb_e[i])
+                    out += "{:.3g}] {:d}\n".format(self.ocb_z[i],
+                                self.ocb_ind if self.ocb_ind.shape == ()
+                                else self.ocb_ind[i])
 
         out += "\n-------------------------------------------\n"
         if self.scale_func is None:
@@ -431,12 +494,28 @@ class VectorData(object):
 
         """
 
+        # Initialize the OCB index
+        ocb.rec_ind = self.ocb_ind
+
         # If the OCB vector coordinates weren't included in the initial info,
         # update them here
         if(np.all(np.isnan(self.ocb_lat)) or np.all(np.isnan(self.ocb_mlt)) or
            np.all(np.isnan(self.r_corr))):
-            (self.ocb_lat, self.ocb_mlt,
-             self.r_corr) = ocb.normal_coord(self.aacgm_lat, self.aacgm_mlt)
+            # Because the OCB and AACGM magnetic field are both time dependent,
+            # can't call this function with multiple OCBs
+            if self.ocb_ind.shape == ():
+                (self.ocb_lat, self.ocb_mlt,
+                 self.r_corr) = ocb.normal_coord(self.aacgm_lat, self.aacgm_mlt)
+            else:
+                for i, ocb.rec_ind in enumerate(self.ocb_ind):
+                    if self.ocb_ind.shape == self.dat_ind.shape:
+                        (self.ocb_lat[i], self.ocb_mlt[i],
+                         self.r_corr[i]) = ocb.normal_coord(self.aacgm_lat[i],
+                                                            self.aacgm_mlt[i])
+                    else:
+                        (self.ocb_lat[i], self.ocb_mlt[i],
+                         self.r_corr[i]) = ocb.normal_coord(self.aacgm_lat,
+                                                            self.aacgm_mlt)
 
         # Exit if the OCB coordinates can't be calculated at this location
         if(np.all(np.isnan(self.ocb_lat)) or np.all(np.isnan(self.ocb_mlt)) or
@@ -468,6 +547,7 @@ class VectorData(object):
             # Assign the OCB vector default values and location.  Will also
             # update the AACGM north azimuth of the vector.
             self.scale_vector()
+
         return
 
     def define_quadrants(self):
@@ -544,31 +624,19 @@ class VectorData(object):
                     ocb_adj_mlt[large_mask])
 
         # Find the quadrant in which the OCB pole lies
-        quad1_mask = (np.less(self.pole_angle, 90.0,
-                              where=~np.isnan(self.pole_angle))
-                      & np.less(ocb_adj_mlt, 12.0,
-                                where =~np.isnan(ocb_adj_mlt))
-                      & ~np.isnan(self.pole_angle) & ~np.isnan(ocb_adj_mlt))
-        quad2_mask = (np.less(self.pole_angle, 90.0,
-                              where=~np.isnan(self.pole_angle))
-                      & np.greater_equal(ocb_adj_mlt, 12.0,
-                                         where =~np.isnan(ocb_adj_mlt))
-                      & ~np.isnan(self.pole_angle) & ~np.isnan(ocb_adj_mlt))
-        quad3_mask = (np.greater_equal(self.pole_angle, 90.0,
-                                       where=~np.isnan(self.pole_angle))
-                      & np.less(ocb_adj_mlt, 24.0,
-                                where =~np.isnan(ocb_adj_mlt))
-                      & ~np.isnan(self.pole_angle) & ~np.isnan(ocb_adj_mlt))
-        quad4_mask = (np.greater_equal(self.pole_angle, 90.0,
-                                       where=~np.isnan(self.pole_angle))
-                      & np.greater_equal(ocb_adj_mlt, 24.0,
-                                         where =~np.isnan(ocb_adj_mlt))
-                      & ~np.isnan(self.pole_angle) & ~np.isnan(ocb_adj_mlt))
+        nan_mask = (~np.isnan(self.pole_angle) & ~np.isnan(ocb_adj_mlt))
+        quad1_mask = (np.less(self.pole_angle, 90.0, where=nan_mask)
+                      & np.less(ocb_adj_mlt, 12.0, where=nan_mask) & nan_mask)
+        quad2_mask = (np.less(self.pole_angle, 90.0, where=nan_mask)
+                      & np.greater_equal(ocb_adj_mlt, 12.0, where=nan_mask)
+                      & nan_mask)
+        quad3_mask = (np.greater_equal(self.pole_angle, 90.0, where=nan_mask)
+                      & np.less(ocb_adj_mlt, 24.0, where=nan_mask) & nan_mask)
+        quad4_mask = (np.greater_equal(self.pole_angle, 90.0, where=nan_mask)
+                      & np.greater_equal(ocb_adj_mlt, 24.0, where=nan_mask)
+                      & nan_mask)
 
         if self.ocb_quad.shape == ():
-            if sum([quad1_mask, quad2_mask, quad3_mask, quad4_mask]) > 1:
-                raise RuntimeError('TEST: you made a logic mistake!')
-
             if np.all(quad1_mask):
                 self.ocb_quad = np.asarray(1)
             elif np.all(quad2_mask):
@@ -584,29 +652,19 @@ class VectorData(object):
             self.ocb_quad[quad4_mask] = 4
 
         # Now determine which quadrant the vector is pointed into
-        quad1_mask = (np.greater_equal(self.aacgm_n, 0.0,
-                                       where=~np.isnan(self.aacgm_n))
-                      & np.greater_equal(self.aacgm_e, 0.0,
-                                         where=~np.isnan(self.aacgm_e))
-                      & ~np.isnan(self.aacgm_n) & ~np.isnan(self.aacgm_e))
-        quad2_mask = (np.greater_equal(self.aacgm_n, 0.0,
-                                       where=~np.isnan(self.aacgm_n))
-                      & np.less(self.aacgm_e, 0.0,
-                                where =~np.isnan(self.aacgm_e))
-                      & ~np.isnan(self.aacgm_n) & ~np.isnan(self.aacgm_e))
-        quad3_mask = (np.less(self.aacgm_n, 0.0,  where=~np.isnan(self.aacgm_n))
-                      & np.less(self.aacgm_e, 0.0,
-                                where=~np.isnan(self.aacgm_e))
-                      & ~np.isnan(self.aacgm_n) & ~np.isnan(self.aacgm_e))
-        quad4_mask = (np.less(self.aacgm_n, 0.0,  where=~np.isnan(self.aacgm_n))
-                      & np.greater_equal(self.aacgm_e, 0.0,
-                                         where =~np.isnan(self.aacgm_e))
-                      & ~np.isnan(self.aacgm_n) & ~np.isnan(self.aacgm_e))
+        nan_mask = (~np.isnan(self.aacgm_n) & ~np.isnan(self.aacgm_e))
+        quad1_mask = (np.greater_equal(self.aacgm_n, 0.0, where=nan_mask)
+                      & np.greater_equal(self.aacgm_e, 0.0, where=nan_mask)
+                      & nan_mask)
+        quad2_mask = (np.greater_equal(self.aacgm_n, 0.0, where=nan_mask)
+                      & np.less(self.aacgm_e, 0.0, where=nan_mask) & nan_mask)
+        quad3_mask = (np.less(self.aacgm_n, 0.0,  where=nan_mask)
+                      & np.less(self.aacgm_e, 0.0, where=nan_mask) & nan_mask)
+        quad4_mask = (np.less(self.aacgm_n, 0.0,  where=nan_mask)
+                      & np.greater_equal(self.aacgm_e, 0.0, where=nan_mask)
+                      & nan_mask)
 
         if self.vec_quad.shape == ():
-            if sum([quad1_mask, quad2_mask, quad3_mask, quad4_mask]) > 1:
-                raise RuntimeError('TEST: you made a logic mistake!')
-
             if np.all(quad1_mask):
                 self.vec_quad = np.asarray(1)
             elif np.all(quad2_mask):
@@ -676,19 +734,6 @@ class VectorData(object):
         if np.all(np.isnan(self.pole_angle)):
             raise ValueError("vector angle in poles-vector triangle required")
 
-        # Scale vertical component
-        # AGB: removed non-scaling of z-component unless that component equalled
-        #      zero.  If direction is important for scaling, a direction
-        #      component indicator should be added to the scaling functions
-        if self.scale_func is None:
-            if self.aacgm_z.shape == ():
-                self.ocb_z = self.aacgm_z
-            else:
-                self.ocb_z = self.aacgm_z
-        else:
-            self.ocb_z = self.scale_func(self.aacgm_z, self.unscaled_r,
-                                         self.scaled_r)
-
         # Determine the special case assignments
         zero_mask = ((self.aacgm_n == 0.0) & (self.aacgm_e == 0.0))
         ns_mask = ((self.pole_angle == 0.0) | (self.pole_angle == 180.0))
@@ -697,35 +742,53 @@ class VectorData(object):
         # There's no magnitude, so nothing to adjust
         if np.any(zero_mask):
             if self.aacgm_n.shape == ():
-                self.ocb_n = np.asarray(0.0)
-                self.ocb_e = np.asarray(0.0)
+                self.ocb_n = np.zeros(shape=self.ocb_n.shape)
+                self.ocb_e = np.zeros(shape=self.ocb_e.shape)
+                self.ocb_z = np.zeros(shape=self.ocb_z.shape)
             else:
-                self.ocb_n[nan_mask][zero_mask] = 0.0
-                self.ocb_e[nan_mask][zero_mask] = 0.0
+                self.ocb_n[zero_mask] = 0.0
+                self.ocb_e[zero_mask] = 0.0
+                self.ocb_z[zero_mask] = 0.0
 
         # The measurement is aligned with the AACGM and OCB poles
         if np.any(ns_mask):
             if self.scale_func is None:
                 if self.aacgm_n.shape == ():
-                    self.ocb_n = self.aacgm_n
-                    self.ocb_e = self.aacgm_e
+                    self.ocb_n = np.full(shape=self.ocb_n.shape,
+                                         fill_value=self.aacgm_n)
+                    self.ocb_e = np.full(shape=self.ocb_e.shape,
+                                         fill_value=self.aacgm_e)
+                    self.ocb_z = np.full(shape=self.ocb_z.shape,
+                                         fill_value=self.aacgm_z)
                 else:
                     self.ocb_n[ns_mask] = self.aacgm_n[ns_mask]
                     self.ocb_e[ns_mask] = self.aacgm_e[ns_mask]
+                    self.ocb_z[ns_mask] = self.aacgm_z[ns_mask]
                     
             else:
                 if self.aacgm_n.shape == ():
-                    self.ocb_n = self.scale_func(self.aacgm_n, self.unscaled_r,
-                                                 self.scaled_r)
-                    self.ocb_e = self.scale_func(self.aacgm_e, self.unscaled_r,
-                                                 self.scaled_r)
+                    self.ocb_n = np.full(shape=self.ocb_n.shape,
+                                         fill_value=self.scale_func(
+                                             self.aacgm_n, self.unscaled_r,
+                                             self.scaled_r))
+                    self.ocb_e = np.full(shape=self.ocb_e.shape,
+                                         fill_value=self.scale_func(
+                                             self.aacgm_e, self.unscaled_r,
+                                             self.scaled_r))
+                    self.ocb_z = np.full(shape=self.ocb_z.shape,
+                                         fill_value=self.scale_func(
+                                             self.aacgm_z, self.unscaled_r,
+                                             self.scaled_r))
                 else:
                     self.ocb_n[ns_mask] = self.scale_func(self.aacgm_n[ns_mask],
                             self.unscaled_r[ns_mask], self.scaled_r[ns_mask])
                     self.ocb_e[ns_mask] = self.scale_func(self.aacgm_e[ns_mask],
                             self.unscaled_r[ns_mask], self.scaled_r[ns_mask])
+                    self.ocb_z[ns_mask] = self.scale_func(self.aacgm_z[ns_mask],
+                            self.unscaled_r[ns_mask], self.scaled_r[ns_mask])
 
             # Determine if the measurement is on or between the poles
+            # This does not affect the vertical direction
             sign_mask = ((self.pole_angle == 0.0) &
                          np.greater_equal(self.aacgm_lat, self.ocb_aacgm_lat,
                                           where=~np.isnan(self.aacgm_lat)) &
@@ -767,30 +830,48 @@ class VectorData(object):
             # any changes associated with adjusting the size of the polar cap
             if self.scale_func is not None:
                 vmag = self.scale_func(vmag, self.unscaled_r, self.scaled_r)
+                vz = self.scale_func(self.aacgm_z if self.aacgm_z.shape == ()
+                                     else self.aacgm_z[norm_mask],
+                                     self.unscaled_r, self.scaled_r)
+            else:
+                if self.aacgm_z.shape == ():
+                    if np.all(np.isnan(vmag)) or np.all(np.isnan(ocb_angle)):
+                        vz = np.nan
+                    else:
+                        vz = self.aacgm_z
+                else:
+                    vz = self.aacgm_z[norm_mask]
+                    nan_mask = (np.isnan(vmag)
+                                | (np.isnan(ocb_angle) if ocb_angle.shape == ()
+                                   else np.isnan(ocb_angle[norm_mask])))
+                    vz[nan_mask] = np.nan
 
             if vmag.shape == ():
-                self.ocb_n = vsigns['north'] * vmag * np.cos(ocb_angle)
-                self.ocb_e = vsigns['east'] * vmag * np.sin(ocb_angle)
+                self.ocb_n = np.full(shape=self.ocb_n.shape,
+                                     fill_value=(vsigns['north'] * vmag
+                                                 * np.cos(ocb_angle)))
+                self.ocb_e = np.full(shape=self.ocb_e.shape,
+                                     fill_value=(vsigns['east'] * vmag
+                                                 * np.sin(ocb_angle)))
+                self.ocb_z = np.full(shape=self.ocb_z.shape, fill_value=vz)
             elif ocb_angle.shape == ():
                 self.ocb_n[norm_mask] = (vsigns['north'][norm_mask] * vmag
                                          * np.cos(ocb_angle))
                 self.ocb_e[norm_mask] = (vsigns['east'][norm_mask] * vmag
                                          * np.sin(ocb_angle))
+                self.ocb_z[norm_mask] = vz
+                
             else:
                 self.ocb_n[norm_mask] = (vsigns['north'][norm_mask] * vmag
                                          * np.cos(ocb_angle[norm_mask]))
                 self.ocb_e[norm_mask] = (vsigns['east'][norm_mask] * vmag
                                          * np.sin(ocb_angle[norm_mask]))
+                self.ocb_z[norm_mask] = vz
                 
 
         # Calculate the scaled OCB vector magnitude
-        if self.ocb_n.shape == ():
-            self.ocb_mag = np.sqrt(self.ocb_n**2 + self.ocb_e**2
-                                   + self.ocb_z**2)
-        else:
-            self.ocb_mag[norm_mask] = np.sqrt(self.ocb_n[norm_mask]**2
-                                              + self.ocb_e[norm_mask]**2
-                                              + self.ocb_z[norm_mask]**2)
+        self.ocb_mag = np.sqrt(self.ocb_n**2 + self.ocb_e**2
+                               + self.ocb_z**2)
 
         return
 
@@ -836,39 +917,48 @@ class VectorData(object):
             raise ValueError("Vector angle undefined")
 
         # Initialise the output and set the quadrant dictionary
+        nan_mask = (~np.isnan(self.aacgm_naz) & ~np.isnan(self.pole_angle))
         ocb_naz = np.full(shape=(self.aacgm_naz+self.pole_angle).shape,
                           fill_value=np.nan)
-        quads = {o: {v: (self.ocb_quad == o) & (self.vec_quad == v)
+        quads = {o: {v: (self.ocb_quad == o) & (self.vec_quad == v) & nan_mask
                      for v in quad_range} for o in quad_range}
 
         # Create masks for the different quadrant combinations
-        nmp_mask = (((quads[2][4] | quads[2][2])
-                     & (self.aacgm_naz > self.pole_angle))
-                    | ((self.aacgm_naz > self.pole_angle) & quads[1][1])
+        nmp_mask = (((quads[2][4] | quads[2][2] | quads[1][1])
+                     & np.greater(self.aacgm_naz, self.pole_angle,
+                                  where=nan_mask))
                     | (quads[1][4]
-                       & (self.aacgm_naz <= self.pole_angle + 90.0)))
-        pmn_mask = ((((self.aacgm_naz <= self.pole_angle) & quads[1][1])
-                     | ((self.aacgm_naz <= self.pole_angle)
-                        &  (quads[2][4] | quads[2][2]))
-                     | ((self.aacgm_naz > self.pole_angle - 90.0)
+                       & np.less_equal(self.aacgm_naz, self.pole_angle + 90.0,
+                                       where=nan_mask)))
+        pmn_mask = (((np.less_equal(self.aacgm_naz, self.pole_angle,
+                                    where=nan_mask)
+                      &  (quads[2][4] | quads[2][2] | quads[1][1]))
+                     | (np.greater(self.aacgm_naz, self.pole_angle - 90.0,
+                                   where=nan_mask)
                         & (quads[4][1] | quads[4][3] | quads[3][4]
                            | quads[3][2]))) & ~nmp_mask)
-        npp_mask = ((self.aacgm_naz <= 90.0 - self.pole_angle)
+        npp_mask = (np.less_equal(self.aacgm_naz, 90.0 - self.pole_angle,
+                                  where=nan_mask)
                     & (quads[1][2] | quads[2][1] | quads[2][3])
                     & ~nmp_mask & ~pmn_mask)
-        omm_mask = ((((self.aacgm_naz > 90.0 - self.pole_angle)
+        omm_mask = (((np.greater(self.aacgm_naz, 90.0 - self.pole_angle,
+                                 where=nan_mask)
                       & (quads[1][2] | quads[2][1] | quads[2][3]))
                      | ((quads[4][4] | quads[4][2] | quads[3][1] | quads[3][3]
                          | quads[1][3])
-                        & (self.aacgm_naz <= 180.0 - self.pole_angle)))
+                        & np.less_equal(self.aacgm_naz, 180.0 - self.pole_angle,
+                                        where=nan_mask)))
                     & ~nmp_mask & ~pmn_mask & ~npp_mask)
         mop_mask = ((((quads[3][1] | quads[3][3] | quads[4][4] | quads [4][2]
                        | quads[1][3])
-                      & (self.aacgm_naz > 180.0 - self.pole_angle))
+                      & np.greater(self.aacgm_naz, 180.0 - self.pole_angle,
+                                   where=nan_mask))
                      | (quads[1][4]
-                        & (self.aacgm_naz > self.pole_angle + 90.0)))
+                        & np.greater(self.aacgm_naz, self.pole_angle + 90.0,
+                                     where=nan_mask)))
                     & ~nmp_mask & ~pmn_mask & ~npp_mask & ~omm_mask)
-        omp_mask = ((self.aacgm_naz <= self.pole_angle - 90.0)
+        omp_mask = (np.less_equal(self.aacgm_naz, self.pole_angle - 90.0,
+                                  where=nan_mask)
                     & (quads[3][4] | quads[3][2] | quads[4][1] | quads[4][3])
                     & ~nmp_mask & ~pmn_mask & ~npp_mask & ~omm_mask & ~mop_mask)
 
@@ -970,16 +1060,17 @@ class VectorData(object):
         if not np.any(np.isin(self.vec_quad, quad_range)):
             raise ValueError("Vector quadrant undefined")
 
-        if np.isnan(self.aacgm_naz):
+        if np.all(np.isnan(self.aacgm_naz)):
             raise ValueError("AACGM polar angle undefined")
 
-        if np.isnan(self.pole_angle):
+        if np.all(np.isnan(self.pole_angle)):
             raise ValueError("Vector angle undefined")
 
         # If necessary, initialise quadrant dictionary
+        nan_mask = (~np.isnan(self.aacgm_naz) & ~np.isnan(self.pole_angle))
         if not np.all([kk in quads.keys() for kk in quad_range]):
             quads = {o: {v: (self.ocb_quad == o) & (self.vec_quad == v)
-                         for v in quad_range} for o in quad_range}
+                         & nan_mask for v in quad_range} for o in quad_range}
 
         # Initialise output
         vsigns = {"north": np.zeros(shape=quads[1][1].shape),
@@ -992,22 +1083,31 @@ class VectorData(object):
             pole_plus = self.pole_angle + 90.0
 
             pmask = (quads[1][1] | quads[2][2] | quads[3][3] | quads[4][4]
-                     | (quads[1][4] & (self.aacgm_naz <= pole_plus))
+                     | (quads[1][4] & np.less_equal(self.aacgm_naz, pole_plus,
+                                                    where=nan_mask))
                      | ((quads[1][2] | quads[2][1])
-                        & (self.aacgm_naz <= minus_pole))
+                        & np.less_equal(self.aacgm_naz, minus_pole,
+                                        where=nan_mask))
                      | ((quads[3][4] | quads[4][3])
-                        & (self.aacgm_naz <= pole_minus))
+                        & np.less_equal(self.aacgm_naz, pole_minus,
+                                        where=nan_mask))
                      | ((quads[3][2] | quads[4][1])
-                        & (self.aacgm_naz > pole_minus))
-                     | (quads[2][3] & (self.aacgm_naz > minus_pole)))
+                        & np.greater(self.aacgm_naz, pole_minus,
+                                     where=nan_mask))
+                     | (quads[2][3] & np.greater(self.aacgm_naz, minus_pole,
+                                                 where=nan_mask)))
             mmask = ((((quads[1][2] | quads[2][1])
-                       & (self.aacgm_naz > minus_pole))
-                      | (quads[1][4] & (self.aacgm_naz > pole_plus))
+                       & np.greater(self.aacgm_naz, minus_pole, where=nan_mask))
+                      | (quads[1][4] & np.greater(self.aacgm_naz, pole_plus,
+                                                  where=nan_mask))
                       | ((quads[4][1] | quads[3][2])
-                         & (self.aacgm_naz <= pole_minus))
-                      | (quads[2][3] & (self.aacgm_naz <= minus_pole))
+                         & np.less_equal(self.aacgm_naz, pole_minus,
+                                         where=nan_mask))
+                      | (quads[2][3] & np.less_equal(self.aacgm_naz, minus_pole,
+                                                     where=nan_mask))
                       | ((quads[4][3] | quads[3][4])
-                         | (self.aacgm_naz > pole_minus))
+                         | np.greater(self.aacgm_naz, pole_minus,
+                                      where=nan_mask))
                       | quads[1][3] | quads[2][4] | quads[3][1] | quads[4][2])
                      & ~pmask)
             
@@ -1028,20 +1128,30 @@ class VectorData(object):
 
             pmask = (quads[1][4] | quads[2][1] | quads[3][2] | quads[4][3] |
                      ((quads[1][1] | quads[2][4])
-                      & (self.aacgm_naz > self.pole_angle))
+                      & np.greater(self.aacgm_naz, self.pole_angle,
+                                   where=nan_mask))
                      | ((quads[4][4] | quads[3][1])
-                        & (self.aacgm_naz <= minus_pole))
+                        & np.less_equal(self.aacgm_naz, minus_pole,
+                                        where=nan_mask))
                      | ((quads[4][2] | quads[3][3] | quads[1][3])
-                        & (self.aacgm_naz > minus_pole))
-                     | (quads[2][2] & (self.aacgm_naz <= self.pole_angle)))
+                        & np.greater(self.aacgm_naz, minus_pole,
+                                     where=nan_mask))
+                     | (quads[2][2] &
+                        np.less_equal(self.aacgm_naz, self.pole_angle,
+                                      where=nan_mask)))
             mmask = ((quads[1][2] | quads[2][3] | quads[3][4] | quads[4][1]
                       | ((quads[4][4] | quads[3][1])
-                         & (self.aacgm_naz > minus_pole))
-                      | (quads[2][2] & (self.aacgm_naz > self.pole_angle))
+                         & np.greater(self.aacgm_naz, minus_pole,
+                                      where=nan_mask))
+                      | (quads[2][2] &
+                         np.greater(self.aacgm_naz, self.pole_angle,
+                                    where=nan_mask))
                       | ((quads[4][2] | quads[3][3] | quads[1][3])
-                         & (self.aacgm_naz <= minus_pole))
+                         & np.less_equal(self.aacgm_naz, minus_pole,
+                                         where=nan_mask))
                       | ((quads[1][1] | quads[2][4])
-                         & (self.aacgm_naz <= self.pole_angle))) & ~pmask)
+                         & np.less_equal(self.aacgm_naz, self.pole_angle,
+                                         where=nan_mask))) & ~pmask)
 
             if np.any(pmask):
                 if vsigns["east"].shape == ():
