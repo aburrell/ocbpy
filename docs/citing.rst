@@ -58,3 +58,16 @@ boundary retrieval method and the OCB correction method.
   https://doi.org/10.25392/leicester.data.11294861.v1
 * **OCB**: Burrell, A. G., et al. (2020): AMPERE Polar Cap Boundaries,
   Ann. Geophys., 38, 481-490, doi:10.5194/angeo-38-481-2020
+
+DMSP SSJ Boundaries
+-------------------
+
+The DMSO SSJ boundaries are retrieved using
+`ssj_auroral_boundary <https://github.com/lkilcommons/ssj_auroral_boundary>`_.
+Please follow the citation guidelines on their page.  The general reference
+for the DMSP SSJ boundary data set is provided below.
+
+* **SSJ Auroral Boundaries (2010-2014)**: Kilcommons, L., et al. (2019).
+  Defense Meteorology Satellite Program (DMSP) Electron Precipitation (SSJ)
+  Auroral Boundaries, 2010-2014 (Version 1.0.0) [Data set]. Zenodo.
+  http://doi.org/10.5281/zenodo.3373812
