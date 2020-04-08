@@ -349,7 +349,7 @@ class TestOCBScalingMethods(unittest.TestCase):
         """ Test the calculation of the OCB vector sign with no pole angle
         """
         self.vdata.set_ocb(self.ocb)
-        self.vdata.pole_angle = np.asarray(0.0)
+        self.vdata.pole_angle = 0.0
 
         nscale = ocbpy.ocb_scaling.normal_evar(self.vdata.aacgm_n,
                                                self.vdata.unscaled_r,
@@ -1046,6 +1046,32 @@ class TestOCBScalingArrayMethods(unittest.TestCase):
         self.assertRegex(self.out, "Index")
         self.assertNotRegex(self.out, "nan, nan")
 
+    def test_array_vector_repr_calc_ocb_vec_array(self):
+        """ Test the VectorData print statement with calculated ocb/vec arrays
+        """
+        self.vargs[1] = [27, 31]
+        self.vdata = ocbpy.ocb_scaling.VectorData(*self.vargs, **self.vkwargs)
+        self.vdata.set_ocb(self.ocb)
+        self.out = self.vdata.__repr__()
+        self.assertRegex(self.out, "Index")
+        self.assertNotRegex(self.out, "nan, nan")
+
+    def test_array_vector_repr_calc_ocb_array(self):
+        """ Test the VectorData print statement with calculated ocb arrays
+        """
+        self.vargs[0] = self.vargs[0][0]
+        self.vargs[1] = [27, 31]
+        self.vargs[2] = self.vargs[2][0]
+        self.vargs[3] = self.vargs[3][0]
+        self.vkwargs['aacgm_n'] = self.vkwargs['aacgm_n'][0]
+        self.vkwargs['aacgm_e'] = self.vkwargs['aacgm_e'][0]
+        self.vkwargs['aacgm_z'] = self.vkwargs['aacgm_z'][0]
+        self.vdata = ocbpy.ocb_scaling.VectorData(*self.vargs, **self.vkwargs)
+        self.vdata.set_ocb(self.ocb)
+        self.out = self.vdata.__repr__()
+        self.assertRegex(self.out, "Index")
+        self.assertNotRegex(self.out, "nan, nan")
+
     def test_init_nez_vec_array(self):
         """ Test VectorData initialisation  with vector array components
         """
@@ -1199,6 +1225,114 @@ class TestOCBScalingArrayMethods(unittest.TestCase):
 
         self.assertEqual(self.vdata.vec_quad[0], 1)
         self.assertEqual(self.vdata.vec_quad[1], 0)
+
+    def test_define_quadrants_neg_adj_mlt(self):
+        """ Test the quadrant assignment with a negative AACGM MLT
+        """
+        self.vargs[3][0] = -22.0
+        self.vdata = ocbpy.ocb_scaling.VectorData(*self.vargs, **self.vkwargs)
+        self.vdata.set_ocb(self.ocb, scale_func=ocbpy.ocb_scaling.normal_evar)
+
+        self.assertGreater(self.vdata.ocb_aacgm_mlt-self.vargs[3][0], 24)
+        self.assertTrue(np.all(self.vdata.ocb_quad == 1))
+        self.assertTrue(np.all(self.vdata.vec_quad == 1))
+
+    @unittest.skipIf(version_info.major == 2,
+                     'Python 2.7 does not support subTest')
+    def test_scale_vec_pole_angle_zero(self):
+        """ Test the calculation of the OCB vector sign with no pole angle
+        """
+        self.vdata = ocbpy.ocb_scaling.VectorData(*self.vargs, **self.vkwargs)
+        self.vdata.set_ocb(self.ocb)
+        self.vdata.pole_angle = np.zeros(shape=self.vargs[2].shape)
+
+        nscale = ocbpy.ocb_scaling.normal_evar(self.vdata.aacgm_n,
+                                               self.vdata.unscaled_r,
+                                               self.vdata.scaled_r)
+        escale = ocbpy.ocb_scaling.normal_evar(self.vdata.aacgm_e,
+                                               self.vdata.unscaled_r,
+                                               self.vdata.scaled_r)
+
+        # Cycle through all the possible options for a pole angle of zero/180
+        for tset in [('scale_func', None, self.vkwargs['aacgm_n'],
+                      self.vkwargs['aacgm_e']),
+                     ('scale_func', ocbpy.ocb_scaling.normal_evar, nscale,
+                      escale),
+                     ('ocb_aacgm_lat', self.vargs[2][0], -1.0 * nscale,
+                      -1.0 * escale)]:
+            with self.subTest(tset=tset):
+                setattr(self.vdata, tset[0], tset[1])
+
+                # Run the scale_vector routine with the new attributes
+                self.vdata.scale_vector()
+        
+                # Assess the ocb north and east components
+                self.assertTrue(np.all(self.vdata.ocb_n == tset[2]))
+                self.assertTrue(np.all(self.vdata.ocb_e == tset[3]))
+
+        del nscale, escale, tset
+
+    @unittest.skipIf(version_info.major > 2, 'Already tested with subTest')
+    def test_scale_vec_pole_angle_zero_noscale(self):
+        """ Test the OCB vector sign calc with no pole angle or scaling
+        """
+        self.vdata = ocbpy.ocb_scaling.VectorData(*self.vargs, **self.vkwargs)
+        self.vdata.set_ocb(self.ocb)
+        self.vdata.pole_angle = np.zeros(shape=self.vargs[2].shape)
+
+        # Run the scale_vector routine with the new attributes
+        self.vdata.scale_vector()
+
+        # Assess the ocb north and east components
+        self.assertTrue(np.all(self.vdata.ocb_n == self.vkwargs['aacgm_n']))
+        self.assertTrue(np.all(self.vdata.ocb_e == self.vkwargs['aacgm_e']))
+
+    @unittest.skipIf(version_info.major > 2, 'Already tested with subTest')
+    def test_scale_vec_pole_angle_zero_scale(self):
+        """  Test the OCB vector sign calc with scaling but no pole angle
+        """
+        self.vdata = ocbpy.ocb_scaling.VectorData(*self.vargs, **self.vkwargs)
+        self.vdata.set_ocb(self.ocb, scale_func=ocbpy.ocb_scaling.normal_evar)
+        self.vdata.pole_angle = np.zeros(shape=self.vargs[2].shape)
+
+        # Run the scale_vector routine with the new attributes
+        self.vdata.scale_vector()
+
+        # Assess the ocb north and east components
+        self.out = ocbpy.ocb_scaling.normal_evar(self.vkwargs['aacgm_n'],
+                                                 self.vdata.unscaled_r,
+                                                 self.vdata.scaled_r)
+        self.assertTrue(np.all(self.vdata.ocb_n == self.out))
+
+        self.out = ocbpy.ocb_scaling.normal_evar(self.vkwargs['aacgm_e'],
+                                                 self.vdata.unscaled_r,
+                                                 self.vdata.scaled_r)
+        self.assertTrue(np.all(self.vdata.ocb_e == self.out))
+
+    @unittest.skipIf(version_info.major > 2, 'Already tested with subTest')
+    def test_scale_vec_pole_angle_zero_scale(self):
+        """  Test the OCB vector sign calc with scaling but no pole angle
+        """
+        self.vdata = ocbpy.ocb_scaling.VectorData(*self.vargs, **self.vkwargs)
+        self.vdata.set_ocb(self.ocb, scale_func=ocbpy.ocb_scaling.normal_evar)
+        self.vdata.pole_angle = np.zeros(shape=self.vargs[2].shape)
+        self.vdata.ocb_aacgm_lat = self.vargs[2][0]
+
+        # Run the scale_vector routine with the new attributes
+        self.vdata.scale_vector()
+
+        # Assess the ocb north and east components
+        self.out = -ocbpy.ocb_scaling.normal_evar(self.vkwargs['aacgm_n'],
+                                                  self.vdata.unscaled_r,
+                                                  self.vdata.scaled_r)
+        self.assertTrue(np.all(self.vdata.ocb_n == self.out))
+
+        self.out = -ocbpy.ocb_scaling.normal_evar(self.vkwargs['aacgm_e'],
+                                                  self.vdata.unscaled_r,
+                                                  self.vdata.scaled_r)
+        self.assertTrue(np.all(self.vdata.ocb_e == self.out))
+
+
 
 if __name__ == '__main__':
     unittest.main()
