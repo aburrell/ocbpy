@@ -1219,12 +1219,7 @@ class VectorData(object):
 
         # Convert the AACGM MLT of the observation and OCB pole to radians,
         # then calculate the difference between them.
-        try:
-            del_long = ocbpy.ocb_time.hr2rad(self.ocb_aacgm_mlt-self.aacgm_mlt)
-        except ValueError:
-            raise ValueError("".join(["Vector input must have either a single",
-                                      " OCB or an equal number of vectors ",
-                                      "and OCBs"]))
+        del_long = ocbpy.ocb_time.hr2rad(self.ocb_aacgm_mlt-self.aacgm_mlt)
 
         if del_long.shape == ():
             if del_long < 0.0:
