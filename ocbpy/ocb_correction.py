@@ -16,10 +16,11 @@ harmonic(mlt, [instrument, method])
 
 References
 -------------------------------------------------------------------------------
-Burrell, A. G. et al.: AMPERE Polar Cap Boundaries, Ann. Geophys. Discuss.,
-https://doi.org/10.5194/angeo-2019-113, in review, 2019.
+Burrell, A. G. et al.: AMPERE Polar Cap Boundaries, Ann. Geophys., 38, 481-490,
+doi:10.5194/angeo-38-481-2020, 2020.
 
 """
+
 import numpy as np
 
 from ocbpy.ocb_time import hr2rad
@@ -65,9 +66,9 @@ def elliptical(mlt, instrument='ampere', method='median'):
         Radius correction in degrees at this MLT
 
     References
-    -----
-    Burrell, A. G. et al.: AMPERE Polar Cap Boundaries, Ann. Geophys. Discuss.,
-    https://doi.org/10.5194/angeo-2019-113, in review, 2019.
+    ----------
+    Burrell, A. G. et al.: AMPERE Polar Cap Boundaries, Ann. Geophys., 38,
+    481-490, doi:10.5194/angeo-38-481-2020, 2020.
 
     """
 
@@ -108,9 +109,9 @@ def harmonic(mlt, instrument='ampere', method='median'):
         Radius correction in degrees at this MLT
 
     References
-    -----
-    Burrell, A. G. et al.: AMPERE Polar Cap Boundaries, Ann. Geophys. Discuss.,
-    https://doi.org/10.5194/angeo-2019-113, in review, 2019.
+    ----------
+    Burrell, A. G. et al.: AMPERE Polar Cap Boundaries, Ann. Geophys., 38,
+    481-490, doi:10.5194/angeo-38-481-2020, 2020.
 
     """
     if instrument.lower() != 'ampere':
