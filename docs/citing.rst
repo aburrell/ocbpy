@@ -42,7 +42,11 @@ retrieval method.
 * **OCB**: Chisham, G. (2017), A new methodology for the development of
   high‐latitude ionospheric climatologies and empirical models,
   J. Geophys. Res. Space Physics, 122, 932–947, doi:10.1002/2016JA023235.
-
+*    : Chisham, G. (2017) Auroral Boundary Derived from IMAGE Satellite Mission
+     Data (May 2000 - Oct 2002), Version 1.1, Polar Data Centre, Natural
+     Environment Research Council, UK.
+     doi:10.5285/75aa66c1-47b4-4344-ab5d-52ff2913a61e.
+     
 AMPERE Boundaries
 -----------------
 
@@ -52,5 +56,5 @@ boundary retrieval method and the OCB correction method.
 
 * **FAC**: Milan, S. E. (2019): AMPERE R1/R2 FAC radii. figshare. Dataset.
   https://doi.org/10.25392/leicester.data.11294861.v1
-* **OCB**: Burrell, A. G., et al.: AMPERE Polar Cap Boundaries, Ann. Geophys.
-  Discuss., doi:10.5194/angeo-2019-113, in review, 2019.
+* **OCB**: Burrell, A. G., et al. (2020): AMPERE Polar Cap Boundaries,
+  Ann. Geophys., 38, 481-490, doi:10.5194/angeo-38-481-2020
