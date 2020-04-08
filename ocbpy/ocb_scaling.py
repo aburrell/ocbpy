@@ -785,11 +785,11 @@ class VectorData(object):
                                              self.scaled_r))
                 else:
                     self.ocb_n[ns_mask] = self.scale_func(self.aacgm_n[ns_mask],
-                            self.unscaled_r[ns_mask], self.scaled_r[ns_mask])
+                            self.unscaled_r[ns_mask], self.scaled_r)
                     self.ocb_e[ns_mask] = self.scale_func(self.aacgm_e[ns_mask],
-                            self.unscaled_r[ns_mask], self.scaled_r[ns_mask])
+                            self.unscaled_r[ns_mask], self.scaled_r)
                     self.ocb_z[ns_mask] = self.scale_func(self.aacgm_z[ns_mask],
-                            self.unscaled_r[ns_mask], self.scaled_r[ns_mask])
+                            self.unscaled_r[ns_mask], self.scaled_r)
 
             # Determine if the measurement is on or between the poles
             # This does not affect the vertical direction
@@ -833,10 +833,18 @@ class VectorData(object):
             # Scale the vector along the OCB north and account for
             # any changes associated with adjusting the size of the polar cap
             if self.scale_func is not None:
-                vmag = self.scale_func(vmag, self.unscaled_r, self.scaled_r)
-                vz = self.scale_func(self.aacgm_z if self.aacgm_z.shape == ()
-                                     else self.aacgm_z[norm_mask],
-                                     self.unscaled_r, self.scaled_r)
+                if self.unscaled_r.shape == ():
+                    un_r = self.unscaled_r
+                else:
+                    un_r = self.unscaled_r[norm_mask]
+
+                if self.aacgm_z.shape == ():
+                    a_z = self.aacgm_z
+                else:
+                    a_z = self.aacgm_z[norm_mask]
+
+                vmag = self.scale_func(vmag, un_r, self.scaled_r)
+                vz = self.scale_func(a_z,  un_r, self.scaled_r)
             else:
                 if self.aacgm_z.shape == ():
                     if np.all(np.isnan(vmag)) or np.all(np.isnan(ocb_angle)):
