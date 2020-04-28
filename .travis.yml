@@ -9,6 +9,7 @@ python:
 addons:
     apt_packages:
         - gfortran
+	- gcc
 env:
     - INSTALL_EXTRA=1
     - INSTALL_EXTRA=2

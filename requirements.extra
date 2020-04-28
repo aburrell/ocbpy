@@ -29,8 +29,8 @@ if [ $EXTRAS = 1 ]; then
     # Install pysat
     pip install -v pysat>=2.0.0
     # Make the pyast data directory
-    printf "import os\nimport pysat\npdir=os.path.join(path.split(pysat.__file__)[0], 'pysatData')\nos.mkdir(pdir)\npysat.utils.set_data_dir(path=pdir)" | python
-    echo "Installed pysat"
+    printf "import os\nimport pysat\npdir=os.path.join(path.split(pysat.__file__)[0], 'pysatData')\nos.mkdir(pdir)\npysat.utils.set_data_dir(pdir)" | python
+    echo "Finished extra installs for pysat"
 elif [ $EXTRAS = 2 ]; then
     # Install code for ssj_auroral_boundary
     pip install spacepy
@@ -48,5 +48,5 @@ elif [ $EXTRAS = 2 ]; then
     python setup.py install
 
     cd ../.
-    echo "Installed SSJ_Auroral_Boundary"
+    echo "Finished extra installs for SSJ_Auroral_Boundary"
 fi
