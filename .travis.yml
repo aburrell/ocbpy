@@ -6,6 +6,9 @@ python:
     - "3.5"
     - "3.6"
     - "3.7"
+addons:
+    apt_packages:
+        - gfortran
 env:
     - INSTALL_EXTRA=1
     - INSTALL_EXTRA=2
