@@ -5,9 +5,13 @@
 EXTRAS=$1
 
 if [ $EXTRAS = 1 ]; then
+    # Install pysat requirements
+    pip install numpy, pytest-cov, future, matplotlib, netCDF4
+    pip install pysatCDF >/dev/null
     # Install pysat
     pip install -v pysat>=2.0.0
-    mkdir $HOME/pysatData
+    # Make the pyast data directory
+    printf "import os\nimport pysat\npdir=os.path.join(path.split(pysat.__file__)[0], 'pysatData')\nos.mkdir(pdir)\npysat.utils.set_data_dir(path=pdir)" | python
     echo "Installed pysat"
 elif [ $EXTRAS = 2 ]; then
     # Install code for ssj_auroral_boundary
