@@ -20,12 +20,12 @@ from __future__ import absolute_import, unicode_literals
 import datetime as dt
 import numpy as np
 
-try:
-    import pysat
-except ImportError as ierr:
-    err = ''.join(['unable to load the pysat modules; pysat is available at:\n',
-                   'https://github.com/pysat/pysat'])
-    raise ImportError("{:s}\n{:}".format(err, ierr))
+# try:
+import pysat
+# except ImportError as ierr:
+#     err = ''.join(['unable to load the pysat modules; pysat is available at:\n',
+#                    'https://github.com/pysat/pysat'])
+#     raise ImportError("{:s}\n{:}".format(err, ierr))
 
 import ocbpy
 import ocbpy.ocb_scaling as ocbscal
