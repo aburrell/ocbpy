@@ -15,14 +15,14 @@ from sys import version_info
 import unittest
 
 import ocbpy
-try:
+# try:
     # Import pysat first to get the correct error message
     import pysat
     import ocbpy.instruments.pysat_instruments as ocb_pysat
     import pandas as pds
     no_pysat = False
-except ImportError:
-    no_pysat = True
+# except ImportError:
+#     no_pysat = True
 
 
 @unittest.skipIf(no_pysat, "pysat not installed, cannot test routines")
