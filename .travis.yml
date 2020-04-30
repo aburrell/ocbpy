@@ -1,6 +1,7 @@
 language: python
 os:
     - linux
+    - osx
 jobs:
     include:
     - name: "Python 2.7 with SSJ_Auroral_Boundary"
