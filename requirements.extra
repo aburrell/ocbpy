@@ -52,6 +52,8 @@ elif [ $EXTRAS = 2 ]; then
     python setup.py install
 
     cd ../.
+    
+    printf "import ssj_auroral_boundary\nprint(ssj_auroral_boundary.__file__)\n" | python
     echo "CDF library is installed here: " $CDF_LIB
     echo "Finished extra installs for SSJ_Auroral_Boundary"
 fi
