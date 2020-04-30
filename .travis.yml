@@ -3,18 +3,18 @@ os:
     - linux
 jobs:
     include:
-        - name: "Python 2.7 with SSJ_Auroral_Boundary"
-	  python: "2.7"
-	  env: INSTALL_EXTRA=2 CDF_LIB=$HOME/lib
-	- name: "Python 3.5 basic install"
-	  python: "3.5"
-	  env: INSTALL_EXTRA=0
-	- name: "Python 3.6 basic install"
-	  python: "3.6"
-	  env: INSTALL_EXTRA=0
-	- name: "Python 3.7 basic install"
-	  python: "3.7"
-	  env: INSTALL_EXTRA=0
+    - name: "Python 2.7 with SSJ_Auroral_Boundary"
+      python: "2.7"
+      env: INSTALL_EXTRA=2 CDF_LIB=$HOME/lib
+    - name: "Python 3.5 basic install"
+      python: "3.5"
+      env: INSTALL_EXTRA=0
+    - name: "Python 3.6 basic install"
+      python: "3.6"
+      env: INSTALL_EXTRA=0
+    - name: "Python 3.7 basic install"
+      python: "3.7"
+      env: INSTALL_EXTRA=0
 addons:
     apt_packages:
         - gfortran
