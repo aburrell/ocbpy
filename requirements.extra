@@ -46,13 +46,15 @@ elif [ $EXTRAS = 2 ]; then
     git clone https://github.com/lkilcommons/geospacepy-lite.git
     cd ./geospacepy-lite
     python setup.py install
+    cd ../.
 
     git clone https://github.com/lkilcommons/ssj_auroral_boundary.git
-    cd ../ssj_auroral_boundary
+    cd ./ssj_auroral_boundary
     python setup.py install
 
     cd ../.
     
+    printf "import geospacepy\nprint(geospacepy.__file__)\n" | python
     printf "import ssj_auroral_boundary\nprint(ssj_auroral_boundary.__file__)\n" | python
     echo "CDF library is installed here: " $CDF_LIB
     echo "Finished extra installs for SSJ_Auroral_Boundary"
