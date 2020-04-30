@@ -6,31 +6,16 @@ EXTRAS=$1
 
 if [ $EXTRAS = 1 ]; then
     # Install pysat requirements
-    sudo apt-get update
-    if [ $TRAVIS_PYTHON_VERSION == "2.7" ]; then
-	wget https://repo.continuum.io/miniconda/Miniconda2-latest-Linux-x86_64.sh -O miniconda.sh;
-    else
-	wget https://repo.continuum.io/miniconda/Miniconda3-latest-Linux-x86_64.sh -O miniconda.sh;
-    fi
-    bash miniconda.sh -b -p $HOME/miniconda
-    source "$HOME/miniconda/etc/profile.d/conda.sh"
-    hash -r
-    conda config --set always_yes True --set changeps1 False
-    conda update -q conda
-    conda info -a
-    conda create -q -n test-environment python=$TRAVIS_PYTHON_VERSION numpy scipy requests beautifulsoup4 lxml netCDF4 h5py nose pytest-cov pytest-ordering coveralls future
-    conda activate test-environment
-    conda install 'pandas>=0.23, <0.25'
-    conda install 'xarray<0.15'
-    conda install 'kiwisolver<1.2'
+    pip install "pandas>=0.23, <0.25"
+    pip install -v xarray<0.15
+    pip install -v kiwisolver<1.2
     pip install madrigalWeb
     pip install PyForecastTools
     pip install pysatCDF >/dev/null
     # Install pysat
     pip install -v pysat>=2.0.0
     # Make the pyast data directory
-    #printf "import os\nimport pysat\npdir=os.path.join(os.path.split(pysat.__file__)[0], 'pysatData')\nos.mkdir(pdir)\npysat.utils.set_data_dir(pdir)" | python
-    mkdir $HOME/build/pysat/pysatData
+    printf "import os\nimport pysat\npdir=os.path.join(os.path.split(pysat.__file__)[0], 'pysatData')\nos.mkdir(pdir)\npysat.utils.set_data_dir(pdir)" | python
     echo "Finished extra installs for pysat"
 elif [ $EXTRAS = 2 ]; then
     # Install code for ssj_auroral_boundary
@@ -47,6 +32,7 @@ elif [ $EXTRAS = 2 ]; then
     cd cdf37_1-dist
     make OS=linux ENV=gnu all
     make INSTALLDIR=$HOME install
+    . $HOME/bin/definitions.B
     cd ..
 
     # Go back to python
