@@ -34,8 +34,7 @@ elif [ $EXTRAS = 2 ]; then
     make INSTALLDIR=$HOME install
     # Running this command for definitions will break matplotlib
     # . $HOME/bin/definitions.B
-    # But we need to define CDF_LIB
-    export CDF_LIB=$HOME/lib
+    # Define environment variables in the .yml file
     cd ..
 
     # Go back to python
