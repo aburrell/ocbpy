@@ -14,7 +14,7 @@ if [ $EXTRAS = 1 ]; then
     pip install pysatCDF >/dev/null
     # Install pysat
     pip install "pysat>=2.0.0"
-    # Make the pyast data directory
+    # Make the pysat data directory
     printf "import os\nimport pysat\npdir=os.path.join(os.path.split(pysat.__file__)[0], 'pysatData')\nos.mkdir(pdir)\npysat.utils.set_data_dir(pdir)" | python
     echo "Finished extra installs for pysat"
 elif [ $EXTRAS = 2 ]; then
@@ -32,7 +32,10 @@ elif [ $EXTRAS = 2 ]; then
     cd cdf37_1-dist
     make OS=linux ENV=gnu all
     make INSTALLDIR=$HOME install
-    . $HOME/bin/definitions.B
+    # Running this command for definitions will break matplotlib
+    # . $HOME/bin/definitions.B
+    # But we need to define CDF_LIB
+    export CDF_LIB=$HOME/lib
     cd ..
 
     # Go back to python
@@ -50,6 +53,6 @@ elif [ $EXTRAS = 2 ]; then
     python setup.py install
 
     cd ../.
-    echo "CDF library is installed here: ", $CDF_LIB
+    echo "CDF library is installed here: " $CDF_LIB
     echo "Finished extra installs for SSJ_Auroral_Boundary"
 fi
