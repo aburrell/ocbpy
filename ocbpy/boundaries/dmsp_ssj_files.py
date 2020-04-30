@@ -42,13 +42,13 @@ if sys.version_info.major == 2:
     import warnings
     warnings.simplefilter('default')
 
+import aacgmv2
+
 err = ''.join(['unable to load the DMSP SSJ module; ssj_auroral_boundary ',
                'is available at: ',
                'https://github.com/lkilcommons/ssj_auroral_boundary'])
 try:
-    import geospacepy
     from spacepy import pycdf
-    import aacgmv2
     import ssj_auroral_boundary as ssj
 except ImportError as ierr:
     raise ImportError("{:s}\n{:}".format(err, ierr))
