@@ -1,19 +1,36 @@
 language: python
-os:
-    - linux
-    - osx
 jobs:
     include:
-    - name: "Python 2.7 with SSJ_Auroral_Boundary"
+    - name: "Mac: Python 2.7 with SSJ_Auroral_Boundary"
+      os: osx
+      python: "2.7"
+      env: INSTALL_EXTRA=2 CDF_LIB=$HOME/lib
+    - name: "Linux: Python 2.7 with SSJ_Auroral_Boundary"
+      os: linux
       python: "2.7"
       env: INSTALL_EXTRA=2 CDF_LIB=$HOME/lib
     - name: "Python 3.5 basic install"
+      os: osx
+      python: "3.5"
+      env: INSTALL_EXTRA=0
+    - name: "Python 3.5 basic install"
+      os: linux
       python: "3.5"
       env: INSTALL_EXTRA=0
     - name: "Python 3.6 basic install"
+      os: osx
+      python: "3.6"
+      env: INSTALL_EXTRA=0
+    - name: "Python 3.6 basic install"
+      os: linux
       python: "3.6"
       env: INSTALL_EXTRA=0
     - name: "Python 3.7 basic install"
+      os: osx
+      python: "3.7"
+      env: INSTALL_EXTRA=0
+    - name: "Python 3.7 basic install"
+      os: linux
       python: "3.7"
       env: INSTALL_EXTRA=0
 addons:
