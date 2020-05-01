@@ -56,13 +56,13 @@ elif [ $EXTRAS -ge 32  ]; then
     # in the future
     EXE_FILE=ffnet-0.8.3.win$EXTRA-py2.7.exe
     SOURCE=http://sourceforge.net/projects/ffnet/files/ffnet/0.8.3/$EXE_FILE
-    curl -fsS -o $EXE_FILE $SOURCE
+    curl.exe -fsS -o $EXE_FILE $SOURCE
     $EXE_FILE
 
     # Get CDF software and install it
     EXE_FILE=cdf37_1_0-setup-$EXTRAS.exe
     SOURCE=https://spdf.sci.gsfc.nasa.gov/pub/software/cdf/dist/cdf37_1/windows/$EXE_FILE
-    curl -fsS -o $EXE_FILE $SOURCE
+    curl.exe -fsS -o $EXE_FILE $SOURCE
     $EXE_FILE
 
     # Go back to python
