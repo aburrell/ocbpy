@@ -49,8 +49,14 @@ elif [ $EXTRAS = 2 ]; then
     echo "Finished extra installs for SSJ_Auroral_Boundary"
 elif [ $EXTRAS -ge 32  ]; then
     # Install code for ssj_auroral_boundary on windows (EXTRAS is 32 or 64)
-    $PYTHON\\python.exe -m pip install wheel scipy matplotlib networkx h5py ffnet
-    
+    $PYTHON\\python.exe -m pip install wheel scipy matplotlib networkx h5py
+
+    # Get ffnet and install it.  pip doesn't work for windows.
+    # This will need to be updated for version number and python version number
+    # in the future
+    wget http://sourceforge.net/projects/ffnet/files/ffnet/0.8.3/ffnet-0.8.3.win$EXTRA-py2.7.exe
+    ffnet-0.8.3.win$EXTRA-py2.7.exe
+
     # Get CDF software and install it
     wget https://spdf.sci.gsfc.nasa.gov/pub/software/cdf/dist/cdf37_1/windows/cdf37_1_0-setup-$EXTRAS.exe
     cdf37_1_0-setup-$EXTRAS.exe
