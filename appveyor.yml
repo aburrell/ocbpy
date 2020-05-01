@@ -19,15 +19,39 @@ init:
   - ps: echo $env:TESTENV
 
 environment:
+  global:
+    WITH_COMPILER: 'cmd /E:ON /V:ON /C .\ci\appveyor-with-compiler.cmd'
   matrix:
-    - PYTHON: "C:\\Python27"
-    - PYTHON: "C:\\Python35"
-    - PYTHON: "C:\\Python36"
-    - PYTHON: "C:\\Python37"
-    - PYTHON: "C:\\Python27-x64"
-    - PYTHON: "C:\\Python35-x64"
-    - PYTHON: "C:\\Python36-x64"
-    - PYTHON: "C:\\Python37-x64"
+    - job_name: P27-x32 basic
+      PYTHON: "C:\\Python27"
+      BASH_CMD: "bash requirements.extra 0"
+    - job_name: P27-x32 ssj_auroral_boundary
+      PYTHON: "C:\\Python27"
+      BASH_CMD: "bash requirements.extra 32"
+    - job_name: P35-x32 basic
+      PYTHON: "C:\\Python35"
+      BASH_CMD: "bash requirements.extra 0"
+    - job_name: P36-x32 basic
+      PYTHON: "C:\\Python36"
+      BASH_CMD: "bash requirements.extra 0"
+    - job_name: P37-x32 basic
+      PYTHON: "C:\\Python37"
+      BASH_CMD: "bash requirements.extra 0"
+    - job_name: P27-x64 basic
+      PYTHON: "C:\\Python27-x64"
+      BASH_CMD: "bash requirements.extra 0"
+    - job_name: P27-x64 ssj_auroral_boundary
+      PYTHON: "C:\\Python27-x64"
+      BASH_CMD: "bash requirements.extra 64"
+    - job_name: P35-x64 basic
+      PYTHON: "C:\\Python35-x64"
+      BASH_CMD: "bash requirements.extra 0"
+    - job_name: P36-x64 basic
+      PYTHON: "C:\\Python36-x64"
+      BASH_CMD: "bash requirements.extra 0"
+    - job_name: P37-x64 basic
+      PYTHON: "C:\\Python37-x64"
+      BASH_CMD: "bash requirements.extra 0"
 
 test_script:
   - "%PYTHON%\\python.exe setup.py test"
@@ -39,6 +63,7 @@ build: off
 configuration: Release
 
 install:
+  - '%BASH_CMD%'
   - '%PYTHON%\\python.exe -m pip install --upgrade pip'
   - '%PYTHON%\\python.exe -m pip install wheel setuptools numpy==1.15.4 aacgmv2'
 
