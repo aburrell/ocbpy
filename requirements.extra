@@ -53,7 +53,7 @@ elif [ $EXTRAS -ge 32  ]; then
 
     # Download ffnet and CDF using curl
     choco install curl
-    CURL_PATH='C:\ProgramData\chocolatey\lib\curl\tools\'
+    CURL_PATH='C:\ProgramData\chocolatey\bin\'
 
     # Get ffnet and install it.  pip doesn't work for windows.
     # This will need to be updated for version number and python version number
