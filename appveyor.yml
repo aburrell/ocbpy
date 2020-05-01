@@ -28,6 +28,7 @@ environment:
     - job_name: P27-x32 ssj_auroral_boundary
       PYTHON: "C:\\Python27"
       BASH_CMD: "bash requirements.extra 32"
+      EXTEND_PATH: "C:\Program Files\Git\mingw32\bin"
     - job_name: P35-x32 basic
       PYTHON: "C:\\Python35"
       BASH_CMD: "bash requirements.extra 0"
@@ -43,6 +44,7 @@ environment:
     - job_name: P27-x64 ssj_auroral_boundary
       PYTHON: "C:\\Python27-x64"
       BASH_CMD: "bash requirements.extra 64"
+      EXTEND_PATH: "C:\Program Files\Git\mingw64\bin"
     - job_name: P35-x64 basic
       PYTHON: "C:\\Python35-x64"
       BASH_CMD: "bash requirements.extra 0"
@@ -63,6 +65,7 @@ build: off
 configuration: Release
 
 install:
+  - set PATH=%EXTEND_PATH%;%PATH%
   - '%BASH_CMD%'
   - '%PYTHON%\\python.exe -m pip install --upgrade pip'
   - '%PYTHON%\\python.exe -m pip install wheel setuptools numpy==1.15.4 aacgmv2'
