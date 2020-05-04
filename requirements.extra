@@ -60,8 +60,7 @@ elif [ $EXTRAS -ge 32  ]; then
     declare -a EXE_FILE=("ffnet-0.8.3.win$EXTRA-py2.7.exe"
 			 "cdf37_1_0-setup-$EXTRAS.exe")
     declare -a SOURCE=("http://sourceforge.net/projects/ffnet/files/ffnet/0.8.3/" "https://spdf.sci.gsfc.nasa.gov/pub/software/cdf/dist/cdf37_1/windows/")
-    CURR_DIR="${BASH_SOURCE[0]}"
-    echo "TEST Current Directory: " $CURR_DIR
+    echo "TEST Current Directory: " $CD
 
     for cind in ${!EXE_FILE[@]}; do
 	curl.exe -o ${EXE_FILE[$cind]} ${SOURCE[$cind]}${EXE_FILE[$cind]}
