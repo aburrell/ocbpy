@@ -61,6 +61,7 @@ elif [ $EXTRAS -ge 32  ]; then
 			 "cdf37_1_0-setup-$EXTRAS.exe")
     declare -a SOURCE=("http://sourceforge.net/projects/ffnet/files/ffnet/0.8.3/" "https://spdf.sci.gsfc.nasa.gov/pub/software/cdf/dist/cdf37_1/windows/")
     echo "TEST Current Directory: " $CD
+    echo "TEST Current Directory: " $APPVEYOR_BUILD_FOLDER
 
     for cind in ${!EXE_FILE[@]}; do
 	curl.exe -o ${EXE_FILE[$cind]} ${SOURCE[$cind]}${EXE_FILE[$cind]}
