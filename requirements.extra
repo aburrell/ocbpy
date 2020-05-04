@@ -62,7 +62,7 @@ elif [ $EXTRAS -ge 32  ]; then
     SOURCE=http://sourceforge.net/projects/ffnet/files/ffnet/0.8.3/$EXE_FILE
     $CURL_PATH\\curl.exe -o $EXE_FILE $SOURCE
     if [ -f "$EXE_FILE" ]; then
-	cmd.exe $EXE_FILE
+	.\\$EXE_FILE
     else
 	echo "Curl failure downloading " $EXE_FILE
     fi
@@ -72,7 +72,7 @@ elif [ $EXTRAS -ge 32  ]; then
     SOURCE=https://spdf.sci.gsfc.nasa.gov/pub/software/cdf/dist/cdf37_1/windows/$EXE_FILE
     $CURL_PATH\\curl.exe -o $EXE_FILE $SOURCE
     if [ -f "$EXE_FILE" ]; then
-	cmd.exe $EXE_FILE
+	.\\$EXE_FILE
     else
 	echo "Curl failure downloading " $EXE_FILE
     fi
