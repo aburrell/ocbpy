@@ -53,16 +53,16 @@ elif [ $EXTRAS -ge 32  ]; then
 
     # Download ffnet and CDF using curl
     choco install curl
-    CURL_PATH='C:\ProgramData\chocolatey\bin\'
 
     # Get ffnet and install it.  pip doesn't work for windows.
     # This will need to be updated for version number and python version number
     # in the future
     EXE_FILE=ffnet-0.8.3.win$EXTRA-py2.7.exe
     SOURCE=http://sourceforge.net/projects/ffnet/files/ffnet/0.8.3/$EXE_FILE
-    $CURL_PATH\\curl.exe -o $EXE_FILE $SOURCE
+    curl.exe -o $EXE_FILE $SOURCE
     if [ -f "$EXE_FILE" ]; then
-	.$EXE_FILE
+	chmod 777 $EXE_FILE
+	$EXE_FILE
     else
 	echo "Curl failure downloading " $EXE_FILE
     fi
@@ -72,7 +72,8 @@ elif [ $EXTRAS -ge 32  ]; then
     SOURCE=https://spdf.sci.gsfc.nasa.gov/pub/software/cdf/dist/cdf37_1/windows/$EXE_FILE
     curl.exe -o $EXE_FILE $SOURCE
     if [ -f "$EXE_FILE" ]; then
-	.$EXE_FILE
+	chmod 777 $EXE_FILE
+	$HOME\\$EXE_FILE
     else
 	echo "Curl failure downloading " $EXE_FILE
     fi
