@@ -64,11 +64,11 @@ elif [ $EXTRAS -ge 32  ]; then
     for cind in ${!EXE_FILE[@]}; do
 	curl.exe -o $APPVERYOR_BUILD_FOLDER/${EXE_FILE[$cind]} ${SOURCE[$cind]}${EXE_FILE[$cind]}
 
-	if [ -f $APPVERYOR_BUILD_FOLDER/${EXE_FILE[$cind]} ]; then
-	    chmod 777 $APPVERYOR_BUILD_FOLDER/${EXE_FILE[$cind]}
-	    $APPVERYOR_BUILD_FOLDER/${EXE_FILE[$cind]}
+	if [ -f $APPVERYOR_BUILD_FOLDER\${EXE_FILE[$cind]} ]; then
+	    chmod 777 $APPVERYOR_BUILD_FOLDER\${EXE_FILE[$cind]}
+	    $APPVERYOR_BUILD_FOLDER\${EXE_FILE[$cind]}
 	else
-	    echo "Curl failure downloading " $APPVERYOR_BUILD_FOLDER/${EXE_FILE[$cind]}
+	    echo "Curl failure downloading " $APPVERYOR_BUILD_FOLDER\${EXE_FILE[$cind]}
 	fi
     done
 
