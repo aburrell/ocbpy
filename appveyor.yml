@@ -63,6 +63,7 @@ build: off
 configuration: Release
 
 install:
+  - 'set PATH=%APPVEYOR_BUILD_FOLDER%;%PATH%'
   - '%BASH_CMD%'
   - '%PYTHON%\\python.exe -m pip install --upgrade pip'
   - '%PYTHON%\\python.exe -m pip install wheel setuptools numpy==1.15.4 aacgmv2'
