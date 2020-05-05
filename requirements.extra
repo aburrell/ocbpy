@@ -65,7 +65,7 @@ elif [ $EXTRAS -ge 32  ]; then
 	curl.exe -o ${EXE_FILE[$cind]} ${SOURCE[$cind]}${EXE_FILE[$cind]}
 
 	if [ -f ${EXE_FILE[$cind]} ]; then
-	    "${EXE_FILE[$cind]}"
+	    ${EXE_FILE[$cind]} /install /q1
 	else
 	    echo "Curl failure downloading " $APPVERYOR_BUILD_FOLDER\\${EXE_FILE[$cind]}
 	fi
