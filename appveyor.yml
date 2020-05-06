@@ -26,6 +26,7 @@ environment:
       PYTHON: "C:\\Python27"
       BASH_CMD: "bash requirements.extra 0"
     - job_name: P27-x32 ssj_auroral_boundary
+      CDF_LIB: 'C:\\Libraries\cdf\cdf37_1_0-dist\lib'
       PYTHON: "C:\\Python27"
       BASH_CMD: "bash requirements.extra 32"
     - job_name: P35-x32 basic
@@ -41,6 +42,7 @@ environment:
       PYTHON: "C:\\Python27-x64"
       BASH_CMD: "bash requirements.extra 0"
     - job_name: P27-x64 ssj_auroral_boundary
+      CDF_LIB: 'C:\\Libraries\cdf\cdf37_1_0-dist\lib'
       PYTHON: "C:\\Python27-x64"
       BASH_CMD: "bash requirements.extra 64"
     - job_name: P35-x64 basic
@@ -64,7 +66,6 @@ configuration: Release
 
 install:
   - 'set PATH=%APPVEYOR_BUILD_FOLDER%;%PATH%'
-  - 'set CDF_LIB=%APPVEYOR_BUILD_FOLDER%\Libraries\cdf\cdf37_1_0-dist\lib'
   - '%BASH_CMD%'
   - '%PYTHON%\\python.exe -m pip install --upgrade pip'
   - '%PYTHON%\\python.exe -m pip install wheel setuptools numpy==1.15.4 aacgmv2'
