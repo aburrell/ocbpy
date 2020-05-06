@@ -87,7 +87,8 @@ elif [ $EXTRAS -ge 32  ]; then
     $PYTHON\\python.exe setup.py install
     cd ..
 
-    ls C:\\Libraries
+    echo "TEST!"
+    ls $ProgramFiles
     echo "CDF library is installed here: " $CDF_LIB
     echo "Finished extra installs for SSJ_Auroral_Boundary"
 fi
