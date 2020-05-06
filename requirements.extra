@@ -88,7 +88,7 @@ elif [ $EXTRAS -ge 32  ]; then
     cd ..
 
     echo "TEST!"
-    ls $ProgramFiles
+    ls $CommonProgramFiles
     echo "CDF library is installed here: " $CDF_LIB
     echo "Finished extra installs for SSJ_Auroral_Boundary"
 fi
