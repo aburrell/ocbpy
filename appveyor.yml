@@ -64,6 +64,7 @@ configuration: Release
 
 install:
   - 'set PATH=%APPVEYOR_BUILD_FOLDER%;%PATH%'
+  - 'set CDF_LIB=%APPVEYOR_BUILD_FOLDER%\Libraries\cdf\cdf37_1_0-dist\lib'
   - '%BASH_CMD%'
   - '%PYTHON%\\python.exe -m pip install --upgrade pip'
   - '%PYTHON%\\python.exe -m pip install wheel setuptools numpy==1.15.4 aacgmv2'
