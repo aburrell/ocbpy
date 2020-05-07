@@ -92,6 +92,6 @@ elif [ $EXTRAS -ge 32  ]; then
     echo "TEST LIST 2"
     ls c:\\*cdf*
     echo "TEST FIND"
-    find c:\ -type d -iname "*cdf*"
+    dir "*cdf*" /AD /s
     echo "Finished extra installs for SSJ_Auroral_Boundary"
 fi
