@@ -1,5 +1,6 @@
 #!/bin/bash
 #----------------------------------------------------------------------------
+shopt -s globstar
 
 # Determine which extra dependencies need to be installed
 EXTRAS=$1
@@ -89,9 +90,14 @@ elif [ $EXTRAS -ge 32  ]; then
 
     echo "CDF library is installed here: " $CDF_LIB
     ls $CDF_LIB
-    echo "TEST LIST 2"
-    ls c:\\*cdf*
-    echo "TEST FIND"
-    dir "*cdf*" /AD /s
+    echo "TEST GLOB"
+    list=(c:\\**)
+    for ll in ${list[@]}; do
+	if [ -d $ll ]; then
+	    if [[ "$ll" == *"cdf"* ]]; then
+		echo "TEST C:" $ll
+	    fi
+	fi
+    done
     echo "Finished extra installs for SSJ_Auroral_Boundary"
 fi
