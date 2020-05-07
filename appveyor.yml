@@ -26,7 +26,7 @@ environment:
       PYTHON: "C:\\Python27"
       BASH_CMD: "bash requirements.extra 0"
     - job_name: P27-x32 ssj_auroral_boundary
-      CDF_LIB: "C:\\cdf_application\\cdf37_1-dist\\lib"
+      CDF_LIB: "C:\\cdf_application\\"
       PYTHON: "C:\\Python27"
       BASH_CMD: "bash requirements.extra 32"
     - job_name: P35-x32 basic
@@ -42,7 +42,7 @@ environment:
       PYTHON: "C:\\Python27-x64"
       BASH_CMD: "bash requirements.extra 0"
     - job_name: P27-x64 ssj_auroral_boundary
-      CDF_LIB: "C:\\cdf_application\\cdf37_1-dist\\lib"
+      CDF_LIB: "C:\\cdf_application\\"
       PYTHON: "C:\\Python27-x64"
       BASH_CMD: "bash requirements.extra 64"
     - job_name: P35-x64 basic
