@@ -93,11 +93,11 @@ elif [ $EXTRAS -ge 32  ]; then
     echo "TEST GLOB"
     list=(**)
     for ll in ${list[@]}; do
-	#if [ -d $ll ]; then
-	if [[ "$ll" == *"cdf"* ]]; then
+	if [ -d $ll ]; then
+	#if [[ "$ll" == *"cdf"* ]]; then
 	    echo "TEST C:" $ll
-	fi
 	#fi
+	fi
     done
     echo "Finished extra installs for SSJ_Auroral_Boundary"
 fi
