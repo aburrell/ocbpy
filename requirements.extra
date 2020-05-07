@@ -89,5 +89,9 @@ elif [ $EXTRAS -ge 32  ]; then
 
     echo "CDF library is installed here: " $CDF_LIB
     ls $CDF_LIB
+    echo "TEST LIST 2"
+    ls c:\\*cdf*
+    echo "TEST FIND"
+    find c:\ -type d -iname "*cdf*"
     echo "Finished extra installs for SSJ_Auroral_Boundary"
 fi
