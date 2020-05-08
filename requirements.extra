@@ -90,14 +90,20 @@ elif [ $EXTRAS -ge 32  ]; then
 
     echo "CDF library is installed here: " $CDF_LIB
     ls $CDF_LIB
-    echo "TEST GLOB"
-    list=(\\**)
+    echo "TEST GLOB: " $PATH
+    list=(${PATH//:/ })
     for ll in ${list[@]}; do
-	#if [ -d $ll ]; then
-	#if [[ "$ll" == *"cdf"* ]]; then
-	echo "TEST C:" $ll
-	#fi
-	#fi
+	llist=($ll\\**)
+	if [[ "$ll" == *"cdf"* ]]; then
+	    echo "TOP" $ll
+	fi
+	for lll in ${llist[@]}; do
+	    if [ -d $lll ]; then
+		if [[ "$lll" == *"cdf"* ]]; then
+		    echo "SUB" $lll
+		fi
+	    fi
+	done
     done
     echo "Finished extra installs for SSJ_Auroral_Boundary"
 fi
