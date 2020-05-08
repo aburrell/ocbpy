@@ -91,6 +91,7 @@ elif [ $EXTRAS -ge 32  ]; then
     echo "CDF library is installed here: " $CDF_LIB
     ls $CDF_LIB
     echo "TEST GLOB"
+    set -f
     list=(${PATH//:/ })
     for ll in ${list[@]}; do
 	echo "TEST DIR:" $ll
