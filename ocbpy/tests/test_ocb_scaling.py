@@ -229,6 +229,7 @@ class TestOCBScalingMethods(unittest.TestCase):
         self.assertEqual(self.vdata.ocb_quad, 2)
         self.assertEqual(self.vdata.vec_quad, 1)
 
+    # HERE
     def test_define_quadrants_opposite_south(self):
         """ Test quad assignment w/vector pointing south from the opp. sector
         """
@@ -861,13 +862,16 @@ class TestHaversine(unittest.TestCase):
     def setUp(self):
         """ Initialize the tests for the haversine and archaversine functions
         """
-        self.input_angles = np.linspace(-2.0*np.pi, 2.0*np.pi, 5)
-        self.hav_out = np.array([0.0, 1.0, 0.0, 1.0, 0.0])
-        self.iarchav = [2, 3]
+        self.input_angles = np.linspace(-2.0*np.pi, 2.0*np.pi, 9)
+        self.hav_out = np.array([0.0, 0.5, 1.0, 0.5, 0.0, 0.5, 1.0, 0.5, 0.0])
+        # archaversine is confinded to 0-pi
+        self.ahav_out = abs(np.array([aa - np.sign(aa) * 2.0 * np.pi
+                                      if abs(aa) > np.pi
+                                      else aa for aa in self.input_angles]))
         self.out = None
 
     def tearDown(self):
-        del self.input_angles, self.hav_out, self.out, self.iarchav
+        del self.input_angles, self.hav_out, self.out, self.ahav_out
 
     @unittest.skipIf(version_info.major == 2,
                      'Python 2.7 does not support subTest')
@@ -886,7 +890,7 @@ class TestHaversine(unittest.TestCase):
                 if i == 0:
                     self.assertAlmostEqual(self.out, tset[1])
                 else:
-                    self.assertTrue(np.all(abs(self.out - tset[1]) < 1.0e-17))
+                    self.assertTrue(np.all(abs(self.out - tset[1]) < 1.0e-7))
 
         del tset
 
@@ -904,14 +908,14 @@ class TestHaversine(unittest.TestCase):
         """ Test implimentation of the haversine with a list input
         """
         self.out = ocbpy.ocb_scaling.hav(list(self.input_angles))
-        self.assertTrue(np.all(abs(self.out - self.hav_out) < 1.0e-17))
+        self.assertTrue(np.all(abs(self.out - self.hav_out) < 1.0e-7))
 
     @unittest.skipIf(version_info.major > 2, 'Already tested with subTest')
     def test_haversine_array(self):
         """ Test implimentation of the haversine with a array input
         """
         self.out = ocbpy.ocb_scaling.hav(self.input_angles)
-        self.assertTrue(np.all(abs(self.out - self.hav_out) < 1.0e-17))
+        self.assertTrue(np.all(abs(self.out - self.hav_out) < 1.0e-7))
 
     @unittest.skipIf(version_info.major == 2,
                      'Python 2.7 does not support subTest')
@@ -920,20 +924,17 @@ class TestHaversine(unittest.TestCase):
         """
         
         # Cycle through all the possible input options
-        for i, tset in enumerate([(self.hav_out[self.iarchav[0]],
-                                   self.input_angles[self.iarchav[0]]),
-                                  ([self.hav_out[j] for j in self.iarchav],
-                                  self.input_angles[self.iarchav]),
-                                  (self.hav_out[self.iarchav],
-                                   self.input_angles[self.iarchav])]):
+        for i, tset in enumerate([(self.hav_out[0], self.ahav_out[0]),
+                                  (list(self.hav_out), self.ahav_out),
+                                  (self.hav_out, self.ahav_out)]):
             with self.subTest(tset=tset):
                 self.out = ocbpy.ocb_scaling.archav(tset[0])
         
                 # Assess the output
                 if i == 0:
-                    self.assertEqual(self.out, tset[1])
+                    self.assertEqual(self.out, abs(tset[1]))
                 else:
-                    self.assertTrue(np.all(abs(self.out - tset[1]) < 1.0e-17))
+                    self.assertTrue(np.all(self.out - tset[1] < 1.0e-7))
 
         del tset
 
@@ -942,28 +943,26 @@ class TestHaversine(unittest.TestCase):
     def test_inverse_haversine_float(self):
         """ Test implimentation of the inverse haversine with float input
         """
-        for i in self.iarchav:
-            self.assertEqual(ocbpy.ocb_scaling.archav(self.hav_out[i]),
-                             self.input_angles[i])
+        for i, self.out in enumerate(self.ahav_out):
+            self.assertAlmostEqual(ocbpy.ocb_scaling.archav(self.hav_out[i]),
+                                   self.out)
 
     @unittest.skipIf(version_info.major > 2,
                      'Python 2.7 does not support subTest')
     def test_inverse_haversine_list(self):
         """ Test implimentation of the inverse haversine with list input
         """
-        self.out = ocbpy.ocb_scaling.archav([self.hav_out[i]
-                                             for i in self.iarchav])
-        self.assertTrue(np.all(abs(self.out - self.input_angles[self.iarchav])
-                               < 1.0e-17))
+        self.out = ocbpy.ocb_scaling.archav(list(self.hav_out))
+        self.assertTrue(np.all(abs(self.out - self.ahav_out)
+                               < 1.0e-7))
 
     @unittest.skipIf(version_info.major > 2,
                      'Python 2.7 does not support subTest')
     def test_inverse_haversine_array(self):
         """ Test implimentation of the inverse haversine with array input
         """
-        self.out = ocbpy.ocb_scaling.archav(self.hav_out[self.iarchav])
-        self.assertTrue(np.all(abs(self.out - self.input_angles[self.iarchav])
-                               < 1.0e-17))
+        self.out = ocbpy.ocb_scaling.archav(self.hav_out)
+        self.assertTrue(np.all(abs(self.out - self.ahav_out) < 1.0e-7))
 
     def test_inverse_haversine_small_float(self):
         """ Test implimentation of the inverse haversine with very small numbers
@@ -985,21 +984,20 @@ class TestHaversine(unittest.TestCase):
         """ Test the inverse haversine with array input of good and bad values
         """
         # Update the test input and output
-        j = [i for i in range(len(self.hav_out)) if i not in self.iarchav]
-        self.hav_out[j[0]] = 1.0e-17
-        self.input_angles[j[0]] = 0.0
-        self.hav_out[j[1]] = np.nan
-        self.input_angles[j[1]] = np.nan
-        self.hav_out[j[2]] = -1.0
-        self.input_angles[j[2]] = np.nan
+        self.hav_out[0] = 1.0e-17
+        self.ahav_out[0] = 0.0
+        self.hav_out[1] = np.nan
+        self.ahav_out[1] = np.nan
+        self.hav_out[2] = -1.0
+        self.ahav_out[2] = np.nan
 
         self.out = ocbpy.ocb_scaling.archav(self.hav_out)
 
         for i, hout in enumerate(self.out):
             if np.isnan(hout):
-                self.assertTrue(np.isnan(self.input_angles[i]))
+                self.assertTrue(np.isnan(self.ahav_out[i]))
             else:
-                self.assertEqual(hout, self.input_angles[i])
+                self.assertAlmostEqual(hout, self.ahav_out[i])
 
 class TestOCBScalingArrayMethods(unittest.TestCase):
 
