@@ -95,11 +95,12 @@ elif [ $EXTRAS -ge 32  ]; then
     read -a list <<< "$PATH"
     for ll in ${list[@]}; do
 	echo "TEST DIR:" $ll
-	llist=($ll\\**)
+	llist=($ll/**)
 	if [[ "$ll" == *"cdf"* ]]; then
 	    echo "TOP" $ll
 	fi
 	for lll in ${llist[@]}; do
+	    echo "TEST SUB:", $lll
 	    if [ -d $lll ]; then
 		if [[ "$lll" == *"cdf"* ]]; then
 		    echo "SUB" $lll
