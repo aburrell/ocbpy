@@ -9,6 +9,7 @@ python:
     - "3.5"
     - "3.6"
     - "3.7"
+    - "3.8"
 addons:
     apt_packages:
         - gfortran
@@ -21,3 +22,8 @@ install:
 script:
     - "coverage run --source=ocbpy setup.py test"
 after_success: coveralls
+allow_failures:
+   - python: "3.5"
+     env: INSTALL_EXTRA=2 CDF_LIB=$HOME/lib
+   - python: "3.6"
+     env: INSTALL_EXTRA=2 CDF_LIB=$HOME/lib
