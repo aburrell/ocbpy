@@ -55,18 +55,17 @@ elif [ $EXTRAS -ge 32  ]; then
     # Download ffnet and CDF using curl
     choco install curl
 
-    # Download and install ffnet and CDF.  ffnet doesn't support pip on windows.
+    # Download and install CDF.  ffnet is not needed.
     # This will need to be updated for version number and python version number
     # in the future
-    declare -a EXE_FILE=(#"ffnet-0.8.3.win$EXTRA-py2.7.exe"
-			 "cdf37_1_0-setup-$EXTRAS.exe")
-    declare -a SOURCE=(#"http://sourceforge.net/projects/ffnet/files/ffnet/0.8.3/"
-	"https://spdf.sci.gsfc.nasa.gov/pub/software/cdf/dist/cdf37_1/windows/")
+    declare -a EXE_FILE=("cdf37_1_0-setup-$EXTRAS.exe")
+    declare -a SOURCE=("https://spdf.sci.gsfc.nasa.gov/pub/software/cdf/dist/cdf37_1/windows/")
 
     for cind in ${!EXE_FILE[@]}; do
 	curl.exe -o ${EXE_FILE[$cind]} ${SOURCE[$cind]}${EXE_FILE[$cind]}
 
 	if [ -f ${EXE_FILE[$cind]} ]; then
+	    # This doesn't actually work, for some reason
 	    echo "RUN COMMAND: ${EXE_FILE[$cind]} /install /q1"
 	    start /wait "" ${EXE_FILE[$cind]} /install /q1
 	else
@@ -90,20 +89,18 @@ elif [ $EXTRAS -ge 32  ]; then
 
     echo "CDF library is installed here: " $CDF_LIB
     ls $CDF_LIB
-    echo "TEST GLOB"
+    echo "TEST TO FIND WHERE CDF IS INSTALLED"
     IFS=":"
     read -a list <<< "$PATH"
     for ll in ${list[@]}; do
-	echo "TEST DIR:" $ll
 	llist=($ll/**)
 	if [[ "$ll" == *"cdf"* ]]; then
-	    echo "TOP" $ll
+	    echo "CDF LOCATION? " $ll
 	fi
 	for lll in ${llist[@]}; do
-	    echo "TEST SUB:", $lll
 	    if [ -d $lll ]; then
 		if [[ "$lll" == *"cdf"* ]]; then
-		    echo "SUB" $lll
+		    echo "CDF LOCATION? " $lll
 		fi
 	    fi
 	done
