@@ -31,6 +31,8 @@ environment:
       PYTHON: "C:\\Python36"
     - job_name: P37-x32 basic
       PYTHON: "C:\\Python37"
+    - job_name: P38-x32 basic
+      PYTHON: "C:\\Python38"
     - job_name: P27-x64 basic
       PYTHON: "C:\\Python27-x64"
     - job_name: P35-x64 basic
@@ -39,6 +41,8 @@ environment:
       PYTHON: "C:\\Python36-x64"
     - job_name: P37-x64 basic
       PYTHON: "C:\\Python37-x64"
+    - job_name: P38-x64 basic
+      PYTHON: "C:\\Python38-x64"
 
 test_script:
   - "%PYTHON%\\python.exe setup.py test"
