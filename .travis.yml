@@ -27,3 +27,5 @@ allow_failures:
      env: INSTALL_EXTRA=2 CDF_LIB=$HOME/lib
    - python: "3.6"
      env: INSTALL_EXTRA=2 CDF_LIB=$HOME/lib
+   - python: "3.8"
+     env: INSTALL_EXTRA=2 CDF_LIB=$HOME/lib
