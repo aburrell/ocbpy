@@ -1,2 +1,3 @@
+numpy
 aacgmv2
 coveralls
