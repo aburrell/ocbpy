@@ -17,7 +17,7 @@ if [ $EXTRAS = 1 ]; then
     cd ..
     git clone http://www.github.com/pysat/pysat
     cd pysat
-    git checckout develop
+    git checkout develop
     python setup.py install
     cd ../ocbpy
     # Make the pysat data directory
