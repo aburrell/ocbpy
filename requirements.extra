@@ -14,7 +14,12 @@ if [ $EXTRAS = 1 ]; then
     pip install PyForecastTools
     pip install pysatCDF >/dev/null
     # Install pysat
-    pip install "pysat>=2.0.0"
+    cd ..
+    git clone http://www.github.com/pysat/pysat
+    cd pysat
+    git checckout develop
+    python setup.py install
+    cd ../ocbpy
     # Make the pysat data directory
     printf "import os\nimport pysat\npdir=os.path.join(os.path.split(pysat.__file__)[0], 'pysatData')\nos.mkdir(pdir)\npysat.utils.set_data_dir(pdir)" | python
     echo "Finished extra installs for pysat"
