@@ -19,15 +19,30 @@ init:
   - ps: echo $env:TESTENV
 
 environment:
+  global:
+    WITH_COMPILER: 'cmd /E:ON /V:ON /C .\ci\appveyor-with-compiler.cmd'
+    BASH_CMD: "bash requirements.extra 0"
   matrix:
-    - PYTHON: "C:\\Python27"
-    - PYTHON: "C:\\Python35"
-    - PYTHON: "C:\\Python36"
-    - PYTHON: "C:\\Python37"
-    - PYTHON: "C:\\Python27-x64"
-    - PYTHON: "C:\\Python35-x64"
-    - PYTHON: "C:\\Python36-x64"
-    - PYTHON: "C:\\Python37-x64"
+    - job_name: P27-x32 basic
+      PYTHON: "C:\\Python27"
+    - job_name: P35-x32 basic
+      PYTHON: "C:\\Python35"
+    - job_name: P36-x32 basic
+      PYTHON: "C:\\Python36"
+    - job_name: P37-x32 basic
+      PYTHON: "C:\\Python37"
+    - job_name: P38-x32 basic
+      PYTHON: "C:\\Python38"
+    - job_name: P27-x64 basic
+      PYTHON: "C:\\Python27-x64"
+    - job_name: P35-x64 basic
+      PYTHON: "C:\\Python35-x64"
+    - job_name: P36-x64 basic
+      PYTHON: "C:\\Python36-x64"
+    - job_name: P37-x64 basic
+      PYTHON: "C:\\Python37-x64"
+    - job_name: P38-x64 basic
+      PYTHON: "C:\\Python38-x64"
 
 test_script:
   - "%PYTHON%\\python.exe setup.py test"
@@ -39,6 +54,8 @@ build: off
 configuration: Release
 
 install:
+  - 'set PATH=%APPVEYOR_BUILD_FOLDER%;%PATH%'
+  - '%BASH_CMD%'
   - '%PYTHON%\\python.exe -m pip install --upgrade pip'
   - '%PYTHON%\\python.exe -m pip install wheel setuptools numpy==1.15.4 aacgmv2'
 

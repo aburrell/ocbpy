@@ -1,5 +1,6 @@
 #!/bin/bash
 #----------------------------------------------------------------------------
+shopt -s globstar
 
 # Determine which extra dependencies need to be installed
 EXTRAS=$1
@@ -10,7 +11,7 @@ if [ $EXTRAS = 1 ]; then
     mkdir $HOME/pysatData
     echo "Installed pysat"
 elif [ $EXTRAS = 2 ]; then
-    # Install code for ssj_auroral_boundary
+    # Install code for ssj_auroral_boundary on linux
     # Start with requirements for spacepy
     pip install scipy
     pip install matplotlib
@@ -46,5 +47,63 @@ elif [ $EXTRAS = 2 ]; then
     cd ../.
 
     echo "CDF library is installed here: " $CDF_LIB
+    echo "Finished extra installs for SSJ_Auroral_Boundary"
+elif [ $EXTRAS -ge 32  ]; then
+    # Install code for ssj_auroral_boundary on windows (EXTRAS is 32 or 64)
+    $PYTHON\\python.exe -m pip install wheel scipy matplotlib networkx h5py
+
+    # Download ffnet and CDF using curl
+    choco install curl
+
+    # Download and install CDF.  ffnet is not needed.
+    # This will need to be updated for version number and python version number
+    # in the future
+    declare -a EXE_FILE=("cdf37_1_0-setup-$EXTRAS.exe")
+    declare -a SOURCE=("https://spdf.sci.gsfc.nasa.gov/pub/software/cdf/dist/cdf37_1/windows/")
+
+    for cind in ${!EXE_FILE[@]}; do
+	curl.exe -o ${EXE_FILE[$cind]} ${SOURCE[$cind]}${EXE_FILE[$cind]}
+
+	if [ -f ${EXE_FILE[$cind]} ]; then
+	    # This doesn't actually work, for some reason
+	    echo "RUN COMMAND: ${EXE_FILE[$cind]} /install /q1"
+	    start /wait "" ${EXE_FILE[$cind]} /install /q1
+	else
+	    echo "Curl failure downloading " $APPVERYOR_BUILD_FOLDER\\${EXE_FILE[$cind]}
+	fi
+    done
+
+    # Go back to python
+    $PYTHON\\python.exe -m pip install ephem spacepy colorlog
+
+    # Finish with the ssj_auroral_boundary installation
+    git clone https://github.com/lkilcommons/geospacepy-lite.git
+    cd geospacepy-lite
+    $PYTHON\\python.exe setup.py install
+    cd ..
+
+    git clone https://github.com/lkilcommons/ssj_auroral_boundary.git
+    cd ssj_auroral_boundary
+    $PYTHON\\python.exe setup.py install
+    cd ..
+
+    echo "CDF library is installed here: " $CDF_LIB
+    ls $CDF_LIB
+    echo "TEST TO FIND WHERE CDF IS INSTALLED"
+    IFS=":"
+    read -a list <<< "$PATH"
+    for ll in ${list[@]}; do
+	llist=($ll/**)
+	if [[ "$ll" == *"cdf"* ]]; then
+	    echo "CDF LOCATION? " $ll
+	fi
+	for lll in ${llist[@]}; do
+	    if [ -d $lll ]; then
+		if [[ "$lll" == *"cdf"* ]]; then
+		    echo "CDF LOCATION? " $lll
+		fi
+	    fi
+	done
+    done
     echo "Finished extra installs for SSJ_Auroral_Boundary"
 fi
