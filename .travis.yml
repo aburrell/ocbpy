@@ -15,6 +15,8 @@ env:
     - INSTALL_EXTRA=2 CDF_LIB=$HOME/lib
 before_install:
     - pip install -r requirements.txt
+    # Force Travis CI to get a newer version of numpy
+    - pip install numpy --upgrade
     - bash requirements.extra $INSTALL_EXTRA
     - pip install pytest
     - pip install pytest-cov
