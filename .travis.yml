@@ -20,6 +20,9 @@ before_install:
     - pip install pytest-cov
 install:
     - "python setup.py install"
+before_script:
+  # set up display screen
+  - export DISPLAY=:99.0
 script:
     - pytest -vs --cov=ocbpy/
 after_success: coveralls
