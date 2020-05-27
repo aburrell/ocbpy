@@ -26,7 +26,7 @@ class TestVortLogWarnings(unittest.TestCase):
         """ Initialize the OCBoundary object using the test file, as well as
         the VectorData object
         """
-        
+
         self.ocb_dir = os.path.dirname(ocbpy.__file__)
         self.test_file = os.path.join(self.ocb_dir, "tests", "test_data",
                                       "test_vort")
@@ -146,7 +146,7 @@ class TestVort2AsciiMethods(unittest.TestCase):
         """ Initialize the OCBoundary object using the test file, as well as
         the VectorData object
         """
-        
+
         self.ocb_dir = os.path.dirname(ocbpy.__file__)
         self.test_ocb = os.path.join(self.ocb_dir, "tests", "test_data",
                                      "test_north_circle")
@@ -411,7 +411,7 @@ class TestVort2AsciiMethods(unittest.TestCase):
             ocb_ivort.vort2ascii_ocb(self.test_empty, "fake_out",
                                      ocbfile=self.test_ocb)
 
-            
+
     def test_vort2ascii_ocb_no_ocb(self):
         """ Test the conversion of vorticity data from AACGM coordinates into
         OCB coordinates
@@ -420,7 +420,7 @@ class TestVort2AsciiMethods(unittest.TestCase):
                                  hemisphere=1)
 
         # Compare created file to stored test file
-        self.assertFalse(ocbpy.instruments.general.test_file("fake_out"))
+        self.assertFalse(ocbpy.instruments.general.check_file("fake_out"))
 
     def test_vort2ascii_ocb_output_failure(self):
         """ Test failure when bad filename is provided
@@ -443,7 +443,7 @@ class TestVortLoadMethods(unittest.TestCase):
         """ Initialize the OCBoundary object using the test file, as well as
         the VectorData object
         """
-        
+
         self.ocb_dir = os.path.dirname(ocbpy.__file__)
         self.test_ocb = os.path.join(self.ocb_dir, "tests", "test_data",
                                      "test_north_circle")

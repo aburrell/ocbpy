@@ -3,7 +3,7 @@
 
 Functions
 -------------------------------------------------------------------------------
-test_file(filename)
+check_file(filename)
     Test to see whether file exists and is small enough to load
 load_ascii_data(filename, hlines, kwargs)
     Load time-sorted ascii data file
@@ -18,7 +18,7 @@ from os import path
 import ocbpy
 import ocbpy.ocb_time as ocbt
 
-def test_file(filename):
+def check_file(filename):
     """Test to ensure the file is small enough to read in.  Python can only
     allocate 2GB of data without crashing
 
@@ -37,7 +37,7 @@ def test_file(filename):
     if not path.isfile(filename):
         ocbpy.logger.warning("name provided is not a file")
         return False
-    
+
     fsize = path.getsize(filename)
 
     if(fsize > 2.0e9):
@@ -53,7 +53,7 @@ def test_file(filename):
 def load_ascii_data(filename, hlines, gft_kwargs=dict(), hsplit=None,
                     datetime_cols=list(), datetime_fmt=None, int_cols=list(),
                     str_cols=list(), max_str_length=50, header=list()):
-    """ Load an ascii data file into a dict of numpy array. 
+    """ Load an ascii data file into a dict of numpy array.
 
     Parameters
     ------------
@@ -103,7 +103,7 @@ def load_ascii_data(filename, hlines, gft_kwargs=dict(), hsplit=None,
     #-----------------------------------------------------------------------
     # Test to ensure the file is small enough to read in.  Python can only
     # allocate 2GB of data.  If you load something larger, python will crash
-    if not test_file(filename):
+    if not check_file(filename):
         return header, dict()
 
     #--------------------------------------------------
@@ -162,7 +162,7 @@ def load_ascii_data(filename, hlines, gft_kwargs=dict(), hsplit=None,
 
     for icol in str_cols:
         ldtype[icol] = '|U{:d}'.format(max_str_length)
-    
+
     #---------------------------------------------------------------------
     # Build and add the datetime objects to the output dictionary
     dt_keys = ['datetime', 'DATETIME', 'DT', 'dt']

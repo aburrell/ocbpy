@@ -42,14 +42,14 @@ class TestGeneralFileTestMethods(unittest.TestCase):
 
     def test_file_test_success(self):
         """ Test the success condition for one of the test_data files"""
-        self.rstat = ocb_igen.test_file(self.test_file)
+        self.rstat = ocb_igen.check_file(self.test_file)
         self.assertTrue(self.rstat)
-        
+
     def test_file_test_not_file(self):
         """ Test the general file testing routine with a bad filename """
         self.lwarn = u"name provided is not a file"
-        
-        self.rstat = ocb_igen.test_file("/")
+
+        self.rstat = ocb_igen.check_file("/")
         self.lout = self.log_capture.getvalue()
 
         self.assertTrue(self.lout.find(self.lwarn) >= 0)
@@ -58,10 +58,10 @@ class TestGeneralFileTestMethods(unittest.TestCase):
     def test_file_test_empty_file(self):
         """ Test the general file testing routine with a bad filename """
         self.lwarn = u'empty file'
-        
+
         # Create an empty file and read it in
         open(self.temp_output, 'a').close()
-        self.rstat = ocb_igen.test_file(self.temp_output)
+        self.rstat = ocb_igen.check_file(self.temp_output)
         self.lout = self.log_capture.getvalue()
 
         self.assertTrue(self.lout.find(self.lwarn) >= 0)
@@ -75,7 +75,7 @@ class TestGeneralFileTestMethods(unittest.TestCase):
         with open(self.temp_output, 'wb') as fout:
             fout.truncate(2024 * 1024 * 1024)
 
-        self.rstat = ocb_igen.test_file(self.temp_output)
+        self.rstat = ocb_igen.check_file(self.temp_output)
         self.lout = self.log_capture.getvalue()
 
         self.assertTrue(self.lout.find(self.lwarn) >= 0)
@@ -356,4 +356,3 @@ class TestGeneralLoadMethods(unittest.TestCase):
 
 if __name__ == '__main__':
     unittest.main()
-

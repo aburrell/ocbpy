@@ -17,7 +17,7 @@ if platform.system().lower() != "windows":
 
 import ocbpy
 import ocbpy.instruments.supermag as ocb_ismag
-from ocbpy.instruments.general import test_file
+from ocbpy.instruments.general import check_file
 
 class TestSuperMAG2AsciiMethods(unittest.TestCase):
 
@@ -25,7 +25,7 @@ class TestSuperMAG2AsciiMethods(unittest.TestCase):
         """ Initialize the OCBoundary object using the test file, as well as
         the VectorData object
         """
-        
+
         self.ocb_dir = os.path.dirname(ocbpy.__file__)
         self.test_ocb = os.path.join(self.ocb_dir, "tests", "test_data",
                                      "test_north_circle")
@@ -277,26 +277,26 @@ class TestSuperMAG2AsciiMethods(unittest.TestCase):
                 with self.assertRaisesRegex(IOError, val[0]):
                     ocb_ismag.supermag2ascii_ocb(*val[1], ocbfile=self.test_ocb)
 
-    
+
     def test_supermag2ascii_ocb_bad_ocb(self):
         """ Test the SuperMAG conversion with a bad ocb file """
         ocb_ismag.supermag2ascii_ocb(self.test_file, "fake_out",
                                      ocbfile="fake_ocb", hemisphere=1)
 
         # Compare created file to stored test file
-        self.assertFalse(test_file("fake_out"))
+        self.assertFalse(check_file("fake_out"))
 
 
 class TestSuperMAGLoadMethods(unittest.TestCase):
     def setUp(self):
         """ Initialize the filenames and data needed to test SuperMAG loading
         """
-        
+
         self.ocb_dir = os.path.dirname(ocbpy.__file__)
         self.test_file = os.path.join(self.ocb_dir, "tests", "test_data",
                                       "test_smag")
         self.test_vals = {'BE': -6.0, 'BN': -23.6, 'BZ': -25.2, 'DAY': 5,
-                          'DEC': 17.13, 'HOUR': 13, 'MIN': 40, 'MLAT': 77.22, 
+                          'DEC': 17.13, 'HOUR': 13, 'MIN': 40, 'MLAT': 77.22,
                           'DATETIME': dt.datetime(2000,5,5,13,40,30),
                           'MLT': 15.86, 'MONTH': 5, 'NST': 2, 'SEC': 30,
                           'SML': -195, 'SMU': 124, 'STID': "THL", 'SZA': 76.97,

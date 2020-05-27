@@ -16,7 +16,7 @@ from __future__ import (absolute_import)
 import logging
 
 from . import (general)
-from .general import (test_file)
+from .general import (check_file)
 from . import (supermag)
 from . import (vort)
 

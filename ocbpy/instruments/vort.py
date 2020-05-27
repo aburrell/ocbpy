@@ -73,7 +73,7 @@ def vort2ascii_ocb(vortfile, outfile, hemisphere=0, ocb=None, ocbfile='default',
 
     """
 
-    if not ocbpy.instruments.test_file(vortfile):
+    if not ocbpy.instruments.check_file(vortfile):
         raise IOError("vorticity file cannot be opened [{:s}]".format(vortfile))
 
     if not isinstance(outfile, str):
@@ -82,7 +82,7 @@ def vort2ascii_ocb(vortfile, outfile, hemisphere=0, ocb=None, ocbfile='default',
     # Read the vorticity data
     vdata = load_vorticity_ascii_data(vortfile, save_all=save_all)
     need_keys = ["VORTICITY", "CENTRE_MLAT", "DATETIME", "MLT"]
-    
+
     if vdata is None or not all([kk in vdata.keys() for kk in need_keys]):
         estr = "unable to load necessary data from [{:s}]".format(vortfile)
         raise ValueError(estr)
@@ -182,7 +182,7 @@ def vort2ascii_ocb(vortfile, outfile, hemisphere=0, ocb=None, ocbfile='default',
 
                 # Move to next line
                 ivort += 1
-        
+
     return
 
 def load_vorticity_ascii_data(vortfile, save_all=False):
@@ -203,7 +203,7 @@ def load_vorticity_ascii_data(vortfile, save_all=False):
 
     """
 
-    if not ocbpy.instruments.test_file(vortfile):
+    if not ocbpy.instruments.check_file(vortfile):
         return None
 
     # Open the data file

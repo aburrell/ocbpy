@@ -71,7 +71,7 @@ def supermag2ascii_ocb(smagfile, outfile, hemisphere=0, ocb=None,
 
     """
 
-    if not ocbpy.instruments.test_file(smagfile):
+    if not ocbpy.instruments.check_file(smagfile):
         raise IOError("SuperMAG file cannot be opened [{:s}]".format(smagfile))
 
     if not isinstance(outfile, str):
@@ -138,11 +138,11 @@ def supermag2ascii_ocb(smagfile, outfile, hemisphere=0, ocb=None,
         outline = "".join([outline, "MLAT MLT BMAG BN BE BZ OCB_MLAT OCB_MLT ",
                            "OCB_BMAG OCB_BN OCB_BE OCB_BZ\n"])
         fout.write(outline)
-    
+
         # Initialise the ocb and SuperMAG indices
         imag = 0
         nmag = mdata['DATETIME'].shape[0]
-    
+
         # Cycle through the data, matching SuperMAG and OCB records
         while imag < nmag and ocb.rec_ind < ocb.records:
             imag = ocbpy.match_data_ocb(ocb, mdata['DATETIME'], idat=imag,
@@ -192,7 +192,7 @@ def supermag2ascii_ocb(smagfile, outfile, hemisphere=0, ocb=None,
 
                 # Move to next line
                 imag += 1
-        
+
     return
 
 #---------------------------------------------------------------------------
@@ -212,9 +212,9 @@ def load_supermag_ascii_data(filename):
         The dict keys are specified by the header data line, the data
         for each key are stored in the numpy array
     """
-    from ocbpy.instruments import test_file
+    from ocbpy.instruments import check_file
     import datetime as dt
-    
+
     fill_val = 999999
     header = list()
     ind = {"SMU": fill_val, "SML": fill_val}
@@ -223,10 +223,10 @@ def load_supermag_ascii_data(filename):
            "SML": list(), "SMU": list(), "STID": list(), "BN": list(),
            "BE": list(), "BZ": list(), "MLT": list(), "MLAT": list(),
            "DEC": list(), "SZA": list()}
-    
-    if not test_file(filename):
+
+    if not check_file(filename):
         return header, dict()
-    
+
     #----------------------------------------------
     # Open the datafile and read the data
     with open(filename, "r") as f:
@@ -292,7 +292,7 @@ def load_supermag_ascii_data(filename):
 
             if k in ['BE', 'BN', 'DEC', 'SZA', 'MLT', 'BZ']:
                 out[k][out[k] == fill_val] = np.nan
-    
+
     return header, out
 
 # End load_supermag_ascii_data
