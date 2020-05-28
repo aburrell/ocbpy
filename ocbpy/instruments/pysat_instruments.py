@@ -59,10 +59,6 @@ def add_ocb_to_data(pysat_inst, mlat_name='', mlt_name='', evar_names=list(),
         provided.  The value corresponding to each key must be a dict that
         indicates the names holding data needed to initialise the
         ocbpy.ocb_scaling.VectorData object. (default={})
-        Example: vector_names={"vel":{"aacgm_n":"vel_n", "aacgm_e":"vel_e",
-                                      "dat_name":"velocity", "dat_units":"m/s"},
-                               "dat":{"aacgm_n":"dat_n", "aacgm_e":"dat_e",
-                                      "scale_func":local_scale_func}}
     hemisphere : (int)
         Hemisphere to process (can only do one at a time).  1=Northern,
         -1=Southern, 0=Determine from data (default=0)
@@ -99,6 +95,14 @@ def add_ocb_to_data(pysat_inst, mlat_name='', mlt_name='', evar_names=list(),
     --------
     This may be run on a pysat instrument or as a custom function
     (using 'modify') when loading pysat data.
+
+    Example
+    -------
+    Example vector name input looks like:
+    vector_names={'vel': {'aacgm_n': 'vel_n', 'aacgm_e': 'vel_e',
+                          'dat_name': 'velocity', 'dat_units': 'm/s'},
+                   'dat': {'aacgm_n': 'dat_n', 'aacgm_e': 'dat_e',
+                           'scale_func': local_scale_func}}
 
     """
 

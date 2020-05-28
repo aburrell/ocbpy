@@ -5,7 +5,7 @@
 """Scale data affected by magnetic field direction or electric field
 
 Routines
--------------------------------------------------------------------------------
+--------
 normal_evar(evar, unscaled_r, scaled_r)
     Normalise a variable proportaional to the electric field (such as velocity)
 normal_curl_evar(curl_evar, unscaled_r, scaled_r)
@@ -13,24 +13,24 @@ normal_curl_evar(curl_evar, unscaled_r, scaled_r)
     as vorticity)
 
 Classes
--------------------------------------------------------------------------------
+-------
 VectorData(object)
     Holds vector data in AACGM N-E-Z coordinates along with location
     information.  Converts vector from AACGM to OCB coordinates.
 
 Moduleauthor
--------------------------------------------------------------------------------
+------------
 Angeline G. Burrell (AGB), 12 May 2017, University of Texas, Dallas (UTDallas)
 Jone P. Reistad (JPR), 27 Mar 2020, University of Bergen (UoB)
-    - Provided first version of the array implementation
 
 References
--------------------------------------------------------------------------------
+----------
 Chisham, G. (2017), A new methodology for the development of high-latitude
- ionospheric climatologies and empirical models, Journal of Geophysical
- Research: Space Physics, 122, doi:10.1002/2016JA023235.
+ionospheric climatologies and empirical models, Journal of Geophysical
+Research: Space Physics, 122, doi:10.1002/2016JA023235.
 
 """
+
 from __future__ import absolute_import, unicode_literals
 import numpy as np
 
@@ -40,7 +40,7 @@ def normal_evar(evar, unscaled_r, scaled_r):
     """ Normalise a variable proportional to the electric field
 
     Parameters
-    -----------
+    ----------
     evar : (float or array)
         Variable related to electric field (e.g. velocity)
     unscaled_r : (float or array)
@@ -49,12 +49,12 @@ def normal_evar(evar, unscaled_r, scaled_r):
         Radius of normalised OCB polar cap in degrees
 
     Returns
-    --------
+    -------
     nvar : (float or array)
         Normalised variable
 
     Notes
-    -------
+    -----
     Assumes that the cross polar cap potential is fixed across the polar cap
     regardless of the radius of the Open Closed field line Boundary.  This is
     commonly assumed when looking at statistical patterns that control the IMF
@@ -62,7 +62,7 @@ def normal_evar(evar, unscaled_r, scaled_r):
     reconnection influence is averaged out over the averaged period.
 
     References
-    -----------
+    ----------
     Chisham, G. (2017), A new methodology for the development of high‐latitude
     ionospheric climatologies and empirical models, Journal of Geophysical
     Research: Space Physics, doi:10.1002/2016JA023235.
@@ -77,7 +77,7 @@ def normal_curl_evar(curl_evar, unscaled_r, scaled_r):
     """ Normalise a variable proportional to the curl of the electric field
 
     Parameters
-    -----------
+    ----------
     curl_evar : (float or array)
         Variable related to electric field (e.g. vorticity)
     unscaled_r : (float or array)
@@ -86,12 +86,12 @@ def normal_curl_evar(curl_evar, unscaled_r, scaled_r):
         Radius of normalised OCB polar cap in degrees
 
     Returns
-    --------
+    -------
     nvar : (float or array)
         Normalised variable
 
     Notes
-    -------
+    -----
     Assumes that the cross polar cap potential is fixed across the polar cap
     regardless of the radius of the Open Closed field line Boundary.  This is
     commonly assumed when looking at statistical patterns that control the IMF
@@ -99,7 +99,7 @@ def normal_curl_evar(curl_evar, unscaled_r, scaled_r):
     reconnection influence is averaged out over the averaged period.
 
     References
-    -----------
+    ----------
     Chisham, G. (2017), A new methodology for the development of high‐latitude
     ionospheric climatologies and empirical models, Journal of Geophysical
     Research: Space Physics, doi:10.1002/2016JA023235.
@@ -114,7 +114,7 @@ class VectorData(object):
     """ Object containing a vector data point
 
     Parameters
-    -----------
+    ----------
     dat_ind : (int or array-like)
         Data index (zero offset)
     ocb_ind : (int or array-like)
@@ -147,7 +147,7 @@ class VectorData(object):
         Data units (default=None)
 
     Attributes
-    ------------
+    ----------
     dat_name : (str or NoneType)
         Name of data
     dat_units : (str or NoneType)
@@ -203,7 +203,7 @@ class VectorData(object):
         polar cap coverage to OCB polar cap coverage
 
     Methods
-    -----------
+    -------
     set_ocb(ocb, scale_func=None)
         Set the ocb coordinates and vector values
     define_quadrants()
@@ -230,7 +230,7 @@ class VectorData(object):
         """ Initialize VectorData object
 
         Parameters
-        -----------
+        ----------
         dat_ind : (int or array-like)
             Data index (zero offset)
         ocb_ind : (int or array-like)
@@ -357,7 +357,8 @@ class VectorData(object):
         return
 
     def __repr__(self):
-        """ Provide readable representation of the DataVector object """
+        """ Provide readable representation of the DataVector object
+        """
         
         out = "Vector data:"
         if self.dat_name is not None:
@@ -438,7 +439,8 @@ class VectorData(object):
         return out
 
     def __str__(self):
-        """ Provide readable representation of the DataVector object """
+        """ Provide readable representation of the DataVector object
+        """
         
         out = self.__repr__()
         return out
@@ -447,7 +449,7 @@ class VectorData(object):
         """ Set the OCBoundary values for this data point
 
         Parameters
-        ------------
+        ----------
         ocb : (OCBoundary)
             Open Closed Boundary class object
         scale_func : (function)
@@ -458,7 +460,7 @@ class VectorData(object):
             (default=None)
 
         Updates
-        ---------
+        -------
         self.unscaled_r : (float or array-like)
             Radius of polar cap in degrees
         self.scaled_r : (float)
@@ -559,7 +561,7 @@ class VectorData(object):
         and data vector
 
         Requires
-        ---------
+        --------
         self.ocb_aacgm_mlt : (float or array-like)
             OCB pole MLT in AACGM coordinates in hours
         self.aacgm_mlt : (float or array-like)
@@ -568,14 +570,14 @@ class VectorData(object):
             vector angle in poles-vector triangle in degrees
 
         Updates
-        --------
+        -------
         self.ocb_quad : (int or array-like)
             OCB pole quadrant
         self.vec_quad : (int or array-like)
             Vector quadrant
 
         Notes
-        ------
+        -----
         North (N) and East (E) are defined by the AACGM directions centred on
         the data vector location, assuming vertical is positive downwards
         Quadrants: 1 [N, E]; 2 [N, W]; 3 [S, W]; 4 [S, E]
@@ -689,7 +691,7 @@ class VectorData(object):
         """ Normalise a variable proportional to the curl of the electric field.
 
         Requires
-        ---------
+        --------
         self.ocb_lat : (float or array-like)
             OCB latitude in degrees
         self.ocb_mlt : (float or array-like)
@@ -700,7 +702,7 @@ class VectorData(object):
             vector angle in poles-vector triangle
 
         Updates
-        --------
+        -------
         ocb_n : (float or array-like)
             OCB scaled north component
         ocb_e : (float or array-like)
@@ -891,7 +893,7 @@ class VectorData(object):
         """ Calculate the OCB north azimuth angle
 
         Requires
-        ---------
+        --------
         self.ocb_quad : (int or array-like)
             OCB quadrant
         self.vec_quad : (int or array-like)
@@ -902,7 +904,7 @@ class VectorData(object):
             Vector angle between AACGM pole, vector origin, and OCB pole
 
         Returns
-        --------
+        -------
         ocb_naz : (float or array-like)
             Angle between measurement vector and OCB pole in degrees
 
@@ -1022,7 +1024,7 @@ class VectorData(object):
         """ Get the sign of the North and East components
 
         Parameters
-        ------------
+        ----------
         north : (boolean)
             Get the sign of the north component(s) (default=False)
         east : (boolean)
@@ -1043,7 +1045,7 @@ class VectorData(object):
             Vector angle in degrees
 
         Returns
-        ---------
+        -------
         vsigns : (dict)
             Dictionary with keys 'north' and 'east' containing the desired signs
 
@@ -1184,7 +1186,7 @@ class VectorData(object):
         OCB pole using spherical triginometry
 
         Requires
-        ---------
+        --------
         self.aacgm_mlt : (float or array-like)
             AACGM MLT of vector origin in hours
         self.aacgm_lat : (float or array-like)
@@ -1195,7 +1197,7 @@ class VectorData(object):
             AACGM latitude of the OCB pole in degrees
 
         Updates
-        --------
+        -------
         self.pole_angle : (float or array-like)
             Angle in degrees between AACGM north, a measurement, and OCB north
 
@@ -1307,7 +1309,7 @@ def hav(alpha):
         Angle in radians
 
     Returns
-    --------
+    -------
     hav_alpha : (float or array-like)
         Haversine of alpha, equal to the square of the sine of half-alpha
 
@@ -1321,12 +1323,12 @@ def archav(hav):
     """ Formula for the inverse haversine
 
     Parameters
-    -----------
+    ----------
     hav : (float or array-like)
         Haversine of an angle
 
     Returns
-    ---------
+    -------
     alpha : (float or array-like)
         Angle in radians
 

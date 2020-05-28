@@ -6,7 +6,7 @@
 """ Functions that specify the boundary location as a function of MLT
 
 Functions
--------------------------------------------------------------------------------
+---------
 circular(mlt, [r_add])
     Return a circular boundary correction for a specified offset
 elliptical(mlt, [instrument, method])
@@ -15,11 +15,12 @@ harmonic(mlt, [instrument, method])
     Return the harmonic boundary correction for a data set and method
 
 References
--------------------------------------------------------------------------------
+----------
 Burrell, A. G. et al.: AMPERE Polar Cap Boundaries, Ann. Geophys. Discuss.,
 https://doi.org/10.5194/angeo-2019-113, in review, 2019.
 
 """
+
 import numpy as np
 
 from ocbpy.ocb_time import hr2rad
@@ -67,7 +68,7 @@ def elliptical(mlt, instrument='ampere', method='median'):
         Radius correction in degrees at this MLT
 
     References
-    -----
+    ----------
     Burrell, A. G. et al.: AMPERE Polar Cap Boundaries, Ann. Geophys. Discuss.,
     https://doi.org/10.5194/angeo-2019-113, in review, 2019.
 
@@ -110,7 +111,7 @@ def harmonic(mlt, instrument='ampere', method='median'):
         Radius correction in degrees at this MLT
 
     References
-    -----
+    ----------
     Burrell, A. G. et al.: AMPERE Polar Cap Boundaries, Ann. Geophys. Discuss.,
     https://doi.org/10.5194/angeo-2019-113, in review, 2019.
 
