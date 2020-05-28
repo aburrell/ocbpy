@@ -12,3 +12,4 @@ coordinates, and more.
    examples/ex_convert.rst
    examples/ex_ampere.rst
    examples/ex_general.rst
+   examples/ex_vector.rst
