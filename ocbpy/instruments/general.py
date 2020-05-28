@@ -217,10 +217,12 @@ def load_ascii_data(filename, hlines, gft_kwargs=dict(), hsplit=None,
                             convert_time_input[ckey] = line[dcol]
                         else:
                             if convert_time_input[ckey] is None:
-                                convert_time_input[ckey] = line[dcol]
+                                convert_time_input[ckey] = "{:}".format(
+                                    line[dcol])
                             else:
                                 convert_time_input[ckey] = " ".join([
-                                    convert_time_input[ckey], line[dcol]])
+                                    convert_time_input[ckey],
+                                    "{:}".format(line[dcol])])
 
                     # Convert the string into a datetime object
                     ftime = ocbt.convert_time(**convert_time_input)
