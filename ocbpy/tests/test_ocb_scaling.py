@@ -151,42 +151,52 @@ class TestOCBScalingMethods(unittest.TestCase):
         self.zdata.calc_vec_pole_angle()
         self.assertAlmostEqual(self.zdata.pole_angle, 91.72024697182087)
         
-    def test_calc_vec_pole_angle(self):
-        """ Test to see that the polar angle calculation is performed properly
+    def test_calc_vec_pole_angle_acute(self):
+        """ Test the polar angle calculation with an acute angle
         """
-        self.vdata.ocb_aacgm_mlt = self.ocb.phi_cent[self.vdata.ocb_ind] / 15.0
-        self.vdata.ocb_aacgm_lat = 90.0 - self.ocb.r_cent[self.vdata.ocb_ind]
-        (self.vdata.ocb_lat, self.vdata.ocb_mlt,
-         self.vdata.r_corr) = self.ocb.normal_coord(self.vdata.aacgm_lat,
-                                                    self.vdata.aacgm_mlt)
+        self.vdata.set_ocb(self.ocb)
+        self.assertAlmostEqual(self.vdata.pole_angle, 8.67527923)
 
-        # Test the calculation of the test pole angle
-        self.vdata.calc_vec_pole_angle()
-        self.assertAlmostEqual(self.vdata.pole_angle, 8.67527923044)
-        
-        # If the measurement has the same MLT as the OCB pole, the angle is
-        # zero.  This includes the AACGM pole and the OCB pole.
+    def test_calc_vec_pole_angle_zero(self):
+        """ Test the polar angle calculation with an angle of zero
+        """
+        self.vdata.set_ocb(self.ocb)
         self.vdata.aacgm_mlt = self.vdata.ocb_aacgm_mlt
         self.vdata.calc_vec_pole_angle()
         self.assertEqual(self.vdata.pole_angle, 0.0)
 
-        # If the measurement is on the opposite side of the AACGM pole as the
-        # OCB pole, then the angle will be 180 degrees
-        self.vdata.aacgm_mlt = self.vdata.ocb_aacgm_mlt + 12.0
+    def test_calc_vec_pole_angle_flat(self):
+        """ Test the polar angle calculation with an angle of 180 deg
+        """
+        self.vdata.set_ocb(self.ocb)
+        self.vdata.ocb_aacgm_mlt = 6.0
+        self.vdata.aacgm_mlt = 6.0
+        self.vdata.aacgm_lat = 45.0 + 0.5 * self.vdata.ocb_aacgm_lat
         self.vdata.calc_vec_pole_angle()
         self.assertEqual(self.vdata.pole_angle, 180.0)
 
+    def test_calc_vec_pole_angle_right_isosceles(self):
+        """ Test the polar angle calculation with a right isosceles triangle
+        """
         # Set the distance between the data point and the OCB is equal to the
         # distance between the AACGM pole and the OCB so that the triangles
         # we're examining are isosceles triangles.  If the triangles were flat,
-        # the angle would be 46.26 degrees
-        self.vdata.aacgm_mlt = 0.0
+        # the angle would be 45 degrees
+        self.vdata.set_ocb(self.ocb)
+        self.vdata.ocb_aacgm_mlt = 0.0
+        self.vdata.aacgm_mlt = 6.0
         self.vdata.aacgm_lat = self.vdata.ocb_aacgm_lat
         self.vdata.calc_vec_pole_angle()
-        self.assertAlmostEqual(self.vdata.pole_angle, 46.2932179019)
+        self.assertAlmostEqual(self.vdata.pole_angle, 45.03325090532819)
 
-        # Return to the default AACGM MLT value
-        self.vdata.aacgm_mlt = 22.0
+    def test_calc_vec_pole_angle_oblique(self):
+        """ Test the polar angle calculation with an isosceles triangle
+        """
+        self.vdata.set_ocb(self.ocb)
+        self.vdata.aacgm_mlt = self.vdata.ocb_aacgm_mlt - 1.0
+        self.vdata.aacgm_lat = 45.0 + 0.5 * self.vdata.ocb_aacgm_lat
+        self.vdata.calc_vec_pole_angle()
+        self.assertAlmostEqual(self.vdata.pole_angle, 150.9561733411)
 
     def test_define_quadrants(self):
         """ Test the assignment of quadrants
@@ -204,14 +214,15 @@ class TestOCBScalingMethods(unittest.TestCase):
         self.assertEqual(self.vdata.ocb_quad, 1)
         self.assertEqual(self.vdata.vec_quad, 1)
 
-    def test_define_quadrants_neg_adj_mlt(self):
-        """ Test the quadrant assignment with a negative AACGM MLT
+    def test_define_quadrants_neg_adj_mlt_west(self):
+        """ Test the quadrant assignment with a negative AACGM MLT and W vect
         """
         self.vdata.aacgm_mlt = -22.0
-        self.vdata.set_ocb(self.ocb, scale_func=ocbpy.ocb_scaling.normal_evar)
+        self.vdata.aacgm_e *= -1.0
+        self.vdata.set_ocb(self.ocb)
         self.assertGreater(self.vdata.ocb_aacgm_mlt-self.vdata.aacgm_mlt, 24)
         self.assertEqual(self.vdata.ocb_quad, 1)
-        self.assertEqual(self.vdata.vec_quad, 1)
+        self.assertEqual(self.vdata.vec_quad, 2)
 
     def test_define_quadrants_neg_north(self):
         """ Test the quadrant assignment with a vector pointing south
@@ -229,25 +240,39 @@ class TestOCBScalingMethods(unittest.TestCase):
         self.assertEqual(self.vdata.ocb_quad, 2)
         self.assertEqual(self.vdata.vec_quad, 1)
 
-    # HERE
-    def test_define_quadrants_opposite_south(self):
-        """ Test quad assignment w/vector pointing south from the opp. sector
+    def test_define_quadrants_aligned_poles_southwest(self):
+        """ Test quad assignment w/vector pointing SW and both poles aligned
         """
         self.vdata.set_ocb(self.ocb, scale_func=ocbpy.ocb_scaling.normal_evar)
         self.vdata.aacgm_mlt = self.vdata.ocb_aacgm_mlt + 12.0
         self.vdata.aacgm_n = -10.0
+        self.vdata.aacgm_e = -10.0
         self.vdata.set_ocb(self.ocb, scale_func=ocbpy.ocb_scaling.normal_evar)
-        self.assertEqual(self.vdata.ocb_quad, 3)
-        self.assertEqual(self.vdata.vec_quad, 4)
+        self.assertEqual(self.vdata.ocb_quad, 2)
+        self.assertEqual(self.vdata.vec_quad, 3)
 
-    def test_define_quadrants_ocb_south(self):
-        """ Test the quadrant assignment with the OCB pole in a southern quad
+    def test_define_quadrants_ocb_south_night(self):
+        """ Test the quadrant assignment with the OCB pole in a south/night quad
         """
+        self.vdata.aacgm_mlt = 0.0
         self.vdata.set_ocb(self.ocb, scale_func=ocbpy.ocb_scaling.normal_evar)
-        self.vdata.ocb_aacgm_mlt = 10.0
+        self.vdata.ocb_aacgm_mlt = 23.0
+        self.vdata.ocb_aacgm_lat = self.vdata.aacgm_lat - 2.0
         self.vdata.calc_vec_pole_angle()
         self.vdata.define_quadrants()
         self.assertEqual(self.vdata.ocb_quad, 3)
+        self.assertEqual(self.vdata.vec_quad, 1)
+
+    def test_define_quadrants_ocb_south_day(self):
+        """ Test the quadrant assignment with the OCB pole in a south/day quad
+        """
+        self.vdata.aacgm_mlt = 0.0
+        self.vdata.set_ocb(self.ocb, scale_func=ocbpy.ocb_scaling.normal_evar)
+        self.vdata.ocb_aacgm_mlt = 1.0
+        self.vdata.ocb_aacgm_lat = self.vdata.aacgm_lat - 2.0
+        self.vdata.calc_vec_pole_angle()
+        self.vdata.define_quadrants()
+        self.assertEqual(self.vdata.ocb_quad, 4)
         self.assertEqual(self.vdata.vec_quad, 1)
 
     def test_undefinable_quadrants(self):
@@ -1009,7 +1034,8 @@ class TestOCBScalingArrayMethods(unittest.TestCase):
         self.assertTrue(path.isfile(test_file))
         self.ocb = ocbpy.ocboundary.OCBoundary(filename=test_file,
                                                instrument='image')
-        self.vargs = [[3,6], 27, np.array([75.0,87.2]), np.array([22.0,21.22])]
+        self.vargs = [[3,6], 27, np.array([75.0, 87.2]),
+                      np.array([22.0, 21.22])]
         self.vkwargs = {'aacgm_n': np.array([50.0, 0.0]),
                         'aacgm_e': np.array([86.5, 0.0]),
                         'aacgm_z': np.array([5.0, 0.0]),
@@ -1186,6 +1212,20 @@ class TestOCBScalingArrayMethods(unittest.TestCase):
         self.assertAlmostEqual(self.vdata.pole_angle[0], 22.45577128)
         self.assertAlmostEqual(self.vdata.pole_angle[1], 91.72024697)
  
+    def test_calc_vec_pole_angle_flat(self):
+        """ Test the polar angle calculation with angles of 0 and 180 deg
+        """
+        self.vargs[3] = np.array([6.0, 6.0])
+        self.vdata = ocbpy.ocb_scaling.VectorData(*self.vargs, **self.vkwargs)
+        self.vdata.set_ocb(self.ocb)
+
+        self.vdata.ocb_aacgm_mlt = np.asarray(6.0)
+        self.vdata.aacgm_lat = np.array([45.0 + 0.5 * self.vdata.ocb_aacgm_lat,
+                                         self.vdata.ocb_aacgm_lat - 0.5])
+        self.vdata.calc_vec_pole_angle()
+        self.assertEqual(self.vdata.pole_angle[0], 0.0)
+        self.assertEqual(self.vdata.pole_angle[1], 180.0)
+
     def test_array_vec_quad(self):
         """ Test the assignment of vector quadrants with array input
         """
@@ -1201,6 +1241,7 @@ class TestOCBScalingArrayMethods(unittest.TestCase):
         self.vdata = ocbpy.ocb_scaling.VectorData(*self.vargs, **self.vkwargs)
         self.vdata.set_ocb(self.ocb)
 
+        print(self.vdata.ocb_quad)
         self.assertEqual(len(self.vargs[0]), len(self.vdata.ocb_quad))
         self.assertTrue(np.all(self.vdata.ocb_quad == 1.0))
 
