@@ -31,5 +31,5 @@ before_script:
       sleep 3;
     fi
 script:
-    - pytest -vs --cov=ocbpy/
+    - "coverage run --source=ocbpy setup.py test"
 after_success: coveralls
