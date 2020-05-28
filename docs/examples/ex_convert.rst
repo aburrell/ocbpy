@@ -2,9 +2,12 @@ Convert between AACGM and OCB coordinates
 ------------------------------------------
 We'll start by visualising the location of the OCB using the first good OCB
 in the default IMAGE FUV file.
+
 ::
-   f = plt.figure()
-   ax = f.add_subplot(111, projection="polar")
+
+   
+   fig = plt.figure()
+   ax = fig.add_subplot(111, projection="polar")
    ax.set_theta_zero_location("S")
    ax.xaxis.set_ticks([0, 0.5*np.pi, np.pi, 1.5*np.pi])
    ax.xaxis.set_ticklabels(["00:00", "06:00", "12:00 MLT", "18:00"])
@@ -13,12 +16,18 @@ in the default IMAGE FUV file.
    ax.yaxis.set_ticklabels(["85$^\circ$", "80$^\circ$", "75$^\circ$", "70$^\circ$"]
 
 Mark the location of the circle centre in AACGM coordinates
+
 ::
+
+   
    ocb.rec_ind = 27
    ax.plot(np.radians(ocb.phi_cent[ocb.rec_ind]), ocb.r_cent[ocb.rec_ind], "mx", ms=10, label="OCB Pole")
 
 Calculate at plot the location of the OCB in AACGM coordinates
+
 ::
+
+   
    lon = np.linspace(0.0, 2.0 * np.pi, num=64)
    ocb.get_aacgm_boundary_lat(aacgm_lon=np.degrees(lon), rec_ind=ocb.rec_ind)
    ax.plot(lon, 90.0-ocb.aacgm_boundary_lat[ocb.rec_ind], "m-", linewidth=2, label="OCB")
@@ -27,7 +36,10 @@ Calculate at plot the location of the OCB in AACGM coordinates
 Add more reference labels for OCB coordinates.  Since we know the location that
 we want to place these labels in OCB coordinates, the **OCBoundary** function
 **revert_coord** can be used to get the location in AACGM coordinates.
+
 ::
+
+   
    lon_clock = list()
    lat_clock = list()
 
@@ -44,7 +56,10 @@ we want to place these labels in OCB coordinates, the **OCBoundary** function
 
 Now add the location of a point in AACGM coordinates, calculate the
 location relative to the OCB, and output both coordinates in the legend
+
 ::
+
+   
    aacgm_lat = 85.0
    aacgm_lon = np.pi
    ocb_lat, ocb_mlt = ocb.normal_coord(aacgm_lat, aacgm_lon * 12.0 / np.pi)
@@ -54,12 +69,18 @@ location relative to the OCB, and output both coordinates in the legend
    
 Find the location relative to the current OCB.  Note that the AACGM coordinates
 must be in degrees latitude and hours of magnetic local time (MLT).
+
 ::
+
+   
    ocb_lat, ocb_mlt = ocb.normal_coord(aacgm_lat, aacgm_lon * 12.0 / np.pi)
    ax.plot([ocb_mlt * np.pi / 12.0], [90.0 - ocb_lat], "mo", label="OCB Point")
 
 Add a legend to finish the figure.
+
 ::
+
+   
    ax.legend(loc=2, fontsize="small", title="{:}".format(ocb.dtime[ocb.rec_ind]), bbox_to_anchor=(-0.4,1.15))
 
 .. image:: ../figures/example_ocb_location.png
