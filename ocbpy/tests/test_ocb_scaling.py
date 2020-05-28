@@ -350,8 +350,8 @@ class TestOCBScalingMethods(unittest.TestCase):
         self.assertAlmostEqual(self.vdata.ocb_e, 77.9686428950)
         
         # Test to see that the magnitudes and z-components are the same
-        self.assertEqual(self.vdata.aacgm_mag, self.vdata.ocb_mag)
-        self.assertEqual(self.vdata.ocb_z, self.vdata.aacgm_z)
+        self.assertAlmostEqual(self.vdata.aacgm_mag, self.vdata.ocb_mag)
+        self.assertAlmostEqual(self.vdata.ocb_z, self.vdata.aacgm_z)
 
         del vmag
 
@@ -457,7 +457,7 @@ class TestOCBScalingMethods(unittest.TestCase):
         # Set the OCB values without any E-field scaling, test to see that the
         # AACGM and OCB vector magnitudes are the same
         self.vdata.set_ocb(self.ocb)
-        self.assertEqual(self.vdata.aacgm_mag, self.vdata.ocb_mag)
+        self.assertAlmostEqual(self.vdata.aacgm_mag, self.vdata.ocb_mag)
 
     def test_set_ocb_evar(self):
         """ Test setting of OCB values with E field scaling
