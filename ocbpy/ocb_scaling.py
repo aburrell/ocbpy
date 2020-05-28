@@ -635,10 +635,10 @@ class VectorData(object):
                       & np.greater_equal(ocb_adj_mlt, 12.0, where=nan_mask)
                       & nan_mask)
         quad3_mask = (np.greater_equal(self.pole_angle, 90.0, where=nan_mask)
-                      & np.less(ocb_adj_mlt, 24.0, where=nan_mask) & nan_mask)
-        quad4_mask = (np.greater_equal(self.pole_angle, 90.0, where=nan_mask)
-                      & np.greater_equal(ocb_adj_mlt, 24.0, where=nan_mask)
+                      & np.greater_equal(ocb_adj_mlt, 12.0, where=nan_mask)
                       & nan_mask)
+        quad4_mask = (np.greater_equal(self.pole_angle, 90.0, where=nan_mask)
+                      & np.less(ocb_adj_mlt, 12.0, where=nan_mask) & nan_mask)
 
         if self.ocb_quad.shape == ():
             if np.all(quad1_mask):
@@ -1230,22 +1230,38 @@ class VectorData(object):
         del_long = ocbpy.ocb_time.hr2rad(self.ocb_aacgm_mlt-self.aacgm_mlt)
 
         if del_long.shape == ():
-            if del_long < 0.0:
+            if del_long < -np.pi:
                 del_long += 2.0 * np.pi
         else:
-            del_long[del_long < 0.0] += 2.0 * np.pi
+            del_long[del_long < -np.pi] += 2.0 * np.pi
 
         # Initalize the output
         self.pole_angle = np.full(shape=del_long.shape, fill_value=np.nan)
 
         # Assign the extreme values
         if del_long.shape == ():
-            if del_long in [0.0, np.pi]:
-                self.pole_angle = np.degrees(del_long)
+            if del_long in [-np.pi, 0.0, np.pi]:
+                if abs(self.aacgm_lat) > abs(self.ocb_aacgm_lat):
+                    self.pole_angle = 180.0
+                else:
+                    self.pole_angle = 0.0
                 return
         else:
-            self.pole_angle[del_long == 0.0] = 0.0
-            self.pole_angle[del_long == np.pi] = 180.0
+            zero_mask = (((del_long == 0) | (abs(del_long) == np.pi))
+                         & np.greater(abs(self.aacgm_lat),
+                                      abs(self.ocb_aacgm_lat),
+                                      where=~np.isnan(del_long)))
+            flat_mask = (((del_long == 0) | (abs(del_long) == np.pi))
+                         & np.less_equal(abs(self.aacgm_lat),
+                                         abs(self.ocb_aacgm_lat),
+                                         where=~np.isnan(del_long)))
+
+            self.pole_angle[flat_mask] = 180.0
+            self.pole_angle[zero_mask] = 0.0
+            update_mask = (~zero_mask & ~flat_mask)
+
+            if not np.any(update_mask):
+                return
 
         # Find the distance in radians between the two poles
         hemisphere = np.sign(self.ocb_aacgm_lat)
@@ -1255,17 +1271,30 @@ class VectorData(object):
         # Get the distance in radians between the AACGM pole and the data point
         del_vect = hemisphere * (rad_pole - np.radians(self.aacgm_lat))
 
-        # Use the law of haversines, which goes to the spherical trigonometric
-        # cosine rule for sides at large angles, but is more robust at small
-        # angles, to find the length of the last side of the spherical triangle.
-        del_ocb = archav(hav(del_pole - del_vect) +
-                         np.sin(del_pole) * np.sin(del_vect) * hav(del_long))
+        # Use the Vincenty formula for a sphere
+        del_ocb = np.arctan2(np.sqrt((np.cos(np.radians(self.ocb_aacgm_lat))
+                                      * np.sin(del_long))**2
+                                     + (np.cos(np.radians(self.aacgm_lat))
+                                        * np.sin(np.radians(self.ocb_aacgm_lat))
+                                        - np.sin(np.radians(self.aacgm_lat))
+                                        * np.cos(np.radians(self.ocb_aacgm_lat))
+                                        * np.cos(del_long))**2),
+                             np.sin(np.radians(self.aacgm_lat))
+                             * np.sin(np.radians(self.ocb_aacgm_lat))
+                             + np.cos(np.radians(self.aacgm_lat))
+                             * np.cos(np.radians(self.ocb_aacgm_lat))
+                             * np.cos(del_long))
+        
+        # Use the half-angle formula to get the pole angle
+        sum_sides = 0.5 * (del_vect + del_ocb + del_pole)
+        half_angle = np.sqrt(np.sin(sum_sides) * np.sin(sum_sides - del_pole)
+                             / (np.sin(del_vect) * np.sin(del_ocb)))
 
-        # Again use law of haversines, this time to find the polar angle
-        hav_pole_angle = (hav(del_pole) - hav(del_vect - del_ocb)) \
-                         / (np.sin(del_vect) * np.sin(del_ocb))
-
-        self.pole_angle = np.degrees(archav(hav_pole_angle))
+        if self.pole_angle.shape == ():
+            self.pole_angle = np.degrees(2.0 * np.arccos(half_angle))
+        else:
+            self.pole_angle[update_mask] = np.degrees(
+                2.0 * np.arccos(half_angle[update_mask]))
 
         return
 
