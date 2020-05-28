@@ -31,15 +31,15 @@ ocb_time       Time manipulation routines
 ocb_scaling    Scaling functions for OCB gridded data
 ocb_correction Boundary correction utilities
 ---------------------------------------------------------------------------
+
 """
 from __future__ import (absolute_import, unicode_literals)
 
 import logging
 
-from . import (ocboundary, ocb_scaling, ocb_time, ocb_correction)
-from .ocboundary import (OCBoundary, match_data_ocb)
-from . import (instruments)
-from . import (boundaries)
+from ocbpy import (ocboundary, ocb_scaling, ocb_time, ocb_correction)
+from ocbpy.ocboundary import (OCBoundary, match_data_ocb)
+from ocbpy import (instruments, boundaries)
 
 # Define the global variables
 __version__ = str('0.2b2')

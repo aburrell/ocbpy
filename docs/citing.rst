@@ -42,7 +42,11 @@ retrieval method.
 * **OCB**: Chisham, G. (2017), A new methodology for the development of
   high‐latitude ionospheric climatologies and empirical models,
   J. Geophys. Res. Space Physics, 122, 932–947, doi:10.1002/2016JA023235.
-
+*    : Chisham, G. (2017) Auroral Boundary Derived from IMAGE Satellite Mission
+     Data (May 2000 - Oct 2002), Version 1.1, Polar Data Centre, Natural
+     Environment Research Council, UK.
+     doi:10.5285/75aa66c1-47b4-4344-ab5d-52ff2913a61e.
+     
 AMPERE Boundaries
 -----------------
 
@@ -52,5 +56,18 @@ boundary retrieval method and the OCB correction method.
 
 * **FAC**: Milan, S. E. (2019): AMPERE R1/R2 FAC radii. figshare. Dataset.
   https://doi.org/10.25392/leicester.data.11294861.v1
-* **OCB**: Burrell, A. G., et al.: AMPERE Polar Cap Boundaries, Ann. Geophys.
-  Discuss., doi:10.5194/angeo-2019-113, in review, 2019.
+* **OCB**: Burrell, A. G., et al. (2020): AMPERE Polar Cap Boundaries,
+  Ann. Geophys., 38, 481-490, doi:10.5194/angeo-38-481-2020
+
+DMSP SSJ Boundaries
+-------------------
+
+The DMSO SSJ boundaries are retrieved using
+`ssj_auroral_boundary <https://github.com/lkilcommons/ssj_auroral_boundary>`_.
+Please follow the citation guidelines on their page.  The general reference
+for the DMSP SSJ boundary data set is provided below.
+
+* **SSJ Auroral Boundaries (2010-2014)**: Kilcommons, L., et al. (2019).
+  Defense Meteorology Satellite Program (DMSP) Electron Precipitation (SSJ)
+  Auroral Boundaries, 2010-2014 (Version 1.0.0) [Data set]. Zenodo.
+  http://doi.org/10.5281/zenodo.3373812
