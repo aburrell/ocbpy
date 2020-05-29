@@ -834,6 +834,7 @@ class VectorData(object):
         
             # Scale the vector along the OCB north and account for
             # any changes associated with adjusting the size of the polar cap
+            print("TEST", np.all(np.isnan(vmag)) or np.all(np.isnan(ocb_angle)))
             if self.scale_func is not None:
                 if self.unscaled_r.shape == ():
                     un_r = self.unscaled_r
@@ -849,10 +850,7 @@ class VectorData(object):
                 vz = self.scale_func(a_z,  un_r, self.scaled_r)
             else:
                 if self.aacgm_z.shape == ():
-                    if np.all(np.isnan(vmag)) or np.all(np.isnan(ocb_angle)):
-                        vz = np.nan
-                    else:
-                        vz = self.aacgm_z
+                    vz = self.aacgm_z
                 else:
                     vz = self.aacgm_z[norm_mask]
                     nan_mask = (np.isnan(vmag)
