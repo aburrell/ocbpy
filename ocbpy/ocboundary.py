@@ -40,7 +40,7 @@ import aacgmv2
 
 import ocbpy
 import ocbpy.ocb_correction as ocbcor
-from ocbpy.ocb_time import slt2glon, convert_time, glon2slt, deg2hr
+from ocbpy.ocb_time import slt2glon, convert_time, glon2slt, deg2hr, fix_range
 from ocbpy.boundaries.files import get_default_file
 
 class OCBoundary(object):
@@ -486,33 +486,33 @@ class OCBoundary(object):
         return
 
     def normal_coord(self, lat, lt, coords='magnetic', height=350.0,
-                     method='TRACE'):
-        """converts a position to normalised co-ordinates relative to the OCB
+                     method='ALLOWTRACE'):
+        """converts position(s) to normalised co-ordinates relative to the OCB
 
         Parameters
         -----------
-        lat : (float)
+        lat : (float or array-like)
             Input latitude (degrees), must be geographic, geodetic, or AACGMV2
-        lt : (float)
+        lt : (float or array-like)
             Input local time (hours), must be solar or AACGMV2 magnetic
         coords : (str)
             Input coordiate system.  Accepts 'magnetic', 'geocentric', or
             'geodetic' (default='magnetic')
-        height : (float)
+        height : (float or array-like)
             Height (km) at which AACGMV2 coordinates will be calculated, if
             geographic coordinates are provided (default=350.0)
         method : (str)
             String denoting which type(s) of conversion to perform, if
             geographic coordinates are provided.  Expects either 'TRACE' or
-            'ALLOWTRACE'.  See AACGMV2 for details.  (default='TRACE')
+            'ALLOWTRACE'.  See AACGMV2 for details.  (default='ALLOWTRACE')
 
         Returns
         --------
-        ocb_lat : (float)
+        ocb_lat : (float or array-like)
             Magnetic latitude relative to OCB (degrees)
-        ocb_mlt : (float)
+        ocb_mlt : (float or array-like)
             Magnetic local time relative to OCB (hours)
-        r_corr : (float)
+        r_corr : (float or array-like)
             Radius correction to OCB (degrees)
  
         Comments
@@ -521,8 +521,20 @@ class OCBoundary(object):
 
         """
 
+        # Cast input as arrays
+        lat = np.asarray(lat)
+        lt = np.asarray(lt)
+        height = np.asarray(height)
+
+        # Initialize output
+        out_shape = max([lat.shape, lt.shape, height.shape])
+        ocb_lat = np.full(shape=out_shape, fill_value=np.nan)
+        ocb_mlt = np.full(shape=out_shape, fill_value=np.nan)
+        r_corr = np.full(shape=out_shape, fill_value=np.nan)
+
+        # Test the OCB record index
         if self.rec_ind < 0 or self.rec_ind >= self.records:
-            return np.nan, np.nan, np.nan
+            return ocb_lat, ocb_mlt, r_corr
 
         # If needed, convert from geographic to magnetic coordinates
         if coords.lower().find('mag') < 0:
@@ -532,15 +544,17 @@ class OCBoundary(object):
             # method flag
             if coords.lower() == 'geocentric':
                 method = "|".join([method, coords.upper()])
-            aacgm_lat, _, aacgm_mlt = aacgmv2.get_aacgm_coord(lat, lon, height,
-                                            self.dtime[self.rec_ind], method)
+            aacgm_lat, _, aacgm_mlt = aacgmv2.get_aacgm_coord_arr(lat, lon,
+                height, self.dtime[self.rec_ind], method)
         else:
             aacgm_lat = lat
             aacgm_mlt = lt
 
         # Ensure the correct hemisphere is loaded for this data
-        if np.sign(aacgm_lat) != self.hemisphere:
-            return np.nan, np.nan, np.nan
+        if np.any(np.sign(aacgm_lat) != self.hemisphere):
+            if np.all(np.sign(aacgm_lat) != self.hemisphere):
+                return ocb_lat, ocb_mlt, r_corr
+            aacgm_lat[np.sign(aacgm_lat) != self.hemisphere] = np.nan
 
         # Calculate the center of the OCB
         phi_cent_rad = np.radians(self.phi_cent[self.rec_ind])
@@ -563,44 +577,42 @@ class OCBoundary(object):
         yn = (yp - yc) * scalen
 
         ocb_lat = self.hemisphere * (90.0 - np.sqrt(xn**2 + yn**2))
-        ocb_mlt = np.degrees(np.arctan2(yn, xn)) / 15.0
-
-        if ocb_mlt < 0.0:
-            ocb_mlt += 24.0
+        ocb_mlt = deg2hr(np.degrees(np.arctan2(yn, xn)))
+        ocb_mlt = fix_range(ocb_mlt, 0.0, 24.0)
 
         return ocb_lat, ocb_mlt, r_corr
 
     def revert_coord(self, ocb_lat, ocb_mlt, r_corr=0.0, coords='magnetic',
-                     height=350.0, method='TRACE'):
+                     height=350.0, method='ALLOWTRACE'):
         """Converts the position of a measurement in normalised co-ordinates
         relative to the OCB into AACGM co-ordinates
 
         Parameters
         -----------
-        ocb_lat : (float)
+        ocb_lat : (float or array-like)
             Input OCB latitude in degrees
-        ocb_mlt : (float)
+        ocb_mlt : (float or array-like)
             Input OCB local time in hours
-        r_corr : (float)
+        r_corr : (float or array-like)
             Input OCB radial correction in degrees, may be a function of
             AACGM MLT (default=0.0)
         coords : (str)
             Output coordiate system.  Accepts 'magnetic', 'geocentric', or
             'geodetic' (default='magnetic')
-        height : (float)
+        height : (float or array-like)
             Geocentric height above sea level (km) at which AACGMV2 coordinates
             will be calculated, if geographic coordinates are desired
             (default=350.0)
         method : (str)
             String denoting which type(s) of conversion to perform, if
             geographic coordinates are provided.  Expects either 'TRACE' or
-            'ALLOWTRACE'.  See AACGMV2 for details.  (default='TRACE')
+            'ALLOWTRACE'.  See AACGMV2 for details.  (default='ALLOWTRACE')
 
         Returns
         --------
-        lat : (float)
+        lat : (float or array-like)
             latitude (degrees)
-        lt : (float)
+        lt : (float or array-like)
             local time (hours)
  
         Comments
@@ -608,13 +620,27 @@ class OCBoundary(object):
         Approximation - Conversion assumes a planar surface
 
         """
-        
+
+        # Cast input as arrays
+        ocb_lat = np.asarray(ocb_lat)
+        ocb_mlt = np.asarray(ocb_mlt)
+        r_corr = np.asarray(r_corr)
+        height = np.asarray(height)
+
+        # Initialize output
+        out_shape = max([ocb_lat.shape, ocb_mlt.shape, r_corr.shape,
+                         height.shape])
+        lat = np.full(shape=out_shape, fill_value=np.nan)
+        lt = np.full(shape=out_shape, fill_value=np.nan)
+
+        # Test the OCB index and hemisphere
         if self.rec_ind < 0 or self.rec_ind >= self.records:
-            return np.nan, np.nan
+            return lat, lt
 
-        if np.sign(ocb_lat) != self.hemisphere:
-            return np.nan, np.nan
+        if np.all(np.sign(ocb_lat) != self.hemisphere):
+            return lat, lt
 
+        # Perform the coordinate transformation
         phi_cent_rad = np.radians(self.phi_cent[self.rec_ind])
         xc = self.r_cent[self.rec_ind] * np.cos(phi_cent_rad)
         yc = self.r_cent[self.rec_ind] * np.sin(phi_cent_rad)
@@ -631,12 +657,8 @@ class OCBoundary(object):
         yp = yn * scale_ocb + yc
 
         aacgm_lat = self.hemisphere * (90.0 - np.sqrt(xp**2 + yp**2))
-        aacgm_mlt = np.degrees(np.arctan2(yp, xp)) / 15.0
-
-        # Don't need to test for values above 24.0 because np.arctan2 is
-        # restricted to a range of +/- pi
-        if aacgm_mlt < 0.0:
-            aacgm_mlt += 24.0
+        aacgm_mlt = deg2hr(np.degrees(np.arctan2(yp, xp)))
+        aacgm_mlt = fix_range(aacgm_mlt, 0.0, 24.0)
 
         # If needed, convert from magnetic to geographic coordinates
         if coords.lower().find('mag') < 0:
@@ -648,8 +670,9 @@ class OCBoundary(object):
             if coords.lower() == 'geocentric':
                 method = "|".join([method, coords.upper()])
             method = "|".join([method, "A2G"])
-            lat, lon, _ = aacgmv2.convert_latlon(aacgm_lat, lon, height,\
-                                            self.dtime[self.rec_ind], method)
+            lat, lon, _ = aacgmv2.convert_latlon_arr(aacgm_lat, lon, height,
+                                                     self.dtime[self.rec_ind],
+                                                     method)
 
             # Convert from longitude to solar local time
             lt = glon2slt(lon, self.dtime[self.rec_ind])
@@ -694,7 +717,7 @@ class OCBoundary(object):
         """
 
         # Ensure the boundary longitudes span from 0-360 degrees
-        aacgm_lon = np.array(aacgm_lon)
+        aacgm_lon = np.asarray(aacgm_lon)
         aacgm_lon[aacgm_lon < 0.0] += 360.0
         aacgm_lon[aacgm_lon >= 360.0] -= 360.0
             

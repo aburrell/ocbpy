@@ -321,8 +321,8 @@ class TestGeneralLoadMethods(unittest.TestCase):
 
         del str_keys
 
-    def test_load_ascii_data_w_datetime(self):
-        """ Test the general routine to load ASCII data
+    def test_load_ascii_data_w_year_soy(self):
+        """ Test the general routine to load ASCII data with year and SOY
         """
 
         self.load_kwargs['header'] = self.headers[self.test_file_soy]

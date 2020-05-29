@@ -2,9 +2,12 @@ Load a test AMPERE OCB file
 ------------------------------------------
 A mock AMPERE file is available in the test directory, containing data for the
 southern hemisphere.  Load this data using the following commands.
+
 ::
+
+   
    ocb = ocbpy.ocboundary.OCBoundary(filename="~/ocbpy/ocbpy/tests/test_data/test_south_circle", instrument="ampere", hemisphere=-1)
-   print ocb
+   print(ocb)
 
    Open-Closed Boundary file: tests/test_data/test_south_circle
    Source instrument: AMPERE
@@ -13,7 +16,7 @@ southern hemisphere.  Load this data using the following commands.
    14 records from 2010-01-01 00:00:00 to 2010-01-01 00:26:00
 
    YYYY-MM-DD HH:MM:SS Phi_Centre R_Centre R
-   -----------------------------------------------------------------------------
+   -----------------------------------------
    2010-01-01 00:00:00 296.57 2.24 10.00
    2010-01-01 00:02:00 315.00 2.83 12.00
    2010-01-01 00:24:00 270.00 2.00 10.00

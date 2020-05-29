@@ -29,6 +29,8 @@ slt2glon(slt, dtime)
     Convert from solar local time to geographic longitude
 glon2slt(glon, dtime)
     Convert from geographic longitude to solar local time
+fix_range(values, max_val, min_val)
+    Ensure cyclic values lie within a specified range
 
 Moduleauthor
 -------------------------------------------------------------------------------
@@ -37,6 +39,7 @@ Angeline G. Burrell (AGB), 15 April 2017, University of Texas, Dallas (UTDallas)
 """
 
 import datetime as dt
+import numpy as np
 
 
 def get_datetime_fmt_len(datetime_fmt):
@@ -238,6 +241,7 @@ def deg2hr(lon):
 
     """
 
+    lon = np.asarray(lon)
     lt = lon / 15.0 # 12 hr/180 deg = 1/15 hr/deg
 
     return lt
@@ -257,6 +261,7 @@ def hr2deg(lt):
 
     """
 
+    lt = np.asarray(lt)
     lon = lt * 15.0 # 180 deg/12 hr = 15 deg/hr
 
     return lon
@@ -275,8 +280,8 @@ def hr2rad(lt):
         Longitude-like value in radians
 
     """
-    import numpy as np
 
+    lt = np.asarray(lt)
     lon = lt * np.pi / 12.0
 
     return lon
@@ -295,8 +300,8 @@ def rad2hr(lon):
         Local time-like value in hours
 
     """
-    import numpy as np
 
+    lon = np.asarray(lon)
     lt = lon * 12.0 / np.pi
 
     return lt
@@ -327,14 +332,14 @@ def slt2glon(slt, dtime):
 
     Parameters
     ----------
-    slt : (float)
+    slt : (float or array-like)
         Solar local time in hours
     dtime : (dt.datetime)
         Universal time as a timestamp
 
     Returns
     -------
-    glon : (float)
+    glon : (float or array-like)
         Geographic longitude in degrees
 
     """
@@ -343,14 +348,11 @@ def slt2glon(slt, dtime):
     uth = datetime2hr(dtime)
 
     # Calculate the longitude in degrees
+    slt = np.asarray(slt)
     glon = hr2deg(slt - uth)
 
-    # Ensure the longitude is not above 360 or below -180
-    while glon >= 360.0:
-        glon -= 360.0
-
-    while glon <= -180.0:
-        glon += 360.0
+    # Ensure the longitude is not at or above 360 or at or below -180
+    glon = fix_range(glon, -180.0, 360.0, 360.0)
 
     return glon
 
@@ -360,27 +362,77 @@ def glon2slt(glon, dtime):
 
     Parameters
     ----------
-    glon : (float)
+    glon : (float or array-like)
         Geographic longitude in degrees
     dtime : (dt.datetime)
         Universal time as a timestamp
 
     Returns
     -------
-    slt : (float)
+    slt : (float or array-like)
         Solar local time in hours
 
     """
-
 
     # Calculate the longitude in degrees
     slt = deg2hr(glon) + datetime2hr(dtime)
 
     # Ensure the local time is between 0 and 24 h
-    while slt >= 24.0:
-        slt -= 24.0
-
-    while slt < 0.0:
-        slt += 24.0
+    slt = fix_range(slt, 0.0, 24.0)
 
     return slt
+
+def fix_range(values, min_val, max_val, val_range=None):
+    """ Ensure cyclic values lie below the maximum and at or above the mininum
+
+    Parameters
+    ----------
+    values : (int, float, or array-like)
+        Values to adjust
+    min_val : (int or float)
+        Maximum that values may not meet or exceed
+    max_val : (int or float)
+        Minimum that values may not lie below
+    val_range : (int, float, or NoneType)
+        Value range or None to calculate from min and max (default=None)
+
+    Returns
+    -------
+    fixed_vals : (int, float, or array-like)
+        Values adjusted to lie min_val <= fixed_vals < max_val
+
+    """
+
+    # Cast output as array-like
+    fixed_vals = np.asarray(values)
+
+    # Test input to ensure the maximum is greater than the minimum
+    if min_val >= max_val:
+        raise ValueError('Minimum is not less than the maximum')
+
+    # Determine the allowable range
+    if val_range is None:
+        val_range = max_val - min_val
+
+    # Test input to ensure the value range is greater than zero
+    if val_range <= 0.0:
+        raise ValueError('Value range must be greater than zero')
+
+    # Fix the values, allowing for deviations that are multiples of the
+    # value range.  Also propagate NaNs
+    ibad = (np.greater_equal(fixed_vals, max_val, where=~np.isnan(fixed_vals))
+            & ~np.isnan(fixed_vals))
+    while np.any(ibad):
+        fixed_vals[ibad] -= val_range
+        ibad = (np.greater_equal(fixed_vals, max_val,
+                                 where=~np.isnan(fixed_vals))
+                & ~np.isnan(fixed_vals))
+
+    ibad = (np.less(fixed_vals, min_val, where=~np.isnan(fixed_vals))
+            & ~np.isnan(fixed_vals))
+    while np.any(ibad):
+        fixed_vals[ibad] += val_range
+        ibad = (np.less(fixed_vals, min_val, where=~np.isnan(fixed_vals))
+                & ~np.isnan(fixed_vals))
+
+    return fixed_vals
