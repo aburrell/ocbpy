@@ -865,20 +865,12 @@ class VectorData(object):
                                      fill_value=(vsigns['east'] * vmag
                                                  * np.sin(ocb_angle)))
                 self.ocb_z = np.full(shape=self.ocb_z.shape, fill_value=vz)
-            elif ocb_angle.shape == ():
-                self.ocb_n[norm_mask] = (vsigns['north'][norm_mask] * vmag
-                                         * np.cos(ocb_angle))
-                self.ocb_e[norm_mask] = (vsigns['east'][norm_mask] * vmag
-                                         * np.sin(ocb_angle))
-                self.ocb_z[norm_mask] = vz
-                
             else:
                 self.ocb_n[norm_mask] = (vsigns['north'][norm_mask] * vmag
                                          * np.cos(ocb_angle[norm_mask]))
                 self.ocb_e[norm_mask] = (vsigns['east'][norm_mask] * vmag
                                          * np.sin(ocb_angle[norm_mask]))
                 self.ocb_z[norm_mask] = vz
-                
 
         # Calculate the scaled OCB vector magnitude
         self.ocb_mag = np.sqrt(self.ocb_n**2 + self.ocb_e**2
