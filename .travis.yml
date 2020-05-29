@@ -1,14 +1,22 @@
 language: python
 os:
     - linux
+env:
+    - INSTALL_EXTRA=0
+    - INSTALL_EXTRA=2 CDF_LIB=$HOME/lib
 python:
     - "2.7"
     - "3.5"
     - "3.6"
     - "3.7"
-env:
-    - INSTALL_EXTRA=1
-    - INSTALL_EXTRA=2
+    - "3.8"
+jobs:
+   allow_failures:
+      - env: INSTALL_EXTRA=2 CDF_LIB=$HOME/lib
+addons:
+    apt_packages:
+        - gfortran
+        - gcc
 before_install:
     - pip install -r requirements.txt
     - bash requirements.extra $INSTALL_EXTRA
