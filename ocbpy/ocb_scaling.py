@@ -286,13 +286,17 @@ class VectorData(object):
 
         # Test the initalization shape
         vshapes = [self.aacgm_lat.shape, self.aacgm_mlt.shape,
-                   self.aacgm_n.shape, self.aacgm_e.shape, self.aacgm_z.shape]
+                   self.dat_ind.shape, self.aacgm_n.shape, self.aacgm_e.shape,
+                   self.aacgm_z.shape]
         vshapes = np.unique(np.asarray(vshapes, dtype=object))
         vshape = () if len(vshapes) == 0 else vshapes.max()
-        if(vshape != self.dat_ind.shape or len(vshapes) > 2
-           or (len(vshapes) == 2 and min(vshapes) != ())):
-            raise ValueError('Data index and vector input shapes mismatched')
-        elif len(vshapes) > 1 and min(vshapes) == ():
+        if len(vshapes) > 2 or (len(vshapes) == 2 and min(vshapes) != ()):
+            raise ValueError('mismatched VectorData input shapes')
+
+        if len(vshapes) > 1 and min(vshapes) == ():
+            if self.dat_ind.shape == ():
+                raise ValueError('data index shape must match vector shape')
+            
             # Vector input needs to be the same length
             if self.aacgm_n.shape == ():
                 self.aacgm_n = np.full(shape=vshape, fill_value=self.aacgm_n)
