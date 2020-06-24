@@ -12,3 +12,8 @@ relative to a fixed magnetic coordinate system would cause averaging of
 different physical regions, such as auroral and polar cap measurements.  This
 coordinate system is described in
 `Chisham (2017) <http://onlinelibrary.wiley.com/doi/10.1002/2016JA023235/pdf>`_.
+
+
+.. image:: figures/ocbpy_logo.gif
+    :align: center
+    :alt: OCBpy logo, planet with auroral oval and two snakes representing field lines
