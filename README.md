@@ -38,7 +38,7 @@ Currently, support is included for files from the following datasets:
 
   * SuperMAG (available at http://supermag.jhuapl.edu)
   * SuperDARN Vorticity (contact GC at gchi@bas.ac.uk)
-  * Any pysat Instrument (available at https://github.com/rstoneback/pysat)
+  * Any pysat Instrument (available at https://github.com/pysat/pysat)
 
 These routines may be used as a guide to write routines for other datasets.
 
