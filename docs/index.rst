@@ -3,8 +3,11 @@
    You can adapt this file completely to your liking, but it should at least
    contain the root `toctree` directive.
 
-Welcome to the ocbpy documentation
+Welcome to the OCBpy documentation
 ==================================
+
+.. image:: ../figures/ocbpy_logo.gif
+
 
 This documentation describes the Open Closed field line Boundary (OCB) gridding
 process and provides examples for usage.
