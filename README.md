@@ -2,13 +2,11 @@
 [![Coverage Status](https://coveralls.io/repos/github/aburrell/ocbpy/badge.svg?branch=master)](https://coveralls.io/github/aburrell/ocbpy?branch=master)
 [![Documentation Status](https://readthedocs.org/projects/ocbpy/badge/?version=latest)](http://ocbpy.readthedocs.io/en/latest/?badge=latest)
 [![DOI](https://zenodo.org/badge/96153180.svg)](https://zenodo.org/badge/latestdoi/96153180)
-<div align="right">
-        <img width="10%" src="/docs/figures/ocbpy_logo.gif" alt="Planet with auroral oval and two pythons representing closed and open magnetic field lines" title="OCBpy Logo"</img>
-</div>
 
+<h1> <img width="128" height="128" src="/docs/figures/ocbpy_logo.gif" alt="Planet with auroral oval and two pythons representing closed and open magnetic field lines" title="OCBpy Logo" style="float:left;">
 # Overview
 
-ocbpy is a Python module that converts between AACGM coordinates and a magnetic
+OCBpy is a Python module that converts between AACGM coordinates and a magnetic
 coordinate system that adjusts latitude and local time relative to the Open
 Closed field line Boundary (OCB).  This is particulary useful for statistical
 studies of the poles, where gridding relative to a fixed magnetic coordinate
