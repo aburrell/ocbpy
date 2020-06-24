@@ -121,8 +121,10 @@ between the two, use the following routine.
 
 
 Because there are 110 vectors at this time and location, printing ``pgr_vect``
-will create a long string!  A better way to visualise the vector gridding is to
-plot the data.  The following code will create a figure that shows the AACGMV2
+will create a long string!  Vector data does not require array input, but does
+allow it to reduce the time needed for calculating data observed at the same
+time.  A better way to visualise the array of vector velocity data is to plot
+it.  The following code will create a figure that shows the AACGMV2
 velocities on the left and the OCB velocities on the right.  Because data from
 only one radar is plotted, only a fraction of the polar region is plotted.
 
