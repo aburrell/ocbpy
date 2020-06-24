@@ -4,7 +4,7 @@
 [![DOI](https://zenodo.org/badge/96153180.svg)](https://zenodo.org/badge/latestdoi/96153180)
 
 <h1> <img width="128" height="128" src="/docs/figures/ocbpy_logo.gif" alt="Planet with auroral oval and two pythons representing closed and open magnetic field lines" title="OCBpy Logo" style="float:left;">
-# Overview
+Overview <\h1>
 
 OCBpy is a Python module that converts between AACGM coordinates and a magnetic
 coordinate system that adjusts latitude and local time relative to the Open
