@@ -547,7 +547,8 @@ class TestVectorDataRaises(unittest.TestCase):
                           'aacgm_e': [100.0, 110.0, 30.0],
                           'aacgm_z': [10.0, 10.0, 3.0]}
 
-        with self.assertRaisesRegex(ValueError, "Mismatched OCB and Vector"):
+        with self.assertRaisesRegex(ValueError,
+                                    "Mismatched OCB and Vector input shapes"):
             self.vdata = ocbpy.ocb_scaling.VectorData(*self.input_attrs,
                                                       **self.bad_input)
 
@@ -563,12 +564,14 @@ class TestVectorDataRaises(unittest.TestCase):
         self.bad_input = [{'aacgm_n': 10.0},
                           {'aacgm_n': [100.0, 110.0, 30.0]},
                           {'aacgm_n': [100.0, 110.0, 30.0]}]
+        self.raise_out = ['data index shape must match vector shape',
+                          'mismatched VectorData input shapes',
+                          'mismatched VectorData input shapes']
 
         for i, iattrs in enumerate(self.input_attrs):
-            tset = [iattrs, self.bad_input[i]]
+            tset = [iattrs, self.bad_input[i], self.raise_out[i]]
             with self.subTest(tset=tset):
-                with self.assertRaisesRegex(ValueError,
-                                            "Data index and vector input"):
+                with self.assertRaisesRegex(ValueError, tset[2]):
                     self.vdata = ocbpy.ocb_scaling.VectorData(*tset[0],
                                                               **tset[1])
 
@@ -579,7 +582,8 @@ class TestVectorDataRaises(unittest.TestCase):
         self.input_attrs = [0, self.ocb.rec_ind, [75.0, 70.0], [22.0, 20.0]]
         self.bad_input = {'aacgm_n': 10.0}
 
-        with self.assertRaisesRegex(ValueError, "Data index and vector input"):
+        with self.assertRaisesRegex(ValueError,
+                                    "data index shape must match vector shape"):
             self.vdata = ocbpy.ocb_scaling.VectorData(*self.input_attrs,
                                                       **self.bad_input)
 
@@ -590,7 +594,8 @@ class TestVectorDataRaises(unittest.TestCase):
         self.input_attrs = [[0, 1], self.ocb.rec_ind, [75.0, 70.0], 20.0]
         self.bad_input = {'aacgm_n': [100.0, 110.0, 30.0]}
 
-        with self.assertRaisesRegex(ValueError, "Data index and vector input"):
+        with self.assertRaisesRegex(ValueError,
+                                    "mismatched VectorData input shapes"):
             self.vdata = ocbpy.ocb_scaling.VectorData(*self.input_attrs,
                                                       **self.bad_input)
 
@@ -602,7 +607,8 @@ class TestVectorDataRaises(unittest.TestCase):
                             [22.0, 20.0, 23.0]]
         self.bad_input = {'aacgm_n': [100.0, 110.0, 30.0]}
 
-        with self.assertRaisesRegex(ValueError, "Data index and vector input"):
+        with self.assertRaisesRegex(ValueError,
+                                    "mismatched VectorData input shapes"):
             self.vdata = ocbpy.ocb_scaling.VectorData(*self.input_attrs,
                                                       **self.bad_input)
 
@@ -1031,7 +1037,6 @@ class TestOCBScalingArrayMethods(unittest.TestCase):
         """
         test_file = path.join(path.dirname(ocbpy.__file__), "tests",
                               "test_data", "test_north_circle")
-        self.assertTrue(path.isfile(test_file))
         self.ocb = ocbpy.ocboundary.OCBoundary(filename=test_file,
                                                instrument='image')
         self.vargs = [[3,6], 27, np.array([75.0, 87.2]),
