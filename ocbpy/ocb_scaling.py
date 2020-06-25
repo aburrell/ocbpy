@@ -285,13 +285,25 @@ class VectorData(object):
         self.aacgm_mlt = np.asarray(aacgm_mlt)
 
         # Test the initalization shape
-        vshapes = np.unique([self.aacgm_lat.shape, self.aacgm_mlt.shape,
-                             self.aacgm_n.shape, self.aacgm_e.shape,
-                             self.aacgm_z.shape])
+        vshapes = [self.aacgm_lat.shape, self.aacgm_mlt.shape,
+                   self.dat_ind.shape, self.aacgm_n.shape, self.aacgm_e.shape,
+                   self.aacgm_z.shape]
+        vshapes = np.unique(np.asarray(vshapes, dtype=object))
         vshape = () if len(vshapes) == 0 else vshapes.max()
-        if(vshape != self.dat_ind.shape or len(vshapes) > 2
-           or (len(vshapes) == 2 and min(vshapes) != ())):
-            raise ValueError('Data index and vector input shapes mismatched')
+        if len(vshapes) > 2 or (len(vshapes) == 2 and min(vshapes) != ()):
+            raise ValueError('mismatched VectorData input shapes')
+
+        if len(vshapes) > 1 and min(vshapes) == ():
+            if self.dat_ind.shape == ():
+                raise ValueError('data index shape must match vector shape')
+            
+            # Vector input needs to be the same length
+            if self.aacgm_n.shape == ():
+                self.aacgm_n = np.full(shape=vshape, fill_value=self.aacgm_n)
+            if self.aacgm_e.shape == ():
+                self.aacgm_e = np.full(shape=vshape, fill_value=self.aacgm_e)
+            if self.aacgm_z.shape == ():
+                self.aacgm_z = np.full(shape=vshape, fill_value=self.aacgm_z)
 
         # Assign the vector magnitudes
         if np.all(np.isnan(aacgm_mag)):
