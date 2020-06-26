@@ -43,8 +43,8 @@ environment:
       TOXENV: py27
     - job_name: P35-x64 basic
       PYTHON: "C:\\Python35-x64"
-    - job_name: P36-x64 basic
       TOXENV: py35
+    - job_name: P36-x64 basic
       PYTHON: "C:\\Python36-x64"
       TOXENV: py36
     - job_name: P37-x64 basic
