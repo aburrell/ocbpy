@@ -45,7 +45,7 @@ environment:
       PYTHON: "C:\\Python38-x64"
 
 test_script:
-  - "%WITH_COMPILER% %PYTHON%\\Scripts\tox"
+  - "%WITH_COMPILER% %PYTHON%\\Scripts\\tox"
 
 after_test:
   - "%PYTHON%\\python.exe setup.py bdist_wheel"
