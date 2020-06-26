@@ -45,7 +45,7 @@ environment:
       PYTHON: "C:\\Python38-x64"
 
 test_script:
-  - "%PYTHON%\\python.exe setup.py test"
+  - "%WITH_COMPILER% %PYTHON%\\Scripts\tox"
 
 after_test:
   - "%PYTHON%\\python.exe setup.py bdist_wheel"
@@ -57,7 +57,7 @@ install:
   - 'set PATH=%APPVEYOR_BUILD_FOLDER%;%PATH%'
   - '%BASH_CMD%'
   - '%PYTHON%\\python.exe -m pip install --upgrade pip'
-  - '%PYTHON%\\python.exe -m pip install wheel setuptools numpy==1.15.4 aacgmv2'
+  - '%PYTHON%\\python.exe -m pip install wheel setuptools numpy==1.15.4 aacgmv2 tox'
 
 artifacts:
   - path: dist/*

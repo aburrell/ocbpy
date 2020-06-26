@@ -5,11 +5,11 @@ env:
     - INSTALL_EXTRA=0
     - INSTALL_EXTRA=2 CDF_LIB=$HOME/lib
 python:
-    - "2.7"
-    - "3.5"
-    - "3.6"
-    - "3.7"
-    - "3.8"
+    - 2.7
+    - 3.5
+    - 3.6
+    - 3.7
+    - 3.8
 jobs:
    allow_failures:
       - env: INSTALL_EXTRA=2 CDF_LIB=$HOME/lib
@@ -21,7 +21,11 @@ before_install:
     - pip install -r requirements.txt
     - bash requirements.extra $INSTALL_EXTRA
 install:
-    - "python setup.py install"
+    - python setup.py install
+    - pip install tox-travis
 script:
-    - "coverage run --source=ocbpy setup.py test"
-after_success: coveralls
+    - tox
+    - coverage run --source ocbpy -m py.test
+    - coverage report -m
+after_success:
+    - coveralls
