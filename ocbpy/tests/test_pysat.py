@@ -926,7 +926,3 @@ class TestPysatCustMethods(unittest.TestCase):
                                      'unknown vector name: bad_n'):
             self.test_load()
 
-
-if __name__ == '__main__':
-    unittest.main()
-

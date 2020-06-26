@@ -359,7 +359,3 @@ class TestSuperMAGLoadMethods(unittest.TestCase):
 
                 self.assertListEqual(self.out[0], list())
                 self.assertDictEqual(self.out[1], dict())
-
-
-if __name__ == '__main__':
-    unittest.main()
