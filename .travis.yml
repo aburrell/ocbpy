@@ -19,6 +19,7 @@ addons:
         - gcc
 install:
     - pip install tox-travis coveralls
+    - bash requirements.extra $INSTALL_EXTRA
 script:
     - tox
 after_success:
