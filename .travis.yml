@@ -25,7 +25,6 @@ install:
     - pip install tox-travis
 script:
     - tox
-    - coverage run --source ocbpy -m py.test
     - coverage report -m
 after_success:
     - coveralls
