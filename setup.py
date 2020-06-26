@@ -10,27 +10,15 @@ from setuptools import setup, find_packages
 from sys import version_info
 
 # Define a read function for using README for long_description
-
 def read(fname, fkwargs=dict()):
     return open(path.join(path.dirname(__file__), fname), **fkwargs).read()
 
 # Define default kwargs for python2/3
 read_kwargs = dict()
 if version_info.major == 3:
-    read_kwargs = {"encoding":"utf8"}
-
-# Define a test suite
-
-def ocb_test_suite():
-    import unittest
-
-    test_loader = unittest.TestLoader()
-    test_path = path.join(path.dirname(__file__), 'ocbpy/tests')
-    test_suite = test_loader.discover(test_path, pattern='test_*.py')
-    return test_suite
+    read_kwargs = {"encoding": "utf8"}
 
 # Run setup
-
 setup(name='ocbpy',
       version='0.2b2',
       url='https://github.com/aburrell/ocbpy',
@@ -63,5 +51,4 @@ setup(name='ocbpy',
                         'dmsp_ssj': ['ssj_auroral_boundaries']},
       include_package_data=True,
       zip_safe=False,
-      test_suite='setup.ocb_test_suite',
 )
