@@ -21,7 +21,8 @@ init:
 environment:
   global:
     WITH_COMPILER: 'cmd /E:ON /V:ON /C .\ci\appveyor-with-compiler.cmd'
-    BASH_CMD: "bash requirements.extra 0"
+    INSTALL_EXTRA: 0
+    BASH_CMD: "bash requirements.extra %INSTALL_EXTRA%"
   matrix:
     - job_name: P27-x32 basic
       PYTHON: "C:\\Python27"
@@ -65,7 +66,6 @@ configuration: Release
 
 install:
   - 'set PATH=%APPVEYOR_BUILD_FOLDER%;%PATH%'
-  - '%BASH_CMD%'
   - '%PYTHON%\\python.exe -m pip install --upgrade pip'
   - '%PYTHON%\\python.exe -m pip install wheel setuptools numpy==1.15.4 aacgmv2 tox'
 
