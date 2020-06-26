@@ -25,27 +25,37 @@ environment:
   matrix:
     - job_name: P27-x32 basic
       PYTHON: "C:\\Python27"
+      TOXENV: py27
     - job_name: P35-x32 basic
       PYTHON: "C:\\Python35"
+      TOXENV: py35
     - job_name: P36-x32 basic
       PYTHON: "C:\\Python36"
+      TOXENV: py36
     - job_name: P37-x32 basic
       PYTHON: "C:\\Python37"
+      TOXENV: py37
     - job_name: P38-x32 basic
       PYTHON: "C:\\Python38"
+      TOXENV: py38
     - job_name: P27-x64 basic
       PYTHON: "C:\\Python27-x64"
+      TOXENV: py27
     - job_name: P35-x64 basic
       PYTHON: "C:\\Python35-x64"
     - job_name: P36-x64 basic
+      TOXENV: py35
       PYTHON: "C:\\Python36-x64"
+      TOXENV: py36
     - job_name: P37-x64 basic
       PYTHON: "C:\\Python37-x64"
+      TOXENV: py37
     - job_name: P38-x64 basic
       PYTHON: "C:\\Python38-x64"
+      TOXENV: py38
 
 test_script:
-  - "%WITH_COMPILER% %PYTHON%\\Scripts\\tox"
+  - tox
 
 after_test:
   - "%PYTHON%\\python.exe setup.py bdist_wheel"
