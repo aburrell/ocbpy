@@ -6,6 +6,7 @@
 
 # Test directories
 /build/
+.tox
 
 # Setuptools distribution folder.
 /dist/
