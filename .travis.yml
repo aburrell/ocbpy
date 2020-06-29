@@ -20,6 +20,4 @@ addons:
 install:
     - pip install tox-travis
 script:
-    - TOXENV=$TOXENV-$INSTALL_EXTRA
-    - echo "TEST: " $TOXENV
-    - tox
+    - tox -e $(echo py$TRAVIS_PYTHON_VERSION-$INSTALL_EXTRA | tr -d .)
