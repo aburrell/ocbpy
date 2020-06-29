@@ -56,7 +56,6 @@ environment:
       TOXENV: py38-%INSTALL_EXTRA%
 
 test_script:
-  - 'set PATH=%PYTHON%\\Scripts;%PATH%'
   - tox
 
 after_test:
