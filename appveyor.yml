@@ -26,37 +26,38 @@ environment:
   matrix:
     - job_name: P27-x32 basic
       PYTHON: "C:\\Python27"
-      TOXENV: py27-$INSTALL_EXTRA
+      TOXENV: py27-%INSTALL_EXTRA%
     - job_name: P35-x32 basic
       PYTHON: "C:\\Python35"
-      TOXENV: py35-$INSTALL_EXTRA
+      TOXENV: py35-%INSTALL_EXTRA%
     - job_name: P36-x32 basic
       PYTHON: "C:\\Python36"
-      TOXENV: py36-$INSTALL_EXTRA
+      TOXENV: py36-%INSTALL_EXTRA%
     - job_name: P37-x32 basic
       PYTHON: "C:\\Python37"
-      TOXENV: py37-$INSTALL_EXTRA
+      TOXENV: py37-%INSTALL_EXTRA%
     - job_name: P38-x32 basic
       PYTHON: "C:\\Python38"
-      TOXENV: py38-$INSTALL_EXTRA
+      TOXENV: py38-%INSTALL_EXTRA%
     - job_name: P27-x64 basic
       PYTHON: "C:\\Python27-x64"
-      TOXENV: py27-$INSTALL_EXTRA
+      TOXENV: py27-%INSTALL_EXTRA%
     - job_name: P35-x64 basic
       PYTHON: "C:\\Python35-x64"
-      TOXENV: py35-$INSTALL_EXTRA
+      TOXENV: py35-%INSTALL_EXTRA%
     - job_name: P36-x64 basic
       PYTHON: "C:\\Python36-x64"
-      TOXENV: py36-$INSTALL_EXTRA
+      TOXENV: py36-%INSTALL_EXTRA%
     - job_name: P37-x64 basic
       PYTHON: "C:\\Python37-x64"
-      TOXENV: py37-$INSTALL_EXTRA
+      TOXENV: py37-%INSTALL_EXTRA%
     - job_name: P38-x64 basic
       PYTHON: "C:\\Python38-x64"
-      TOXENV: py38-$INSTALL_EXTRA
+      TOXENV: py38-%INSTALL_EXTRA%
 
 test_script:
   - set PATH=%PYTHON%\\Scripts;%PATH%
+  - echo "TEST: " %PATH%
   - tox
 
 after_test:
