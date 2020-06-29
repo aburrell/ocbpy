@@ -23,4 +23,4 @@ script:
     - tox -e $(echo py$TRAVIS_PYTHON_VERSION-extra$INSTALL_EXTRA | tr -d .)
 after_success:
    if: python = 3.7
-      - tox -e coveralls
+      - tox -e py37-extra2-coveralls
