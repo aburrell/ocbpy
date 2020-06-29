@@ -18,9 +18,6 @@ addons:
         - gfortran
         - gcc
 install:
-    - pip install tox-travis coveralls
-    - bash requirements.extra $INSTALL_EXTRA
+    - pip install tox-travis
 script:
     - tox
-after_success:
-    - coveralls
