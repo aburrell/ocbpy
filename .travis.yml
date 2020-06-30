@@ -22,4 +22,4 @@ install:
 script:
     - tox -e $(echo py$TRAVIS_PYTHON_VERSION-extra$INSTALL_EXTRA | tr -d .)
 after_success:
-   - 'if [ ( "$TRAVIS_PYTHON_VERSION" = "3.7" -o "$TRAVIS_PYTHON_VERSION" = "2.7" ) -a "$INSTALL_EXTRA" = "0" ] then; tox -e $(echo py$TRAVIS_PYTHON_VERSION | tr -d .)-cover; fi'
+   - 'if [ ( $TRAVIS_PYTHON_VERSION = "3.7" -o $TRAVIS_PYTHON_VERSION = "2.7" ) -a $INSTALL_EXTRA = "0" ] then; tox -e $(echo py$TRAVIS_PYTHON_VERSION | tr -d .)-cover; fi'
