@@ -22,4 +22,5 @@ install:
 script:
     - tox -e $(echo py$TRAVIS_PYTHON_VERSION-extra$INSTALL_EXTRA | tr -d .)
 after_success:
-   - test $TRAVIS_PYTHON_VERSION = "3.7" && $INSTALL_EXTRA = "0" run tox -e py37-cover
+   - if [ "$TRAVIS_PYTHON_VERSION" = "3.7" -a "$INSTALL_EXTRA" = "0" ] then; \
+     tox -e py37-cover; fi
