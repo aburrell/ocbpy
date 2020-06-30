@@ -2,8 +2,11 @@ language: python
 os:
     - linux
 env:
-    - INSTALL_EXTRA=0
-    - INSTALL_EXTRA=2 CDF_LIB=$HOME/lib
+    global:
+        - CDF_LIB=$HOME/lib
+    jobs:
+        - INSTALL_EXTRA=0
+        - INSTALL_EXTRA=2
 python:
     - 2.7
     - 3.5
@@ -12,7 +15,7 @@ python:
     - 3.8
 jobs:
    allow_failures:
-      - env: INSTALL_EXTRA=2 CDF_LIB=$HOME/lib
+      - env: INSTALL_EXTRA=2
 addons:
     apt_packages:
         - gfortran
@@ -22,4 +25,4 @@ install:
 script:
     - tox -e $(echo py$TRAVIS_PYTHON_VERSION-extra$INSTALL_EXTRA | tr -d .)
 after_success:
-   if ([ $TRAVIS_PYTHON_VERSION == "3.7" ] || [ $TRAVIS_PYTHON_VERSION == "2.7" ]); then if [ $INSTALL_EXTRA == "0" ]; then tox -e $(echo py$TRAVIS_PYTHON_VERSION | tr -d .)-cover; fi; fi
+    if ([ $TRAVIS_PYTHON_VERSION == "3.7" ] || [ $TRAVIS_PYTHON_VERSION == "2.7" ]); then if [ $INSTALL_EXTRA == "0" ]; then tox -e $(echo py$TRAVIS_PYTHON_VERSION | tr -d .)-cover; fi; fi
