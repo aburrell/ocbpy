@@ -58,7 +58,7 @@ test_script:
   - tox
 
 after_test:
-  - "%PYTHON%\\python.exe setup.py bdist_wheel"
+  - if [ %APPVEYOR_REPO_BRANCH% = "master" ]; then "%PYTHON%\\python.exe setup.py bdist_wheel"; fi
 
 build: off
 configuration: Release
