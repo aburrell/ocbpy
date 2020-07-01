@@ -1,13 +1,15 @@
 language: python
 os:
     - linux
+
 env:
     global:
         - CDF_LIB=$HOME/lib
-	- COVERALLS_PARALLEL=true
+        - COVERALLS_PARALLEL=true
     jobs:
         - INSTALL_EXTRA=0
         - INSTALL_EXTRA=2
+
 python:
     - 2.7
     - 3.5
@@ -22,10 +24,12 @@ addons:
     apt_packages:
         - gfortran
         - gcc
+
 install:
     - pip install tox-travis
+
 script:
     - tox -e $(echo py$TRAVIS_PYTHON_VERSION-extra$INSTALL_EXTRA | tr -d .)
 
 notifications:
-    webhooks: https://coveralls.io/webhook
+  webhooks: https://coveralls.io/webhook
