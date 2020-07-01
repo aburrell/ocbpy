@@ -14,11 +14,14 @@ python:
     - 3.7
     - 3.8
 jobs:
-   allow_failures:
-       - env: INSTALL_EXTRA=2
-   include:
-       - stage: coveralls
-         script: tox -e cover
+    allow_failures:
+        - env: INSTALL_EXTRA=2
+    include:
+        - stage: coveralls
+          script: tox -e cover
+cache:
+    directories:
+        - $HOME/cover
 addons:
     apt_packages:
         - gfortran
