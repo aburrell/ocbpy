@@ -66,7 +66,7 @@ build: off
 configuration: Release
 
 after_test:
-  - if($env:APPVEYOR_REPO_BRANCH -eq 'master') {
+  - if($env:APPVEYOR_REPO_BRANCH == 'main') {
     "%PYTHON%\\python.exe setup.py bdist_wheel"
     }
 
