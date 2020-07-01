@@ -54,22 +54,27 @@ environment:
       PYTHON: "C:\\Python38-x64"
       TOXENV: py38-extra%INSTALL_EXTRA%
 
-test_script:
-  - tox
-
-after_test:
-  - if [ %APPVEYOR_REPO_BRANCH% = "main" ]; then "%PYTHON%\\python.exe setup.py bdist_wheel"; else echo "Not Main" fi
-
-build: off
-configuration: Release
-
 install:
   - 'set PATH=%APPVEYOR_BUILD_FOLDER%;%PYTHON%//Scripts;%PATH%'
   - '%PYTHON%\\python.exe -m pip install --upgrade pip'
   - '%PYTHON%\\python.exe -m pip install wheel setuptools tox'
 
-artifacts:
-  - path: dist/*
+test_script:
+  - tox
+
+build: off
+configuration: Release
+
+for:
+  - branches:
+    only:
+      - main
+
+    after_test:
+      - "%PYTHON%\\python.exe setup.py bdist_wheel"
+
+    artifacts:
+      - path: dist/*
 
 #matrix:
 #  allow_failures:
