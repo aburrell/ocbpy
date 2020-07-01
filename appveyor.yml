@@ -58,7 +58,7 @@ test_script:
   - tox
 
 after_test:
-  - if [ %APPVEYOR_REPO_BRANCH% = "master" ]; then "%PYTHON%\\python.exe setup.py bdist_wheel"; fi
+  - if [ %APPVEYOR_REPO_BRANCH% = "main" ]; then "%PYTHON%\\python.exe setup.py bdist_wheel"; else echo "Not Main" fi
 
 build: off
 configuration: Release
