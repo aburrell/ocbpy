@@ -65,17 +65,13 @@ test_script:
 build: off
 configuration: Release
 
-for:
--
-  branches:
-    only:
-      - main
+after_test:
+  - if($env:APPVEYOR_REPO_BRANCH -eq 'master') {
+    "%PYTHON%\\python.exe setup.py bdist_wheel"
+    }
 
-  after_test:
-    - "%PYTHON%\\python.exe setup.py bdist_wheel"
-
-  artifacts:
-    - path: dist/*
+artifacts:
+  - path: dist/*
 
 #matrix:
 #  allow_failures:
