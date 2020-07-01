@@ -24,5 +24,5 @@ install:
     - pip install tox-travis
 script:
     - tox -e $(echo py$TRAVIS_PYTHON_VERSION-extra$INSTALL_EXTRA | tr -d .)
-after_success:
-    if ([ $TRAVIS_PYTHON_VERSION == "3.7" ] || [ $TRAVIS_PYTHON_VERSION == "2.7" ]); then if [ $INSTALL_EXTRA == "0" ]; then tox -e $(echo py$TRAVIS_PYTHON_VERSION | tr -d .)-cover; fi; fi
+after_script:
+    - tox -e cover
