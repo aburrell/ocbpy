@@ -15,7 +15,11 @@ python:
     - 3.8
 jobs:
    allow_failures:
-      - env: INSTALL_EXTRA=2
+       - env: INSTALL_EXTRA=2
+   include:
+       - stage: coveralls
+         script: tox -e cover
+	 python: 3.7
 addons:
     apt_packages:
         - gfortran
@@ -24,5 +28,3 @@ install:
     - pip install tox-travis
 script:
     - tox -e $(echo py$TRAVIS_PYTHON_VERSION-extra$INSTALL_EXTRA | tr -d .)
-after_script:
-    - tox -e cover
