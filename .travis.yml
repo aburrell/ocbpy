@@ -27,10 +27,13 @@ addons:
         - gcc
 
 install:
-    - pip install tox-travis
+    - pip install tox-travis coveralls
 
 script:
     - tox -e $(echo py$TRAVIS_PYTHON_VERSION-extra$INSTALL_EXTRA | tr -d .)
+
+after_success:
+    - coveralls --rcfile=tox.ini
 
 notifications:
   webhooks: https://coveralls.io/webhook
