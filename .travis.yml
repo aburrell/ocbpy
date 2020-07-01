@@ -19,7 +19,6 @@ jobs:
    include:
        - stage: coveralls
          script: tox -e cover
-	 python: 3.7
 addons:
     apt_packages:
         - gfortran
