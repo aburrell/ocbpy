@@ -22,6 +22,7 @@ environment:
   global:
     WITH_COMPILER: 'cmd /E:ON /V:ON /C .\ci\appveyor-with-compiler.cmd'
     INSTALL_EXTRA: 0
+    TRAVIS: false
   matrix:
     - job_name: P27-x32 basic
       PYTHON: "C:\\Python27"
