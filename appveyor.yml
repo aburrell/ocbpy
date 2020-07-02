@@ -52,7 +52,7 @@ install:
   - '%PYTHON%\\python.exe setup.py install'
 
 test_script:
-  - "coverage run --rcfile=.coveragerc -m unittest install"
+  - "coverage run --rcfile=.coveragerc -m unittest discover"
 
 build: off
 configuration: Release
