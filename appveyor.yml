@@ -62,8 +62,13 @@ after_test:
     "%PYTHON%\\python.exe setup.py bdist_wheel"
     }
 
-artifacts:
-  - path: dist/*
+for:
+-
+  branches:
+    only:
+      - main
+  artifacts:
+    - path: dist/*
 
 #matrix:
 #  allow_failures:
