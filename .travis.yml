@@ -33,6 +33,7 @@ script:
     - tox -e $(echo py$TRAVIS_PYTHON_VERSION-extra$INSTALL_EXTRA | tr -d .)
 
 after_success:
+    - ls -a
     - coverage report --rcfile=tox.ini .coverage -m
     - coveralls --rcfile=tox.ini .coverage
 
