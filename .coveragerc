@@ -1,13 +1,13 @@
-[coverage]
+[run]
 relative_files = True
 include = */ocbpy/*
           */ocbpy/tests/*
 
-[coverage]
+[paths]
 ocb_paths = ocbpy/
             */lib/*/site-packages/ocbpy
 
-[coverage]
+[report]
 omit = */lib/*/site-packages/*.py
        */lib/*/site-packages/a*/*
        */lib/*/site-packages/c*/*
