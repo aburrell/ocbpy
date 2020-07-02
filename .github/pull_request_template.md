@@ -32,7 +32,7 @@ your test configuration
 
 # Checklist:
 
-- [ ] Make sure you are merging into the ``develop`` (not ``master``) branch
+- [ ] Make sure you are merging into the ``develop`` (not ``main``) branch
 - [ ] My commits are formatted appropriately (following the SciPy/NumPy style) 
 - [ ] My code follows the style guidelines of this project
 - [ ] I have performed a self-review of my own code
