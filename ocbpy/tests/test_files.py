@@ -484,7 +484,3 @@ class TestFilesMethods(unittest.TestCase):
         self.assertEqual(len(self.out[1]), 0)
 
         del ii
-
-if __name__ == '__main__':
-    unittest.main()
-

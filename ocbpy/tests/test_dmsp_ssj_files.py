@@ -629,7 +629,3 @@ class TestSSJFailure(unittest.TestCase):
         with self.assertRaisesRegex(ImportError,
                                     'unable to load the DMSP SSJ module'):
             from ocbpy.boundaries import dmsp_ssj_files
-
-if __name__ == '__main__':
-    unittest.main()
-

@@ -1320,7 +1320,3 @@ class TestOCBoundaryFailure(unittest.TestCase):
                                 "Unknown input type for correction keywords"):
             ocbpy.ocboundary.OCBoundary(rfunc_kwargs="rfunc")
 
-
-
-if __name__ == '__main__':
-    unittest.main()

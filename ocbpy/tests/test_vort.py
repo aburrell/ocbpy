@@ -508,6 +508,3 @@ class TestVortLoadMethods(unittest.TestCase):
         for kk in self.test_vals.keys():
             self.assertEqual(self.data[kk][-1], self.test_vals[kk])
 
-
-if __name__ == '__main__':
-    unittest.main()

@@ -197,6 +197,3 @@ class TestOCBCorrection(unittest.TestCase):
         self.assertAlmostEqual(self.functions[bound](self.mlt[0],
                                                      method="gaussian"),
                                self.gaus_results[bound])
-
-if __name__ == '__main__':
-    unittest.main()

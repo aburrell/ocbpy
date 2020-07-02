@@ -353,7 +353,3 @@ class TestGeneralLoadMethods(unittest.TestCase):
                          dt.datetime(2000,5,9,11,33,22))
 
         del ktest
-
-if __name__ == '__main__':
-    unittest.main()
-
