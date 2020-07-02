@@ -21,47 +21,38 @@ init:
 environment:
   global:
     WITH_COMPILER: 'cmd /E:ON /V:ON /C .\ci\appveyor-with-compiler.cmd'
-    INSTALL_EXTRA: 0
-    TRAVIS: false
+    BASH_CMD: "bash requirements.extra 0"
   matrix:
     - job_name: P27-x32 basic
       PYTHON: "C:\\Python27"
-      TOXENV: py27-extra%INSTALL_EXTRA%
     - job_name: P35-x32 basic
       PYTHON: "C:\\Python35"
-      TOXENV: py35-extra%INSTALL_EXTRA%
     - job_name: P36-x32 basic
       PYTHON: "C:\\Python36"
-      TOXENV: py36-extra%INSTALL_EXTRA%
     - job_name: P37-x32 basic
       PYTHON: "C:\\Python37"
-      TOXENV: py37-extra%INSTALL_EXTRA%
     - job_name: P38-x32 basic
       PYTHON: "C:\\Python38"
-      TOXENV: py38-extra%INSTALL_EXTRA%
     - job_name: P27-x64 basic
       PYTHON: "C:\\Python27-x64"
-      TOXENV: py27-extra%INSTALL_EXTRA%
     - job_name: P35-x64 basic
       PYTHON: "C:\\Python35-x64"
-      TOXENV: py35-extra%INSTALL_EXTRA%
     - job_name: P36-x64 basic
       PYTHON: "C:\\Python36-x64"
-      TOXENV: py36-extra%INSTALL_EXTRA%
     - job_name: P37-x64 basic
       PYTHON: "C:\\Python37-x64"
-      TOXENV: py37-extra%INSTALL_EXTRA%
     - job_name: P38-x64 basic
       PYTHON: "C:\\Python38-x64"
-      TOXENV: py38-extra%INSTALL_EXTRA%
 
 install:
   - 'set PATH=%APPVEYOR_BUILD_FOLDER%;%PYTHON%//Scripts;%PATH%'
   - '%PYTHON%\\python.exe -m pip install --upgrade pip'
-  - '%PYTHON%\\python.exe -m pip install wheel setuptools tox'
+  - '%PYTHON%\\python.exe -m pip install wheel setuptools requirements.txt'
+  - '%BASH_CMD%'
+  - '%PYTHON%\\python.exe setup.py install'
 
 test_script:
-  - tox
+  - "coverage run --rcfile=.coveragerc -m unittest install"
 
 build: off
 configuration: Release

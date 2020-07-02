@@ -1,0 +1,14 @@
+[coverage]
+relative_files = True
+include = */ocbpy/*
+          */ocbpy/tests/*
+
+[coverage]
+ocb_paths = ocbpy/
+            */lib/*/site-packages/ocbpy
+
+[coverage]
+omit = */lib/*/site-packages/*/*
+       */lib/*/site-packages/numpy/*
+       */lib/*/site-packages/pysat/*
+       */lib/*/site-packages/ssj_auroral_boundary/*

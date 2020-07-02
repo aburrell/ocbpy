@@ -26,11 +26,18 @@ addons:
         - gfortran
         - gcc
 
+before_install:
+    - pip install requirements.txt coveralls
+    - bash requirements.extra $INSTALL_EXTRA
+
 install:
-    - pip install tox-travis coveralls coverage
+    - python setup.py install
 
 script:
-    - tox -e $(echo py$TRAVIS_PYTHON_VERSION-extra$INSTALL_EXTRA | tr -d .)
+    - coverage run --rcfile=.coveragerc -m unittest discover
+
+after_success:
+    - coveralls --rcfile=.coveragerc
 
 notifications:
   webhooks: https://coveralls.io/webhook
