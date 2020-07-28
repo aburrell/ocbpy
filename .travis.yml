@@ -19,8 +19,9 @@ python:
 
 jobs:
    allow_failures:
-      - env: INSTALL_EXTRA=1
-      - env: INSTALL_EXTRA=2
+      env:
+         - INSTALL_EXTRA=1
+         - INSTALL_EXTRA=2
 addons:
     apt_packages:
         - gfortran
