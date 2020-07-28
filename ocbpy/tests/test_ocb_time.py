@@ -550,7 +550,3 @@ class TestFixRange(unittest.TestCase):
         self.out = ocb_time.fix_range(self.vals[0], 0.0, 360.0)
         self.assertGreaterEqual(self.out, 0.0)
         self.assertLess(self.out, 360.0)
-
-
-if __name__ == '__main__':
-    unittest.main()

@@ -54,23 +54,31 @@ environment:
       PYTHON: "C:\\Python38-x64"
       NUMPY: "numpy>=1.19.0"
 
-test_script:
-  - "%PYTHON%\\python.exe setup.py test"
+install:
+  - 'set PATH=%APPVEYOR_BUILD_FOLDER%;%PYTHON%//Scripts;%PATH%'
+  - '%PYTHON%\\python.exe -m pip install --upgrade pip'
+  - '%PYTHON%\\python.exe -m pip install wheel setuptools -rrequirements.txt'
+  - '%BASH_CMD%'
+  - '%PYTHON%\\python.exe setup.py install'
 
-after_test:
-  - "%PYTHON%\\python.exe setup.py bdist_wheel"
+test_script:
+  - "coverage run --rcfile=.coveragerc -m unittest discover"
 
 build: off
 configuration: Release
 
-install:
-  - 'set PATH=%APPVEYOR_BUILD_FOLDER%;%PATH%'
-  - '%BASH_CMD%'
-  - '%PYTHON%\\python.exe -m pip install --upgrade pip'
-  - '%PYTHON%\\python.exe -m pip install wheel setuptools %NUMPY% aacgmv2'
+after_test:
+  - if($env:APPVEYOR_REPO_BRANCH == 'main') {
+    "%PYTHON%\\python.exe setup.py bdist_wheel"
+    }
 
-artifacts:
-  - path: dist/*
+for:
+-
+  branches:
+    only:
+      - main
+  artifacts:
+    - path: dist/*
 
 #matrix:
 #  allow_failures:

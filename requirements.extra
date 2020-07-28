@@ -14,46 +14,24 @@ if [ $EXTRAS = 1 ]; then
     echo "Installed pysat"
 elif [ $EXTRAS = 2 ]; then
     # Install code for ssj_auroral_boundary on linux
-    # Start with requirements for spacepy
-    pip install scipy
-    pip install matplotlib
-    pip install h5py
-    pip install networkx
-    pip install ffnet
-
+    #
     # Get CDF software and install it
     wget https://spdf.sci.gsfc.nasa.gov/pub/software/cdf/dist/cdf37_1/linux/cdf37_1-dist-cdf.tar.gz
     tar xzf cdf37_1-dist-cdf.tar.gz
-    cd cdf37_1-dist
-    make OS=linux ENV=gnu all
-    make INSTALLDIR=$HOME install
+    make OS=linux ENV=gnu -C cdf37_1-dist/ all
+    make INSTALLDIR=$HOME -C cdf37_1-dist/ install
     # Running this command for definitions will break matplotlib
     # . $HOME/bin/definitions.B
     # Define environment variables in the .yml file
-    cd ..
 
-    # Go back to python
-    pip install ephem
-    pip install spacepy
-    pip install colorlog
-
-    # Finish with the ssj_auroral_boundary installation
-    git clone https://github.com/lkilcommons/geospacepy-lite.git
-    cd ./geospacepy-lite
-    python setup.py install
-    cd ../.
-
-    git clone https://github.com/lkilcommons/ssj_auroral_boundary.git
-    cd ./ssj_auroral_boundary
-    python setup.py install
-    cd ../.
+    # Install the python requirements
+    pip install scipy matplotlib h5py networkx ffnet ephem spacepy colorlog
+    pip install git+https://github.com/lkilcommons/geospacepy-lite.git@master
+    pip install git+https://github.com/lkilcommons/ssj_auroral_boundary@master
 
     echo "CDF library is installed here: " $CDF_LIB
     echo "Finished extra installs for SSJ_Auroral_Boundary"
 elif [ $EXTRAS -ge 32  ]; then
-    # Install code for ssj_auroral_boundary on windows (EXTRAS is 32 or 64)
-    $PYTHON\\python.exe -m pip install wheel scipy matplotlib networkx h5py
-
     # Download ffnet and CDF using curl
     choco install curl
 
@@ -75,19 +53,11 @@ elif [ $EXTRAS -ge 32  ]; then
 	fi
     done
 
-    # Go back to python
+    # Install code for ssj_auroral_boundary on windows (EXTRAS is 32 or 64)
+    $PYTHON\\python.exe -m pip install wheel scipy matplotlib networkx h5py
     $PYTHON\\python.exe -m pip install ephem spacepy colorlog
-
-    # Finish with the ssj_auroral_boundary installation
-    git clone https://github.com/lkilcommons/geospacepy-lite.git
-    cd geospacepy-lite
-    $PYTHON\\python.exe setup.py install
-    cd ..
-
-    git clone https://github.com/lkilcommons/ssj_auroral_boundary.git
-    cd ssj_auroral_boundary
-    $PYTHON\\python.exe setup.py install
-    cd ..
+    $PYTHON\\python.exe -m pip install git+https://github.com/lkilcommons/geospacepy-lite.git@master
+    $PYTHON\\python.exe -m pip install git+https://github.com/lkilcommons/ssj_auroral_boundary@master
 
     echo "CDF library is installed here: " $CDF_LIB
     ls $CDF_LIB

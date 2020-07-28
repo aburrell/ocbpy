@@ -17,7 +17,7 @@ if platform.system().lower() != "windows":
 
 import ocbpy
 import ocbpy.instruments.supermag as ocb_ismag
-from ocbpy.instruments.general import test_file
+from ocbpy.instruments import general
 
 class TestSuperMAG2AsciiMethods(unittest.TestCase):
 
@@ -284,7 +284,7 @@ class TestSuperMAG2AsciiMethods(unittest.TestCase):
                                      ocbfile="fake_ocb", hemisphere=1)
 
         # Compare created file to stored test file
-        self.assertFalse(test_file("fake_out"))
+        self.assertFalse(general.test_file("fake_out"))
 
 
 class TestSuperMAGLoadMethods(unittest.TestCase):
@@ -359,7 +359,3 @@ class TestSuperMAGLoadMethods(unittest.TestCase):
 
                 self.assertListEqual(self.out[0], list())
                 self.assertDictEqual(self.out[1], dict())
-
-
-if __name__ == '__main__':
-    unittest.main()

@@ -1375,9 +1375,3 @@ class TestOCBScalingArrayMethods(unittest.TestCase):
                                                   self.vdata.unscaled_r,
                                                   self.vdata.scaled_r)
         self.assertTrue(np.all(self.vdata.ocb_e == self.out))
-
-
-
-if __name__ == '__main__':
-    unittest.main()
-
