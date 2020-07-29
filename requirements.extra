@@ -9,7 +9,9 @@ if [ $EXTRAS = 1 ]; then
     # Install pysat, which currently is not vetted for Windows.
     # Although ocbpy works with pysat >= 2.0.0, the testing suite is not
     # provided in versions below 2.2.2.
-    pip install -v pysat>=2.2.2
+    # pip install -v pysat>=2.2.2
+    # TEMPORARY TEST LINE
+    pip install --index-url https://test.pypi.org/simple/ --extra-index-url https://pypi.org/simple pysat
     mkdir $HOME/pysatData
     echo "Installed pysat"
 elif [ $EXTRAS = 2 ]; then
