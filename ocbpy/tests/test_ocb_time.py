@@ -2,7 +2,7 @@
 # -*- coding: utf-8 -*-
 # Copyright (C) 2017, AGB & GC
 # Full license can be found in License.md
-#-----------------------------------------------------------------------------
+# -----------------------------------------------------------------------------
 """ Tests the ocboundary class and functions
 """
 
@@ -12,6 +12,7 @@ from sys import version_info
 import unittest
 
 from ocbpy import ocb_time
+
 
 class TestOCBTimeMethods(unittest.TestCase):
     def setUp(self):
@@ -53,9 +54,10 @@ class TestOCBTimeMethods(unittest.TestCase):
         """ Test to see that the datetime construction works with custom format
         """
         # Test the custom date implimentation
-        self.assertEqual(ocb_time.convert_time(date="2001-01-01", \
-                            tod="00-00-00", datetime_fmt="%Y-%m-%d %H-%M-%S"),
-                         self.dtime)
+        self.assertEqual(
+            ocb_time.convert_time(date="2001-01-01", tod="00-00-00",
+                                  datetime_fmt="%Y-%m-%d %H-%M-%S"),
+            self.dtime)
 
     def test_convert_time_year_soy(self):
         """ Test to see that the datetime construction works with year-soy
@@ -87,7 +89,7 @@ class TestOCBTimeMethods(unittest.TestCase):
                          self.dtime)
 
     def test_convert_time_yyddd_sod(self):
-        """ Test to see that the datetime construction works  with yyddd and sod
+        """Test to see that the datetime construction works  with yyddd and sod
         """
         # Test the year-soy implimentation
         self.assertEqual(ocb_time.convert_time(yyddd="101001", sod=0),
@@ -105,14 +107,14 @@ class TestOCBTimeMethods(unittest.TestCase):
         """ Test to see that the datetime construction works with dict inputs
         """
         # Test dictionary input implimentation
-        input_dict = {"year":None, "soy":None, "yyddd":None, "sod":None,
-                      "date":"2001-01-01", "tod":"000000",
-                      "datetime_fmt":"%Y-%m-%d %H%M%S"}
+        input_dict = {"year": None, "soy": None, "yyddd": None, "sod": None,
+                      "date": "2001-01-01", "tod": "000000",
+                      "datetime_fmt": "%Y-%m-%d %H%M%S"}
         self.assertEqual(ocb_time.convert_time(**input_dict), self.dtime)
 
         # Test dictionary input implimentation
-        input_dict = {"year":None, "soy":None, "yyddd":None, "sod":0.0,
-                      "date":"2001-01-01", "tod":None}
+        input_dict = {"year": None, "soy": None, "yyddd": None, "sod": 0.0,
+                      "date": "2001-01-01", "tod": None}
         self.assertEqual(ocb_time.convert_time(**input_dict), self.dtime)
 
         del input_dict
@@ -167,88 +169,70 @@ class TestOCBTimeMethods(unittest.TestCase):
 class TestOCBTimeUnits(unittest.TestCase):
     def setUp(self):
         """ Set up test runs """
-
         self.lon = np.linspace(0.0, 360.0, 37)
         self.lt = np.linspace(0.0, 24.0, 37)
+        self.out = None
 
     def tearDown(self):
         """ Clean up after each test """
-
-        del self.lon, self.lt
+        del self.lon, self.lt, self.out
 
     def test_deg2hr_array(self):
         """ Test degree to hour conversion for an array"""
+        self.out = ocb_time.deg2hr(self.lon)
 
-        out = ocb_time.deg2hr(self.lon)
-
-        for i,val in enumerate(self.lt):
-            self.assertAlmostEqual(out[i], val)
-        del out, i, val
+        for i, val in enumerate(self.lt):
+            self.assertAlmostEqual(self.out[i], val)
 
     def test_deg2hr_value(self):
         """ Test degree to hour conversion for a single value"""
+        self.out = ocb_time.deg2hr(self.lon[0])
 
-        out = ocb_time.deg2hr(self.lon[0])
-
-        self.assertAlmostEqual(out, self.lt[0])
-        del out
+        self.assertAlmostEqual(self.out, self.lt[0])
 
     def test_hr2deg_array(self):
         """ Test hour to degree conversion for an array"""
+        self.out = ocb_time.hr2deg(self.lt)
 
-        out = ocb_time.hr2deg(self.lt)
-
-        for i,val in enumerate(self.lon):
-            self.assertAlmostEqual(out[i], val)
-        del out, i, val
+        for i, val in enumerate(self.lon):
+            self.assertAlmostEqual(self.out[i], val)
 
     def test_hr2deg_value(self):
         """ Test hour to degree conversion for a single value"""
+        self.out = ocb_time.deg2hr(self.lt[0])
 
-        out = ocb_time.deg2hr(self.lt[0])
-
-        self.assertAlmostEqual(out, self.lon[0])
-        del out
+        self.assertAlmostEqual(self.out, self.lon[0])
 
     def test_hr2rad_array(self):
         """ Test hour to radian conversion for an array"""
+        self.out = ocb_time.hr2rad(self.lt)
 
-        out = ocb_time.hr2rad(self.lt)
-
-        for i,val in enumerate(np.radians(self.lon)):
-            self.assertAlmostEqual(out[i], val)
-        del out, i, val
+        for i, val in enumerate(np.radians(self.lon)):
+            self.assertAlmostEqual(self.out[i], val)
 
     def test_hr2rad_value(self):
         """ Test hour to radian conversion for a single value"""
+        self.out = ocb_time.hr2rad(self.lt[0])
 
-        out = ocb_time.hr2rad(self.lt[0])
-
-        self.assertAlmostEqual(out, np.radians(self.lon[0]))
-        del out
+        self.assertAlmostEqual(self.out, np.radians(self.lon[0]))
 
     def test_rad2hr_array(self):
         """ Test radian to hour conversion for an array"""
+        self.out = list(ocb_time.rad2hr(np.radians(self.lon)))
 
-        out = list(ocb_time.rad2hr(np.radians(self.lon)))
-
-        for i,val in enumerate(out):
+        for i, val in enumerate(self.out):
             self.assertAlmostEqual(val, self.lt[i])
-        del out, i, val
 
     def test_rad2hr_value(self):
         """ Test radian to hour conversion for a single value"""
+        self.out = ocb_time.rad2hr(np.radians(self.lon[0]))
 
-        out = ocb_time.rad2hr(np.radians(self.lon[0]))
-
-        self.assertAlmostEqual(out, self.lt[0])
-        del out
+        self.assertAlmostEqual(self.out, self.lt[0])
 
 
 class TestOCBGeographicTime(unittest.TestCase):
     def setUp(self):
         """ Set up test runs """
-
         self.dtime = dt.datetime(2001, 1, 1, 1)
         self.lon = [390.0, 359.0, 90.0, -15.0, -30.0]
         self.lt = [27.0, 0.9333333333333336, 7.0, 0.0, -1.0]
@@ -256,7 +240,6 @@ class TestOCBGeographicTime(unittest.TestCase):
 
     def tearDown(self):
         """ Clean up after each test """
-
         del self.lon, self.lt, self.dtime, self.out
 
     def test_glon2slt(self):
@@ -270,7 +253,6 @@ class TestOCBGeographicTime(unittest.TestCase):
         for i, lon in enumerate(self.lon):
             self.assertAlmostEqual(ocb_time.glon2slt(lon, self.dtime),
                                    self.out[i])
-        del i, lon
 
     def test_slt2glon(self):
         """ Test slt to longitude conversion for a range of values"""
@@ -282,7 +264,6 @@ class TestOCBGeographicTime(unittest.TestCase):
         for i, lt in enumerate(self.lt):
             self.assertAlmostEqual(ocb_time.slt2glon(lt, self.dtime),
                                    self.out[i])
-        del i, lt
 
     def test_slt2glon_list(self):
         """ Test slt to longitude conversion for a list of values"""
@@ -336,7 +317,6 @@ class TestOCBGeographicTime(unittest.TestCase):
 class TestTimeFormatMethods(unittest.TestCase):
     def setUp(self):
         """ Set up test runs """
-
         self.dtime = dt.datetime(2001, 1, 1)
         self.dt_formats = ['No Directives', '%y-%m-%d %H:%M:%S', '%a %b %Y %f',
                            '%A %B %z %Z', '%c', '%j %x', '%X']
@@ -345,14 +325,12 @@ class TestTimeFormatMethods(unittest.TestCase):
 
     def tearDown(self):
         """ Clean up after each test """
-
         del self.dt_formats, self.dtime, self.out_fmt, self.out_len
 
     @unittest.skipIf(version_info.major < 3,
                      'Already tested, remove in 2020')
     def test_get_datetime_fmt_len(self):
         """ Test the datetime format length determination"""
-
         # Cycle through the different formatting options
         for val in self.dt_formats:
             with self.subTest(val=val):
@@ -369,7 +347,8 @@ class TestTimeFormatMethods(unittest.TestCase):
     @unittest.skipIf(version_info.major > 2,
                      'Python 2.7 does not support subTest')
     def test_get_datetime_fmt_len_nodate(self):
-        """ Test the datetime format length determination for string w/o date"""
+        """ Test the datetime format length determination for string w/o date
+        """
         # Get the function format string length maximum
         self.out_len = ocb_time.get_datetime_fmt_len(self.dt_formats[0])
 
@@ -489,12 +468,10 @@ class TestFixRange(unittest.TestCase):
         with self.assertRaisesRegex(ValueError, "Value range must be greater"):
             ocb_time.fix_range(self.vals, -10.0, 10.0, 0.0)
 
-
     @unittest.skipIf(version_info.major < 3,
                      'Already tested, remove in 2020')
     def test_fix_range(self):
         """ Test fix_range success """
-
         for tset in [([self.vals, 0.0, 360.0], {}),
                      ([list(self.vals), 0.0, 360.0], {}),
                      ([self.vals, -180.0, 360.0], {'val_range': 360.0}),

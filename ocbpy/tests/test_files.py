@@ -2,22 +2,21 @@
 # -*- coding: utf-8 -*-
 # Copyright (C) 2019, AGB & GC
 # Full license can be found in License.md
-#-----------------------------------------------------------------------------
+# -----------------------------------------------------------------------------
 """ Tests the boundaries.files functions
 """
 from __future__ import absolute_import, unicode_literals
 
-
 import datetime as dt
 from io import StringIO
 import logging
-import numpy as np
 import os
 from sys import version_info
 import unittest
 
 import ocbpy
 from ocbpy.boundaries import files
+
 
 class TestDMSPFileMethods(unittest.TestCase):
     def setUp(self):
@@ -54,48 +53,47 @@ class TestDMSPFileMethods(unittest.TestCase):
         del self.out, self.lwarn, self.lout, self.log_capture
 
     def test_no_short_name_one_file(self):
-        """ Test get_default_file for dmsp-ssj with one boundary file"""
-        
+        """ Test get_default_file for dmsp-ssj with one boundary file
+        """
         # Copy over one temporary file to the boundary directory
         os.system("cp {:s} {:s}".format(self.test_dmsp, self.temp_files[0]))
 
         # Get the default file and instrument
         self.out = files.get_default_file(**self.comp_dict)
-        
+
         self.assertEqual(self.out[0], self.temp_files[0])
         self.assertEqual(self.out[1], self.comp_dict['instrument'])
 
     def test_no_short_name_mult_files(self):
         """ Test get_default_file for dmsp-ssj with one boundary file"""
-        
         # Copy over one temporary file to the boundary directory
         for self.tfile in self.temp_files[:2]:
             os.system("cp {:s} {:s}".format(self.test_dmsp, self.tfile))
 
         # Get the default file and instrument
         self.out = files.get_default_file(**self.comp_dict)
-        
+
         self.assertTrue(self.out[0] in self.temp_files)
         self.assertEqual(self.out[1], self.comp_dict['instrument'])
 
     def test_good_unknown_inst_file(self):
         """ Test get_boundary_file for a good unknown instrument file"""
-        
         # Copy over one temporary file to the boundary directory
         os.system("cp {:s} {:s}".format(self.test_dmsp, self.temp_files[2]))
         self.tfile = os.path.basename(self.temp_files[2])
 
         # Get the default file and instrument
         self.out = files.get_boundary_files()
-        
+
         self.assertTrue(self.tfile in self.out.keys())
-        self.assertListEqual(sorted([kk for kk in self.out[self.tfile].keys()]),
-                             [u'etime', u'hemisphere', u'instrument', u'stime'])
-        
+        self.assertListEqual(
+            sorted([kk for kk in self.out[self.tfile].keys()]),
+            [u'etime', u'hemisphere', u'instrument', u'stime'])
+
     def test_bad_unknown_inst_file(self):
         """ Test get_boundary_file for a bad unknown instrument file"""
         self.lwarn = u'Unknown boundary file present'
-        
+
         # Copy over one temporary file to the boundary directory
         os.system("cp {:s} {:s}".format(self.test_dmsp, self.temp_files[3]))
         self.tfile = os.path.basename(self.temp_files[3])
@@ -107,9 +105,9 @@ class TestDMSPFileMethods(unittest.TestCase):
         # Test logging error message and data output
         self.assertTrue(self.lout.find(self.lwarn) >= 0)
         self.assertTrue(self.tfile in self.out.keys())
-        self.assertListEqual(sorted([kk for kk in self.out[self.tfile].keys()]),
-                             [u'hemisphere', u'instrument'])
-
+        self.assertListEqual(
+            sorted([kk for kk in self.out[self.tfile].keys()]),
+            [u'hemisphere', u'instrument'])
 
 
 class TestFilesMethods(unittest.TestCase):
@@ -139,14 +137,16 @@ class TestFilesMethods(unittest.TestCase):
                           {'instrument': 'amp', 'hemisphere': -1,
                            'stime': dt.datetime(2010, 1, 1, 0, 0),
                            'etime': dt.datetime(2017, 1, 1, 0, 0)}}
-        self.short_to_long = {"amp": "ampere", "si12": "image", "si13": "image",
-                              "wic": "image", "": "image"}
+        self.short_to_long = {"amp": "ampere", "si12": "image",
+                              "si13": "image", "wic": "image", "": "image"}
         self.long_to_short = {"ampere": "amp", "image": "si13", "": "si13",
                               "dmsp-ssj": None}
         self.inst = {1: ['', 'si13', 'si12', 'wic', 'amp', 'image', 'ampere',
                          'dmsp-ssj'],
                      -1: ['', 'amp', 'ampere', 'dmsp-ssj']}
         self.hemi = 1
+        self.ikey = ''
+        self.fname = None
 
         # Remove in 2020 when dropping support for 2.7
         if version_info.major == 2:
@@ -157,7 +157,7 @@ class TestFilesMethods(unittest.TestCase):
             ocbpy.__file__ = self.orig_file
 
         del self.out, self.orig_file, self.comp_dict, self.short_to_long
-        del self.inst, self.long_to_short, self.hemi
+        del self.inst, self.long_to_short, self.hemi, self.ikey, self.fname
 
     def test_get_boundary_directory(self):
         """ Test the default boundary directory definition  """
@@ -165,7 +165,8 @@ class TestFilesMethods(unittest.TestCase):
         self.assertGreater(self.out.find("boundaries"), 0)
 
     def test_get_boundary_directory_failure(self):
-        """ Test the failure of the default boundary directory definition """
+        """ Test the failure of the default boundary directory definition
+        """
         ocbpy.__file__ = "/fake_dir/test_file"
         with self.assertRaisesRegexp(OSError, "boundary file directory"):
             files.get_boundary_directory()
@@ -194,8 +195,8 @@ class TestFilesMethods(unittest.TestCase):
         self.assertIsNone(self.out[0])
         self.assertEqual(len(self.out[1]), 0)
 
-    def test_get_default_file_none_north_any(self):
-        """ Test get_default_file with no range, northern hemisphere, any inst
+    def test_get_default_file_none_north_any_default_inst(self):
+        """ Test get_default_file with no range, northern hemisphere
         """
         self.out = files.get_default_file(None, None, self.hemi)
 
@@ -214,129 +215,115 @@ class TestFilesMethods(unittest.TestCase):
                                                   instrument=ii)
 
                 if ii in self.long_to_short.keys():
-                    if self.long_to_short[ii] is None:
-                        fname = None
-                    else:
-                        fname = "{:s}_north".format(self.long_to_short[ii])
+                    if self.long_to_short[ii] is not None:
+                        self.fname = "{:s}_north".format(
+                            self.long_to_short[ii])
                 else:
-                    fname = "{:s}_north".format(ii)
+                    self.fname = "{:s}_north".format(ii)
 
                 if ii in self.short_to_long.keys():
                     iname = self.short_to_long[ii]
                 else:
                     iname = ii
 
-                if fname is None:
+                if self.fname is None:
                     self.assertIsNone(self.out[0])
                 else:
-                    self.assertRegex(self.out[0], fname)
+                    self.assertRegex(self.out[0], self.fname)
                 self.assertRegex(self.out[1], iname)
-
-        del ii, fname, iname
 
     @unittest.skipIf(version_info.major == 3, 'Already tested, remove in 2020')
     def test_get_default_file_none_north_any(self):
         """ Test get_default_file with no range, northern hemisphere, any inst
         """
-        ii = ''
-        self.out = files.get_default_file(None, None, self.hemi, instrument=ii)
+        self.out = files.get_default_file(None, None, self.hemi,
+                                          instrument=self.ikey)
 
-        if self.long_to_short[ii] is None:
-            fname = None
-        else:
-            fname = "{:s}_north".format(self.long_to_short[ii])
+        if self.long_to_short[self.ikey] is not None:
+            self.fname = "{:s}_north".format(self.long_to_short[self.ikey])
 
-        self.assertRegex(self.out[0], fname)
-        self.assertRegex(self.out[1], self.short_to_long[ii])
-
-        del ii, fname
+        self.assertRegex(self.out[0], self.fname)
+        self.assertRegex(self.out[1], self.short_to_long[self.ikey])
 
     @unittest.skipIf(version_info.major == 3, 'Already tested, remove in 2020')
     def test_get_default_file_none_north_si12(self):
         """ Test get_default_file with no range, northern hemisphere, any inst
         """
-        ii = 'si12'
-        self.out = files.get_default_file(None, None, self.hemi, instrument=ii)
+        self.ikey = 'si12'
+        self.out = files.get_default_file(None, None, self.hemi,
+                                          instrument=self.ikey)
 
-        self.assertRegex(self.out[0], "{:s}_north".format(ii))
-        self.assertRegex(self.out[1], self.short_to_long[ii])
-
-        del ii
+        self.assertRegex(self.out[0], "{:s}_north".format(self.ikey))
+        self.assertRegex(self.out[1], self.short_to_long[self.ikey])
 
     @unittest.skipIf(version_info.major == 3, 'Already tested, remove in 2020')
     def test_get_default_file_none_north_si13(self):
         """ Test get_default_file with no range, northern hemisphere, any inst
         """
-        ii = 'si13'
-        self.out = files.get_default_file(None, None, self.hemi, instrument=ii)
+        self.ikey = 'si13'
+        self.out = files.get_default_file(None, None, self.hemi,
+                                          instrument=self.ikey)
 
-        self.assertRegex(self.out[0], "{:s}_north".format(ii))
-        self.assertRegex(self.out[1], self.short_to_long[ii])
-
-        del ii
+        self.assertRegex(self.out[0], "{:s}_north".format(self.ikey))
+        self.assertRegex(self.out[1], self.short_to_long[self.ikey])
 
     @unittest.skipIf(version_info.major == 3, 'Already tested, remove in 2020')
     def test_get_default_file_none_north_wic(self):
         """ Test get_default_file with no range, northern hemisphere, any inst
         """
-        ii = 'wic'
-        self.out = files.get_default_file(None, None, self.hemi, instrument=ii)
+        self.ikey = 'wic'
+        self.out = files.get_default_file(None, None, self.hemi,
+                                          instrument=self.ikey)
 
-        self.assertRegex(self.out[0], "{:s}_north".format(ii))
-        self.assertRegex(self.out[1], self.short_to_long[ii])
-
-        del ii
+        self.assertRegex(self.out[0], "{:s}_north".format(self.ikey))
+        self.assertRegex(self.out[1], self.short_to_long[self.ikey])
 
     @unittest.skipIf(version_info.major == 3, 'Already tested, remove in 2020')
     def test_get_default_file_none_north_image(self):
         """ Test get_default_file with no range, northern hemisphere, any inst
         """
-        ii = 'image'
-        self.out = files.get_default_file(None, None, self.hemi, instrument=ii)
+        self.ikey = 'image'
+        self.out = files.get_default_file(None, None, self.hemi,
+                                          instrument=self.ikey)
 
-        fname = "{:s}_north".format(self.long_to_short[ii])
+        self.fname = "{:s}_north".format(self.long_to_short[self.ikey])
 
-        self.assertRegex(self.out[0], fname)
-        self.assertRegex(self.out[1], ii)
-
-        del ii, fname
+        self.assertRegex(self.out[0], self.fname)
+        self.assertRegex(self.out[1], self.ikey)
 
     @unittest.skipIf(version_info.major == 3, 'Already tested, remove in 2020')
     def test_get_default_file_none_north_ampere(self):
         """ Test get_default_file with no range, northern hemisphere, any inst
         """
-        ii = 'ampere'
-        self.out = files.get_default_file(None, None, self.hemi, instrument=ii)
+        self.ikey = 'ampere'
+        self.out = files.get_default_file(None, None, self.hemi,
+                                          instrument=self.ikey)
 
-        fname = "{:s}_north".format(self.long_to_short[ii])
+        self.fname = "{:s}_north".format(self.long_to_short[self.ikey])
 
-        self.assertRegex(self.out[0], fname)
-        self.assertRegex(self.out[1], ii)
-
-        del ii, fname
+        self.assertRegex(self.out[0], self.fname)
+        self.assertRegex(self.out[1], self.ikey)
 
     @unittest.skipIf(version_info.major == 3, 'Already tested, remove in 2020')
     def test_get_default_file_none_north_amp(self):
         """ Test get_default_file with no range, northern hemisphere, any inst
         """
-        ii = 'amp'
-        self.out = files.get_default_file(None, None, self.hemi, instrument=ii)
+        self.ikey = 'amp'
+        self.out = files.get_default_file(None, None, self.hemi,
+                                          instrument=self.ikey)
 
-        self.assertRegex(self.out[0], "{:s}_north".format(ii))
-        self.assertRegex(self.out[1], self.short_to_long[ii])
-
-        del ii
+        self.assertRegex(self.out[0], "{:s}_north".format(self.ikey))
+        self.assertRegex(self.out[1], self.short_to_long[self.ikey])
 
     @unittest.skipIf(version_info.major == 2,
                      'Python 2.7 does not support subTest')
     def test_get_default_file_none_south_all(self):
         """ Test get_default_file with no range, southern hemisphere"""
-
         # Set the southern hemisphere defaults
         self.hemi = -1
         self.long_to_short[''] = 'amp'
         self.short_to_long[''] = 'ampere'
-        
+
         # Cycle through all possible instrument names
         for ii in self.inst[self.hemi]:
             with self.subTest(ii=ii):
@@ -344,25 +331,22 @@ class TestFilesMethods(unittest.TestCase):
                                                   instrument=ii)
 
                 if ii in self.long_to_short.keys():
-                    if self.long_to_short[ii] is None:
-                        fname = None
-                    else:
-                        fname = "{:s}_south".format(self.long_to_short[ii])
+                    if self.long_to_short[ii] is not None:
+                        self.fname = "{:s}_south".format(
+                            self.long_to_short[ii])
                 else:
-                    fname = "{:s}_south".format(ii)
+                    self.fname = "{:s}_south".format(ii)
 
                 if ii in self.short_to_long.keys():
                     iname = self.short_to_long[ii]
                 else:
                     iname = ii
 
-                if fname is None:
+                if self.fname is None:
                     self.assertIsNone(self.out[0])
                 else:
-                    self.assertRegex(self.out[0], fname)
+                    self.assertRegex(self.out[0], self.fname)
                 self.assertRegex(self.out[1], iname)
-
-        del ii, fname, iname
 
     @unittest.skipIf(version_info.major == 3, 'Already tested, remove in 2020')
     def test_get_default_file_none_south_any(self):
@@ -373,16 +357,13 @@ class TestFilesMethods(unittest.TestCase):
         self.long_to_short[''] = 'amp'
         self.short_to_long[''] = 'ampere'
 
-        ii = ''
-        self.out = files.get_default_file(None, None, self.hemi, instrument=ii)
+        self.out = files.get_default_file(None, None, self.hemi,
+                                          instrument=self.ikey)
 
-        fname = "{:s}_south".format(self.long_to_short[ii])
+        self.fname = "{:s}_south".format(self.long_to_short[self.ikey])
 
-        self.assertRegex(self.out[0], fname)
-        self.assertRegex(self.out[1], self.short_to_long[ii])
-
-        del ii, fname
-
+        self.assertRegex(self.out[0], self.fname)
+        self.assertRegex(self.out[1], self.short_to_long[self.ikey])
 
     @unittest.skipIf(version_info.major == 3, 'Already tested, remove in 2020')
     def test_get_default_file_none_south_ampere(self):
@@ -391,15 +372,14 @@ class TestFilesMethods(unittest.TestCase):
         # Set the southern hemisphere defaults
         self.hemi = -1
 
-        ii = 'ampere'
-        self.out = files.get_default_file(None, None, self.hemi, instrument=ii)
+        self.ikey = 'ampere'
+        self.out = files.get_default_file(None, None, self.hemi,
+                                          instrument=self.ikey)
 
-        fname = "{:s}_south".format(self.long_to_short[ii])
+        self.fname = "{:s}_south".format(self.long_to_short[self.ikey])
 
-        self.assertRegex(self.out[0], fname)
-        self.assertRegex(self.out[1], ii)
-
-        del ii, fname
+        self.assertRegex(self.out[0], self.fname)
+        self.assertRegex(self.out[1], self.ikey)
 
     @unittest.skipIf(version_info.major == 3, 'Already tested, remove in 2020')
     def test_get_default_file_none_south_amp(self):
@@ -410,19 +390,17 @@ class TestFilesMethods(unittest.TestCase):
         self.long_to_short[''] = 'amp'
         self.short_to_long[''] = 'ampere'
 
-        ii = 'amp'
-        self.out = files.get_default_file(None, None, self.hemi, instrument=ii)
+        self.ikey = 'amp'
+        self.out = files.get_default_file(None, None, self.hemi,
+                                          instrument=self.ikey)
 
-        self.assertRegex(self.out[0], "{:s}_south".format(ii))
-        self.assertRegex(self.out[1], self.short_to_long[ii])
-
-        del ii
+        self.assertRegex(self.out[0], "{:s}_south".format(self.ikey))
+        self.assertRegex(self.out[1], self.short_to_long[self.ikey])
 
     @unittest.skipIf(version_info.major == 2,
                      'Python 2.7 does not support subTest')
     def test_get_default_good_file_times(self):
         """ Test get_default_file with good ranges"""
-        
         # Cycle through all possible instrument names
         for ii in ['amp_north_radii.ocb', 'si13_north_circle.ocb']:
             with self.subTest(ii=ii):
@@ -430,57 +408,48 @@ class TestFilesMethods(unittest.TestCase):
                                                   self.comp_dict[ii]['etime'],
                                                   self.hemi)
 
-                if self.comp_dict[ii]['instrument'] in self.short_to_long.keys():
-                    iname = self.short_to_long[self.comp_dict[ii]['instrument']]
+                if(self.comp_dict[ii]['instrument']
+                   in self.short_to_long.keys()):
+                    iname = self.short_to_long[
+                        self.comp_dict[ii]['instrument']]
                 else:
                     iname = self.comp_dict[ii]['instrument']
-    
+
                 self.assertRegex(self.out[0], ii)
                 self.assertRegex(self.out[1], iname)
-
-        del ii, iname
 
     @unittest.skipIf(version_info.major == 3, 'Already tested, remove in 2020')
     def test_get_default_file_good_file_times_ampere(self):
         """ Test get_default_file with good ranges for ampere
         """
-
-        ii = 'amp_north_radii.ocb'
-        self.out = files.get_default_file(self.comp_dict[ii]['stime'],
-                                          self.comp_dict[ii]['etime'],
+        self.ikey = 'amp_north_radii.ocb'
+        self.out = files.get_default_file(self.comp_dict[self.ikey]['stime'],
+                                          self.comp_dict[self.ikey]['etime'],
                                           self.hemi)
 
-        self.assertRegex(self.out[0], ii)
-        self.assertRegex(self.out[1], self.comp_dict[ii]['instrument'])
-
-        del ii
+        self.assertRegex(self.out[0], self.ikey)
+        self.assertRegex(self.out[1], self.comp_dict[self.ikey]['instrument'])
 
     @unittest.skipIf(version_info.major == 3, 'Already tested, remove in 2020')
     def test_get_default_file_good_file_times_image(self):
         """ Test get_default_file with good ranges for image
         """
-
-        ii = 'si13_north_circle.ocb'
-        self.out = files.get_default_file(self.comp_dict[ii]['stime'],
-                                          self.comp_dict[ii]['etime'],
+        self.ikey = 'si13_north_circle.ocb'
+        self.out = files.get_default_file(self.comp_dict[self.ikey]['stime'],
+                                          self.comp_dict[self.ikey]['etime'],
                                           self.hemi)
 
-        self.assertRegex(self.out[0], ii)
+        self.assertRegex(self.out[0], self.ikey)
         self.assertRegex(self.out[1], 'image')
-
-        del ii
 
     def test_get_default_file_bad_file_times(self):
         """ Test get_default_file with bad time ranges
         """
-
-        ii = 'si13_north_circle.ocb'
+        self.ikey = 'si13_north_circle.ocb'
         self.hemi = -1
-        self.out = files.get_default_file(self.comp_dict[ii]['stime'],
-                                          self.comp_dict[ii]['etime'],
+        self.out = files.get_default_file(self.comp_dict[self.ikey]['stime'],
+                                          self.comp_dict[self.ikey]['etime'],
                                           self.hemi)
 
         self.assertIsNone(self.out[0])
         self.assertEqual(len(self.out[1]), 0)
-
-        del ii
