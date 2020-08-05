@@ -134,9 +134,10 @@ class TestSSJCreate(unittest.TestCase):
         self.ocb_dir = os.path.dirname(ocbpy.__file__)
         self.test_dir = os.path.join(self.ocb_dir, "tests")
         self.base_file = "".join(["dmsp-f16_ssj_precipitating-electrons-ions",
-                                  "_20101231_v1.1.2_boundaries"])
+                                  "_20101231_v1.1.2"])
         self.comp_files = [os.path.join(self.test_dir, "test_data",
-                                        "{:s}.csv".format(self.base_file))]
+                                        "{:s}_boundaries.csv".format(
+                                            self.base_file))]
         self.cdf_files = [os.path.join(self.test_dir, "test_data",
                                        '{:s}.cdf'.format(self.base_file))]
         self.out_cols = ['mlat', 'mlt']
@@ -251,6 +252,8 @@ class TestSSJCreate(unittest.TestCase):
 
         self.out = boundaries.dmsp_ssj_files.create_ssj_boundary_files(
             self.cdf_files, out_dir=self.test_dir)
+
+        print(len(self.out))
 
         self.assertTrue(len(self.out), len(self.comp_files))
 
