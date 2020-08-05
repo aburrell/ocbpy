@@ -2,28 +2,28 @@
 # -*- coding: utf-8 -*-
 # Copyright (C) 2019, AGB & GC
 # Full license can be found in License.md
-#-----------------------------------------------------------------------------
+# ----------------------------------------------------------------------------
 """Hold, manipulate, and load the open-closed field line boundary data
 
 Functions
--------------------------------------------------------------------------------
+---------
 retrieve_all_good_indices(ocb)
     Retrieve all good boundary indices
 match_data_ocb(ocb, dat_dtime, kwargs)
     Match data with open-closed field line boundaries
 
 Classes
--------------------------------------------------------------------------------
-OCBoundary    Loads, holds, and cycles the open-closed field line boundary data.
-              Calculates magnetic coordinates relative to OCB (setting OCB at
-              74 degrees latitude) given an AACGM location.
+-------
+OCBoundary  Loads, holds, and cycles the open-closed field line boundary data.
+            Calculates magnetic coordinates relative to OCB (setting OCB at
+            74 degrees latitude) given an AACGM location.
 
 Moduleauthor
--------------------------------------------------------------------------------
-Angeline G. Burrell (AGB), 15 April 2017, University of Texas, Dallas (UTDallas)
+------------
+Angeline G. Burrell (AGB), 15 April 2017, University of Texas, Dallas
 
 References
--------------------------------------------------------------------------------
+----------
 Chisham, G. (2017), A new methodology for the development of high-latitude
  ionospheric climatologies and empirical models, Journal of Geophysical
  Research: Space Physics, 122, doi:10.1002/2016JA023235.
@@ -33,7 +33,6 @@ from __future__ import absolute_import, unicode_literals
 
 import datetime as dt
 import numpy as np
-from os import path
 import types
 
 import aacgmv2
@@ -43,11 +42,12 @@ import ocbpy.ocb_correction as ocbcor
 from ocbpy.ocb_time import slt2glon, convert_time, glon2slt, deg2hr, fix_range
 from ocbpy.boundaries.files import get_default_file
 
+
 class OCBoundary(object):
     """ Object containing open-closed field-line boundary (OCB) data
 
     Attributes
-    -----------
+    ----------
     filename : (str or NoneType)
         OCBoundary filename or None, if problem loading default
     boundary_lat : (float)
@@ -74,8 +74,8 @@ class OCBoundary(object):
         Non-circular boundaries must be specified by a boundary function that
         alters r at a specified AACGM MLT (in hours).  To allow the boundary
         shape to change with time, each temporal instance may have a different
-        function. If a single function is provided, will recast as an array that
-        specifies this function for all times (default=None)
+        function. If a single function is provided, will recast as an array
+        that specifies this function for all times (default=None)
     rfunc_kwargs : (numpy.ndarray, dict, or NoneType)
         Array of optional keyword arguements for rfunc. If None is specified,
         uses function defaults.  If dict is specified, recasts as an array
@@ -84,7 +84,7 @@ class OCBoundary(object):
         Numpy array of floats that hold the remaining values in input file
 
     Methods
-    ---------- 
+    -------
     inst_defaults()
         Get the information needed to load an OCB file using instrument
         specific formatting, and update the boundary latitude for a given
@@ -135,8 +135,9 @@ class OCBoundary(object):
         min_fom : (float)
             Minimum acceptable figure of merit for data (default=0)
         rfunc : (np.ndarray, function, or NoneType)
-            OCB radius correction function, if None will use instrument default.
-            Function must have AACGM MLT as argument input. (default=None) 
+            OCB radius correction function, if None will use instrument
+            default. Function must have AACGM MLT as argument input.
+            (default=None)
         rfunc_kwargs : (np.ndarray, dict, or NoneType)
             OCB radius correction function keyword arguments. (default={})
 
@@ -158,8 +159,8 @@ class OCBoundary(object):
                 ocbpy.logger.warning(estr)
                 self.filename = None
             elif filename.lower() == "default":
-                self.filename, self.instrument = get_default_file(stime, etime,
-                                                    hemisphere, self.instrument)
+                self.filename, self.instrument = get_default_file(
+                    stime, etime, hemisphere, self.instrument)
             else:
                 self.filename = filename
 
@@ -171,7 +172,7 @@ class OCBoundary(object):
                     ocbpy.logger.warning(estr)
                     self.filename = None
 
-        if not hemisphere in [1, -1]:
+        if hemisphere not in [1, -1]:
             raise ValueError("hemisphere must be 1 (north) or -1 (south)")
 
         self.hemisphere = hemisphere
@@ -207,7 +208,7 @@ class OCBoundary(object):
 
     def __repr__(self):
         """ Provide readable representation of the OCBoundary object """
-    
+
         if self.filename is None:
             out = "No Open-Closed Boundary file specified\n"
         else:
@@ -227,7 +228,8 @@ class OCBoundary(object):
                 if self.records == 1:
                     irep = [0]
                 else:
-                    irep = np.unique(np.arange(0,self.records,1)[[0,1,-2,-1]])
+                    irep = np.unique(
+                        np.arange(0, self.records, 1)[[0, 1, -2, -1]])
 
                 head = "YYYY-MM-DD HH:MM:SS Phi_Centre R_Centre R"
                 out = "{:s}{:s}\n{:-<77s}\n".format(out, head, "")
@@ -285,12 +287,12 @@ class OCBoundary(object):
             hlines = 0
             ocb_cols = "date time r x y fom"
             datetime_fmt = "%Y%m%d %H:%M"
-            self.min_fom = 0.15 # From Milan et al. (2015)
+            self.min_fom = 0.15  # From Milan et al. (2015)
         elif self.instrument == "dmsp-ssj":
             hlines = 1
             ocb_cols = "sc date time r x y fom x_1 y_1 x_2 y_2"
             datetime_fmt = "%Y-%m-%d %H:%M:%S"
-            self.min_fom = 3.0 # From Burrell et al. (2019)
+            self.min_fom = 3.0  # From Burrell et al. (2019)
         else:
             hlines = 0
             ocb_cols = ""
@@ -304,9 +306,9 @@ class OCBoundary(object):
         """Load the data from the specified Open-Closed Boundary file
 
         Parameters
-        -----------
+        ----------
         ocb_cols : (str)
-            String specifying format of OCB file.  All but the first two 
+            String specifying format of OCB file.  All but the first two
             columns must be included in the string, additional data values will
             be ignored.  If 'year soy' aren't used, expects
             'date time' in 'YYYY-MM-DD HH:MM:SS' format.
@@ -324,24 +326,24 @@ class OCBoundary(object):
             (default=None)
 
         """
-        
+
         cols = ocb_cols.split()
         dflag = -1
-        ldtype = [(k,float) if k != "num_sectors" else (k,int) for k in cols]
+        ldtype = [(k, float) if k != "num_sectors" else (k, int) for k in cols]
 
         if "soy" in cols and "year" in cols:
             dflag = 0
-            ldtype[cols.index('year')] = ('year',int)
+            ldtype[cols.index('year')] = ('year', int)
         elif "date" in cols and "time" in cols:
             dflag = 1
-            ldtype[cols.index('date')] = ('date','|U50')
-            ldtype[cols.index('time')] = ('time','|U50')
+            ldtype[cols.index('date')] = ('date', '|U50')
+            ldtype[cols.index('time')] = ('time', '|U50')
 
         if dflag < 0:
             estr = "missing time columns in [{:s}]".format(ocb_cols)
             ocbpy.logger.error(estr)
             return
-        
+
         # Read the OCB data
         odata = np.rec.array(np.genfromtxt(self.filename, skip_header=hlines,
                                            dtype=ldtype))
@@ -363,7 +365,7 @@ class OCBoundary(object):
             soy = odata.soy[i] if dflag == 0 else None
             date = None if dflag == 0 else odata.date[i]
             tod = None if dflag == 0 else odata.time[i]
-                
+
             dtime = convert_time(year=year, soy=soy, date=date, tod=tod,
                                  datetime_fmt=datetime_fmt)
 
@@ -430,7 +432,7 @@ class OCBoundary(object):
         the available parameters.
 
         Parameters
-        -----------
+        ----------
         min_sectors : (int)
             Minimum number of MLT sectors required for good OCB. (default=7)
         rcent_dev : (float)
@@ -450,7 +452,7 @@ class OCBoundary(object):
         available after the starting point
 
         Comments
-        ---------
+        --------
         IMAGE FUV checks:
         - more than 6 MLT boundary values have contributed to OCB circle
         - that the OCB 'pole' is with 8 degrees of the AACGM pole
@@ -463,7 +465,7 @@ class OCBoundary(object):
 
         # Incriment forward from previous boundary
         self.rec_ind += 1
-        
+
         while self.rec_ind < self.records:
             # Evaluate the current boundary for quality, using optional
             # parameters
@@ -471,13 +473,15 @@ class OCBoundary(object):
             if(hasattr(self, "num_sectors") and
                self.num_sectors[self.rec_ind] < min_sectors):
                 good = False
-            elif hasattr(self, "fom") and self.fom[self.rec_ind] < self.min_fom:
+            elif(hasattr(self, "fom")
+                 and self.fom[self.rec_ind] < self.min_fom):
                 good = False
 
             # Evaluate the current boundary for quality, using non-optional
             # parameters
-            if(good and self.r_cent[self.rec_ind] <= rcent_dev and
-               self.r[self.rec_ind] >= min_r and self.r[self.rec_ind] <= max_r):
+            if(good and self.r_cent[self.rec_ind] <= rcent_dev
+               and self.r[self.rec_ind] >= min_r
+               and self.r[self.rec_ind] <= max_r):
                 return
 
             # Cycle to next boundary
@@ -490,7 +494,7 @@ class OCBoundary(object):
         """converts position(s) to normalised co-ordinates relative to the OCB
 
         Parameters
-        -----------
+        ----------
         lat : (float or array-like)
             Input latitude (degrees), must be geographic, geodetic, or AACGMV2
         lt : (float or array-like)
@@ -507,16 +511,16 @@ class OCBoundary(object):
             'ALLOWTRACE'.  See AACGMV2 for details.  (default='ALLOWTRACE')
 
         Returns
-        --------
+        -------
         ocb_lat : (float or array-like)
             Magnetic latitude relative to OCB (degrees)
         ocb_mlt : (float or array-like)
             Magnetic local time relative to OCB (hours)
         r_corr : (float or array-like)
             Radius correction to OCB (degrees)
- 
+
         Comments
-        ---------
+        --------
         Approximation - Conversion assumes a planar surface
 
         """
@@ -544,8 +548,8 @@ class OCBoundary(object):
             # method flag
             if coords.lower() == 'geocentric':
                 method = "|".join([method, coords.upper()])
-            aacgm_lat, _, aacgm_mlt = aacgmv2.get_aacgm_coord_arr(lat, lon,
-                height, self.dtime[self.rec_ind], method)
+            aacgm_lat, _, aacgm_mlt = aacgmv2.get_aacgm_coord_arr(
+                lat, lon, height, self.dtime[self.rec_ind], method)
         else:
             aacgm_lat = lat
             aacgm_mlt = lt
@@ -588,7 +592,7 @@ class OCBoundary(object):
         relative to the OCB into AACGM co-ordinates
 
         Parameters
-        -----------
+        ----------
         ocb_lat : (float or array-like)
             Input OCB latitude in degrees
         ocb_mlt : (float or array-like)
@@ -609,14 +613,14 @@ class OCBoundary(object):
             'ALLOWTRACE'.  See AACGMV2 for details.  (default='ALLOWTRACE')
 
         Returns
-        --------
+        -------
         lat : (float or array-like)
             latitude (degrees)
         lt : (float or array-like)
             local time (hours)
- 
+
         Comments
-        ---------
+        --------
         Approximation - Conversion assumes a planar surface
 
         """
@@ -720,7 +724,7 @@ class OCBoundary(object):
         aacgm_lon = np.asarray(aacgm_lon)
         aacgm_lon[aacgm_lon < 0.0] += 360.0
         aacgm_lon[aacgm_lon >= 360.0] -= 360.0
-            
+
         if not hasattr(self, 'aacgm_boundary_lon'):
             self.aacgm_boundary_lon = [None for i in range(self.records)]
 
@@ -751,8 +755,9 @@ class OCBoundary(object):
                 r_corr = self.rfunc[i](deg2hr(aacgm_lon),
                                        **self.rfunc_kwargs[i])
                 scale_r = self.r[i] + r_corr
-                rad = self.r_cent[i] * np.cos(del_lon) + \
-                np.sqrt(scale_r**2 - (self.r_cent[i] * np.sin(del_lon))**2)
+                rad = self.r_cent[i] * np.cos(del_lon) \
+                    + np.sqrt(scale_r**2 - (self.r_cent[i]
+                                            * np.sin(del_lon))**2)
 
                 # If the radius is negative, set to NaN
                 if len(rad.shape) > 0:
@@ -767,13 +772,14 @@ class OCBoundary(object):
                 self.aacgm_boundary_lon[i] = aacgm_lon
             else:
                 estr = "".join(["unable to update AACGM boundary latitude at ",
-                                "{:}, overwrite blocked".format(self.dtime[i])])
+                                "{:}, overwrite ".format(self.dtime[i]),
+                                "blocked"])
                 ocbpy.logger.warning(estr)
 
         return
 
     def _set_default_rfunc(self):
-        """Set the default instrument OCB boundary function 
+        """Set the default instrument OCB boundary function
 
         Notes
         -----
@@ -783,7 +789,8 @@ class OCBoundary(object):
         """
 
         if self.instrument in ["image", "dmsp-ssj"]:
-            self.rfunc = np.full(shape=self.records, fill_value=ocbcor.circular)
+            self.rfunc = np.full(shape=self.records,
+                                 fill_value=ocbcor.circular)
         elif self.instrument == "ampere":
             self.rfunc = np.full(shape=self.records,
                                  fill_value=ocbcor.elliptical)
@@ -829,7 +836,7 @@ def retrieve_all_good_indices(ocb):
     # Return the good indices
     return good_ind
 
-    
+
 def match_data_ocb(ocb, dat_dtime, idat=0, max_tol=600, min_sectors=7,
                    rcent_dev=8.0, max_r=23.0, min_r=10.0):
     """Matches data records with OCB records, locating the closest values
@@ -851,20 +858,20 @@ def match_data_ocb(ocb, dat_dtime, idat=0, max_tol=600, min_sectors=7,
         Maximum number of degrees between the new centre and the AACGM pole
         (default=8.0)
     max_r : (float)
-        Maximum radius for open-closed field line boundary in degrees.
+        Maximum radius for open-closed field line boundary in degrees
         (default=23.0)
     min_r : (float)
         Minimum radius for open-closed field line boundary in degrees
         (default=10.0)
 
     Returns
-    ---------
+    -------
     idat : (int or NoneType)
-        Data index for match value.  None if all of the data have been searched.
+        Data index for match value, None if all of the data have been searched
 
     Notes
-    --------
-    Updates OCBoundary.rec_ind for matched value.  None if all of the
+    -----
+    Updates OCBoundary.rec_ind for matched value. None if all of the
     boundaries have been searched.
 
     """
@@ -897,7 +904,8 @@ def match_data_ocb(ocb, dat_dtime, idat=0, max_tol=600, min_sectors=7,
             idat += 1
 
             if idat >= dat_records:
-                ocbpy.logger.error("no input data close enough to first record")
+                ocbpy.logger.error("".join(["no input data close enough ",
+                                            "to first record"]))
                 return None
 
     # If the times match, return
@@ -918,8 +926,8 @@ def match_data_ocb(ocb, dat_dtime, idat=0, max_tol=600, min_sectors=7,
         elif sdiff > max_tol:
             # Cycle to the next value if no OCB values were close enough
             estr = "".join(["no OCB data available within ",
-                            "[{:d} s] of input measurement at ".format(max_tol),
-                            "[{:}]".format(dat_dtime[idat])])
+                            "[{:d} s] of input measurement at".format(max_tol),
+                            " [{:}]".format(dat_dtime[idat])])
             ocbpy.logger.info(estr)
             idat += 1
         else:
@@ -952,8 +960,9 @@ def match_data_ocb(ocb, dat_dtime, idat=0, max_tol=600, min_sectors=7,
 
     # Return from the last loop
     if idat == 0 and abs(sdiff) > max_tol:
-        estr = "".join(["no OCB data available within [{:d} s]".format(max_tol),
-                        " of first measurement [{:}]".format(dat_dtime[idat])])
+        estr = "".join(["no OCB data available within ",
+                        "[{:d} s] of first measurement ".format(max_tol),
+                        "[{:}]".format(dat_dtime[idat])])
         ocbpy.logger.info(estr)
-    
+
     return idat
