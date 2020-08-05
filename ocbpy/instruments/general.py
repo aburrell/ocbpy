@@ -185,11 +185,14 @@ def load_ascii_data(filename, hlines, gft_kwargs=dict(), hsplit=None,
 
     #-------------------------------------------
     # Open the datafile and read the data rows
-    temp = np.genfromtxt(filename, skip_header=hlines, dtype=ldtype,
-                         **gft_kwargs)
+    temp = np.genfromtxt(filename, skip_header=hlines, dtype=str, **gft_kwargs)
 
     if len(temp) > 0:
         # When dtype is specified, output comes as a np.array of np.void objects
+        #
+        # Moved type specification for numpy 1.19.0, which throws a TypeError.
+        # Also accounted for possibility of line variable being a scalar (but
+        # not when calculating a time value)
         for iline, line in enumerate(temp):
             # Each line may have times that need to be combined and converted
             convert_time_input = {"year": None, "soy": None, "yyddd": None,
@@ -201,6 +204,8 @@ def load_ascii_data(filename, hlines, gft_kwargs=dict(), hsplit=None,
                 if idt < len(dt_keys) and name == dt_keys[idt]:
                     # Build the convert_time input
                     for icol, dcol in enumerate(datetime_cols):
+                        line_val = line[dcol].astype(ldtype[dcol])
+
                         if dfmt_parts[icol].find("%") == 0:
                             if dfmt_parts[icol][1] in time_formats:
                                 ckey = "tod"
@@ -209,18 +214,18 @@ def load_ascii_data(filename, hlines, gft_kwargs=dict(), hsplit=None,
                         else:
                             ckey = dfmt_parts[icol].lower()
                             if ckey in ['year', 'soy']:
-                                line[dcol] = int(line[dcol])
+                                line_val = int(line_val)
                             elif ckey == 'sod':
-                                line[dcol] = float(line[dcol])
+                                line_val = float(line_val)
 
                         if ckey not in convert_time_input.keys():
-                            convert_time_input[ckey] = line[dcol]
+                            convert_time_input[ckey] = line_val
                         else:
                             if convert_time_input[ckey] is None:
-                                convert_time_input[ckey] = line[dcol]
+                                convert_time_input[ckey] = line_val
                             else:
                                 convert_time_input[ckey] = " ".join([
-                                    convert_time_input[ckey], line[dcol]])
+                                    convert_time_input[ckey], line_val])
 
                     # Convert the string into a datetime object
                     ftime = ocbt.convert_time(**convert_time_input)
@@ -229,7 +234,10 @@ def load_ascii_data(filename, hlines, gft_kwargs=dict(), hsplit=None,
                     out[dt_keys[idt]].append(ftime)
                 else:
                     # Save the output data without any manipulation
-                    out[name].append(line[num])
+                    try:
+                        out[name].append(line[num].astype(ldtype[num]))
+                    except AttributeError as aerr:
+                        out[name].append(line.astype(ldtype[num]))
 
     # Cast all lists as numpy arrays, if possible
     for k in out.keys():

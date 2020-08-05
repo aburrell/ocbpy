@@ -25,24 +25,34 @@ environment:
   matrix:
     - job_name: P27-x32 basic
       PYTHON: "C:\\Python27"
+      NUMPY: "numpy==1.15.4"
     - job_name: P35-x32 basic
       PYTHON: "C:\\Python35"
+      NUMPY: "numpy==1.15.4"
     - job_name: P36-x32 basic
       PYTHON: "C:\\Python36"
+      NUMPY: "numpy>=1.19.0"
     - job_name: P37-x32 basic
       PYTHON: "C:\\Python37"
+      NUMPY: "numpy>=1.19.0"
     - job_name: P38-x32 basic
       PYTHON: "C:\\Python38"
+      NUMPY: "numpy>=1.19.0"
     - job_name: P27-x64 basic
       PYTHON: "C:\\Python27-x64"
+      NUMPY: "numpy==1.15.4"
     - job_name: P35-x64 basic
       PYTHON: "C:\\Python35-x64"
+      NUMPY: "numpy==1.15.4"
     - job_name: P36-x64 basic
       PYTHON: "C:\\Python36-x64"
+      NUMPY: "numpy>=1.19.0"
     - job_name: P37-x64 basic
       PYTHON: "C:\\Python37-x64"
+      NUMPY: "numpy>=1.19.0"
     - job_name: P38-x64 basic
       PYTHON: "C:\\Python38-x64"
+      NUMPY: "numpy>=1.19.0"
 
 install:
   - 'set PATH=%APPVEYOR_BUILD_FOLDER%;%PYTHON%//Scripts;%PATH%'

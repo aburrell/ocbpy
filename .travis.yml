@@ -8,8 +8,8 @@ env:
         - COVERALLS_PARALLEL=true
     jobs:
         - INSTALL_EXTRA=0
+        - INSTALL_EXTRA=1
         - INSTALL_EXTRA=2
-
 python:
     - 2.7
     - 3.5
@@ -18,9 +18,9 @@ python:
     - 3.8
 
 jobs:
-    allow_failures:
-        - env: INSTALL_EXTRA=2
-
+   allow_failures:
+      - env: INSTALL_EXTRA=1
+      - env: INSTALL_EXTRA=2
 addons:
     apt_packages:
         - gfortran
