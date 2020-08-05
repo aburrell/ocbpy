@@ -2,11 +2,11 @@
 # -*- coding: utf-8 -*-
 # Copyright (C) 2019, AGB & GC
 # Full license can be found in License.md
-#-----------------------------------------------------------------------------
+# -----------------------------------------------------------------------------
 """ Download and format DMSP SSJ boundary files
 
 Functions
--------------------------------------------------------------------------------
+---------
 fetch_ssj_files(stime, etime, [out_dir, sat_nums])
     Download DMSP SSJ files
 create_ssj_boundary_files(cdf_files, [out_dir, out_cols, make_plots, plot_dir])
@@ -19,11 +19,11 @@ fetch_format_ssj_boundary_files(stime, etime, [out_dir, rm_temp, ref_alt,
     Download and format the individual pass boundaries
 
 Moduleauthor
--------------------------------------------------------------------------------
+------------
 Angeline G. Burrell (AGB), 25 September 2019, Naval Research Laboratory (NRL)
 
 References
--------------------------------------------------------------------------------
+----------
 Kilcommons, L.M., et al. (2017), A new DMSP magnetometer and auroral boundary
  data set and estimates of field-aligned currents in dynamic auroral boundary
  coordinates, J. Geophys. Res.: Space Phys., 122, pp 9068-9079,
@@ -38,6 +38,8 @@ import numpy as np
 import os
 import sys
 
+import ocbpy
+
 if sys.version_info.major == 2:
     import warnings
     warnings.simplefilter('default')
@@ -46,14 +48,12 @@ err = ''.join(['unable to load the DMSP SSJ module; ssj_auroral_boundary ',
                'is available at: ',
                'https://github.com/lkilcommons/ssj_auroral_boundary'])
 try:
-    import geospacepy
     from spacepy import pycdf
     import aacgmv2
     import ssj_auroral_boundary as ssj
 except ImportError as ierr:
     raise ImportError("{:s}\n{:}".format(err, ierr))
 
-import ocbpy
 
 def fetch_ssj_files(stime, etime, out_dir=None, sat_nums=None):
     """ Download DMSP SSJ files and place them in a specified directory
@@ -89,8 +89,8 @@ def fetch_ssj_files(stime, etime, out_dir=None, sat_nums=None):
     if not os.path.isdir(out_dir):
         raise ValueError("can't find the output directory")
 
-    # SSJ5 was carried on F16 onwards. F19 was short lived, F20 was not launched
-    # Ref: https://space.skyrocket.de/doc_sdat/dmsp-5d3.htm
+    # SSJ5 was carried on F16 onwards. F19 was short lived, F20 was not
+    # launched. Ref: https://space.skyrocket.de/doc_sdat/dmsp-5d3.htm
     sat_launch = {16: dt.datetime(2003, 10, 18),
                   17: dt.datetime(2006, 11, 4),
                   18: dt.datetime(2009, 10, 18)}
@@ -122,7 +122,7 @@ def fetch_ssj_files(stime, etime, out_dir=None, sat_nums=None):
                                                            ctime.day)
             local = os.path.join(out_dir, fname)
 
-            # Download the remote file to the local location if it doesn't exist
+            # Download the remote file if it doesn't exist locally
             if os.path.isfile(local):
                 out_files.append(local)
             else:
@@ -138,7 +138,9 @@ def fetch_ssj_files(stime, etime, out_dir=None, sat_nums=None):
     # Return list of available files for these satellites and times
     return out_files
 
-def create_ssj_boundary_files(cdf_files, out_dir=None, out_cols=['glat','glon'],
+
+def create_ssj_boundary_files(cdf_files, out_dir=None,
+                              out_cols=['glat', 'glon'],
                               make_plots=False, plot_dir=None):
     """ Create SSJ boundary files for a list of DMSP SSJ daily satellite files
 
@@ -186,7 +188,7 @@ def create_ssj_boundary_files(cdf_files, out_dir=None, out_cols=['glat','glon'],
     if 'glat' in out_cols:
         out_cols[out_cols.index('glat')] = 'SC_GEOCENTRIC_LAT'
     if 'glon' in out_cols:
-        out_cols[out_cols.index('glon')] = 'SC_GEOCENTRIC_LON'        
+        out_cols[out_cols.index('glon')] = 'SC_GEOCENTRIC_LON'
 
     # Cycle through all the CDF files, creating the desired CSV files
     out_files = list()
@@ -288,9 +290,11 @@ def format_ssj_boundary_files(csv_files, ref_alt=830.0,
 
     # Specify the output file information
     outfile_prefix = os.path.commonprefix(list(csv_files)).split('-f')[0]
-    filename_sec = os.path.split(csv_files[0])[-1].split('dmsp-f')[-1].split('_')
+    filename_sec = os.path.split(
+        csv_files[0])[-1].split('dmsp-f')[-1].split('_')
     sdate = filename_sec[3]
-    filename_sec = os.path.split(csv_files[-1])[-1].split('dmsp-f')[-1].split('_')
+    filename_sec = os.path.split(
+        csv_files[-1])[-1].split('dmsp-f')[-1].split('_')
     edate = filename_sec[3]
 
     bound_files = {hh: {bb: "".join([outfile_prefix, "-", filename_sec[1], "_",
@@ -339,23 +343,21 @@ def format_ssj_boundary_files(csv_files, ref_alt=830.0,
                 time_ind = {bb: [header_list.index('UTSec {:s}{:d}'.format(
                     bb, i)) for i in [1, 2]]
                             for bb in bound_prefix.keys()}
-                lat_ind = {bb:
-                        [header_list.index('SC_GEOCENTRIC_LAT {:s}{:d}'.format(
-                            bb, i)) for i in [1, 2]]
-                           for bb in bound_prefix.keys()}
-                lon_ind = {bb:
-                        [header_list.index('SC_GEOCENTRIC_LON {:s}{:d}'.format(
-                            bb, i)) for i in [1, 2]]
-                           for bb in bound_prefix.keys()}
+                lat_ind = {bb: [header_list.index(
+                    'SC_GEOCENTRIC_LAT {:s}{:d}'.format(bb, i))
+                                for i in [1, 2]] for bb in bound_prefix.keys()}
+                lon_ind = {bb: [header_list.index(
+                    'SC_GEOCENTRIC_LON {:s}{:d}'.format(bb, i))
+                                for i in [1, 2]] for bb in bound_prefix.keys()}
 
                 # Calculate the midpoint seconds of day
-                mid_utsec = {bb: 0.5 * (data[:,time_ind[bb][1]]
-                                        +data[:,time_ind[bb][0]])
+                mid_utsec = {bb: 0.5 * (data[:, time_ind[bb][1]]
+                                        + data[:, time_ind[bb][0]])
                              for bb in time_ind.keys()}
 
                 # Select the hemisphere and FOM
-                hemi = data[:,header_list.index('hemisphere')]
-                fom = data[:,header_list.index('FOM')]
+                hemi = data[:, header_list.index('hemisphere')]
+                fom = data[:, header_list.index('FOM')]
 
                 # Cycle through each line of data, calculating the
                 # necessary information
@@ -366,8 +368,8 @@ def format_ssj_boundary_files(csv_files, ref_alt=830.0,
                     # (sufficiently accurate at current sec. var.) for each
                     # boundary
                     for bb in bound_prefix.keys():
-                        mid_time = file_date + dt.timedelta(seconds=
-                                                        mid_utsec[bb][iline])
+                        mid_time = file_date + dt.timedelta(
+                            seconds=mid_utsec[bb][iline])
                         mloc = aacgmv2.get_aacgm_coord_arr(
                             data_line[lat_ind[bb]], data_line[lon_ind[bb]],
                             ref_alt, mid_time, method=method)
@@ -388,16 +390,16 @@ def format_ssj_boundary_files(csv_files, ref_alt=830.0,
                         # Prepare the output line, which has the format:
                         # sc bound hemi date time r x y fom x_1 y_1
                         # x_2 y_2
-                        out_line = " ".join(["{:d}".format(sc),
-                                        mid_time.strftime('%Y-%m-%d %H:%M:%S'),
-                                             " ".join(["{:.3f}".format(val)
-                                                for val in [rad, mid_x, mid_y,
-                                                            fom[iline], x[0],
-                                                            y[0], x[1], y[1]]]),
-                                             "\n"])
+                        out_line = " ".join(
+                            ["{:d}".format(sc),
+                             mid_time.strftime('%Y-%m-%d %H:%M:%S'),
+                             " ".join(["{:.3f}".format(val)
+                                       for val in [rad, mid_x, mid_y,
+                                                   fom[iline], x[0], y[0],
+                                                   x[1], y[1]]]), "\n"])
 
                         # Write the output line to the file
-                        fpout[hh][bb].write(out_line)        
+                        fpout[hh][bb].write(out_line)
 
     # If some input files were not processed, inform the user
     if len(bad_files) > 0:
@@ -409,6 +411,7 @@ def format_ssj_boundary_files(csv_files, ref_alt=830.0,
                             for ff in bound_files.values()])
 
     return list(bound_files.flatten())
+
 
 def fetch_format_ssj_boundary_files(stime, etime, out_dir=None, rm_temp=True,
                                     ref_alt=830.0,
@@ -451,8 +454,8 @@ def fetch_format_ssj_boundary_files(stime, etime, out_dir=None, rm_temp=True,
 
     # Test to see if there are any DMSP processed files
     if len(csv_files) == 0:
-        raise ValueError("".join(["unable to process the downloaded SSJ files ",
-                                  "{:}".format(dmsp_files)]))
+        raise ValueError("".join(["unable to process the downloaded SSJ files",
+                                  " {:}".format(dmsp_files)]))
 
     # Remove the DMSP files, as their data has been processed
     if rm_temp:
