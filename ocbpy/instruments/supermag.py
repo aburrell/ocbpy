@@ -1,10 +1,11 @@
 # -*- coding: utf-8 -*-
-# Copyright (C) 2017
+# Copyright (C) 2017 AGB
 # Full license can be found in LICENSE.txt
+# ---------------------------------------------------------------------------
 """ Perform OCB gridding for SuperMAG data
 
 Functions
-----------------------------------------------------------------------------
+---------
 supermag2ascii_ocb(smagfile, outfile, kwargs)
      Write and ASCII file with SuperMAG data and the OCB coordinates for each
      data point
@@ -12,7 +13,7 @@ load_supermag_ascii_data(filename)
      Load SuperMAG ASCII data files
 
 Data
-----------------------------------------------------------------------------
+----
 SuperMAG data available at: http://supermag.jhuapl.edu/
 
 """
@@ -24,12 +25,11 @@ import numpy as np
 import ocbpy
 import ocbpy.ocb_scaling as ocbscal
 
+
 def supermag2ascii_ocb(smagfile, outfile, hemisphere=0, ocb=None,
                        ocbfile='default', instrument='', max_sdiff=600,
                        min_sectors=7, rcent_dev=8.0, max_r=23.0, min_r=10.0):
-    """ Coverts the location of SuperMAG data into a frame that is relative to
-    the open-closed field-line boundary (OCB) as determined from a circle fit
-    to the poleward boundary of the auroral oval
+    """ Coverts and scales the SuperMAG data into OCB coordinates
 
     Parameters
     ----------
@@ -45,8 +45,8 @@ def supermag2ascii_ocb(smagfile, outfile, hemisphere=0, ocb=None,
         If None, looks to ocbfile
     ocbfile : (str)
         file containing the required OC boundary data sorted by time, or
-        'default' to load default file for time and hemisphere.  Only used if no
-        OCBoundary object is supplied (default='default')
+        'default' to load default file for time and hemisphere.  Only used if
+        no OCBoundary object is supplied (default='default')
     instrument : (str)
         Instrument providing the OCBoundaries.  Requires 'image' or 'ampere'
         if a file is provided.  If using filename='default', also accepts
@@ -67,7 +67,8 @@ def supermag2ascii_ocb(smagfile, outfile, hemisphere=0, ocb=None,
 
     Notes
     -----
-    May only process one hemisphere at a time
+    May only process one hemisphere at a time.  Scales the magnetic field
+    observations using `ocbpy.ocb_scale.normal_curl_evar`.
 
     """
 
@@ -94,8 +95,8 @@ def supermag2ascii_ocb(smagfile, outfile, hemisphere=0, ocb=None,
                 hemisphere = np.sign(np.nanmin(mdata['MLAT']))
             elif hemisphere != np.sign(np.nanmin(mdata['MLAT'])):
                 raise ValueError("".join(["cannot process observations from "
-                                          "both hemispheres at the same time."
-                                          "Set hemisphere=+/-1 to choose one"]))
+                                          "both hemispheres at the same time;"
+                                          "set hemisphere=+/-1 to choose."]))
 
         # Initialize the OCBoundary object
         ocb = ocbpy.OCBoundary(ocbfile, stime=mstart, etime=mend,
@@ -138,11 +139,11 @@ def supermag2ascii_ocb(smagfile, outfile, hemisphere=0, ocb=None,
         outline = "".join([outline, "MLAT MLT BMAG BN BE BZ OCB_MLAT OCB_MLT ",
                            "OCB_BMAG OCB_BN OCB_BE OCB_BZ\n"])
         fout.write(outline)
-    
+
         # Initialise the ocb and SuperMAG indices
         imag = 0
         nmag = mdata['DATETIME'].shape[0]
-    
+
         # Cycle through the data, matching SuperMAG and OCB records
         while imag < nmag and ocb.rec_ind < ocb.records:
             imag = ocbpy.match_data_ocb(ocb, mdata['DATETIME'], idat=imag,
@@ -163,7 +164,7 @@ def supermag2ascii_ocb(smagfile, outfile, hemisphere=0, ocb=None,
 
                 vdata.set_ocb(ocb)
 
-                # Format the output line
+                # Format the output line:
                 #    DATE TIME NST [SML SMU] STID [SZA] MLAT MLT BMAG BN BE BZ
                 #    OCB_MLAT OCB_MLT OCB_BMAG OCB_BN OCB_BE OCB_BZ
                 outline = "{:} {:d} {:s} ".format(mdata['DATETIME'][imag],
@@ -175,46 +176,43 @@ def supermag2ascii_ocb(smagfile, outfile, hemisphere=0, ocb=None,
                         outline = "{:s}{:.2f} ".format(outline,
                                                        mdata[okey][imag])
                     else:
-                        outline = "{:s}{:d} ".format(outline, mdata[okey][imag])
+                        outline = "{:s}{:d} ".format(outline,
+                                                     mdata[okey][imag])
 
                 outline = "".join([outline, "{:.2f} ".format(vdata.aacgm_lat),
                                    "{:.2f} {:.2f} ".format(vdata.aacgm_mlt,
                                                            vdata.aacgm_mag),
                                    "{:.2f} {:.2f} ".format(vdata.aacgm_n,
                                                            vdata.aacgm_e),
-                                   "{:.2f} {:.2f} {:.2f} ".format(vdata.aacgm_z,
-                                                vdata.ocb_lat, vdata.ocb_mlt),
-                                   "{:.2f} {:.2f} ".format(vdata.ocb_mag,
-                                                           vdata.ocb_n),
-                                   "{:.2f} {:.2f}\n".format(vdata.ocb_e,
-                                                            vdata.ocb_z)])
+                                   "{:.2f} {:.2f} {:.2f} {:.2f}".format(
+                                       vdata.aacgm_z, vdata.ocb_lat,
+                                       vdata.ocb_mlt, vdata.ocb_mag),
+                                   " {:.2f} {:.2f} {:.2f}\n".format(
+                                       vdata.ocb_n, vdata.ocb_e, vdata.ocb_z)])
                 fout.write(outline)
 
                 # Move to next line
                 imag += 1
-        
+
     return
 
-#---------------------------------------------------------------------------
-# load_supermag_ascii_data: A routine to open a supermag ascii file
 
 def load_supermag_ascii_data(filename):
-    """Open a SuperMAG ASCII data file and load it into a dictionary of nparrays
+    """Load a SuperMAG ASCII data file
 
     Parameters
-    ------------
+    ----------
     filename : (str)
         SuperMAG ASCI data file name
 
     Returns
-    ----------
+    -------
     out : (dict of numpy.arrays)
         The dict keys are specified by the header data line, the data
         for each key are stored in the numpy array
+
     """
-    from ocbpy.instruments import test_file
-    import datetime as dt
-    
+
     fill_val = 999999
     header = list()
     ind = {"SMU": fill_val, "SML": fill_val}
@@ -223,11 +221,10 @@ def load_supermag_ascii_data(filename):
            "SML": list(), "SMU": list(), "STID": list(), "BN": list(),
            "BE": list(), "BZ": list(), "MLT": list(), "MLAT": list(),
            "DEC": list(), "SZA": list()}
-    
-    if not test_file(filename):
+
+    if not ocbpy.instruments.test_file(filename):
         return header, dict()
-    
-    #----------------------------------------------
+
     # Open the datafile and read the data
     with open(filename, "r") as f:
         hflag = True
@@ -238,7 +235,6 @@ def load_supermag_ascii_data(filename):
                 header.append(line)
                 if line.find("=========================================") >= 0:
                     hflag = False
-                    dflag = True
             else:
                 # Fill the output dictionary
                 if n < 0:
@@ -292,7 +288,5 @@ def load_supermag_ascii_data(filename):
 
             if k in ['BE', 'BN', 'DEC', 'SZA', 'MLT', 'BZ']:
                 out[k][out[k] == fill_val] = np.nan
-    
-    return header, out
 
-# End load_supermag_ascii_data
+    return header, out
