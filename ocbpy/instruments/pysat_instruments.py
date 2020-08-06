@@ -13,7 +13,7 @@ add_ocb_to_metadata()
 
 Module
 ------
-pysat is available at: http://github.com/rstoneback/pysat or pypi
+pysat is available at: http://github.com/pysat/pysat or pypi
 
 """
 from __future__ import absolute_import, unicode_literals
