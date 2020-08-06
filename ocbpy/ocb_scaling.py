@@ -21,7 +21,6 @@ VectorData(object)
 Moduleauthor
 ------------
 Angeline G. Burrell (AGB), 12 May 2017, University of Texas, Dallas
-Jone P. Reistad (JPR), 27 Mar 2020, University of Bergen
 
 References
 ----------
@@ -35,82 +34,6 @@ from __future__ import absolute_import, unicode_literals
 import numpy as np
 
 import ocbpy
-
-
-def normal_evar(evar, unscaled_r, scaled_r):
-    """ Normalise a variable proportional to the electric field
-
-    Parameters
-    ----------
-    evar : (float or array)
-        Variable related to electric field (e.g. velocity)
-    unscaled_r : (float or array)
-        Radius of polar cap in degrees
-    scaled_r : (float or array)
-        Radius of normalised OCB polar cap in degrees
-
-    Returns
-    -------
-    nvar : (float or array)
-        Normalised variable
-
-    Notes
-    -----
-    Assumes that the cross polar cap potential is fixed across the polar cap
-    regardless of the radius of the Open Closed field line Boundary.  This is
-    commonly assumed when looking at statistical patterns that control the IMF
-    (which accounts for dayside reconnection) and assume that the nightside
-    reconnection influence is averaged out over the averaged period.
-
-    References
-    ----------
-    Chisham, G. (2017), A new methodology for the development of high‐latitude
-    ionospheric climatologies and empirical models, Journal of Geophysical
-    Research: Space Physics, doi:10.1002/2016JA023235.
-
-    """
-
-    nvar = evar * unscaled_r / scaled_r
-
-    return nvar
-
-
-def normal_curl_evar(curl_evar, unscaled_r, scaled_r):
-    """ Normalise a variable proportional to the curl of the electric field
-
-    Parameters
-    ----------
-    curl_evar : (float or array)
-        Variable related to electric field (e.g. vorticity)
-    unscaled_r : (float or array)
-        Radius of polar cap in degrees
-    scaled_r : (float or array)
-        Radius of normalised OCB polar cap in degrees
-
-    Returns
-    -------
-    nvar : (float or array)
-        Normalised variable
-
-    Notes
-    -----
-    Assumes that the cross polar cap potential is fixed across the polar cap
-    regardless of the radius of the Open Closed field line Boundary.  This is
-    commonly assumed when looking at statistical patterns that control the IMF
-    (which accounts for dayside reconnection) and assume that the nightside
-    reconnection influence is averaged out over the averaged period.
-
-    References
-    ----------
-    Chisham, G. (2017), A new methodology for the development of high‐latitude
-    ionospheric climatologies and empirical models, Journal of Geophysical
-    Research: Space Physics, doi:10.1002/2016JA023235.
-
-    """
-
-    nvar = curl_evar * (unscaled_r / scaled_r)**2
-
-    return nvar
 
 
 class VectorData(object):
@@ -209,16 +132,6 @@ class VectorData(object):
     -------
     set_ocb(ocb, scale_func=None)
         Set the ocb coordinates and vector values
-    define_quadrants()
-        Define the OCB pole and vector AACGM quadrant
-    scale_vector()
-        Scale the data vector into OCB coordinates
-    calc_ocb_polar_angle()
-        calculate the OCB north azimuth angle
-    calc_ocb_vec_sign(north=False, east=False, quads=dict())
-        calculate the signs of the OCB scaled vector components
-    calc_vec_pole_angle(angular_res=1.0e-3)
-        calculate the vector angle of the vector-poles triangle
 
     Notes
     -----
@@ -1314,6 +1227,82 @@ class VectorData(object):
                 2.0 * np.arccos(half_angle[update_mask]))
 
         return
+
+
+def normal_evar(evar, unscaled_r, scaled_r):
+    """ Normalise a variable proportional to the electric field
+
+    Parameters
+    ----------
+    evar : (float or array)
+        Variable related to electric field (e.g. velocity)
+    unscaled_r : (float or array)
+        Radius of polar cap in degrees
+    scaled_r : (float or array)
+        Radius of normalised OCB polar cap in degrees
+
+    Returns
+    -------
+    nvar : (float or array)
+        Normalised variable
+
+    Notes
+    -----
+    Assumes that the cross polar cap potential is fixed across the polar cap
+    regardless of the radius of the Open Closed field line Boundary.  This is
+    commonly assumed when looking at statistical patterns that control the IMF
+    (which accounts for dayside reconnection) and assume that the nightside
+    reconnection influence is averaged out over the averaged period.
+
+    References
+    ----------
+    Chisham, G. (2017), A new methodology for the development of high‐latitude
+    ionospheric climatologies and empirical models, Journal of Geophysical
+    Research: Space Physics, doi:10.1002/2016JA023235.
+
+    """
+
+    nvar = evar * unscaled_r / scaled_r
+
+    return nvar
+
+
+def normal_curl_evar(curl_evar, unscaled_r, scaled_r):
+    """ Normalise a variable proportional to the curl of the electric field
+
+    Parameters
+    ----------
+    curl_evar : (float or array)
+        Variable related to electric field (e.g. vorticity)
+    unscaled_r : (float or array)
+        Radius of polar cap in degrees
+    scaled_r : (float or array)
+        Radius of normalised OCB polar cap in degrees
+
+    Returns
+    -------
+    nvar : (float or array)
+        Normalised variable
+
+    Notes
+    -----
+    Assumes that the cross polar cap potential is fixed across the polar cap
+    regardless of the radius of the Open Closed field line Boundary.  This is
+    commonly assumed when looking at statistical patterns that control the IMF
+    (which accounts for dayside reconnection) and assume that the nightside
+    reconnection influence is averaged out over the averaged period.
+
+    References
+    ----------
+    Chisham, G. (2017), A new methodology for the development of high‐latitude
+    ionospheric climatologies and empirical models, Journal of Geophysical
+    Research: Space Physics, doi:10.1002/2016JA023235.
+
+    """
+
+    nvar = curl_evar * (unscaled_r / scaled_r)**2
+
+    return nvar
 
 
 def hav(alpha):
