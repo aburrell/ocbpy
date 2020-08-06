@@ -44,6 +44,11 @@ class TestPysatUtils(unittest.TestCase):
         self.arevectors = list(),
         self.nkeys = 0
 
+        # Remove in 2020 when dropping support for 2.7
+        if version_info.major == 2:
+            self.assertRegex = self.assertRegexpMatches
+            self.assertRaisesRegex = self.assertRaisesRegexp
+
     def tearDown(self):
         """Delete attributes"""
         del self.meta, self.ocb_key, self.pysat_key, self.notes, self.isvector
@@ -82,25 +87,24 @@ class TestPysatUtils(unittest.TestCase):
                             self.assertEqual(
                                 len(self.meta[self.pysat_key][ll]), 0)
                         else:
-                            self.assertRegexpMatches(
-                                self.meta[self.ocb_key][ll],
-                                self.meta[self.pysat_key][ll])
+                            self.assertRegex(self.meta[self.ocb_key][ll],
+                                             self.meta[self.pysat_key][ll])
 
             # Test the elements that have "OCB" appended to the text
             for ll in [self.meta.name_label, self.meta.axis_label,
                        self.meta.plot_label]:
                 sline = self.meta[self.ocb_key][ll].split(" ")
-                self.assertRegexpMatches(sline[0], "OCB")
+                self.assertRegex(sline[0], "OCB")
                 if not self.isvector and self.pysat_key is not None:
-                    self.assertRegexpMatches(" ".join(sline[1:]),
-                                             self.meta[self.pysat_key][ll])
+                    self.assertRegex(" ".join(sline[1:]),
+                                     self.meta[self.pysat_key][ll])
 
             # Test the remaining elements
             self.assertEqual(
                 self.meta[self.ocb_key][self.meta.desc_label].find(
                     "Open Closed"), 0)
             if self.notes is not None:
-                self.assertRegexpMatches(
+                self.assertRegex(
                     self.meta[self.ocb_key][self.meta.notes_label], self.notes)
 
             del ll, sline
@@ -157,8 +161,10 @@ class TestPysatUtils(unittest.TestCase):
 @unittest.skipIf(not no_pysat, "pysat installed, cannot test failure")
 class TestPysatFailure(unittest.TestCase):
     def setUp(self):
-        """ No initialization needed """
-        pass
+        """ Initialize, allowing use of python 2.7 """        
+        # Remove in 2020 when dropping support for 2.7
+        if version_info.major == 2:
+            self.assertRaisesRegex = self.assertRaisesRegexp
 
     def tearDown(self):
         """ No teardown needed"""
@@ -167,7 +173,7 @@ class TestPysatFailure(unittest.TestCase):
     def test_import_failure(self):
         """ Test pysat import failure"""
 
-        with self.assertRaisesRegexp(ImportError, 'unable to load the pysat'):
+        with self.assertRaisesRegex(ImportError, 'unable to load the pysat'):
             import ocbpy.instruments.pysat_instruments as ocb_pysat
 
 
@@ -252,6 +258,11 @@ class TestPysatMethods(unittest.TestCase):
         self.utils = TestPysatUtils("test_ocb_metadata")
         self.utils.setUp()
 
+        # Remove in 2020 when dropping support for 2.7
+        if version_info.major == 2:
+            self.assertRegex = self.assertRegexpMatches
+            self.assertRaisesRegex = self.assertRaisesRegexp
+
     def tearDown(self):
         self.utils.tearDown()
         del self.test_file, self.log_capture, self.test_inst, self.ocb
@@ -296,8 +307,7 @@ class TestPysatMethods(unittest.TestCase):
                                       notes="test notes two", overwrite=True)
 
         meta = self.test_inst.meta
-        self.assertRegexpMatches(meta['ocb_test'][meta.notes_label],
-                                 "test notes two")
+        self.assertRegex(meta['ocb_test'][meta.notes_label], "test notes two")
 
         del meta
 
@@ -502,40 +512,40 @@ class TestPysatMethods(unittest.TestCase):
         """ Test failure of unknown mlat key in add_ocb_to_data
         """
 
-        with self.assertRaisesRegexp(ValueError,
-                                     'unknown magnetic latitude name mlat'):
+        with self.assertRaisesRegex(ValueError,
+                                    'unknown magnetic latitude name mlat'):
             ocb_pysat.add_ocb_to_data(self.test_inst, "mlat", "mlt",
                                       ocb=self.ocb)
 
     def test_add_ocb_to_data_bad_mlt(self):
         """ Test failure of unknown mlt key in add_ocb_to_data
         """
-        with self.assertRaisesRegexp(ValueError,
-                                     'unknown magnetic local time name bad'):
+        with self.assertRaisesRegex(ValueError,
+                                    'unknown magnetic local time name bad'):
             ocb_pysat.add_ocb_to_data(self.test_inst, "latitude", "bad",
                                       ocb=self.ocb)
 
     def test_add_ocb_to_data_bad_evar(self):
         """ Test failure of unknown E field key in add_ocb_to_data
         """
-        with self.assertRaisesRegexp(ValueError,
-                                     'at least one unknown E field name'):
+        with self.assertRaisesRegex(ValueError,
+                                    'at least one unknown E field name'):
             ocb_pysat.add_ocb_to_data(self.test_inst, "latitude", "mlt",
                                       evar_names=["bad"], ocb=self.ocb)
 
     def test_add_ocb_to_data_bad_curl(self):
         """ Test failure of unknown E field key in add_ocb_to_data
         """
-        with self.assertRaisesRegexp(ValueError,
-                                     'at least one unknown E field name'):
+        with self.assertRaisesRegex(ValueError,
+                                    'at least one unknown E field name'):
             ocb_pysat.add_ocb_to_data(self.test_inst, "latitude", "mlt",
                                       curl_evar_names=["bad"], ocb=self.ocb)
 
     def test_add_ocb_to_data_bad_vector_scale(self):
         """ Test failure of missing scaling function in add_ocb_to_data
         """
-        with self.assertRaisesRegexp(ValueError,
-                                     'missing scaling function for bad'):
+        with self.assertRaisesRegex(ValueError,
+                                    'missing scaling function for bad'):
             ocb_pysat.add_ocb_to_data(self.test_inst, "latitude", "mlt",
                                       vector_names={'bad': {'aacgm_n': 'bad_n',
                                                             'aacgm_e': 'bad_e',
@@ -546,8 +556,8 @@ class TestPysatMethods(unittest.TestCase):
     def test_add_ocb_to_data_bad_vector_name(self):
         """ Test failure of missing scaling function in add_ocb_to_data
         """
-        with self.assertRaisesRegexp(ValueError,
-                                     'unknown vector name bad_n'):
+        with self.assertRaisesRegex(ValueError,
+                                    'unknown vector name bad_n'):
             ocb_pysat.add_ocb_to_data(self.test_inst, "latitude", "mlt",
                                       evar_names=['bad'],
                                       vector_names={'bad':
@@ -590,6 +600,11 @@ class TestPysatCustMethods(unittest.TestCase):
         self.utils = TestPysatUtils("test_ocb_metadata")
         self.utils.setUp()
 
+        # Remove in 2020 when dropping support for 2.7
+        if version_info.major == 2:
+            self.assertRegex = self.assertRegexpMatches
+            self.assertRaisesRegex = self.assertRaisesRegexp
+
     def tearDown(self):
         self.utils.tearDown()
         del self.test_file, self.log_capture, self.test_inst, self.ocb
@@ -606,7 +621,7 @@ class TestPysatCustMethods(unittest.TestCase):
         """ Test adding ocb to pysat data with load using the loaded OCB object
         """
         self.test_inst.custom.attach(ocb_pysat.add_ocb_to_data, 'modify',
-                                     kwargs=self.cust_kwargs)
+                                     **self.cust_kwargs)
 
         self.test_load()
 
@@ -631,7 +646,7 @@ class TestPysatCustMethods(unittest.TestCase):
         self.cust_kwargs['instrument'] = 'image'
         self.cust_kwargs['hemisphere'] = 1
         self.test_inst.custom.attach(ocb_pysat.add_ocb_to_data, 'modify',
-                                     kwargs=self.cust_kwargs)
+                                     **self.cust_kwargs)
 
         self.test_load()
 
@@ -648,9 +663,9 @@ class TestPysatCustMethods(unittest.TestCase):
     def test_cust_add_ocb_to_data_evar(self):
         """ Test adding ocb to pysat with load including E-field variables
         """
-        self.cust_kwargs['evar_names'] = 'dummy1'
+        self.cust_kwargs['evar_names'] = ['dummy1']
         self.test_inst.custom.attach(ocb_pysat.add_ocb_to_data, 'modify',
-                                     kwargs=self.cust_kwargs)
+                                     **self.cust_kwargs)
 
         self.test_load()
 
@@ -669,9 +684,9 @@ class TestPysatCustMethods(unittest.TestCase):
         """ Test adding ocb to pysat with load including Curl E-field variables
         """
 
-        self.cust_kwargs['curl_evar_names'] = 'dummy2'
+        self.cust_kwargs['curl_evar_names'] = ['dummy2']
         self.test_inst.custom.attach(ocb_pysat.add_ocb_to_data, 'modify',
-                                     kwargs=self.cust_kwargs)
+                                     **self.cust_kwargs)
 
         self.test_load()
 
@@ -696,7 +711,7 @@ class TestPysatCustMethods(unittest.TestCase):
                                              'dat_name': 'vect',
                                              'dat_units': 'm/s'}}
         self.test_inst.custom.attach(ocb_pysat.add_ocb_to_data, 'modify',
-                                     kwargs=self.cust_kwargs)
+                                     **self.cust_kwargs)
 
         self.test_load()
 
@@ -726,7 +741,7 @@ class TestPysatCustMethods(unittest.TestCase):
                                              'dat_name': 'vect',
                                              'dat_units': 'm/s'}}
         self.test_inst.custom.attach(ocb_pysat.add_ocb_to_data, 'modify',
-                                     kwargs=self.cust_kwargs)
+                                     **self.cust_kwargs)
 
         self.test_load()
 
@@ -756,7 +771,7 @@ class TestPysatCustMethods(unittest.TestCase):
                                              'dat_units': 'm/s',
                                              'scale_func': None}}
         self.test_inst.custom.attach(ocb_pysat.add_ocb_to_data, 'modify',
-                                     kwargs=self.cust_kwargs)
+                                     **self.cust_kwargs)
         self.test_load()
 
         self.utils.added_keys = [kk for kk in self.test_inst.meta.keys()
@@ -788,7 +803,7 @@ class TestPysatCustMethods(unittest.TestCase):
                                              'dat_units': 'm/s',
                                              'scale_func': None}}
         self.test_inst.custom.attach(ocb_pysat.add_ocb_to_data, 'modify',
-                                     kwargs=self.cust_kwargs)
+                                     **self.cust_kwargs)
 
         self.test_load()
 
@@ -817,7 +832,7 @@ class TestPysatCustMethods(unittest.TestCase):
         self.cust_kwargs['instrument'] = 'image'
         self.cust_kwargs['hemisphere'] = 1
         self.test_inst.custom.attach(ocb_pysat.add_ocb_to_data, 'modify',
-                                     kwargs=self.cust_kwargs)
+                                     **self.cust_kwargs)
 
         self.test_load()
 
@@ -829,8 +844,8 @@ class TestPysatCustMethods(unittest.TestCase):
         """ Test failure of unknown mlat key in add_ocb_to_data in custom func
         """
 
-        with self.assertRaisesRegexp(ValueError,
-                                     'unknown magnetic latitude name mlat'):
+        with self.assertRaisesRegex(ValueError,
+                                    'unknown magnetic latitude name mlat'):
             ocb_pysat.add_ocb_to_data(self.test_inst, "mlat", "mlt",
                                       ocb=self.ocb)
 
@@ -839,10 +854,10 @@ class TestPysatCustMethods(unittest.TestCase):
         """
         self.cust_kwargs['mlt_name'] = 'bad'
         self.test_inst.custom.attach(ocb_pysat.add_ocb_to_data, 'modify',
-                                     kwargs=self.cust_kwargs)
+                                     **self.cust_kwargs)
 
-        with self.assertRaisesRegexp(ValueError,
-                                     'unknown magnetic local time name bad'):
+        with self.assertRaisesRegex(ValueError,
+                                    'unknown magnetic local time name bad'):
             self.test_load()
 
     def test_cust_add_ocb_to_data_bad_evar(self):
@@ -850,10 +865,10 @@ class TestPysatCustMethods(unittest.TestCase):
         """
         self.cust_kwargs['evar_names'] = ['bad']
         self.test_inst.custom.attach(ocb_pysat.add_ocb_to_data, 'modify',
-                                     kwargs=self.cust_kwargs)
+                                     **self.cust_kwargs)
 
-        with self.assertRaisesRegexp(ValueError,
-                                     'at least one unknown E field name'):
+        with self.assertRaisesRegex(ValueError,
+                                    'at least one unknown E field name'):
             self.test_load()
 
     def test_cust_add_ocb_to_data_bad_curl(self):
@@ -861,10 +876,10 @@ class TestPysatCustMethods(unittest.TestCase):
         """
         self.cust_kwargs['curl_evar_names'] = ['bad']
         self.test_inst.custom.attach(ocb_pysat.add_ocb_to_data, 'modify',
-                                     kwargs=self.cust_kwargs)
+                                     **self.cust_kwargs)
 
-        with self.assertRaisesRegexp(ValueError,
-                                     'at least one unknown E field name'):
+        with self.assertRaisesRegex(ValueError,
+                                    'at least one unknown E field name'):
             self.test_load()
 
     def test_cust_add_ocb_to_data_bad_vector_scale(self):
@@ -875,10 +890,10 @@ class TestPysatCustMethods(unittest.TestCase):
                                                     'dat_name': 'bad',
                                                     'dat_units': ''}}
         self.test_inst.custom.attach(ocb_pysat.add_ocb_to_data, 'modify',
-                                     kwargs=self.cust_kwargs)
+                                     **self.cust_kwargs)
 
-        with self.assertRaisesRegexp(ValueError,
-                                     'missing scaling function for: bad'):
+        with self.assertRaisesRegex(ValueError,
+                                    'missing scaling function for bad'):
             self.test_load()
 
     def test_cust_add_ocb_to_data_bad_vector_name(self):
@@ -890,7 +905,7 @@ class TestPysatCustMethods(unittest.TestCase):
                                                     'dat_name': 'bad',
                                                     'dat_units': ''}}
         self.test_inst.custom.attach(ocb_pysat.add_ocb_to_data, 'modify',
-                                     kwargs=self.cust_kwargs)
+                                     **self.cust_kwargs)
 
-        with self.assertRaisesRegexp(ValueError, 'unknown vector name bad_n'):
+        with self.assertRaisesRegex(ValueError, 'unknown vector name bad_n'):
             self.test_load()
