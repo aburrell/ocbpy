@@ -19,7 +19,7 @@ process and provides examples for usage.
    ocb_boundary_correction.rst
    supported_datasets.rst
    example.rst
-   
+   contributing.rst
 
 
 
