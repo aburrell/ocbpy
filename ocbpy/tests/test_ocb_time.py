@@ -147,7 +147,7 @@ class TestOCBTimeMethods(unittest.TestCase):
     def test_yyddd_to_date_failure(self):
         """ Test yyddd_to_date failure with non-string input
         """
-        with self.assertRaisesRegexp(ValueError, "YYDDD must be a string"):
+        with self.assertRaisesRegex(ValueError, "YYDDD must be a string"):
             ocb_time.yyddd_to_date(yyddd=101001)
 
     def test_datetime2hr(self):
