@@ -1,5 +1,5 @@
-Citing the OCBpy package and data sets
-======================================
+Citation Guide
+==============
 
 When publishing work that uses OCBpy, please cite both the package and the
 boundary data set.  Specifying which version of OCBpy used will also improve
@@ -8,16 +8,16 @@ the reproducibility of your presented results.
 OCBpy
 -----
 
-* Burrell, A. G. and G. Chisham. (2018). aburrell/ocbpy:
-  Beta Release (Version 0.2b1). Zenodo. doi:10.5281/zenodo.1217177.
+* Burrell, A. G., et al. (2020). aburrell/ocbpy:
+  Version 0.2.0. Zenodo. doi:10.5281/zenodo.1217177.
 
 .. code-block:: latex
    
     @Misc{ocbpy,
-          author = {Burrell, A. G. and Chisham, G.},
-	  title  = {aburrell/ocbpy: Beta Release},
-  	  year   = {2018},
-	  date   = {2018-04-12},
+          author = {Burrell, A. G. and Chisham, G. and Reistad, J. P.},
+	  title  = {aburrell/ocbpy: Version 0.2.0},
+  	  year   = {2020},
+	  date   = {2020-06-10},
 	  doi    = {10.5281/zenodo.1179230},
 	  url    = {http://doi.org/10.5281/zenodo.1217177},
 	  }
@@ -28,6 +28,8 @@ which may also be cited if a description of the package is desired.
 * Burrell, A. G., et al. (2018). Snakes on a spaceship — An overview of Python
   in heliophysics. Journal of Geophysical Research: Space Physics, 123,
   10,384–10,402. doi:10.1029/2018JA025877.
+
+.. include:: ../AUTHORS.rst
 
 IMAGE FUV Boundaries
 --------------------
