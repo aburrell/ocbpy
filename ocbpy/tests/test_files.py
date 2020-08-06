@@ -215,7 +215,11 @@ class TestFilesMethods(unittest.TestCase):
                                                   instrument=ii)
 
                 if ii in self.long_to_short.keys():
-                    if self.long_to_short[ii] is not None:
+                    if self.long_to_short[ii] is None:
+                        # This is necessary because setUp does not run
+                        # between subTests
+                        self.fname = None
+                    else:
                         self.fname = "{:s}_north".format(
                             self.long_to_short[ii])
                 else:
@@ -331,7 +335,11 @@ class TestFilesMethods(unittest.TestCase):
                                                   instrument=ii)
 
                 if ii in self.long_to_short.keys():
-                    if self.long_to_short[ii] is not None:
+                    if self.long_to_short[ii] is None:
+                        # This is necessary because setUp does not run
+                        # between subTests
+                        self.fname = None
+                    else:
                         self.fname = "{:s}_south".format(
                             self.long_to_short[ii])
                 else:
