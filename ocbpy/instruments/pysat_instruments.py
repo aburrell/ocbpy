@@ -178,8 +178,8 @@ def add_ocb_to_data(pysat_inst, mlat_name='', mlt_name='', evar_names=list(),
                 if vinit in vector_reqs:
                     if(vector_names[eattr][vinit] not in
                        pysat_inst.data.columns):
-                        raise ValueError("unknown vector name: " +
-                                         vector_names[eattr][vinit])
+                        raise ValueError("unknown vector name {:}".format(
+                            vector_names[eattr][vinit]))
                     else:
                         if vector_names[eattr][vinit] not in pysat_names:
                             pysat_names.append(vector_names[eattr][vinit])
