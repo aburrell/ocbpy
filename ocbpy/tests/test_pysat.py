@@ -626,10 +626,12 @@ class TestPysatCustMethods(unittest.TestCase):
     def test_cust_add_ocb_to_data_ocb_file(self):
         """ Test adding ocb to pysat data with load using the OCB file name
         """
-        self.test_inst.custom.add(ocb_pysat.add_ocb_to_data, 'modify',
-                                  mlat_name='latitude', mlt_name='mlt',
-                                  ocbfile=self.test_file, instrument='image',
-                                  hemisphere=1)
+        del self.cust_kwargs['ocb']
+        self.cust_kwargs['ocbfile'] = self.test_file
+        self.cust_kwargs['instrument'] = 'image'
+        self.cust_kwargs['hemisphere'] = 1
+        self.test_inst.custom.attach(ocb_pysat.add_ocb_to_data, 'modify',
+                                     kwargs=self.cust_kwargs)
 
         self.test_load()
 
