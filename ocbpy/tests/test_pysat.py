@@ -161,7 +161,7 @@ class TestPysatUtils(unittest.TestCase):
 @unittest.skipIf(not no_pysat, "pysat installed, cannot test failure")
 class TestPysatFailure(unittest.TestCase):
     def setUp(self):
-        """ Initialize, allowing use of python 2.7 """        
+        """ Initialize, allowing use of python 2.7 """
         # Remove in 2020 when dropping support for 2.7
         if version_info.major == 2:
             self.assertRaisesRegex = self.assertRaisesRegexp
