@@ -1,0 +1,22 @@
+[run]
+relative_files = True
+include = */ocbpy/*
+          */ocbpy/tests/*
+
+[paths]
+ocb_paths = ocbpy/
+            */lib/*/site-packages/ocbpy
+
+[report]
+omit = */lib/*/site-packages/*.py
+       */lib/*/site-packages/a*/*
+       */lib/*/site-packages/c*/*
+       */lib/*/site-packages/d*/*
+       */lib/*/site-packages/g*/*
+       */lib/*/site-packages/i*/*
+       */lib/*/site-packages/m*/*
+       */lib/*/site-packages/n*/*
+       */lib/*/site-packages/p*/*
+       */lib/*/site-packages/r*/*
+       */lib/*/site-packages/s*/*
+       */lib/*/site-packages/u*/*

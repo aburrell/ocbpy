@@ -3,20 +3,23 @@
    You can adapt this file completely to your liking, but it should at least
    contain the root `toctree` directive.
 
-Welcome to the ocbpy documentation
+Welcome to the OCBpy documentation
 ==================================
 
 This documentation describes the Open Closed field line Boundary (OCB) gridding
 process and provides examples for usage.
 
 .. toctree::
-   :maxdepth: 2
+   :maxdepth: -1
 
    overview.rst
+   citing.rst
    ocb_datasets.rst
    ocb_gridding.rst
+   ocb_boundary_correction.rst
    supported_datasets.rst
    example.rst
+   contributing.rst
 
 
 

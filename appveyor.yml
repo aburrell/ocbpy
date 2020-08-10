@@ -8,7 +8,7 @@ version: '{branch}-{build}'
 # Do not build on tags
 skip_tags: true
 
-# Masimum number of concurrent jobs for the project
+# Maximum number of concurrent jobs for the project
 max_jobs: 2
 
 #---------------------------------#
@@ -19,32 +19,66 @@ init:
   - ps: echo $env:TESTENV
 
 environment:
+  global:
+    WITH_COMPILER: 'cmd /E:ON /V:ON /C .\ci\appveyor-with-compiler.cmd'
+    BASH_CMD: "bash requirements.extra 0"
   matrix:
-    - PYTHON: "C:\\Python27"
-    - PYTHON: "C:\\Python34"
-    - PYTHON: "C:\\Python35"
-    - PYTHON: "C:\\Python36"
-    - PYTHON: "C:\\Python27-x64"
-      DISTUTILS_USE_SDK: "1"
-    - PYTHON: "C:\\Python34-x64"
-      DISTUTILS_USE_SDK: "1"
-    - PYTHON: "C:\\Python35-x64"
-    - PYTHON: "C:\\Python36-x64"
+    - job_name: P27-x32 basic
+      PYTHON: "C:\\Python27"
+      NUMPY: "numpy==1.15.4"
+    - job_name: P35-x32 basic
+      PYTHON: "C:\\Python35"
+      NUMPY: "numpy==1.15.4"
+    - job_name: P36-x32 basic
+      PYTHON: "C:\\Python36"
+      NUMPY: "numpy>=1.19.0"
+    - job_name: P37-x32 basic
+      PYTHON: "C:\\Python37"
+      NUMPY: "numpy>=1.19.0"
+    - job_name: P38-x32 basic
+      PYTHON: "C:\\Python38"
+      NUMPY: "numpy>=1.19.0"
+    - job_name: P27-x64 basic
+      PYTHON: "C:\\Python27-x64"
+      NUMPY: "numpy==1.15.4"
+    - job_name: P35-x64 basic
+      PYTHON: "C:\\Python35-x64"
+      NUMPY: "numpy==1.15.4"
+    - job_name: P36-x64 basic
+      PYTHON: "C:\\Python36-x64"
+      NUMPY: "numpy>=1.19.0"
+    - job_name: P37-x64 basic
+      PYTHON: "C:\\Python37-x64"
+      NUMPY: "numpy>=1.19.0"
+    - job_name: P38-x64 basic
+      PYTHON: "C:\\Python38-x64"
+      NUMPY: "numpy>=1.19.0"
+
+install:
+  - 'set PATH=%APPVEYOR_BUILD_FOLDER%;%PYTHON%//Scripts;%PATH%'
+  - '%PYTHON%\\python.exe -m pip install --upgrade pip'
+  - '%PYTHON%\\python.exe -m pip install wheel setuptools -rrequirements.txt'
+  - '%BASH_CMD%'
+  - '%PYTHON%\\python.exe setup.py install'
 
 test_script:
-  - "%PYTHON%\\python.exe setup.py test"
-
-after_test:
-  - "%PYTHON%\\python.exe setup.py bdist_wheel"
+  - "coverage run --rcfile=.coveragerc -m unittest discover"
 
 build: off
 configuration: Release
 
-install:
-  - '%PYTHON%\\python.exe -m pip install logbook wheel numpy setuptools'
+after_test:
+  - if($env:APPVEYOR_REPO_BRANCH == 'main') {
+    "%PYTHON%\\python.exe setup.py bdist_wheel"
+    }
 
-artifacts:
-  - path: dist/*
+for:
+-
+  branches:
+    only:
+      - main
+  artifacts:
+    - path: dist/*
 
 #matrix:
 #  allow_failures:
