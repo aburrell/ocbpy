@@ -2,7 +2,7 @@
 # -*- coding: utf-8 -*-
 # Copyright (C) 2017, AGB & GC
 # Full license can be found in License.md
-#-----------------------------------------------------------------------------
+# ----------------------------------------------------------------------------
 """ Functions that specify the boundary location as a function of MLT
 
 Functions
@@ -24,6 +24,7 @@ doi:10.5194/angeo-38-481-2020, 2020.
 import numpy as np
 
 from ocbpy.ocb_time import hr2rad
+
 
 def circular(mlt, r_add=0.0):
     """Return a circular boundary correction
@@ -134,12 +135,12 @@ def harmonic(mlt, instrument='ampere', method='median'):
 
     rad_mlt = hr2rad(mlt)
     r_corr = coeff[method][0] \
-                + coeff[method][1] * np.cos(rad_mlt+coeff[method][2]) \
-                + coeff[method][3] * np.sin(rad_mlt+coeff[method][4]) \
-                + coeff[method][5] * np.cos(2.0 * (rad_mlt+coeff[method][6])) \
-                + coeff[method][7] * np.sin(2.0 * (rad_mlt+coeff[method][8])) \
-                + coeff[method][9] * np.cos(3.0 * (rad_mlt+coeff[method][10])) \
-                + coeff[method][11] * np.sin(3.0 * (rad_mlt+coeff[method][12]))
+        + coeff[method][1] * np.cos(rad_mlt+coeff[method][2]) \
+        + coeff[method][3] * np.sin(rad_mlt+coeff[method][4]) \
+        + coeff[method][5] * np.cos(2.0 * (rad_mlt+coeff[method][6])) \
+        + coeff[method][7] * np.sin(2.0 * (rad_mlt+coeff[method][8])) \
+        + coeff[method][9] * np.cos(3.0 * (rad_mlt+coeff[method][10])) \
+        + coeff[method][11] * np.sin(3.0 * (rad_mlt+coeff[method][12]))
 
     # Because this is a poleward shift, return the negative of the correction
     return -r_corr

@@ -2,7 +2,7 @@
 # -*- coding: utf-8 -*-
 # Copyright (C) 2019, AGB
 # Full license can be found in License.md
-#-----------------------------------------------------------------------------
+# -----------------------------------------------------------------------------
 """ Tests the boundaries.dmsp_ssj_files functions"""
 from __future__ import absolute_import, unicode_literals
 
@@ -20,10 +20,10 @@ from ocbpy import boundaries
 
 no_ssj = False if hasattr(boundaries, 'dmsp_ssj_files') else True
 
+
 @unittest.skipIf(no_ssj,
                  "ssj_auroral_boundary not installed, cannot test routines")
 class TestSSJFetch(unittest.TestCase):
-
     def setUp(self):
         """ Initialize the test class
         """
@@ -89,7 +89,9 @@ class TestSSJFetch(unittest.TestCase):
                 temp = self.in_args[ii[0]]
                 self.in_args[ii[0]] = ii[1]
                 with self.assertRaisesRegex(ValueError, ii[2]):
-                    self.fetch_files = boundaries.dmsp_ssj_files.fetch_ssj_files(*self.in_args)
+                    self.fetch_files = \
+                        boundaries.dmsp_ssj_files.fetch_ssj_files(
+                            *self.in_args)
                 self.in_args[ii[0]] = temp
         del temp
 
@@ -100,7 +102,7 @@ class TestSSJFetch(unittest.TestCase):
 
         self.in_args[2] = "fake_dir"
         with self.assertRaisesRegexp(ValueError,
-                                    "can't find the output directory"):
+                                     "can't find the output directory"):
             self.fetch_files = boundaries.dmsp_ssj_files.fetch_ssj_files(
                 *self.in_args)
 
@@ -122,6 +124,7 @@ class TestSSJFetch(unittest.TestCase):
             self.fetch_files = boundaries.dmsp_ssj_files.fetch_ssj_files(
                 *self.in_args)
 
+
 @unittest.skipIf(no_ssj,
                  "ssj_auroral_boundary not installed, cannot test routines")
 class TestSSJCreate(unittest.TestCase):
@@ -130,10 +133,13 @@ class TestSSJCreate(unittest.TestCase):
         """ Initialize the test class"""
         self.ocb_dir = os.path.dirname(ocbpy.__file__)
         self.test_dir = os.path.join(self.ocb_dir, "tests")
+        self.base_file = "".join(["dmsp-f16_ssj_precipitating-electrons-ions",
+                                  "_20101231_v1.1.2"])
         self.comp_files = [os.path.join(self.test_dir, "test_data",
-    "dmsp-f16_ssj_precipitating-electrons-ions_20101231_v1.1.2_boundaries.csv")]
+                                        "{:s}_boundaries.csv".format(
+                                            self.base_file))]
         self.cdf_files = [os.path.join(self.test_dir, "test_data",
-            'dmsp-f16_ssj_precipitating-electrons-ions_20101231_v1.1.2.cdf')]
+                                       '{:s}.cdf'.format(self.base_file))]
         self.out_cols = ['mlat', 'mlt']
         self.out = list()
         self.lout = ''
@@ -151,8 +157,9 @@ class TestSSJCreate(unittest.TestCase):
             for ff in self.out:
                 os.remove(ff)
 
-        del self.ocb_dir, self.out, self.test_dir, self.cdf_files, self.out_cols
-        del self.comp_files, self.log_capture, self.lout
+        del self.ocb_dir, self.out, self.test_dir, self.cdf_files
+        del self.comp_files, self.log_capture, self.lout, self.base_file
+        del self.out_cols
 
     @unittest.skipIf(sys.version_info.major == 2,
                      'Python 2.7 does not support subTest')
@@ -165,7 +172,9 @@ class TestSSJCreate(unittest.TestCase):
                     "unknown plot directory")]:
             with self.subTest(ii=list(ii)):
                 with self.assertRaisesRegex(ValueError, ii[1]):
-                    self.out = boundaries.dmsp_ssj_files.create_ssj_boundary_files(self.cdf_files, **ii[0])
+                    self.out = \
+                        boundaries.dmsp_ssj_files.create_ssj_boundary_files(
+                            self.cdf_files, **ii[0])
 
     @unittest.skipIf(sys.version_info.major == 3,
                      'Already tested, remove in 2020')
@@ -243,6 +252,8 @@ class TestSSJCreate(unittest.TestCase):
 
         self.out = boundaries.dmsp_ssj_files.create_ssj_boundary_files(
             self.cdf_files, out_dir=self.test_dir)
+
+        print(len(self.out))
 
         self.assertTrue(len(self.out), len(self.comp_files))
 
@@ -323,6 +334,7 @@ class TestSSJCreate(unittest.TestCase):
         except IndexError as ierr:
             print("Allowed failure: {:}".format(ierr))
 
+
 @unittest.skipIf(no_ssj,
                  "ssj_auroral_boundary not installed, cannot test routines")
 class TestSSJFormat(unittest.TestCase):
@@ -344,7 +356,9 @@ class TestSSJFormat(unittest.TestCase):
                            os.path.join(self.test_dir,
                                         "dmsp-ssj_south_out.ocb")}
         self.csv_files = [os.path.join(self.test_dir,
-    "dmsp-f16_ssj_precipitating-electrons-ions_20101231_v1.1.2_boundaries.csv")]
+                                       "".join(["dmsp-f16_ssj_precipitating",
+                                                "-electrons-ions_20101231_",
+                                                "v1.1.2_boundaries.csv"]))]
         self.out = list()
         self.ldtype = [int, '|U50', '|U50', float, float, float,
                        float, float, float, float, float]
@@ -511,8 +525,8 @@ class TestSSJFetchFormat(unittest.TestCase):
         del self.comp_files, self.ldtype
 
     def test_fetch_format_ssj_boundary_files_default(self):
-        """Test the default implementation of fetch_format_ssj_boundary_files"""
-
+        """Test the default implementation of fetch_format_ssj_boundary_files
+        """
         self.out = boundaries.dmsp_ssj_files.fetch_format_ssj_boundary_files(
             *self.in_args)
 
@@ -540,7 +554,8 @@ class TestSSJFetchFormat(unittest.TestCase):
         del test_out, temp_out, fname, comp_row, fout
 
     def test_fetch_format_ssj_boundary_files_no_rm_temp(self):
-        """ Test fetch_format_ssj_boundary_files without removing temp files"""
+        """ Test fetch_format_ssj_boundary_files without removing temp files
+        """
 
         self.out = boundaries.dmsp_ssj_files.fetch_format_ssj_boundary_files(
             *self.in_args, rm_temp=False)
@@ -595,22 +610,28 @@ class TestSSJFetchFormat(unittest.TestCase):
         del test_out, temp_out, fname, comp_row, fout, nsat
 
     def test_fetch_format_ssj_boundary_files_time_failure(self):
-        """ Test fetch_format_ssj_boundary_files time failure """
+        """ Test fetch_format_ssj_boundary_files time failure
+        """
 
         self.in_args[0] = dt.datetime(1000, 1, 1)
         self.in_args[1] = dt.datetime(1000, 1, 2)
 
         with self.assertRaisesRegex(ValueError, "unable to download"):
-            self.out = boundaries.dmsp_ssj_files.fetch_format_ssj_boundary_files(*self.in_args)
+            self.out = \
+                boundaries.dmsp_ssj_files.fetch_format_ssj_boundary_files(
+                    *self.in_args)
 
     def test_fetch_format_ssj_boundary_files_dir_failure(self):
-        """ Test fetch_format_ssj_boundary_files output directory failure """
+        """ Test fetch_format_ssj_boundary_files output directory failure
+        """
 
         self.in_args[2] = "/fake_dir/"
 
         with self.assertRaisesRegex(ValueError,
                                     "can't find the output directory"):
-            self.out = boundaries.dmsp_ssj_files.fetch_format_ssj_boundary_files(*self.in_args)
+            self.out = \
+                boundaries.dmsp_ssj_files.fetch_format_ssj_boundary_files(
+                    *self.in_args)
 
 
 @unittest.skipIf(not no_ssj,

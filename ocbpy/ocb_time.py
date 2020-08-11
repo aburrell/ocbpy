@@ -2,11 +2,11 @@
 # -*- coding: utf-8 -*-
 # Copyright (C) 2017, AGB & GC
 # Full license can be found in License.md
-#-----------------------------------------------------------------------------
+# ----------------------------------------------------------------------------
 """Routines to convert from different file timekeeping methods to datetime
 
 Functions
--------------------------------------------------------------------------------
+---------
 get_datetime_fmt_len(datetime_fmt)
     Gets the length of a string line needed to hold a specified datetime format
 year_soy_to_datetime(yyyy, soy)
@@ -33,8 +33,8 @@ fix_range(values, max_val, min_val)
     Ensure cyclic values lie within a specified range
 
 Moduleauthor
--------------------------------------------------------------------------------
-Angeline G. Burrell (AGB), 15 April 2017, University of Texas, Dallas (UTDallas)
+------------
+Angeline G. Burrell (AGB), 15 April 2017, University of Texas, Dallas
 
 """
 
@@ -76,24 +76,24 @@ def get_datetime_fmt_len(datetime_fmt):
 
     return str_len
 
+
 def year_soy_to_datetime(yyyy, soy):
     """Converts year and soy to datetime
 
     Parameters
-    -----------
+    ----------
     yyyy : (int)
         4 digit year
     soy : (float)
         seconds of year
 
     Returns
-    ---------
+    -------
     dtime : (dt.datetime)
         datetime object
 
     """
-    import numpy as np
-                
+
     # Calcuate doy, hour, min, seconds of day
     ss = soy / 86400.0
     ddd = np.floor(ss)
@@ -105,20 +105,22 @@ def year_soy_to_datetime(yyyy, soy):
     mm = np.floor(ss)
 
     ss = soy - ddd * 86400.0 - hh * 3600.0 - mm * 60.0
-    
+
     # Define format
-    stime = "{:d}-{:.0f}-{:.0f}-{:.0f}-{:.0f}".format(yyyy, ddd + 1, hh, mm, ss)
+    stime = "{:d}-{:.0f}-{:.0f}-{:.0f}-{:.0f}".format(yyyy, ddd + 1, hh, mm,
+                                                      ss)
 
     # Convert to datetime
     dtime = dt.datetime.strptime(stime, "%Y-%j-%H-%M-%S")
 
     return dtime
 
+
 def yyddd_to_date(yyddd):
     """ Convert from years since 1900 and day of year to datetime
 
     Parameters
-    -----------
+    ----------
     yyddd : (str)
         String containing years since 1900 and day of year
         (e.g. 100126 = 2000-05-5).
@@ -143,8 +145,9 @@ def yyddd_to_date(yyddd):
 
     return dtime
 
-def convert_time(year=None, soy=None, yyddd=None, sod=None, date=None, tod=None,
-                 datetime_fmt="%Y-%m-%d %H:%M:%S"):
+
+def convert_time(year=None, soy=None, yyddd=None, sod=None, date=None,
+                 tod=None, datetime_fmt="%Y-%m-%d %H:%M:%S"):
     """ Convert to datetime from multiple time formats
 
     Parameters
@@ -166,15 +169,14 @@ def convert_time(year=None, soy=None, yyddd=None, sod=None, date=None, tod=None,
         String containing time of day information or None if not in date-time
         format (default=None)
     datetime_fmt : (str)
-        String with the date-time or date format.  (default='%Y-%m-%d %H:%M:%S')
+        String with the date-time or date format (default='%Y-%m-%d %H:%M:%S')
 
     Returns
-    --------
+    -------
     dtime : (datetime)
         Datetime object
 
     """
-    import numpy as np
 
     try:
         if year is not None and soy is not None:
@@ -189,7 +191,8 @@ def convert_time(year=None, soy=None, yyddd=None, sod=None, date=None, tod=None,
                     ifmt = datetime_fmt.upper().find("YYDDD")
                     if ifmt >= 0:
                         old_fmt = datetime_fmt[ifmt:ifmt+5]
-                        datetime_fmt = datetime_fmt.replace(old_fmt, "%Y-%m-%d")
+                        datetime_fmt = datetime_fmt.replace(old_fmt,
+                                                            "%Y-%m-%d")
                     else:
                         datetime_fmt = "%Y-%m-%d {:s}".format(datetime_fmt)
             if tod is None:
@@ -202,7 +205,7 @@ def convert_time(year=None, soy=None, yyddd=None, sod=None, date=None, tod=None,
                         datetime_fmt = datetime_fmt[:time_loc]
             else:
                 str_time = "{:s} {:s}".format(date, tod)
-                
+
             dtime = dt.datetime.strptime(str_time, datetime_fmt)
 
             if sod is not None:
@@ -226,6 +229,7 @@ def convert_time(year=None, soy=None, yyddd=None, sod=None, date=None, tod=None,
 
     return dtime
 
+
 def deg2hr(lon):
     """ Convert from degrees to hours
 
@@ -242,9 +246,10 @@ def deg2hr(lon):
     """
 
     lon = np.asarray(lon)
-    lt = lon / 15.0 # 12 hr/180 deg = 1/15 hr/deg
+    lt = lon / 15.0  # 12 hr/180 deg = 1/15 hr/deg
 
     return lt
+
 
 def hr2deg(lt):
     """ Convert from degrees to hours
@@ -262,9 +267,10 @@ def hr2deg(lt):
     """
 
     lt = np.asarray(lt)
-    lon = lt * 15.0 # 180 deg/12 hr = 15 deg/hr
+    lon = lt * 15.0  # 180 deg/12 hr = 15 deg/hr
 
     return lon
+
 
 def hr2rad(lt):
     """ Convert from hours to radians
@@ -286,6 +292,7 @@ def hr2rad(lt):
 
     return lon
 
+
 def rad2hr(lon):
     """ Convert from radians to hours
 
@@ -306,6 +313,7 @@ def rad2hr(lon):
 
     return lt
 
+
 def datetime2hr(dtime):
     """ Calculate hours of day from datetime
 
@@ -325,7 +333,7 @@ def datetime2hr(dtime):
         + (dtime.second + dtime.microsecond * 1.0e-6) / 3600.0
 
     return uth
-    
+
 
 def slt2glon(slt, dtime):
     """ Convert from solar local time to geographic longitude
@@ -381,6 +389,7 @@ def glon2slt(glon, dtime):
     slt = fix_range(slt, 0.0, 24.0)
 
     return slt
+
 
 def fix_range(values, min_val, max_val, val_range=None):
     """ Ensure cyclic values lie below the maximum and at or above the mininum

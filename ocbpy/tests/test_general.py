@@ -2,7 +2,7 @@
 # -*- coding: utf-8 -*-
 # Copyright (C) 2017, AGB & GC
 # Full license can be found in License.md
-#-----------------------------------------------------------------------------
+# -----------------------------------------------------------------------------
 """ Tests the ocb_scaling class and functions
 """
 from __future__ import absolute_import, unicode_literals
@@ -10,12 +10,12 @@ from __future__ import absolute_import, unicode_literals
 import datetime as dt
 import logging
 from io import StringIO
-import numpy as np
 import os
 import unittest
 
 import ocbpy
 import ocbpy.instruments.general as ocb_igen
+
 
 class TestGeneralFileTestMethods(unittest.TestCase):
     def setUp(self):
@@ -44,11 +44,11 @@ class TestGeneralFileTestMethods(unittest.TestCase):
         """ Test the success condition for one of the test_data files"""
         self.rstat = ocb_igen.test_file(self.test_file)
         self.assertTrue(self.rstat)
-        
+
     def test_file_test_not_file(self):
         """ Test the general file testing routine with a bad filename """
         self.lwarn = u"name provided is not a file"
-        
+
         self.rstat = ocb_igen.test_file("/")
         self.lout = self.log_capture.getvalue()
 
@@ -58,7 +58,7 @@ class TestGeneralFileTestMethods(unittest.TestCase):
     def test_file_test_empty_file(self):
         """ Test the general file testing routine with a bad filename """
         self.lwarn = u'empty file'
-        
+
         # Create an empty file and read it in
         open(self.temp_output, 'a').close()
         self.rstat = ocb_igen.test_file(self.temp_output)
@@ -113,7 +113,7 @@ class TestGeneralLoadMethods(unittest.TestCase):
                           "r": 1.268, "time": u"23:24:53", "x": 0.437,
                           "x_1": -7.61, "x_2": 8.485, "y": 6.999, "y_1": 5.564,
                           "y_2": 8.433,
-                          "datetime": dt.datetime(2010,12,31,23,24,53)}}
+                          "datetime": dt.datetime(2010, 12, 31, 23, 24, 53)}}
         self.load_kwargs = {'gft_kwargs': dict(), 'hsplit': None,
                             'datetime_cols': list(), 'datetime_fmt': None,
                             'int_cols': list(), 'str_cols': list(),
@@ -350,6 +350,6 @@ class TestGeneralLoadMethods(unittest.TestCase):
 
         # Test the datetime
         self.assertEqual(self.out[1]['datetime'][-1],
-                         dt.datetime(2000,5,9,11,33,22))
+                         dt.datetime(2000, 5, 9, 11, 33, 22))
 
         del ktest

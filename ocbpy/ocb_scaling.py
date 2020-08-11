@@ -1,7 +1,7 @@
 #!/usr/bin/env python# -*- coding: utf-8 -*-
 # Copyright (C) 2017, AGB & GC
 # Full license can be found in License.md
-#-----------------------------------------------------------------------------
+# ----------------------------------------------------------------------------
 """Scale data affected by magnetic field direction or electric field
 
 Routines
@@ -20,8 +20,7 @@ VectorData(object)
 
 Moduleauthor
 ------------
-Angeline G. Burrell (AGB), 12 May 2017, University of Texas, Dallas (UTDallas)
-Jone P. Reistad (JPR), 27 Mar 2020, University of Bergen (UoB)
+Angeline G. Burrell (AGB), 12 May 2017, University of Texas, Dallas
 
 References
 ----------
@@ -36,79 +35,6 @@ import numpy as np
 
 import ocbpy
 
-def normal_evar(evar, unscaled_r, scaled_r):
-    """ Normalise a variable proportional to the electric field
-
-    Parameters
-    ----------
-    evar : (float or array)
-        Variable related to electric field (e.g. velocity)
-    unscaled_r : (float or array)
-        Radius of polar cap in degrees
-    scaled_r : (float or array)
-        Radius of normalised OCB polar cap in degrees
-
-    Returns
-    -------
-    nvar : (float or array)
-        Normalised variable
-
-    Notes
-    -----
-    Assumes that the cross polar cap potential is fixed across the polar cap
-    regardless of the radius of the Open Closed field line Boundary.  This is
-    commonly assumed when looking at statistical patterns that control the IMF
-    (which accounts for dayside reconnection) and assume that the nightside
-    reconnection influence is averaged out over the averaged period.
-
-    References
-    ----------
-    Chisham, G. (2017), A new methodology for the development of high‐latitude
-    ionospheric climatologies and empirical models, Journal of Geophysical
-    Research: Space Physics, doi:10.1002/2016JA023235.
-
-    """
-
-    nvar = evar * unscaled_r / scaled_r
-
-    return nvar
-
-def normal_curl_evar(curl_evar, unscaled_r, scaled_r):
-    """ Normalise a variable proportional to the curl of the electric field
-
-    Parameters
-    ----------
-    curl_evar : (float or array)
-        Variable related to electric field (e.g. vorticity)
-    unscaled_r : (float or array)
-        Radius of polar cap in degrees
-    scaled_r : (float or array)
-        Radius of normalised OCB polar cap in degrees
-
-    Returns
-    -------
-    nvar : (float or array)
-        Normalised variable
-
-    Notes
-    -----
-    Assumes that the cross polar cap potential is fixed across the polar cap
-    regardless of the radius of the Open Closed field line Boundary.  This is
-    commonly assumed when looking at statistical patterns that control the IMF
-    (which accounts for dayside reconnection) and assume that the nightside
-    reconnection influence is averaged out over the averaged period.
-
-    References
-    ----------
-    Chisham, G. (2017), A new methodology for the development of high‐latitude
-    ionospheric climatologies and empirical models, Journal of Geophysical
-    Research: Space Physics, doi:10.1002/2016JA023235.
-
-    """
-
-    nvar = curl_evar * (unscaled_r / scaled_r)**2
-
-    return nvar
 
 class VectorData(object):
     """ Object containing a vector data point
@@ -206,16 +132,6 @@ class VectorData(object):
     -------
     set_ocb(ocb, scale_func=None)
         Set the ocb coordinates and vector values
-    define_quadrants()
-        Define the OCB pole and vector AACGM quadrant
-    scale_vector()
-        Scale the data vector into OCB coordinates
-    calc_ocb_polar_angle()
-        calculate the OCB north azimuth angle
-    calc_ocb_vec_sign(north=False, east=False, quads=dict())
-        calculate the signs of the OCB scaled vector components
-    calc_vec_pole_angle(angular_res=1.0e-3)
-        calculate the vector angle of the vector-poles triangle
 
     Notes
     -----
@@ -246,8 +162,8 @@ class VectorData(object):
         aacgm_n : (float or array-like)
             AACGM North pointing vector (positive towards North) (default=0.0)
         aacgm_e : (float or array-like)
-            AACGM East pointing vector (completes right-handed coordinate system
-            (default = 0.0)
+            AACGM East pointing vector (completes right-handed coordinate
+            system (default=0.0)
         aacgm_z : (float or array-like)
             AACGM Vertical pointing vector (positive down) (default=0.0)
         aacgm_mag : (float or array-like)
@@ -272,7 +188,7 @@ class VectorData(object):
         # Assign the vector data name and units
         self.dat_name = dat_name
         self.dat_units = dat_units
-        
+
         # Assign the data and OCB indices
         self.dat_ind = np.asarray(dat_ind)
         self.ocb_ind = np.asarray(ocb_ind)
@@ -296,7 +212,7 @@ class VectorData(object):
         if len(vshapes) > 1 and min(vshapes) == ():
             if self.dat_ind.shape == ():
                 raise ValueError('data index shape must match vector shape')
-            
+
             # Vector input needs to be the same length
             if self.aacgm_n.shape == ():
                 self.aacgm_n = np.full(shape=vshape, fill_value=self.aacgm_n)
@@ -325,10 +241,12 @@ class VectorData(object):
         self.r_corr = np.asarray(r_corr)
 
         if self.ocb_lat.shape == () and self.ocb_ind.shape != ():
-            self.ocb_lat = np.full(shape=self.ocb_ind.shape, fill_value=ocb_lat)
+            self.ocb_lat = np.full(shape=self.ocb_ind.shape,
+                                   fill_value=ocb_lat)
 
         if self.ocb_mlt.shape == () and self.ocb_ind.shape != ():
-            self.ocb_mlt = np.full(shape=self.ocb_ind.shape, fill_value=ocb_mlt)
+            self.ocb_mlt = np.full(shape=self.ocb_ind.shape,
+                                   fill_value=ocb_mlt)
 
         if self.r_corr.shape == () and self.ocb_ind.shape != ():
             self.r_corr = np.full(shape=self.ocb_ind.shape, fill_value=r_corr)
@@ -371,7 +289,7 @@ class VectorData(object):
     def __repr__(self):
         """ Provide readable representation of the DataVector object
         """
-        
+
         out = "Vector data:"
         if self.dat_name is not None:
             out += " {:s}".format(self.dat_name)
@@ -417,11 +335,11 @@ class VectorData(object):
         out += "\n-------------------------------------------\n"
         if self.aacgm_mag.shape == () and self.ocb_mag.shape == ():
             out += "Value: Magnitude [N, E, Z]\n"
-            out += "AACGM: {:.3g} [{:.3g},".format(self.aacgm_mag, self.aacgm_n)
-            out += " {:.3g}, {:.3g}]\n".format(self.aacgm_e, self.aacgm_z)
+            out += "AACGM: {:.3g} [{:.3g}".format(self.aacgm_mag, self.aacgm_n)
+            out += ", {:.3g}, {:.3g}]\n".format(self.aacgm_e, self.aacgm_z)
             if not np.isnan(self.ocb_mag):
-                out += "  OCB: {:.3g} [{:.3g},".format(self.ocb_mag, self.ocb_n)
-                out += " {:.3g}, {:.3g}]\n".format(self.ocb_e, self.ocb_z)
+                out += "  OCB: {:.3g} [{:.3g}".format(self.ocb_mag, self.ocb_n)
+                out += ", {:.3g}, {:.3g}]\n".format(self.ocb_e, self.ocb_z)
         else:
             out += "Value: Magnitude [N, E, Z] Index\n"
             for i, mag in enumerate(self.ocb_mag):
@@ -438,9 +356,9 @@ class VectorData(object):
                 if not np.isnan(mag):
                     out += "  OCB: {:.3g} [{:.3g}, ".format(mag, self.ocb_n[i])
                     out += "{:.3g}, ".format(self.ocb_e[i])
-                    out += "{:.3g}] {:d}\n".format(self.ocb_z[i],
-                                self.ocb_ind if self.ocb_ind.shape == ()
-                                else self.ocb_ind[i])
+                    out += "{:.3g}] {:d}\n".format(
+                        self.ocb_z[i], self.ocb_ind if self.ocb_ind.shape == ()
+                        else self.ocb_ind[i])
 
         out += "\n-------------------------------------------\n"
         if self.scale_func is None:
@@ -453,7 +371,7 @@ class VectorData(object):
     def __str__(self):
         """ Provide readable representation of the DataVector object
         """
-        
+
         out = self.__repr__()
         return out
 
@@ -523,7 +441,8 @@ class VectorData(object):
             # can't call this function with multiple OCBs
             if self.ocb_ind.shape == ():
                 (self.ocb_lat, self.ocb_mlt,
-                 self.r_corr) = ocb.normal_coord(self.aacgm_lat, self.aacgm_mlt)
+                 self.r_corr) = ocb.normal_coord(self.aacgm_lat,
+                                                 self.aacgm_mlt)
             else:
                 for i, ocb.rec_ind in enumerate(self.ocb_ind):
                     if self.ocb_ind.shape == self.dat_ind.shape:
@@ -552,12 +471,12 @@ class VectorData(object):
         # Set the OCB and Vector quadrants
         if np.any(~np.isnan(self.pole_angle)):
             self.define_quadrants()
-        
+
             # Set the scaling function
             if self.scale_func is None:
                 if scale_func is None:
-                    # This is not necessarily a bad thing, if the value does not
-                    # need to be scaled.
+                    # This is not necessarily a bad thing, if the value does
+                    # not need to be scaled.
                     ocbpy.logger.info("no scaling function provided")
                 else:
                     self.scale_func = scale_func
@@ -698,7 +617,7 @@ class VectorData(object):
             self.vec_quad[quad4_mask] = 4
 
         return
-        
+
     def scale_vector(self):
         """ Normalise a variable proportional to the curl of the electric field.
 
@@ -782,7 +701,6 @@ class VectorData(object):
                     self.ocb_n[ns_mask] = self.aacgm_n[ns_mask]
                     self.ocb_e[ns_mask] = self.aacgm_e[ns_mask]
                     self.ocb_z[ns_mask] = self.aacgm_z[ns_mask]
-                    
             else:
                 if self.aacgm_n.shape == ():
                     self.ocb_n = np.full(shape=self.ocb_n.shape,
@@ -798,12 +716,15 @@ class VectorData(object):
                                              self.aacgm_z, self.unscaled_r,
                                              self.scaled_r))
                 else:
-                    self.ocb_n[ns_mask] = self.scale_func(self.aacgm_n[ns_mask],
-                            self.unscaled_r[ns_mask], self.scaled_r)
-                    self.ocb_e[ns_mask] = self.scale_func(self.aacgm_e[ns_mask],
-                            self.unscaled_r[ns_mask], self.scaled_r)
-                    self.ocb_z[ns_mask] = self.scale_func(self.aacgm_z[ns_mask],
-                            self.unscaled_r[ns_mask], self.scaled_r)
+                    self.ocb_n[ns_mask] = self.scale_func(
+                        self.aacgm_n[ns_mask], self.unscaled_r[ns_mask],
+                        self.scaled_r)
+                    self.ocb_e[ns_mask] = self.scale_func(
+                        self.aacgm_e[ns_mask], self.unscaled_r[ns_mask],
+                        self.scaled_r)
+                    self.ocb_z[ns_mask] = self.scale_func(
+                        self.aacgm_z[ns_mask], self.unscaled_r[ns_mask],
+                        self.scaled_r)
 
             # Determine if the measurement is on or between the poles
             # This does not affect the vertical direction
@@ -826,7 +747,7 @@ class VectorData(object):
             if(np.any(self.ocb_quad[norm_mask] == 0)
                or np.any(self.vec_quad[norm_mask] == 0)):
                 self.define_quadrants()
-    
+
             # Get the unscaled 2D vector magnitude and
             # calculate the AACGM north azimuth in degrees
             if self.aacgm_n.shape == ():
@@ -843,7 +764,7 @@ class VectorData(object):
 
             # Get the sign of the North and East components
             vsigns = self.calc_ocb_vec_sign(north=True, east=True)
-        
+
             # Scale the vector along the OCB north and account for
             # any changes associated with adjusting the size of the polar cap
             if self.scale_func is not None:
@@ -947,7 +868,7 @@ class VectorData(object):
                                        where=nan_mask)))
         pmn_mask = (((np.less_equal(self.aacgm_naz, self.pole_angle,
                                     where=nan_mask)
-                      &  (quads[2][4] | quads[2][2] | quads[1][1]))
+                      & (quads[2][4] | quads[2][2] | quads[1][1]))
                      | (np.greater(self.aacgm_naz, self.pole_angle - 90.0,
                                    where=nan_mask)
                         & (quads[4][1] | quads[4][3] | quads[3][4]
@@ -961,10 +882,10 @@ class VectorData(object):
                       & (quads[1][2] | quads[2][1] | quads[2][3]))
                      | ((quads[4][4] | quads[4][2] | quads[3][1] | quads[3][3]
                          | quads[1][3])
-                        & np.less_equal(self.aacgm_naz, 180.0 - self.pole_angle,
-                                        where=nan_mask)))
+                        & np.less_equal(self.aacgm_naz, 180.0
+                                        - self.pole_angle, where=nan_mask)))
                     & ~nmp_mask & ~pmn_mask & ~npp_mask)
-        mop_mask = ((((quads[3][1] | quads[3][3] | quads[4][4] | quads [4][2]
+        mop_mask = ((((quads[3][1] | quads[3][3] | quads[4][4] | quads[4][2]
                        | quads[1][3])
                       & np.greater(self.aacgm_naz, 180.0 - self.pole_angle,
                                    where=nan_mask))
@@ -975,7 +896,8 @@ class VectorData(object):
         omp_mask = (np.less_equal(self.aacgm_naz, self.pole_angle - 90.0,
                                   where=nan_mask)
                     & (quads[3][4] | quads[3][2] | quads[4][1] | quads[4][3])
-                    & ~nmp_mask & ~pmn_mask & ~npp_mask & ~omm_mask & ~mop_mask)
+                    & ~nmp_mask & ~pmn_mask & ~npp_mask & ~omm_mask
+                    & ~mop_mask)
 
         # Calculate OCB polar angle based on quadrants and other angles
         if np.any(nmp_mask):
@@ -996,8 +918,8 @@ class VectorData(object):
             if ocb_naz.shape == ():
                 ocb_naz = self.aacgm_naz + self.pole_angle
             else:
-                 ocb_naz[npp_mask] = (self.aacgm_naz
-                                      + self.pole_angle)[npp_mask]
+                ocb_naz[npp_mask] = (self.aacgm_naz
+                                     + self.pole_angle)[npp_mask]
 
         if np.any(omm_mask):
             if ocb_naz.shape == ():
@@ -1020,7 +942,7 @@ class VectorData(object):
                                      + self.aacgm_naz)[omp_mask]
 
         return ocb_naz
-    
+
     def calc_ocb_vec_sign(self, north=False, east=False, quads=dict()):
         """ Get the sign of the North and East components
 
@@ -1035,7 +957,7 @@ class VectorData(object):
             and Vector quadrants. (default=dict())
 
         Requires
-        ----------
+        --------
         self.ocb_quad : (int or array-like)
             OCB pole quadrant
         self.vec_quad : (int or array-like)
@@ -1048,7 +970,8 @@ class VectorData(object):
         Returns
         -------
         vsigns : (dict)
-            Dictionary with keys 'north' and 'east' containing the desired signs
+            Dictionary with keys 'north' and 'east' containing the desired
+            signs
 
         Raises
         ------
@@ -1112,20 +1035,22 @@ class VectorData(object):
                      | (quads[2][3] & np.greater(self.aacgm_naz, minus_pole,
                                                  where=nan_mask)))
             mmask = ((((quads[1][2] | quads[2][1])
-                       & np.greater(self.aacgm_naz, minus_pole, where=nan_mask))
+                       & np.greater(self.aacgm_naz, minus_pole,
+                                    where=nan_mask))
                       | (quads[1][4] & np.greater(self.aacgm_naz, pole_plus,
                                                   where=nan_mask))
                       | ((quads[4][1] | quads[3][2])
                          & np.less_equal(self.aacgm_naz, pole_minus,
                                          where=nan_mask))
-                      | (quads[2][3] & np.less_equal(self.aacgm_naz, minus_pole,
+                      | (quads[2][3] & np.less_equal(self.aacgm_naz,
+                                                     minus_pole,
                                                      where=nan_mask))
                       | ((quads[4][3] | quads[3][4])
                          | np.greater(self.aacgm_naz, pole_minus,
                                       where=nan_mask))
                       | quads[1][3] | quads[2][4] | quads[3][1] | quads[4][2])
                      & ~pmask)
-            
+
             if np.any(pmask):
                 if vsigns["north"].shape == ():
                     vsigns["north"] = 1
@@ -1173,9 +1098,9 @@ class VectorData(object):
                     vsigns["east"] = 1
                 else:
                     vsigns["east"][pmask] = 1
-    
+
             if np.any(mmask):
-                if  vsigns["east"].shape == ():
+                if vsigns["east"].shape == ():
                     vsigns["east"] = -1
                 else:
                     vsigns["east"][mmask] = -1
@@ -1278,16 +1203,18 @@ class VectorData(object):
         del_ocb = np.arctan2(np.sqrt((np.cos(np.radians(self.ocb_aacgm_lat))
                                       * np.sin(del_long))**2
                                      + (np.cos(np.radians(self.aacgm_lat))
-                                        * np.sin(np.radians(self.ocb_aacgm_lat))
+                                        * np.sin(
+                                            np.radians(self.ocb_aacgm_lat))
                                         - np.sin(np.radians(self.aacgm_lat))
-                                        * np.cos(np.radians(self.ocb_aacgm_lat))
+                                        * np.cos(
+                                            np.radians(self.ocb_aacgm_lat))
                                         * np.cos(del_long))**2),
                              np.sin(np.radians(self.aacgm_lat))
                              * np.sin(np.radians(self.ocb_aacgm_lat))
                              + np.cos(np.radians(self.aacgm_lat))
                              * np.cos(np.radians(self.ocb_aacgm_lat))
                              * np.cos(del_long))
-        
+
         # Use the half-angle formula to get the pole angle
         sum_sides = 0.5 * (del_vect + del_ocb + del_pole)
         half_angle = np.sqrt(np.sin(sum_sides) * np.sin(sum_sides - del_pole)
@@ -1300,6 +1227,83 @@ class VectorData(object):
                 2.0 * np.arccos(half_angle[update_mask]))
 
         return
+
+
+def normal_evar(evar, unscaled_r, scaled_r):
+    """ Normalise a variable proportional to the electric field
+
+    Parameters
+    ----------
+    evar : (float or array)
+        Variable related to electric field (e.g. velocity)
+    unscaled_r : (float or array)
+        Radius of polar cap in degrees
+    scaled_r : (float or array)
+        Radius of normalised OCB polar cap in degrees
+
+    Returns
+    -------
+    nvar : (float or array)
+        Normalised variable
+
+    Notes
+    -----
+    Assumes that the cross polar cap potential is fixed across the polar cap
+    regardless of the radius of the Open Closed field line Boundary.  This is
+    commonly assumed when looking at statistical patterns that control the IMF
+    (which accounts for dayside reconnection) and assume that the nightside
+    reconnection influence is averaged out over the averaged period.
+
+    References
+    ----------
+    Chisham, G. (2017), A new methodology for the development of high‐latitude
+    ionospheric climatologies and empirical models, Journal of Geophysical
+    Research: Space Physics, doi:10.1002/2016JA023235.
+
+    """
+
+    nvar = evar * unscaled_r / scaled_r
+
+    return nvar
+
+
+def normal_curl_evar(curl_evar, unscaled_r, scaled_r):
+    """ Normalise a variable proportional to the curl of the electric field
+
+    Parameters
+    ----------
+    curl_evar : (float or array)
+        Variable related to electric field (e.g. vorticity)
+    unscaled_r : (float or array)
+        Radius of polar cap in degrees
+    scaled_r : (float or array)
+        Radius of normalised OCB polar cap in degrees
+
+    Returns
+    -------
+    nvar : (float or array)
+        Normalised variable
+
+    Notes
+    -----
+    Assumes that the cross polar cap potential is fixed across the polar cap
+    regardless of the radius of the Open Closed field line Boundary.  This is
+    commonly assumed when looking at statistical patterns that control the IMF
+    (which accounts for dayside reconnection) and assume that the nightside
+    reconnection influence is averaged out over the averaged period.
+
+    References
+    ----------
+    Chisham, G. (2017), A new methodology for the development of high‐latitude
+    ionospheric climatologies and empirical models, Journal of Geophysical
+    Research: Space Physics, doi:10.1002/2016JA023235.
+
+    """
+
+    nvar = curl_evar * (unscaled_r / scaled_r)**2
+
+    return nvar
+
 
 def hav(alpha):
     """ Formula for haversine
@@ -1319,6 +1323,7 @@ def hav(alpha):
     hav_alpha = np.sin(alpha * 0.5)**2
 
     return hav_alpha
+
 
 def archav(hav):
     """ Formula for the inverse haversine

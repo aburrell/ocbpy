@@ -1,5 +1,5 @@
 
-Load a general data file (DMSP)
+Load a general data file (DMSP SSIES)
 ---------------------------------------------
 DMSP SSIES provides commonly used polar data, which can be accessed from
 `Madrigal <http://cedar.openmadrigal.org/>`_, which also has a Python API called

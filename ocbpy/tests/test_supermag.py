@@ -2,7 +2,7 @@
 # -*- coding: utf-8 -*-
 # Copyright (C) 2017, AGB & GC
 # Full license can be found in License.md
-#-----------------------------------------------------------------------------
+# -----------------------------------------------------------------------------
 """ Tests the ocb_scaling class and functions
 """
 import datetime as dt
@@ -19,13 +19,13 @@ import ocbpy
 import ocbpy.instruments.supermag as ocb_ismag
 from ocbpy.instruments import general
 
+
 class TestSuperMAG2AsciiMethods(unittest.TestCase):
 
     def setUp(self):
-        """ Initialize the OCBoundary object using the test file, as well as
-        the VectorData object
+        """ Initialize the setup for SuperMAG processing unit tests
         """
-        
+
         self.ocb_dir = os.path.dirname(ocbpy.__file__)
         self.test_ocb = os.path.join(self.ocb_dir, "tests", "test_data",
                                      "test_north_circle")
@@ -74,7 +74,7 @@ class TestSuperMAG2AsciiMethods(unittest.TestCase):
             self.assertTupleEqual(test_out.shape, temp_out.shape)
 
             # Test the data in each row
-            for i,test_row in enumerate(test_out):
+            for i, test_row in enumerate(test_out):
                 self.assertListEqual(list(test_row), list(temp_out[i]))
 
             del ldtype, test_out, temp_out
@@ -108,7 +108,7 @@ class TestSuperMAG2AsciiMethods(unittest.TestCase):
             self.assertTupleEqual(test_out.shape, temp_out.shape)
 
             # Test the data in each row
-            for i,test_row in enumerate(test_out):
+            for i, test_row in enumerate(test_out):
                 self.assertListEqual(list(test_row), list(temp_out[i]))
 
             del ldtype, test_out, temp_out
@@ -142,7 +142,7 @@ class TestSuperMAG2AsciiMethods(unittest.TestCase):
             self.assertTupleEqual(test_out.shape, temp_out.shape)
 
             # Test the data in each row
-            for i,test_row in enumerate(test_out):
+            for i, test_row in enumerate(test_out):
                 self.assertListEqual(list(test_row), list(temp_out[i]))
 
             del ldtype, test_out, temp_out
@@ -174,7 +174,7 @@ class TestSuperMAG2AsciiMethods(unittest.TestCase):
             self.assertTupleEqual(test_out.shape, temp_out.shape)
 
             # Test the data in each row
-            for i,test_row in enumerate(test_out):
+            for i, test_row in enumerate(test_out):
                 self.assertListEqual(list(test_row), list(temp_out[i]))
 
             del ldtype, test_out, temp_out
@@ -195,16 +195,17 @@ class TestSuperMAG2AsciiMethods(unittest.TestCase):
                      {'ocbfile': self.test_ocb, 'instrument': 'image',
                       'hemisphere': -1}),
                     (self.test_file, self.test_output_north,
-                     {'ocb': ocbpy.ocboundary.OCBoundary(filename=self.test_ocb,
-                                                         instrument='image',
-                                                         hemisphere=1)}),
+                     {'ocb': ocbpy.ocboundary.OCBoundary(
+                         filename=self.test_ocb, instrument='image',
+                         hemisphere=1)}),
                     (self.test_file, self.test_output_north,
                     {'ocbfile': self.test_ocb, 'instrument': 'image',
                      'hemisphere': 1})]
 
         for val in subtests:
             with self.subTest(val=val):
-                ocb_ismag.supermag2ascii_ocb(val[0], self.temp_output, **val[2])
+                ocb_ismag.supermag2ascii_ocb(val[0], self.temp_output,
+                                             **val[2])
 
                 if platform.system().lower() == "windows":
                     # filecmp doesn't work on windows
@@ -252,7 +253,8 @@ class TestSuperMAG2AsciiMethods(unittest.TestCase):
     def test_supermag2ascii_ocb_bad_output_str(self):
         """ Test failure caused by an non-string output name
         """
-        with self.assertRaisesRegex(IOError, "output filename is not a string"):
+        with self.assertRaisesRegex(IOError,
+                                    "output filename is not a string"):
             ocb_ismag.supermag2ascii_ocb(self.test_file, 1,
                                          ocbfile=self.test_ocb)
 
@@ -275,9 +277,9 @@ class TestSuperMAG2AsciiMethods(unittest.TestCase):
                     ("output filename is not a string", [self.test_file, 1])]:
             with self.subTest(val=val):
                 with self.assertRaisesRegex(IOError, val[0]):
-                    ocb_ismag.supermag2ascii_ocb(*val[1], ocbfile=self.test_ocb)
+                    ocb_ismag.supermag2ascii_ocb(*val[1],
+                                                 ocbfile=self.test_ocb)
 
-    
     def test_supermag2ascii_ocb_bad_ocb(self):
         """ Test the SuperMAG conversion with a bad ocb file """
         ocb_ismag.supermag2ascii_ocb(self.test_file, "fake_out",
@@ -291,13 +293,13 @@ class TestSuperMAGLoadMethods(unittest.TestCase):
     def setUp(self):
         """ Initialize the filenames and data needed to test SuperMAG loading
         """
-        
+
         self.ocb_dir = os.path.dirname(ocbpy.__file__)
         self.test_file = os.path.join(self.ocb_dir, "tests", "test_data",
                                       "test_smag")
         self.test_vals = {'BE': -6.0, 'BN': -23.6, 'BZ': -25.2, 'DAY': 5,
-                          'DEC': 17.13, 'HOUR': 13, 'MIN': 40, 'MLAT': 77.22, 
-                          'DATETIME': dt.datetime(2000,5,5,13,40,30),
+                          'DEC': 17.13, 'HOUR': 13, 'MIN': 40, 'MLAT': 77.22,
+                          'DATETIME': dt.datetime(2000, 5, 5, 13, 40, 30),
                           'MLT': 15.86, 'MONTH': 5, 'NST': 2, 'SEC': 30,
                           'SML': -195, 'SMU': 124, 'STID': "THL", 'SZA': 76.97,
                           'YEAR': 2000}
@@ -352,8 +354,8 @@ class TestSuperMAGLoadMethods(unittest.TestCase):
     def test_load_failures(self):
         """ Test graceful failures with different bad file inputs"""
 
-        for val in ['fake_file',
-                    os.path.join(self.ocb_dir,"test","test_data","test_vort")]:
+        for val in ['fake_file', os.path.join(self.ocb_dir, "test",
+                                              "test_data", "test_vort")]:
             with self.subTest(val=val):
                 self.out = ocb_ismag.load_supermag_ascii_data(val)
 

@@ -1,8 +1,11 @@
 #!/usr/bin/env python
+# Copyright (C) 2017 AGB
+# Full license can be found in LICENSE.txt
+# ---------------------------------------------------------------------------
 """ General loading routines for data files
 
 Functions
--------------------------------------------------------------------------------
+---------
 test_file(filename)
     Test to see whether file exists and is small enough to load
 load_ascii_data(filename, hlines, kwargs)
@@ -11,24 +14,24 @@ load_ascii_data(filename, hlines, kwargs)
 """
 from __future__ import absolute_import, unicode_literals
 
-import datetime as dt
 import numpy as np
 from os import path
 
 import ocbpy
 import ocbpy.ocb_time as ocbt
 
+
 def test_file(filename):
     """Test to ensure the file is small enough to read in.  Python can only
     allocate 2GB of data without crashing
 
     Parameters
-    ------------
+    ----------
     filename : (str)
         Filename to test
 
     Returns
-    ---------
+    -------
     good_flag : (bool)
         True if good, bad if false
 
@@ -37,7 +40,7 @@ def test_file(filename):
     if not path.isfile(filename):
         ocbpy.logger.warning("name provided is not a file")
         return False
-    
+
     fsize = path.getsize(filename)
 
     if(fsize > 2.0e9):
@@ -53,10 +56,10 @@ def test_file(filename):
 def load_ascii_data(filename, hlines, gft_kwargs=dict(), hsplit=None,
                     datetime_cols=list(), datetime_fmt=None, int_cols=list(),
                     str_cols=list(), max_str_length=50, header=list()):
-    """ Load an ascii data file into a dict of numpy array. 
+    """ Load an ascii data file into a dict of numpy array
 
     Parameters
-    ------------
+    ----------
     filename : (str)
         data file name
     hlines : (int)
@@ -87,7 +90,7 @@ def load_ascii_data(filename, hlines, gft_kwargs=dict(), hsplit=None,
         names (default=list())
 
     Returns
-    ----------
+    -------
     header : (list of strings)
         Contains all specified header lines
     out : (dict of numpy.arrays)
@@ -95,23 +98,20 @@ def load_ascii_data(filename, hlines, gft_kwargs=dict(), hsplit=None,
         for each key are stored in the numpy array
 
     Notes
-    -------
+    -----
     Data is assumed to be float unless otherwise stated.
 
     """
 
-    #-----------------------------------------------------------------------
     # Test to ensure the file is small enough to read in.  Python can only
     # allocate 2GB of data.  If you load something larger, python will crash
     if not test_file(filename):
         return header, dict()
 
-    #--------------------------------------------------
     # Initialize the convert_time input dictionary
     dfmt_parts = list() if datetime_fmt is None else datetime_fmt.split(" ")
     time_formats = ["H", "I", "p", "M", "S", "f", "z", "Z"]
 
-    #----------------------------------------------------------------------
     # Make sure the max_str_length is long enough to read datetime and that
     # the time data will be cast in the correct format
     if datetime_fmt is not None:
@@ -128,7 +128,6 @@ def load_ascii_data(filename, hlines, gft_kwargs=dict(), hsplit=None,
             case_part = datetime_fmt[ipart:ipart+3]
             int_cols.append(dfmt_parts.index(case_part))
 
-    #----------------------------------------------
     # Open the data file and read the header rows
     with open(filename, "r") as fin:
         in_header = str(header[-1]) if len(header) > 0 else None
@@ -136,7 +135,6 @@ def load_ascii_data(filename, hlines, gft_kwargs=dict(), hsplit=None,
         for hind in range(hlines):
             header.append(fin.readline().strip())
 
-    #---------------------------------------------------------------------
     # Create the output dictionary keylist
     if len(header) == 0:
         estr = "unable to find header of [{:d}] lines".format(hlines)
@@ -153,7 +151,6 @@ def load_ascii_data(filename, hlines, gft_kwargs=dict(), hsplit=None,
     nhead = len(keylist)
     out = {okey: list() for okey in keylist}
 
-    #---------------------------------------------------------------------
     # Build the dtype list
     ldtype = [float for i in range(nhead)]
 
@@ -162,13 +159,13 @@ def load_ascii_data(filename, hlines, gft_kwargs=dict(), hsplit=None,
 
     for icol in str_cols:
         ldtype[icol] = '|U{:d}'.format(max_str_length)
-    
-    #---------------------------------------------------------------------
+
     # Build and add the datetime objects to the output dictionary
     dt_keys = ['datetime', 'DATETIME', 'DT', 'dt']
     if len(datetime_cols) > 0 and datetime_fmt is not None:
         idt = 0
-        while dt_keys[idt] in out.keys(): idt += 1
+        while dt_keys[idt] in out.keys():
+            idt += 1
 
         if idt < len(dt_keys):
             keylist.append(dt_keys[idt])
@@ -177,18 +174,17 @@ def load_ascii_data(filename, hlines, gft_kwargs=dict(), hsplit=None,
         # Change the datetime column input from float to string, if it is not
         # supposed to be an integer
         for i, icol in enumerate(datetime_cols):
-            if(not icol in int_cols and
-               dfmt_parts[i].upper().find("SOD") < 0):
+            if(icol not in int_cols
+               and dfmt_parts[i].upper().find("SOD") < 0):
                 ldtype[icol] = '|U{:d}'.format(max_str_length)
     else:
         idt = len(dt_keys)
 
-    #-------------------------------------------
     # Open the datafile and read the data rows
     temp = np.genfromtxt(filename, skip_header=hlines, dtype=str, **gft_kwargs)
 
     if len(temp) > 0:
-        # When dtype is specified, output comes as a np.array of np.void objects
+        # When dtype is specified, output comes as a void np.array
         #
         # Moved type specification for numpy 1.19.0, which throws a TypeError.
         # Also accounted for possibility of line variable being a scalar (but
@@ -236,7 +232,7 @@ def load_ascii_data(filename, hlines, gft_kwargs=dict(), hsplit=None,
                     # Save the output data without any manipulation
                     try:
                         out[name].append(line[num].astype(ldtype[num]))
-                    except AttributeError as aerr:
+                    except AttributeError:
                         out[name].append(line.astype(ldtype[num]))
 
     # Cast all lists as numpy arrays, if possible

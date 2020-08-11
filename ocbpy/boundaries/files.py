@@ -2,11 +2,11 @@
 # -*- coding: utf-8 -*-
 # Copyright (C) 2019, AGB & GC
 # Full license can be found in License.md
-#-----------------------------------------------------------------------------
+# ----------------------------------------------------------------------------
 """ Provide desired boundary file names
 
 Functions
--------------------------------------------------------------------------------
+---------
 get_boundary_dir()
     Get the OCBpy boundary directory
 get_boundary_files()
@@ -15,11 +15,11 @@ get_default_file(stime, etime, hemisphere, [instrument])
     Return the name of the default boundary file
 
 Moduleauthor
--------------------------------------------------------------------------------
+------------
 Angeline G. Burrell (AGB), 25 September 2019, Naval Research Laboratory (NRL)
 
 References
--------------------------------------------------------------------------------
+----------
 Chisham, G. (2017), A new methodology for the development of high-latitude
  ionospheric climatologies and empirical models, Journal of Geophysical
  Research: Space Physics, 122, doi:10.1002/2016JA023235.
@@ -36,6 +36,7 @@ import itertools
 import os
 
 import ocbpy
+
 
 def get_boundary_directory():
     """ Get the OCBpy boundary directory
@@ -61,7 +62,8 @@ def get_boundary_files(bound='ocb'):
     Parameters
     ----------
     bound : (str)
-        String specifying which boundary is desired (OCB or EAB) (default='ocb')
+        String specifying which boundary is desired (OCB or EAB)
+        (default='ocb')
 
     Returns
     -------
@@ -86,10 +88,10 @@ def get_boundary_files(bound='ocb'):
              "si12": dt.datetime(2002, 8, 23),
              "si13": dt.datetime(2002, 8, 23),
              "wic": dt.datetime(2002, 8, 22),
-             "dmsp-ssj": dt.datetime.today().replace(hour=0, minute=0, second=0,
-                                                     microsecond=0)
+             "dmsp-ssj": dt.datetime.today().replace(hour=0, minute=0,
+                                                     second=0, microsecond=0)
              + dt.timedelta(days=1)}
-    
+
     # List all of the files in the OCBpy boundary directory
     boundary_dir = get_boundary_directory()
     file_list = os.listdir(boundary_dir)
@@ -127,11 +129,11 @@ def get_default_file(stime, etime, hemisphere, instrument='', bound='ocb'):
     Parameters
     ----------
     stime : (dt.datetime or NoneType)
-        Starting time for which the file is desired.  If None, will prioritize
-        IMAGE data for the northern and AMERE data for the southern hemisphere.
+        Starting time for which the file is desired; if None, will prioritize
+        IMAGE data for the northern and AMERE data for the southern hemisphere
     etime : (dt.datetime or NoneType)
-        Ending time for which the file is desired.  If None, will prioritize
-        IMAGE data for the northern and AMPERE data for the southern hemisphere.
+        Ending time for which the file is desired; if None, will prioritize
+        IMAGE data for the northern and AMPERE data for the southern hemisphere
     hemisphere : (int)
         Hemisphere for which the file is desired (1=north, -1=south)
     instrument : (str)
@@ -147,7 +149,8 @@ def get_default_file(stime, etime, hemisphere, instrument='', bound='ocb'):
             BBB      = ocb or eab
         (default='')
     bound : (str)
-        String specifying which boundary is desired (OCB or EAB) (default='ocb')
+        String specifying which boundary is desired (OCB or EAB)
+        (default='ocb')
 
     Returns
     -------
@@ -216,4 +219,3 @@ def get_default_file(stime, etime, hemisphere, instrument='', bound='ocb'):
             instrument = boundary_files[bfile]['instrument']
 
     return default_file, instrument
-            

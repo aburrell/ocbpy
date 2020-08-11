@@ -52,8 +52,9 @@ templates_path = ['.templates']
 # source_suffix = ['.rst', '.md']
 source_suffix = '.rst'
 
-# The main toctree document.
-main_doc = 'index'
+# The main toctree document.  Using offensive variable name is required for
+# the code to run.
+master_doc = 'index'
 
 # General information about the project.
 project = u'ocbpy'
@@ -137,7 +138,7 @@ latex_elements = {
 # (source start file, target name, title,
 #  author, documentclass [howto, manual, or own class]).
 latex_documents = [
-    (main_doc, 'ocbpy.tex', u'ocbpy Documentation',
+    (master_doc, 'ocbpy.tex', u'ocbpy Documentation',
      u'Angeline G Burrell and Gareth Chisham', 'manual'),
 ]
 
@@ -147,7 +148,7 @@ latex_documents = [
 # One entry per manual page. List of tuples
 # (source start file, name, description, authors, manual section).
 man_pages = [
-    (main_doc, 'ocbpy', u'ocbpy Documentation', [author], 1)
+    (master_doc, 'ocbpy', u'ocbpy Documentation', [author], 1)
 ]
 
 
@@ -157,7 +158,7 @@ man_pages = [
 # (source start file, target name, title, author,
 #  dir menu entry, description, category)
 texinfo_documents = [
-    (main_doc, 'ocbpy', u'ocbpy Documentation',
+    (master_doc, 'ocbpy', u'ocbpy Documentation',
      author, 'ocbpy', 'One line description of project.',
      'Miscellaneous'),
 ]

@@ -1,8 +1,8 @@
 #!/usr/bin/env python
 # -*- coding: utf-8 -*-
-# Copyright (C) 2017, AGB & GC
+# Copyright (C) 2017, AGB
 # Full license can be found in License.md
-#-----------------------------------------------------------------------------
+# -----------------------------------------------------------------------------
 """ Tests the ocb_scaling class and functions
 """
 import datetime as dt
@@ -20,13 +20,13 @@ if platform.system().lower() != "windows":
 import ocbpy
 import ocbpy.instruments.vort as ocb_ivort
 
+
 class TestVortLogWarnings(unittest.TestCase):
 
     def setUp(self):
-        """ Initialize the OCBoundary object using the test file, as well as
-        the VectorData object
+        """ Initialize the unit tests for vorticity logging warnings
         """
-        
+
         self.ocb_dir = os.path.dirname(ocbpy.__file__)
         self.test_file = os.path.join(self.ocb_dir, "tests", "test_data",
                                       "test_vort")
@@ -89,7 +89,8 @@ class TestVortLogWarnings(unittest.TestCase):
     @unittest.skipIf(version_info.major > 2,
                      'Python 2.7 does not support subTest')
     def test_vort_unexpected_line_number_entries(self):
-        """ Testing vorticity catch for file loading with missing number line"""
+        """ Testing vorticity catch for file loading with missing number line
+        """
 
         self.lwarn = u'unexpected line encountered when number of entries line'
 
@@ -116,8 +117,7 @@ class TestVortLogWarnings(unittest.TestCase):
         """ Testing vorticity catch for file loading"""
 
         # Initalize the vorticity run with different test files
-        for val in [(u'unexpected line encountered when number of entries line',
-                     1),
+        for val in [(u'unexpected line encountered when number of entries', 1),
                     (u'unexpected line encountered for a data block', -1)]:
             with self.subTest(val=val):
                 # Initalize the warning
@@ -140,20 +140,20 @@ class TestVortLogWarnings(unittest.TestCase):
 
         del data, fout, fin
 
+
 class TestVort2AsciiMethods(unittest.TestCase):
 
     def setUp(self):
-        """ Initialize the OCBoundary object using the test file, as well as
-        the VectorData object
+        """ Initialize the setup for vorticity processing unit tests
         """
-        
+
         self.ocb_dir = os.path.dirname(ocbpy.__file__)
         self.test_ocb = os.path.join(self.ocb_dir, "tests", "test_data",
                                      "test_north_circle")
         self.test_file = os.path.join(self.ocb_dir, "tests", "test_data",
                                       "test_hemi_vort")
         self.test_eq_file = os.path.join(self.ocb_dir, "tests", "test_data",
-                                      "test_eq_hemi_vort")
+                                         "test_eq_hemi_vort")
         self.test_empty = os.path.join(self.ocb_dir, "tests", "test_data",
                                        "test_empty")
         self.test_output_north = os.path.join(self.ocb_dir, "tests",
@@ -162,9 +162,10 @@ class TestVort2AsciiMethods(unittest.TestCase):
                                               "test_data",  "out_south_vort")
         self.temp_output = os.path.join(self.ocb_dir, "tests", "test_data",
                                         "temp_vort")
-        self.test_vals = {'CENTRE_MLAT':67.27, 'DAY':5, 'MLT':3.127,
-                          'UTH':13.65, 'VORTICITY':0.0020967, 'YEAR':2000,
-                          'DATETIME':dt.datetime(2000,5,5,13,39,00), 'MONTH':5}
+        self.test_vals = {'CENTRE_MLAT': 67.27, 'DAY': 5, 'MLT': 3.127,
+                          'UTH': 13.65, 'VORTICITY': 0.0020967, 'YEAR': 2000,
+                          'DATETIME': dt.datetime(2000, 5, 5, 13, 39, 00),
+                          'MONTH': 5}
         self.assertTrue(os.path.isfile(self.test_file))
 
         # Remove in 2020
@@ -310,7 +311,7 @@ class TestVort2AsciiMethods(unittest.TestCase):
 
     @unittest.skipIf(version_info.major < 3,
                      'Already tested, remove in 2020')
-    def test_vort2ascii_ocb_north(self):
+    def test_vort2ascii_ocb(self):
         """ Test vorticity conversion with different hemispheres and methods
         """
         # Initialize the subTest input
@@ -323,9 +324,9 @@ class TestVort2AsciiMethods(unittest.TestCase):
                     (self.test_eq_file, self.test_output_south,
                      {"ocbfile": self.test_ocb, "instrument": "image"}),
                     (self.test_file, self.test_output_north,
-                     {"ocb": ocbpy.ocboundary.OCBoundary(filename=self.test_ocb,
-                                                         instrument='image',
-                                                         hemisphere=1)})]
+                     {"ocb": ocbpy.ocboundary.OCBoundary(
+                         filename=self.test_ocb, instrument='image',
+                         hemisphere=1)})]
 
         # Initalize the vorticity run with different test files
         for val in subtests:
@@ -336,8 +337,9 @@ class TestVort2AsciiMethods(unittest.TestCase):
                     # filecmp doesn't work on windows
 
                     ldtype = ['|U50' if i < 2 else float for i in range(5)]
-                    test_out = np.genfromtxt(val[1],skip_header=1,dtype=ldtype)
-                    temp_out = np.genfromtxt(self.temp_output,skip_header=1,
+                    test_out = np.genfromtxt(val[1], skip_header=1,
+                                             dtype=ldtype)
+                    temp_out = np.genfromtxt(self.temp_output, skip_header=1,
                                              dtype=ldtype)
 
                     # Test the number of rows and columns
@@ -375,8 +377,8 @@ class TestVort2AsciiMethods(unittest.TestCase):
 
         # Test the data in each row
         for i, test_row in enumerate(test_out):
-            self.assertListEqual(list(test_row[[0,1,-3,-2,-1]]),
-                                 list(temp_out[i][[0,1,-3,-2,-1]]))
+            self.assertListEqual(list(test_row[[0, 1, -3, -2, -1]]),
+                                 list(temp_out[i][[0, 1, -3, -2, -1]]))
 
         del test_out, temp_out
 
@@ -386,6 +388,7 @@ class TestVort2AsciiMethods(unittest.TestCase):
         with self.assertRaisesRegex(ValueError, "from both hemispheres"):
             ocb_ivort.vort2ascii_ocb(self.test_file, self.temp_output,
                                      ocbfile=self.test_ocb, instrument='image')
+
     def test_vort2ascii_ocb_write_failure(self):
         """ Test the conversion of vorticity data with a bad output filename
         """
@@ -399,7 +402,8 @@ class TestVort2AsciiMethods(unittest.TestCase):
         """ Test the conversion of vorticity data with a bad vorticity filename
         """
 
-        with self.assertRaisesRegex(IOError, "vorticity file cannot be opened"):
+        with self.assertRaisesRegex(IOError,
+                                    "vorticity file cannot be opened"):
             ocb_ivort.vort2ascii_ocb("fake_file", "fake_out",
                                      ocbfile=self.test_ocb)
 
@@ -411,13 +415,12 @@ class TestVort2AsciiMethods(unittest.TestCase):
             ocb_ivort.vort2ascii_ocb(self.test_empty, "fake_out",
                                      ocbfile=self.test_ocb)
 
-            
     def test_vort2ascii_ocb_no_ocb(self):
         """ Test the conversion of vorticity data from AACGM coordinates into
         OCB coordinates
         """
-        ocb_ivort.vort2ascii_ocb(self.test_file, "fake_out", ocbfile="fake_ocb",
-                                 hemisphere=1)
+        ocb_ivort.vort2ascii_ocb(self.test_file, "fake_out",
+                                 ocbfile="fake_ocb", hemisphere=1)
 
         # Compare created file to stored test file
         self.assertFalse(ocbpy.instruments.general.test_file("fake_out"))
@@ -427,23 +430,24 @@ class TestVort2AsciiMethods(unittest.TestCase):
         """
         # Error message changes based on operating system
         with self.assertRaises(IOError):
-            ocb_ivort.vort2ascii_ocb(self.test_file, "/", ocbfile=self.test_ocb,
+            ocb_ivort.vort2ascii_ocb(self.test_file, "/",
+                                     ocbfile=self.test_ocb,
                                      instrument='image', hemisphere=1)
 
     def test_vort2ascii_ocb_output_failure_str(self):
         """ Test failure when a filename that is not a string is provided
         """
-        with self.assertRaisesRegex(IOError, "output filename is not a string"):
+        with self.assertRaisesRegex(IOError,
+                                    "output filename is not a string"):
             ocb_ivort.vort2ascii_ocb(self.test_file, 1, ocbfile=self.test_ocb)
 
 
 class TestVortLoadMethods(unittest.TestCase):
 
     def setUp(self):
-        """ Initialize the OCBoundary object using the test file, as well as
-        the VectorData object
+        """ Initialize the setup for vorticity loading methods
         """
-        
+
         self.ocb_dir = os.path.dirname(ocbpy.__file__)
         self.test_ocb = os.path.join(self.ocb_dir, "tests", "test_data",
                                      "test_north_circle")
@@ -451,12 +455,12 @@ class TestVortLoadMethods(unittest.TestCase):
                                       "test_vort")
         self.bad_file = os.path.join(self.ocb_dir, "test", "test_data",
                                      "test_smag")
-        self.test_vals = {'CENTRE_MLAT':67.27, 'DAY':5, 'MLT':3.127,
-                          'UTH':13.65, 'VORTICITY':0.0020967, 'YEAR':2000,
-                          'DATETIME':dt.datetime(2000,5,5,13,39,00), 'MONTH':5}
+        self.test_vals = {'CENTRE_MLAT': 67.27, 'DAY': 5, 'MLT': 3.127,
+                          'UTH': 13.65, 'VORTICITY': 0.0020967, 'YEAR': 2000,
+                          'DATETIME': dt.datetime(2000, 5, 5, 13, 39, 00),
+                          'MONTH': 5}
         self.assertTrue(os.path.isfile(self.test_file))
         self.data = dict()
-
 
     def tearDown(self):
         del self.test_file, self.test_ocb, self.data, self.bad_file
@@ -507,4 +511,3 @@ class TestVortLoadMethods(unittest.TestCase):
         # needed for the OCB calculation
         for kk in self.test_vals.keys():
             self.assertEqual(self.data[kk][-1], self.test_vals[kk])
-

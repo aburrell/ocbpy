@@ -20,7 +20,7 @@ if version_info.major == 3:
 
 # Run setup
 setup(name='ocbpy',
-      version='0.2b2',
+      version='0.2.0',
       url='https://github.com/aburrell/ocbpy',
       author='Angeline G. Burrell',
       author_email='angeline.burrell@nrl.navy.mil',
@@ -29,7 +29,7 @@ setup(name='ocbpy',
       long_description_content_type="text/markdown",
       packages=find_packages(),
       classifiers=[
-          "Development Status :: 4 - Beta",
+          "Development Status :: 5 - Production/Stable",
           "Topic :: Scientific/Engineering :: Physics",
           "Intended Audience :: Science/Research",
           "License :: OSI Approved :: BSD License",

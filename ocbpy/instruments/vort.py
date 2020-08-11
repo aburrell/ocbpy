@@ -1,11 +1,11 @@
 # -*- coding: utf-8 -*-
-# Copyright (C) 2017
+# Copyright (C) 2017 AGB
 # Full license can be found in LICENSE.txt
-#---------------------------------------------------------------------------
+# ---------------------------------------------------------------------------
 """ Perform OCB gridding for SuperDARN vorticity data
 
 Functions
-----------------------------------------------------------------------------
+---------
 vort2ascii_ocb(vortfile, outfile, kwargs)
     Write and ASCII file with SuperDARN data and the OCB coordinates for each
     data point
@@ -13,7 +13,7 @@ load_vorticity_ascii_data(filename, save_all=False)
     Load vorticity block ASCII data files
 
 Data
-----------------------------------------------------------------------------
+----
 Specialised SuperDARN data product, available from: gchi@bas.ac.uk
 
 """
@@ -25,12 +25,11 @@ import ocbpy
 import ocbpy.ocb_scaling as ocbscal
 
 
-def vort2ascii_ocb(vortfile, outfile, hemisphere=0, ocb=None, ocbfile='default',
-                   instrument='', max_sdiff=600, save_all=False, min_sectors=7,
-                   rcent_dev=8.0, max_r=23.0, min_r=10.0):
-    """ Coverts the location of vorticity data in AACGM coordinates into a frame
-    that is relative to the open-closed field-line boundary (OCB) as determined
-    from a circle fit to the poleward boundary of the auroral oval
+def vort2ascii_ocb(vortfile, outfile, hemisphere=0, ocb=None,
+                   ocbfile='default', instrument='', max_sdiff=600,
+                   save_all=False, min_sectors=7, rcent_dev=8.0, max_r=23.0,
+                   min_r=10.0):
+    """ Coverts the location of vorticity data from AACGM to OCB coordinates
 
     Parameters
     ----------
@@ -68,13 +67,14 @@ def vort2ascii_ocb(vortfile, outfile, hemisphere=0, ocb=None, ocbfile='default',
         (default=10.0)
 
     Notes
-    --------
+    -----
     Input header or col_names must include the names in the default string.
 
     """
 
     if not ocbpy.instruments.test_file(vortfile):
-        raise IOError("vorticity file cannot be opened [{:s}]".format(vortfile))
+        raise IOError("vorticity file cannot be opened [{:s}]".format(
+            vortfile))
 
     if not isinstance(outfile, str):
         raise IOError("output filename is not a string [{:}]".format(outfile))
@@ -82,15 +82,15 @@ def vort2ascii_ocb(vortfile, outfile, hemisphere=0, ocb=None, ocbfile='default',
     # Read the vorticity data
     vdata = load_vorticity_ascii_data(vortfile, save_all=save_all)
     need_keys = ["VORTICITY", "CENTRE_MLAT", "DATETIME", "MLT"]
-    
+
     if vdata is None or not all([kk in vdata.keys() for kk in need_keys]):
         estr = "unable to load necessary data from [{:s}]".format(vortfile)
         raise ValueError(estr)
 
     # Load the OCB data
     if ocb is None or not isinstance(ocb, ocbpy.ocboundary.OCBoundary):
-        vstart = vdata['DATETIME'][0] - dt.timedelta(seconds=max_sdiff+1)
-        vend = vdata['DATETIME'][-1] + dt.timedelta(seconds=max_sdiff+1)
+        vstart = vdata['DATETIME'][0] - dt.timedelta(seconds=max_sdiff + 1)
+        vend = vdata['DATETIME'][-1] + dt.timedelta(seconds=max_sdiff + 1)
 
         # If hemisphere isn't specified, set it here
         if hemisphere == 0:
@@ -100,9 +100,9 @@ def vort2ascii_ocb(vortfile, outfile, hemisphere=0, ocb=None, ocbfile='default',
             if hemisphere == 0:
                 hemisphere = np.sign(np.nanmin(vdata['CENTRE_MLAT']))
             elif hemisphere != np.sign(np.nanmin(vdata['CENTRE_MLAT'])):
-                raise ValueError("".join(["cannot process observations from "
-                                          "both hemispheres at the same time."
-                                          "Set hemisphere=+/-1 to choose one"]))
+                raise ValueError("".join(["cannot process observations from ",
+                                          "both hemispheres at the same time;",
+                                          " set hemisphere=+/-1 to choose."]))
 
         # Initialize the OCBoundary object
         ocb = ocbpy.ocboundary.OCBoundary(ocbfile, stime=vstart, etime=vend,
@@ -164,10 +164,11 @@ def vort2ascii_ocb(vortfile, outfile, hemisphere=0, ocb=None, ocbfile='default',
             if ivort < num_vort and ocb.rec_ind < ocb.records:
                 # Use the indexed OCB to convert the AACGM grid coordinate to
                 # one related to the OCB
-                nlat, nmlt, ncor = ocb.normal_coord(vdata['CENTRE_MLAT'][ivort],
-                                                    vdata['MLT'][ivort])
+                nlat, nmlt, ncor = ocb.normal_coord(
+                    vdata['CENTRE_MLAT'][ivort], vdata['MLT'][ivort])
                 nvort = ocbscal.normal_curl_evar(vdata['VORTICITY'][ivort],
-                                                 ocb.r[ocb.rec_ind]+ncor, ref_r)
+                                                 ocb.r[ocb.rec_ind] + ncor,
+                                                 ref_r)
 
                 # Format the output line
                 #    DATE TIME (SAVE_ALL) OCB_LAT OCB_MLT NORM_VORT
@@ -182,14 +183,15 @@ def vort2ascii_ocb(vortfile, outfile, hemisphere=0, ocb=None, ocbfile='default',
 
                 # Move to next line
                 ivort += 1
-        
+
     return
+
 
 def load_vorticity_ascii_data(vortfile, save_all=False):
     """Load SuperDARN vorticity data files.
 
     Parameters
-    -----------
+    ----------
     vortfile : (str)
         SuperDARN vorticity file in block format
     save_all : (bool)
@@ -197,7 +199,7 @@ def load_vorticity_ascii_data(vortfile, save_all=False):
         the OCB coordinates and normalised vorticity (False). (default=False)
 
     Returns
-    ---------
+    -------
     vdata : (dict)
         Dictionary of numpy arrays
 
@@ -214,10 +216,10 @@ def load_vorticity_ascii_data(vortfile, save_all=False):
         if save_all:
             vkeys.extend(["R1BM1", "R1BM2", "R2BM1", "R2BM2", "AREA",
                           "CENTRE_GLAT", "CENTRE_GLON", "C1_GLAT", "C1_GLON",
-                          "C2_GLAT", "C2_GLON", "C3_GLAT", "C3_GLON", "C4_GLAT",
-                          "C4_GLON", "CENTRE_MLON", "C1_MLAT", "C1_MLON",
-                          "C2_MLAT", "C2_MLON", "C3_MLAT", "C3_MLON", "C4_MLAT",
-                          "C4_MLON"])
+                          "C2_GLAT", "C2_GLON", "C3_GLAT", "C3_GLON",
+                          "C4_GLAT", "C4_GLON", "CENTRE_MLON", "C1_MLAT",
+                          "C1_MLON", "C2_MLAT", "C2_MLON", "C3_MLAT",
+                          "C3_MLON", "C4_MLAT", "C4_MLON"])
         vdata = {vk: list() for vk in vkeys}
         vkeys = set(vkeys)
 
@@ -283,7 +285,8 @@ def load_vorticity_ascii_data(vortfile, save_all=False):
                     vdata['DATETIME'].append(dtime)
 
                     for bklist in bkeys:
-                        # Test to see that this line has the right number of col
+                        # Test to see that this line has the right number of
+                        # columns
                         if len(vsplit) != len(bklist):
                             estr = "".join(["unexpected line encountered ",
                                             "for a data block ",

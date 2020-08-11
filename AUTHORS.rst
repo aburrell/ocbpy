@@ -1,10 +1,11 @@
 Authors
-=======
+-------
 
 * Angeline G. Burrell - https://github.com/aburrell
 * Gareth Chisham
-* Jone P. Reistad
+* Jone P. Reistad - https://github.com/jpreistad
   
-Thanks
-======
-* Future testers and reviewers
+Contributors
+------------
+
+* Dominic Jodoin - https://github.com/cotsog
