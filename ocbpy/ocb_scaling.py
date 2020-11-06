@@ -1021,35 +1021,18 @@ class VectorData(object):
             pole_plus = self.pole_angle + 90.0
 
             pmask = (quads[1][1] | quads[2][2] | quads[3][3] | quads[4][4]
-                     | (quads[1][4] & np.less_equal(self.aacgm_naz, pole_plus,
-                                                    where=nan_mask))
+                     | ((quads[1][4] | quads[2][3] )
+                        & np.less_equal(self.aacgm_naz, pole_plus,
+                                        where=nan_mask))
                      | ((quads[1][2] | quads[2][1])
                         & np.less_equal(self.aacgm_naz, minus_pole,
                                         where=nan_mask))
                      | ((quads[3][4] | quads[4][3])
-                        & np.less_equal(self.aacgm_naz, pole_minus,
-                                        where=nan_mask))
+                        & np.greater_equal(self.aacgm_naz, 180.0 - pole_minus,
+                                           where=nan_mask))
                      | ((quads[3][2] | quads[4][1])
-                        & np.greater(self.aacgm_naz, pole_minus,
-                                     where=nan_mask))
-                     | (quads[2][3] & np.greater(self.aacgm_naz, minus_pole,
-                                                 where=nan_mask)))
-            mmask = ((((quads[1][2] | quads[2][1])
-                       & np.greater(self.aacgm_naz, minus_pole,
-                                    where=nan_mask))
-                      | (quads[1][4] & np.greater(self.aacgm_naz, pole_plus,
-                                                  where=nan_mask))
-                      | ((quads[4][1] | quads[3][2])
-                         & np.less_equal(self.aacgm_naz, pole_minus,
-                                         where=nan_mask))
-                      | (quads[2][3] & np.less_equal(self.aacgm_naz,
-                                                     minus_pole,
-                                                     where=nan_mask))
-                      | ((quads[4][3] | quads[3][4])
-                         | np.greater(self.aacgm_naz, pole_minus,
-                                      where=nan_mask))
-                      | quads[1][3] | quads[2][4] | quads[3][1] | quads[4][2])
-                     & ~pmask)
+                        & np.greater_equal(self.aacgm_naz, pole_minus,
+                                           where=nan_mask)))
 
             if np.any(pmask):
                 if vsigns["north"].shape == ():
@@ -1057,41 +1040,28 @@ class VectorData(object):
                 else:
                     vsigns["north"][pmask] = 1
 
-            if np.any(mmask):
+            if np.any(~pmask):
                 if vsigns["north"].shape == ():
                     vsigns["north"] = -1
                 else:
-                    vsigns["north"][mmask] = -1
+                    vsigns["north"][~pmask] = -1
 
         if east:
             minus_pole = 180.0 - self.pole_angle
 
             pmask = (quads[1][4] | quads[2][1] | quads[3][2] | quads[4][3] |
-                     ((quads[1][1] | quads[2][4])
-                      & np.greater(self.aacgm_naz, self.pole_angle,
+                     ((quads[1][1] | quads[4][4])
+                      & np.greater_equal(self.aacgm_naz, self.pole_angle,
                                    where=nan_mask))
-                     | ((quads[4][4] | quads[3][1])
+                     | ((quads[3][1] | quads[2][4])
                         & np.less_equal(self.aacgm_naz, minus_pole,
                                         where=nan_mask))
-                     | ((quads[4][2] | quads[3][3] | quads[1][3])
-                        & np.greater(self.aacgm_naz, minus_pole,
-                                     where=nan_mask))
-                     | (quads[2][2] &
-                        np.less_equal(self.aacgm_naz, self.pole_angle,
-                                      where=nan_mask)))
-            mmask = ((quads[1][2] | quads[2][3] | quads[3][4] | quads[4][1]
-                      | ((quads[4][4] | quads[3][1])
-                         & np.greater(self.aacgm_naz, minus_pole,
-                                      where=nan_mask))
-                      | (quads[2][2] &
-                         np.greater(self.aacgm_naz, self.pole_angle,
-                                    where=nan_mask))
-                      | ((quads[4][2] | quads[3][3] | quads[1][3])
-                         & np.less_equal(self.aacgm_naz, minus_pole,
-                                         where=nan_mask))
-                      | ((quads[1][1] | quads[2][4])
-                         & np.less_equal(self.aacgm_naz, self.pole_angle,
-                                         where=nan_mask))) & ~pmask)
+                     | ((quads[4][2] | quads[1][3])
+                        & np.greater_equal(self.aacgm_naz, minus_pole,
+                                           where=nan_mask))
+                     | ((quads[2][2] | quads[3][3])
+                        & np.less_equal(self.aacgm_naz, self.pole_angle,
+                                        where=nan_mask)))
 
             if np.any(pmask):
                 if vsigns["east"].shape == ():
@@ -1099,11 +1069,11 @@ class VectorData(object):
                 else:
                     vsigns["east"][pmask] = 1
 
-            if np.any(mmask):
+            if np.any(~pmask):
                 if vsigns["east"].shape == ():
                     vsigns["east"] = -1
                 else:
-                    vsigns["east"][mmask] = -1
+                    vsigns["east"][~pmask] = -1
 
         return vsigns
 
