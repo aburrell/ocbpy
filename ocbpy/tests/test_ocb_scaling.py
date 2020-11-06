@@ -50,9 +50,25 @@ class TestOCBScalingLogFailure(unittest.TestCase):
         """
         self.lwarn = u"no scaling function provided"
 
-        # Initialize the OCBScaling class without a scaling function
+        # Initialize the VectorData class without a scaling function
         self.vdata.set_ocb(self.ocb)
         self.assertIsNone(self.vdata.scale_func)
+
+        self.lout = self.log_capture.getvalue()
+        # Test logging error message for each bad initialization
+        self.assertTrue(self.lout.find(self.lwarn) >= 0)
+
+    def test_inconsistent_vector_warning(self):
+        """ Test init failure with inconsistent AACGM components
+        """
+        self.lwarn = u"inconsistent AACGM"
+
+        # Initalize the VectorData class with inconsistent vector magnitudes
+        self.vdata = ocbpy.ocb_scaling.VectorData(0, self.ocb.rec_ind,
+                                                  75.0, 22.0,
+                                                  aacgm_mag=100.0,
+                                                  dat_name="Test",
+                                                  dat_units="$m s^{-1}$")
 
         self.lout = self.log_capture.getvalue()
         # Test logging error message for each bad initialization
@@ -516,16 +532,6 @@ class TestVectorDataRaises(unittest.TestCase):
     def tearDown(self):
         del self.ocb, self.vdata, self.input_attrs, self.bad_input
         del self.raise_out, self.hold_val
-
-    def test_init_failure(self):
-        """ Test init failure with inconsistent AACGM components
-        """
-        with self.assertRaisesRegex(ValueError, "inconsistent AACGM"):
-            self.vdata = ocbpy.ocb_scaling.VectorData(0, self.ocb.rec_ind,
-                                                      75.0, 22.0,
-                                                      aacgm_mag=100.0,
-                                                      dat_name="Test",
-                                                      dat_units="$m s^{-1}$")
 
     def test_init_ocb_array_failure(self):
         """ Test init failure with mismatched OCB and input array input

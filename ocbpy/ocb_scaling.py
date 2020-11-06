@@ -232,7 +232,11 @@ class VectorData(object):
                                  + np.asarray(aacgm_z)**2)
             if np.any(np.greater(abs(aacgm_mag - aacgm_sqrt), 1.0e-3,
                                  where=~np.isnan(aacgm_mag))):
-                raise ValueError("inconsistent AACGM components")
+                ocbpy.logger.warning("".join(["inconsistent AACGM components ",
+                                              "with a maximum difference of ",
+                                              "{:} > 1.0e-3".format(
+                                                  abs(aacgm_mag
+                                                      - aacgm_sqrt).max())]))
             self.aacgm_mag = aacgm_mag
 
         # Assign the OCB vector default values
