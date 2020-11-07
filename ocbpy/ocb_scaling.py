@@ -794,6 +794,15 @@ class VectorData(object):
                                    else np.isnan(ocb_angle[norm_mask])))
                     vz[nan_mask] = np.nan
 
+            # Restrict the OCB angle to result in positive sines and cosines
+            lmask = ocb_angle > np.pi / 2.0
+            if np.any(lmask):
+                if ocb_angle.shape == ():
+                    ocb_angle = np.pi - ocb_angle
+                else:
+                    ocb_angle[lmask] = np.pi - ocb_angle[lmask]
+
+            # Calculate the vector components
             if vmag.shape == ():
                 self.ocb_n = np.full(shape=self.ocb_n.shape,
                                      fill_value=(vsigns['north'] * vmag
@@ -858,92 +867,61 @@ class VectorData(object):
 
         # Initialise the output and set the quadrant dictionary
         nan_mask = (~np.isnan(self.aacgm_naz) & ~np.isnan(self.pole_angle))
-        ocb_naz = np.full(shape=(self.aacgm_naz+self.pole_angle).shape,
+        ocb_naz = np.full(shape=(self.aacgm_naz + self.pole_angle).shape,
                           fill_value=np.nan)
-        quads = {o: {v: (self.ocb_quad == o) & (self.vec_quad == v) & nan_mask
-                     for v in quad_range} for o in quad_range}
+        quads = {oquad: {vquad: (self.ocb_quad == oquad)
+                         & (self.vec_quad == vquad) & nan_mask
+                         for vquad in quad_range} for oquad in quad_range}
 
         # Create masks for the different quadrant combinations
-        nmp_mask = (((quads[2][4] | quads[2][2] | quads[1][1])
-                     & np.greater(self.aacgm_naz, self.pole_angle,
-                                  where=nan_mask))
-                    | (quads[1][4]
-                       & np.less_equal(self.aacgm_naz, self.pole_angle + 90.0,
-                                       where=nan_mask)))
-        pmn_mask = (((np.less_equal(self.aacgm_naz, self.pole_angle,
-                                    where=nan_mask)
-                      & (quads[2][4] | quads[2][2] | quads[1][1]))
-                     | (np.greater(self.aacgm_naz, self.pole_angle - 90.0,
-                                   where=nan_mask)
-                        & (quads[4][1] | quads[4][3] | quads[3][4]
-                           | quads[3][2]))) & ~nmp_mask)
-        npp_mask = (np.less_equal(self.aacgm_naz, 90.0 - self.pole_angle,
-                                  where=nan_mask)
-                    & (quads[1][2] | quads[2][1] | quads[2][3])
-                    & ~nmp_mask & ~pmn_mask)
-        omm_mask = (((np.greater(self.aacgm_naz, 90.0 - self.pole_angle,
-                                 where=nan_mask)
-                      & (quads[1][2] | quads[2][1] | quads[2][3]))
-                     | ((quads[4][4] | quads[4][2] | quads[3][1] | quads[3][3]
-                         | quads[1][3])
-                        & np.less_equal(self.aacgm_naz, 180.0
-                                        - self.pole_angle, where=nan_mask)))
-                    & ~nmp_mask & ~pmn_mask & ~npp_mask)
-        mop_mask = ((((quads[3][1] | quads[3][3] | quads[4][4] | quads[4][2]
-                       | quads[1][3])
-                      & np.greater(self.aacgm_naz, 180.0 - self.pole_angle,
-                                   where=nan_mask))
-                     | (quads[1][4]
-                        & np.greater(self.aacgm_naz, self.pole_angle + 90.0,
-                                     where=nan_mask)))
-                    & ~nmp_mask & ~pmn_mask & ~npp_mask & ~omm_mask)
-        omp_mask = (np.less_equal(self.aacgm_naz, self.pole_angle - 90.0,
-                                  where=nan_mask)
-                    & (quads[3][4] | quads[3][2] | quads[4][1] | quads[4][3])
-                    & ~nmp_mask & ~pmn_mask & ~npp_mask & ~omm_mask
-                    & ~mop_mask)
+        abs_mask = (quads[1][1] | quads[2][2] | quads[3][3] | quads[4][4])
+        add_mask = (quads[1][2] | quads[1][3] | quads[2][1] | quads[2][4]
+                    | quads[3][1] | quads[4][2])
+        mpa_mask = (quads[1][4] | quads[2][3])
+        maa_mask = (quads[3][2] | quads[4][1])
+        cir_mask = (quads[3][4] | quads[4][3])
 
-        # Calculate OCB polar angle based on quadrants and other angles
-        if np.any(nmp_mask):
+        # Calculate OCB polar angle based on the quadrants and other angles
+        if np.any(abs_mask):
+            if ocb_naz.shape == ():
+                ocb_naz = abs(self.aacgm_naz - self.pole_angle)
+            else:
+                ocb_naz[abs_mask] = abs(self.aacgm_naz
+                                        - self.pole_angle)[abs_mask]
+
+        if np.any(add_mask):
+            if ocb_naz.shape == ():
+                ocb_naz = self.pole_angle + self.aacgm_naz
+                if ocb_naz > 180.0:
+                    ocb_naz = 360.0 - ocb_naz
+            else:
+                ocb_naz[add_mask] = (self.pole_angle
+                                     + self.aacgm_naz)[add_mask]
+                lmask = (ocb_naz > 180.0) & add_mask
+                if np.any(lmask):
+                    ocb_naz[lmask] = 360.0 - ocb_naz[lmask]
+                    
+
+        if np.any(mpa_mask):
             if ocb_naz.shape == ():
                 ocb_naz = self.aacgm_naz - self.pole_angle
             else:
-                ocb_naz[nmp_mask] = (self.aacgm_naz
-                                     - self.pole_angle)[nmp_mask]
+                ocb_naz[mpa_mask] = (self.aacgm_naz
+                                     - self.pole_angle)[mpa_mask]
 
-        if np.any(pmn_mask):
+        if np.any(maa_mask):
             if ocb_naz.shape == ():
                 ocb_naz = self.pole_angle - self.aacgm_naz
             else:
-                ocb_naz[pmn_mask] = (self.pole_angle
-                                     - self.aacgm_naz)[pmn_mask]
+                ocb_naz[maa_mask] = (self.pole_angle
+                                     - self.aacgm_naz)[maa_mask]
 
-        if np.any(npp_mask):
+        if np.any(cir_mask):
             if ocb_naz.shape == ():
-                ocb_naz = self.aacgm_naz + self.pole_angle
+                ocb_naz = 360.0 - self.aacgm_naz - self.pole_angle
             else:
-                ocb_naz[npp_mask] = (self.aacgm_naz
-                                     + self.pole_angle)[npp_mask]
-
-        if np.any(omm_mask):
-            if ocb_naz.shape == ():
-                ocb_naz = 180.0 - self.aacgm_naz - self.pole_angle
-            else:
-                ocb_naz[omm_mask] = (180.0 - self.aacgm_naz
-                                     - self.pole_angle)[omm_mask]
-        if np.any(mop_mask):
-            if ocb_naz.shape == ():
-                ocb_naz = self.aacgm_naz - 180.0 + self.pole_angle
-            else:
-                ocb_naz[mop_mask] = (self.aacgm_naz - 180.0
-                                     + self.pole_angle)[mop_mask]
-
-        elif np.any(omp_mask):
-            if ocb_naz.shape == ():
-                ocb_naz = 180.0 - self.pole_angle + self.aacgm_naz
-            else:
-                ocb_naz[omp_mask] = (180.0 - self.pole_angle
-                                     + self.aacgm_naz)[omp_mask]
+                ocb_naz[cir_mask] = (360.0 - self.aacgm_naz
+                                     - self.pole_angle)[cir_mask]
 
         return ocb_naz
 
