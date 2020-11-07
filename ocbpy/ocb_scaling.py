@@ -900,7 +900,6 @@ class VectorData(object):
                 lmask = (ocb_naz > 180.0) & add_mask
                 if np.any(lmask):
                     ocb_naz[lmask] = 360.0 - ocb_naz[lmask]
-                    
 
         if np.any(mpa_mask):
             if ocb_naz.shape == ():
@@ -1003,7 +1002,7 @@ class VectorData(object):
             pole_plus = self.pole_angle + 90.0
 
             pmask = (quads[1][1] | quads[2][2] | quads[3][3] | quads[4][4]
-                     | ((quads[1][4] | quads[2][3] )
+                     | ((quads[1][4] | quads[2][3])
                         & np.less_equal(self.aacgm_naz, pole_plus,
                                         where=nan_mask))
                      | ((quads[1][2] | quads[2][1])
@@ -1034,7 +1033,7 @@ class VectorData(object):
             pmask = (quads[1][4] | quads[2][1] | quads[3][2] | quads[4][3] |
                      ((quads[1][1] | quads[4][4])
                       & np.greater_equal(self.aacgm_naz, self.pole_angle,
-                                   where=nan_mask))
+                                         where=nan_mask))
                      | ((quads[3][1] | quads[2][4])
                         & np.less_equal(self.aacgm_naz, minus_pole,
                                         where=nan_mask))
