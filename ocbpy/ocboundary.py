@@ -688,8 +688,7 @@ class OCBoundary(object):
 
     def get_aacgm_boundary_lat(self, aacgm_lon, rec_ind=None,
                                overwrite=False):
-        """Calculate the OCB latitude in AACGM coordinates at specified
-        longitudes
+        """Get the OCB latitude in AACGM coordinates at specified longitudes
 
         Parameters
         ----------
@@ -704,8 +703,8 @@ class OCBoundary(object):
             calculated boundary latitudes for a different set of input
             longitudes (default=False).
 
-        Returns
-        -------
+        Notes
+        -----
         Updates OCBoundary object with list attributes.  If no boundary value
         is calculated at a certain time, the list is padded with None.  If
         a boundary latitude cannot be calculated at that time and longitude,
