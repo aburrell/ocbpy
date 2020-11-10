@@ -84,7 +84,7 @@ a local install use the "--user" flag after "install".
 To run the unit tests,
 
 ```
-    $ python setup.py test
+    $ python -m unittest discover
 ```
 
 # Example
@@ -119,6 +119,9 @@ YYYY-MM-DD HH:MM:SS Phi_Centre R_Centre R
 2000-05-05 11:37:23 202.97 13.23 22.23
 2002-08-21 23:55:20 322.60 5.49 15.36
 2002-08-22 00:01:28 179.02 2.32 19.52
+
+Uses scaling function(s):
+circular(**{})
 ```
 
 Get the first good OCB record, which will be record index 27.
@@ -134,10 +137,11 @@ To get the OCB record closest to a specified time, use **ocbpy.match_data_ocb**
 
 ```
 first_good_time = ocb.dtime[ocb.rec_ind]
-test_times = [first_good_time + dt.timedelta(minutes=5*(i+1)) for i in range(5)]
+test_times = [first_good_time + dt.timedelta(minutes=5 * (i + 1))
+              for i in range(5)]
 itest = ocbpy.match_data_ocb(ocb, test_times, idat=0)
 print(itest, ocb.rec_ind, test_times[itest], ocb.dtime[ocb.rec_ind])
-  
+
 0 31 2000-05-05 13:45:30 2000-05-05 13:50:29
 ```
 
