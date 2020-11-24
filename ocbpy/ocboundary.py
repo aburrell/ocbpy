@@ -39,7 +39,7 @@ import aacgmv2
 
 import ocbpy
 import ocbpy.ocb_correction as ocbcor
-from ocbpy.ocb_time import slt2glon, convert_time, glon2slt, deg2hr, fix_range
+from ocbpy import ocb_time
 from ocbpy.boundaries.files import get_default_file
 
 
@@ -366,8 +366,8 @@ class OCBoundary(object):
             date = None if dflag == 0 else odata.date[i]
             tod = None if dflag == 0 else odata.time[i]
 
-            dtime = convert_time(year=year, soy=soy, date=date, tod=tod,
-                                 datetime_fmt=datetime_fmt)
+            dtime = ocb_time.convert_time(year=year, soy=soy, date=date,
+                                          tod=tod, datetime_fmt=datetime_fmt)
 
             if stime is None and etime is None:
                 dt_list.append(dtime)
@@ -543,7 +543,7 @@ class OCBoundary(object):
         # If needed, convert from geographic to magnetic coordinates
         if coords.lower().find('mag') < 0:
             # Convert from lt to longitude
-            lon = slt2glon(lt, self.dtime[self.rec_ind])
+            lon = ocb_time.slt2glon(lt, self.dtime[self.rec_ind])
             # If geocentric coordinates are specified, add this info to the
             # method flag
             if coords.lower() == 'geocentric':
@@ -581,8 +581,8 @@ class OCBoundary(object):
         yn = (yp - yc) * scalen
 
         ocb_lat = self.hemisphere * (90.0 - np.sqrt(xn**2 + yn**2))
-        ocb_mlt = deg2hr(np.degrees(np.arctan2(yn, xn)))
-        ocb_mlt = fix_range(ocb_mlt, 0.0, 24.0)
+        ocb_mlt = ocb_time.deg2hr(np.degrees(np.arctan2(yn, xn)))
+        ocb_mlt = ocb_time.fix_range(ocb_mlt, 0.0, 24.0)
 
         return ocb_lat, ocb_mlt, r_corr
 
@@ -661,8 +661,8 @@ class OCBoundary(object):
         yp = yn * scale_ocb + yc
 
         aacgm_lat = self.hemisphere * (90.0 - np.sqrt(xp**2 + yp**2))
-        aacgm_mlt = deg2hr(np.degrees(np.arctan2(yp, xp)))
-        aacgm_mlt = fix_range(aacgm_mlt, 0.0, 24.0)
+        aacgm_mlt = ocb_time.deg2hr(np.degrees(np.arctan2(yp, xp)))
+        aacgm_mlt = ocb_time.fix_range(aacgm_mlt, 0.0, 24.0)
 
         # If needed, convert from magnetic to geographic coordinates
         if coords.lower().find('mag') < 0:
@@ -679,21 +679,20 @@ class OCBoundary(object):
                                                      method)
 
             # Convert from longitude to solar local time
-            lt = glon2slt(lon, self.dtime[self.rec_ind])
+            lt = ocb_time.glon2slt(lon, self.dtime[self.rec_ind])
         else:
             lat = aacgm_lat
             lt = aacgm_mlt
 
         return lat, lt
 
-    def get_aacgm_boundary_lat(self, aacgm_lon, rec_ind=None,
-                               overwrite=False):
-        """Calculate the OCB latitude in AACGM coordinates at specified
-        longitudes
+    def get_aacgm_boundary_lat(self, aacgm_mlt, rec_ind=None,
+                               overwrite=False, set_lon=True):
+        """Get the OCB latitude in AACGM coordinates at specified longitudes
 
         Parameters
         ----------
-        aacgm_lon : (int, float, or array-like)
+        aacgm_mlt : (int, float, or array-like)
             AACGM longitude location(s) (in degrees) for which the OCB latitude
             will be calculated.
         rec_ind : (int, array-like, or NoneType)
@@ -703,33 +702,42 @@ class OCBoundary(object):
             Overwrite previous boundary locations if this time already has
             calculated boundary latitudes for a different set of input
             longitudes (default=False).
+        set_lon : (boolean)
+            Calculate the AACGM longitude of the OCB alongside the MLT
+            (default=True).
 
-        Returns
-        -------
+        Notes
+        -----
         Updates OCBoundary object with list attributes.  If no boundary value
         is calculated at a certain time, the list is padded with None.  If
         a boundary latitude cannot be calculated at that time and longitude,
         that time and longitude is filled with NaN.
 
-        'aacgm_boundary_lat' contains the AACGM latitude location(s) of the OCB
+        `aacgm_boundary_lat` contains the AACGM latitude location(s) of the OCB
         (in degrees) for each requested time.
 
-        'aacgm_boundary_lon' holds the aacgm_lon input for each requested
-        time.  The requested longitude may differ from time to time, to allow
+        `aacgm_boundary_mlt` holds the aacgm_mlt input for each requested
+        time.  The requested MLT may differ from time to time, to allow
         easy comparison with satellite passes.
+
+        `aacgm_boundary_lon` holds the aacgm_lon input for each requested
+        time.  This is calculated from `aacgm_boundary_mlt` by default.
 
         """
 
         # Ensure the boundary longitudes span from 0-360 degrees
-        aacgm_lon = np.asarray(aacgm_lon)
-        aacgm_lon[aacgm_lon < 0.0] += 360.0
-        aacgm_lon[aacgm_lon >= 360.0] -= 360.0
+        aacgm_mlt = np.asarray(aacgm_mlt)
+        aacgm_mlt[aacgm_mlt < 0.0] += 24.0
+        aacgm_mlt[aacgm_mlt >= 24.0] -= 24.0
 
-        if not hasattr(self, 'aacgm_boundary_lon'):
-            self.aacgm_boundary_lon = [None for i in range(self.records)]
+        if not hasattr(self, 'aacgm_boundary_mlt'):
+            self.aacgm_boundary_mlt = [None for i in range(self.records)]
 
         if not hasattr(self, 'aacgm_boundary_lat'):
             self.aacgm_boundary_lat = [None for i in range(self.records)]
+
+        if set_lon and not hasattr(self, 'aacgm_boundary_lon'):
+            self.aacgm_boundary_lon = [None for i in range(self.records)]
 
         # Get the indices to calculate the boundary latitudes
         if rec_ind is None:
@@ -747,17 +755,17 @@ class OCBoundary(object):
         for i in rinds:
             # If data exists here and the overwrite option is off, skip
             if self.aacgm_boundary_lat[i] is None or overwrite:
-                # Calculate the difference between the output longitude and the
-                # longitude of the centre of the polar cap
-                del_lon = np.radians(aacgm_lon - self.phi_cent[i])
+                # Calculate the difference between the output MLT and the
+                # MLT of the centre of the polar cap, which is give in degrees
+                del_mlt = ocb_time.hr2rad(aacgm_mlt
+                                          - ocb_time.deg2hr(self.phi_cent[i]))
 
                 # Calculate the radius of the OCB in degrees
-                r_corr = self.rfunc[i](deg2hr(aacgm_lon),
-                                       **self.rfunc_kwargs[i])
+                r_corr = self.rfunc[i](aacgm_mlt, **self.rfunc_kwargs[i])
                 scale_r = self.r[i] + r_corr
-                rad = self.r_cent[i] * np.cos(del_lon) \
+                rad = self.r_cent[i] * np.cos(del_mlt) \
                     + np.sqrt(scale_r**2 - (self.r_cent[i]
-                                            * np.sin(del_lon))**2)
+                                            * np.sin(del_mlt))**2)
 
                 # If the radius is negative, set to NaN
                 if len(rad.shape) > 0:
@@ -768,8 +776,14 @@ class OCBoundary(object):
                 # Calculate the latitude of the OCB in AACGM coordinates
                 self.aacgm_boundary_lat[i] = self.hemisphere * (90.0 - rad)
 
-                # Save the longitude at this time
-                self.aacgm_boundary_lon[i] = aacgm_lon
+                # Save the MLT at this time
+                self.aacgm_boundary_mlt[i] = aacgm_mlt
+
+                # Set the longitude at this time
+                if set_lon:
+                    self.aacgm_boundary_lon[i] = np.asarray(
+                        aacgmv2.convert_mlt(aacgm_mlt, self.dtime[i],
+                                            m2a=True))
             else:
                 estr = "".join(["unable to update AACGM boundary latitude at ",
                                 "{:}, overwrite ".format(self.dtime[i]),

@@ -50,9 +50,25 @@ class TestOCBScalingLogFailure(unittest.TestCase):
         """
         self.lwarn = u"no scaling function provided"
 
-        # Initialize the OCBScaling class without a scaling function
+        # Initialize the VectorData class without a scaling function
         self.vdata.set_ocb(self.ocb)
         self.assertIsNone(self.vdata.scale_func)
+
+        self.lout = self.log_capture.getvalue()
+        # Test logging error message for each bad initialization
+        self.assertTrue(self.lout.find(self.lwarn) >= 0)
+
+    def test_inconsistent_vector_warning(self):
+        """ Test init failure with inconsistent AACGM components
+        """
+        self.lwarn = u"inconsistent AACGM"
+
+        # Initalize the VectorData class with inconsistent vector magnitudes
+        self.vdata = ocbpy.ocb_scaling.VectorData(0, self.ocb.rec_ind,
+                                                  75.0, 22.0,
+                                                  aacgm_mag=100.0,
+                                                  dat_name="Test",
+                                                  dat_units="$m s^{-1}$")
 
         self.lout = self.log_capture.getvalue()
         # Test logging error message for each bad initialization
@@ -516,16 +532,6 @@ class TestVectorDataRaises(unittest.TestCase):
     def tearDown(self):
         del self.ocb, self.vdata, self.input_attrs, self.bad_input
         del self.raise_out, self.hold_val
-
-    def test_init_failure(self):
-        """ Test init failure with inconsistent AACGM components
-        """
-        with self.assertRaisesRegex(ValueError, "inconsistent AACGM"):
-            self.vdata = ocbpy.ocb_scaling.VectorData(0, self.ocb.rec_ind,
-                                                      75.0, 22.0,
-                                                      aacgm_mag=100.0,
-                                                      dat_name="Test",
-                                                      dat_units="$m s^{-1}$")
 
     def test_init_ocb_array_failure(self):
         """ Test init failure with mismatched OCB and input array input
@@ -1015,16 +1021,36 @@ class TestOCBScalingArrayMethods(unittest.TestCase):
                               "test_data", "test_north_circle")
         self.ocb = ocbpy.ocboundary.OCBoundary(filename=test_file,
                                                instrument='image')
-        self.vargs = [[3, 6], 27, np.array([75.0, 87.2]),
-                      np.array([22.0, 21.22])]
-        self.vkwargs = {'aacgm_n': np.array([50.0, 0.0]),
-                        'aacgm_e': np.array([86.5, 0.0]),
-                        'aacgm_z': np.array([5.0, 0.0]),
-                        'dat_name': 'Test', 'dat_units': 'm/s'}
+        # Construct a set of test vectors that have all the different OCB
+        # and vector combinations and one with no magnitude. The test OCB pole
+        # is at 87.24 deg, 5.832 h
+        lats = np.full(shape=(17,), fill_value=75.0)
+        lats[8:] = 89.0
+        mlts = np.zeros(shape=(17,))
+        mlts[4:8] = 15.0
+        mlts[8:12] = 7.0
+        mlts[12:] = 5.0
+        north = [10.0, 10.0, -10.0, -10.0, 10.0, 10.0, -10.0, -10.0,
+                 10.0, 10.0, -10.0, -10.0, 10.0, 10.0, -10.0, -10.0, 0.0]
+        east = [3.0, -3.0, -3.0, 3.0, 3.0, -3.0, -3.0, 3.0, 3.0, -3.0, -3.0,
+                3.0, 3.0, -3.0, -3.0, 3.0, 0.0]
+        vert = np.zeros(shape=(17,))
+        vert[0] = 5.0
+        self.ref_quads = {'ocb': [1, 1, 1, 1, 2, 2, 2, 2, 3, 3, 3, 3, 4, 4, 4,
+                                  4, 4],
+                          'vec': [1, 2, 3, 4, 1, 2, 3, 4, 1, 2, 3, 4, 1, 2, 3,
+                                  4, 1]}
+        
+        self.vargs = [np.arange(0, 17, 1), 27, lats, mlts]
+        self.vkwargs = {'aacgm_n': np.array(north), 'aacgm_e': np.array(east),
+                        'aacgm_z': np.array(vert), 'dat_name': 'Test',
+                        'dat_units': 'm/s'}
         self.vdata = None
         self.out = None
 
-        self.aacgm_mag = [100.03624343, 0.0]
+        self.aacgm_mag = np.full(shape=(17,), fill_value=10.44030650891055)
+        self.aacgm_mag[0] = 11.575836902790225
+        self.aacgm_mag[-1] = 0.0
 
         if version_info.major == 2:
             self.assertRegex = self.assertRegexpMatches
@@ -1032,7 +1058,13 @@ class TestOCBScalingArrayMethods(unittest.TestCase):
 
     def tearDown(self):
         del self.ocb, self.vargs, self.vkwargs, self.out, self.vdata
-        del self.aacgm_mag
+        del self.aacgm_mag, self.ref_quads
+
+    def set_vector_ocb_ind(self):
+        """ Update the input vector arguements to have vector OCB index input
+        """
+        self.vargs[1] = np.full(shape=self.vargs[-1].shape, fill_value=27)
+        self.vargs[1][8:] = 31
 
     def test_array_vector_repr_not_calc(self):
         """ Test the VectorData print statement with uncalculated array input
@@ -1054,7 +1086,7 @@ class TestOCBScalingArrayMethods(unittest.TestCase):
     def test_array_vector_repr_calc_ocb_vec_array(self):
         """ Test the VectorData print statement with calculated ocb/vec arrays
         """
-        self.vargs[1] = [27, 31]
+        self.set_vector_ocb_ind()
         self.vdata = ocbpy.ocb_scaling.VectorData(*self.vargs, **self.vkwargs)
         self.vdata.set_ocb(self.ocb)
         self.out = self.vdata.__repr__()
@@ -1065,7 +1097,7 @@ class TestOCBScalingArrayMethods(unittest.TestCase):
         """ Test the VectorData print statement with calculated ocb arrays
         """
         self.vargs[0] = self.vargs[0][0]
-        self.vargs[1] = [27, 31]
+        self.set_vector_ocb_ind()
         self.vargs[2] = self.vargs[2][0]
         self.vargs[3] = self.vargs[3][0]
         self.vkwargs['aacgm_n'] = self.vkwargs['aacgm_n'][0]
@@ -1089,7 +1121,7 @@ class TestOCBScalingArrayMethods(unittest.TestCase):
     def test_init_nez_ocb_vec_array(self):
         """ Test VectorData initialisation with ocb and vector array components
         """
-        self.vargs[1] = [27, 31]
+        self.set_vector_ocb_ind()
         self.vdata = ocbpy.ocb_scaling.VectorData(*self.vargs, **self.vkwargs)
         self.assertEqual(len(self.vdata.aacgm_mag), len(self.vargs[0]))
         self.assertEqual(len(self.vdata.ocb_mag), len(self.vargs[0]))
@@ -1099,8 +1131,7 @@ class TestOCBScalingArrayMethods(unittest.TestCase):
     def test_init_nez_ocb_array(self):
         """ Test VectorData initialisation with ocb array components
         """
-        self.vargs[0] = self.vargs[0][0]
-        self.vargs[1] = [27, 31]
+        self.set_vector_ocb_ind()
         self.vargs[2] = self.vargs[2][0]
         self.vargs[3] = self.vargs[3][0]
         self.vkwargs['aacgm_n'] = self.vkwargs['aacgm_n'][0]
@@ -1178,34 +1209,25 @@ class TestOCBScalingArrayMethods(unittest.TestCase):
         self.assertAlmostEqual(self.vdata.aacgm_mag[1], self.aacgm_mag[1])
         self.assertAlmostEqual(self.vdata.ocb_mag[1], self.aacgm_mag[1])
 
-    def test_calc_one_large_pole_angle(self):
-        """ Test the OCB polar angle calculation with one angle > 90 deg
-        """
-        self.vdata = ocbpy.ocb_scaling.VectorData(*self.vargs, **self.vkwargs)
-        self.vdata.set_ocb(self.ocb)
-
-        self.vdata.ocb_aacgm_mlt = np.asarray(1.260677777)
-        self.vdata.ocb_aacgm_lat = np.asarray(83.99)
-        self.vdata.ocb_lat[1] = 84.838777192
-        self.vdata.ocb_mlt[1] = 15.1110383783
-
-        self.vdata.calc_vec_pole_angle()
-        self.assertAlmostEqual(self.vdata.pole_angle[0], 22.45577128)
-        self.assertAlmostEqual(self.vdata.pole_angle[1], 91.72024697)
-
     def test_calc_vec_pole_angle_flat(self):
         """ Test the polar angle calculation with angles of 0 and 180 deg
         """
-        self.vargs[3] = np.array([6.0, 6.0])
+        self.vargs[3] = np.full(shape=self.vargs[2].shape,
+                                fill_value=ocbpy.ocb_time.deg2hr(
+                                    self.ocb.phi_cent[self.vargs[1]]))
+        self.vargs[3][np.array(self.ref_quads['ocb']) > 2] += 12.0
         self.vdata = ocbpy.ocb_scaling.VectorData(*self.vargs, **self.vkwargs)
         self.vdata.set_ocb(self.ocb)
 
-        self.vdata.ocb_aacgm_mlt = np.asarray(6.0)
-        self.vdata.aacgm_lat = np.array([45.0 + 0.5 * self.vdata.ocb_aacgm_lat,
-                                         self.vdata.ocb_aacgm_lat - 0.5])
-        self.vdata.calc_vec_pole_angle()
-        self.assertEqual(self.vdata.pole_angle[0], 0.0)
-        self.assertEqual(self.vdata.pole_angle[1], 180.0)
+        self.assertTrue(np.all([quad in [2, 4]
+                                for quad in self.vdata.ocb_quad]))
+        self.assertEqual(list(self.vdata.vec_quad), self.ref_quads['vec'])
+        self.assertTrue(np.all([self.vdata.pole_angle[i] == 0.0
+                                for i, quad in enumerate(self.vdata.ocb_quad)
+                                if quad == 2]))
+        self.assertTrue(np.all([self.vdata.pole_angle[i] == 180.0
+                                for i, quad in enumerate(self.vdata.ocb_quad)
+                                if quad == 4]))
 
     def test_array_vec_quad(self):
         """ Test the assignment of vector quadrants with array input
@@ -1214,7 +1236,7 @@ class TestOCBScalingArrayMethods(unittest.TestCase):
         self.vdata.set_ocb(self.ocb)
 
         self.assertEqual(len(self.vargs[0]), len(self.vdata.vec_quad))
-        self.assertTrue(np.all(self.vdata.vec_quad == 1.0))
+        self.assertEqual(list(self.vdata.vec_quad), self.ref_quads['vec'])
 
     def test_array_ocb_quad(self):
         """ Test the assignment of OCB quadrants with array input
@@ -1222,9 +1244,8 @@ class TestOCBScalingArrayMethods(unittest.TestCase):
         self.vdata = ocbpy.ocb_scaling.VectorData(*self.vargs, **self.vkwargs)
         self.vdata.set_ocb(self.ocb)
 
-        print(self.vdata.ocb_quad)
         self.assertEqual(len(self.vargs[0]), len(self.vdata.ocb_quad))
-        self.assertTrue(np.all(self.vdata.ocb_quad == 1.0))
+        self.assertEqual(list(self.vdata.ocb_quad), self.ref_quads['ocb'])
 
     def test_one_undefinable_ocb_quadrant(self):
         """ Test VectorData array initialization for a undefinable OCB quadrant
@@ -1249,13 +1270,14 @@ class TestOCBScalingArrayMethods(unittest.TestCase):
     def test_define_quadrants_neg_adj_mlt(self):
         """ Test the quadrant assignment with a negative AACGM MLT
         """
-        self.vargs[3][0] = -22.0
+        self.vargs[3] -= 24.0
         self.vdata = ocbpy.ocb_scaling.VectorData(*self.vargs, **self.vkwargs)
         self.vdata.set_ocb(self.ocb, scale_func=ocbpy.ocb_scaling.normal_evar)
 
-        self.assertGreater(self.vdata.ocb_aacgm_mlt-self.vargs[3][0], 24)
-        self.assertTrue(np.all(self.vdata.ocb_quad == 1))
-        self.assertTrue(np.all(self.vdata.vec_quad == 1))
+        self.assertGreater(self.vdata.ocb_aacgm_mlt - self.vargs[3][0], 24)
+
+        self.assertEqual(list(self.vdata.ocb_quad), self.ref_quads['ocb'])
+        self.assertEqual(list(self.vdata.vec_quad), self.ref_quads['vec'])
 
     @unittest.skipIf(version_info.major == 2,
                      'Python 2.7 does not support subTest')
@@ -1264,7 +1286,11 @@ class TestOCBScalingArrayMethods(unittest.TestCase):
         """
         self.vdata = ocbpy.ocb_scaling.VectorData(*self.vargs, **self.vkwargs)
         self.vdata.set_ocb(self.ocb)
+
+        # If the OCB pole is closer to the AACGM pole than the vector, set
+        # the pole angle to zero deg. Otherwise, set it to 180.0 deg
         self.vdata.pole_angle = np.zeros(shape=self.vargs[2].shape)
+        self.vdata.pole_angle[self.vdata.ocb_quad > 2] = 180.0
 
         nscale = ocbpy.ocb_scaling.normal_evar(self.vdata.aacgm_n,
                                                self.vdata.unscaled_r,
@@ -1277,9 +1303,7 @@ class TestOCBScalingArrayMethods(unittest.TestCase):
         for tset in [('scale_func', None, self.vkwargs['aacgm_n'],
                       self.vkwargs['aacgm_e']),
                      ('scale_func', ocbpy.ocb_scaling.normal_evar, nscale,
-                      escale),
-                     ('ocb_aacgm_lat', self.vargs[2][0], -1.0 * nscale,
-                      -1.0 * escale)]:
+                      escale)]:
             with self.subTest(tset=tset):
                 setattr(self.vdata, tset[0], tset[1])
 
@@ -1299,6 +1323,7 @@ class TestOCBScalingArrayMethods(unittest.TestCase):
         self.vdata = ocbpy.ocb_scaling.VectorData(*self.vargs, **self.vkwargs)
         self.vdata.set_ocb(self.ocb)
         self.vdata.pole_angle = np.zeros(shape=self.vargs[2].shape)
+        self.vdata.pole_angle[self.vdata.ocb_quad > 2] = 180.0
 
         # Run the scale_vector routine with the new attributes
         self.vdata.scale_vector()
@@ -1314,6 +1339,7 @@ class TestOCBScalingArrayMethods(unittest.TestCase):
         self.vdata = ocbpy.ocb_scaling.VectorData(*self.vargs, **self.vkwargs)
         self.vdata.set_ocb(self.ocb, scale_func=ocbpy.ocb_scaling.normal_evar)
         self.vdata.pole_angle = np.zeros(shape=self.vargs[2].shape)
+        self.vdata.pole_angle[self.vdata.ocb_quad > 2] = 180.0
 
         # Run the scale_vector routine with the new attributes
         self.vdata.scale_vector()

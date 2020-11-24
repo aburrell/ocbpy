@@ -20,7 +20,7 @@ if version_info.major == 3:
 
 # Run setup
 setup(name='ocbpy',
-      version='0.2.0',
+      version='0.2.1',
       url='https://github.com/aburrell/ocbpy',
       author='Angeline G. Burrell',
       author_email='angeline.burrell@nrl.navy.mil',
