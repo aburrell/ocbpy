@@ -37,7 +37,7 @@ from ocbpy.ocboundary import OCBoundary, match_data_ocb
 from ocbpy import instruments, boundaries
 
 # Define the global variables
-__version__ = str('0.2.0')
+__version__ = str('0.2.1')
 
 # Define a logger object to allow easier log handling
 logging.raiseExceptions = False
