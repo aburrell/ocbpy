@@ -12,7 +12,6 @@ load_ascii_data(filename, hlines, kwargs)
     Load time-sorted ascii data file
 
 """
-from __future__ import absolute_import, unicode_literals
 
 import numpy as np
 from os import path

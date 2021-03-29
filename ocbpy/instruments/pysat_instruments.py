@@ -16,7 +16,6 @@ Module
 pysat is available at: http://github.com/pysat/pysat or pypi
 
 """
-from __future__ import absolute_import, unicode_literals
 
 import datetime as dt
 import numpy as np
