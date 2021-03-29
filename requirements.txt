@@ -1,4 +1,3 @@
-numpy<=1.15.4 ; python_version<='3.5'
-numpy>=1.19.0 ; python_version>='3.6'
+numpy
 aacgmv2
 coverage
