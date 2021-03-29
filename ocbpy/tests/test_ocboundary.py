@@ -5,13 +5,11 @@
 # -----------------------------------------------------------------------------
 """ Tests the ocboundary class and functions
 """
-from __future__ import absolute_import, unicode_literals
 
 import datetime as dt
 from io import StringIO
 import logging
 import numpy as np
-from sys import version_info
 from os import path
 import unittest
 
@@ -31,8 +29,6 @@ class TestOCBoundaryLogFailure(unittest.TestCase):
         """ Tear down the test case"""
         del self.lwarn, self.lout, self.log_capture
 
-    @unittest.skipIf(version_info.major == 2,
-                     'Python 2.7 does not support subTest')
     def test_bad_instrument_name(self):
         """ Test OCB initialization with bad instrument name """
         self.lwarn = u"OCB instrument must be a string"
@@ -50,59 +46,6 @@ class TestOCBoundaryLogFailure(unittest.TestCase):
 
         del val, ocb
 
-    @unittest.skipIf(version_info.major == 3, 'Already tested, remove in 2020')
-    def test_bad_instrument_int_name(self):
-        """ Test OCB initialization with a bad integer instrument name """
-        self.lwarn = u"OCB instrument must be a string"
-
-        # Initialize the OCBoundary class with bad instrument names
-        ocb = ocbpy.OCBoundary(instrument=1)
-        self.assertIsNone(ocb.filename)
-        self.assertIsNone(ocb.instrument)
-
-        self.lout = self.log_capture.getvalue()
-        # Test logging error message for each bad initialization
-        print(self.lout, self.lwarn)
-        self.assertTrue(self.lout.find(self.lwarn) >= 0)
-
-        del ocb
-
-    @unittest.skipIf(version_info.major == 3, 'Already tested, remove in 2020')
-    def test_bad_instrument_none_name(self):
-        """ Test OCB initialization with a bad NoneType instrument name """
-        self.lwarn = u"OCB instrument must be a string"
-
-        # Initialize the OCBoundary class with bad instrument names
-        ocb = ocbpy.OCBoundary(instrument=None)
-        self.assertIsNone(ocb.filename)
-        self.assertIsNone(ocb.instrument)
-
-        self.lout = self.log_capture.getvalue()
-        # Test logging error message for each bad initialization
-        print(self.lout, self.lwarn)
-        self.assertTrue(self.lout.find(self.lwarn) >= 0)
-
-        del ocb
-
-    @unittest.skipIf(version_info.major == 3, 'Already tested, remove in 2020')
-    def test_bad_instrument_boolean_name(self):
-        """ Test OCB initialization with a bad Boolean instrument name """
-        self.lwarn = u"OCB instrument must be a string"
-
-        # Initialize the OCBoundary class with bad instrument names
-        ocb = ocbpy.OCBoundary(instrument=True)
-        self.assertIsNone(ocb.filename)
-        self.assertIsNone(ocb.instrument)
-
-        self.lout = self.log_capture.getvalue()
-        # Test logging error message for each bad initialization
-        print(self.lout, self.lwarn)
-        self.assertTrue(self.lout.find(self.lwarn) >= 0)
-
-        del ocb
-
-    @unittest.skipIf(version_info.major == 2,
-                     'Python 2.7 does not support subTest')
     def test_bad_file_name(self):
         """ Test OCB initialization with bad file name """
         self.lwarn = u"filename is not a string"
@@ -118,36 +61,6 @@ class TestOCBoundaryLogFailure(unittest.TestCase):
                 self.assertTrue(self.lout.find(self.lwarn) >= 0)
 
         del val, ocb
-
-    @unittest.skipIf(version_info.major == 3, 'Already tested, remove in 2020')
-    def test_bad_file_name_int(self):
-        """ Test OCB initialization with a bad file name that's an integer"""
-        self.lwarn = u"filename is not a string"
-
-        # Initialize the OCBoundary class with bad instrument names
-        ocb = ocbpy.OCBoundary(filename=1)
-        self.assertIsNone(ocb.filename)
-
-        self.lout = self.log_capture.getvalue()
-        # Test logging error message for each bad initialization
-        self.assertTrue(self.lout.find(self.lwarn) >= 0)
-
-        del ocb
-
-    @unittest.skipIf(version_info.major == 3, 'Already tested, remove in 2020')
-    def test_bad_filename_bool(self):
-        """ Test OCB initialization with a bad file name that's a Boolean"""
-        self.lwarn = u"filename is not a string"
-
-        # Initialize the OCBoundary class with bad instrument names
-        ocb = ocbpy.OCBoundary(filename=True)
-        self.assertIsNone(ocb.filename)
-
-        self.lout = self.log_capture.getvalue()
-        # Test logging error message for each bad initialization
-        self.assertTrue(self.lout.find(self.lwarn) >= 0)
-
-        del ocb
 
     def test_bad_filename(self):
         """ Test OCB initialization with a bad default file/instrument pairing
@@ -223,8 +136,6 @@ class TestOCBoundaryInstruments(unittest.TestCase):
     def tearDown(self):
         del self.test_dir, self.inst_attrs, self.inst_init, self.ocb
 
-    @unittest.skipIf(version_info.major == 2,
-                     'Python 2.7 does not support subTest')
     def test_instrument_loading(self):
         """ Test OCB initialization with good instrument names """
         for ocb_kwargs in self.inst_init:
@@ -238,58 +149,6 @@ class TestOCBoundaryInstruments(unittest.TestCase):
                     self.assertFalse(hasattr(self.ocb, tattr))
 
         del ocb_kwargs, tattr
-
-    @unittest.skipIf(version_info.major == 3, 'Already tested, remove in 2020')
-    def test_image_loading(self):
-        """ Test OCB initialization for IMAGE names """
-        self.ocb = ocbpy.OCBoundary(**self.inst_init[0])
-
-        for tattr in self.inst_attrs['image']:
-            self.assertTrue(hasattr(self.ocb, tattr))
-
-        for tattr in self.not_attrs['image']:
-            self.assertFalse(hasattr(self.ocb, tattr))
-
-        del tattr
-
-    @unittest.skipIf(version_info.major == 3, 'Already tested, remove in 2020')
-    def test_ampere_loading(self):
-        """ Test OCB initialization for AMPERE names """
-        self.ocb = ocbpy.OCBoundary(**self.inst_init[3])
-
-        for tattr in self.inst_attrs['ampere']:
-            self.assertTrue(hasattr(self.ocb, tattr))
-
-        for tattr in self.not_attrs['ampere']:
-            self.assertFalse(hasattr(self.ocb, tattr))
-
-        del tattr
-
-    @unittest.skipIf(version_info.major == 3, 'Already tested, remove in 2020')
-    def test_dmsp_ssj_north_loading(self):
-        """ Test OCB initialization for DMSP-SSJ North names """
-        self.ocb = ocbpy.OCBoundary(**self.inst_init[1])
-
-        for tattr in self.inst_attrs['dmsp-ssj']:
-            self.assertTrue(hasattr(self.ocb, tattr))
-
-        for tattr in self.not_attrs['dmsp-ssj']:
-            self.assertFalse(hasattr(self.ocb, tattr))
-
-        del tattr
-
-    @unittest.skipIf(version_info.major == 3, 'Already tested, remove in 2020')
-    def test_dmsp_ssj_south_loading(self):
-        """ Test OCB initialization for DMSP-SSJ South names """
-        self.ocb = ocbpy.OCBoundary(**self.inst_init[2])
-
-        for tattr in self.inst_attrs['dmsp-ssj']:
-            self.assertTrue(hasattr(self.ocb, tattr))
-
-        for tattr in self.not_attrs['dmsp-ssj']:
-            self.assertFalse(hasattr(self.ocb, tattr))
-
-        del tattr
 
 
 class TestOCBoundaryMethodsGeneral(unittest.TestCase):
@@ -307,10 +166,6 @@ class TestOCBoundaryMethodsGeneral(unittest.TestCase):
         self.assertTrue(path.isfile(self.set_empty['filename']))
         self.assertTrue(path.isfile(self.set_default['filename']))
         self.ocb = None
-
-        if version_info.major == 2:
-            self.assertRaisesRegex = self.assertRaisesRegexp
-            self.assertRegex = self.assertRegexpMatches
 
     def tearDown(self):
         del self.set_empty, self.set_default, self.ocb
@@ -342,23 +197,14 @@ class TestOCBoundaryMethodsGeneral(unittest.TestCase):
         """ Test the unset class representation """
 
         self.ocb = ocbpy.ocboundary.OCBoundary(filename=None)
-
-        if version_info.major == 2:
-            self.assertRegexpMatches(self.ocb.__repr__(),
-                                     "No Open-Closed Boundary file specified")
-        else:
-            self.assertRegex(self.ocb.__repr__(),
-                             "No Open-Closed Boundary file specified")
+        self.assertRegex(self.ocb.__repr__(),
+                         "No Open-Closed Boundary file specified")
 
     def test_empty_file_repr(self):
         """ Test the class representation with an empty data file"""
 
         self.ocb = ocbpy.ocboundary.OCBoundary(**self.set_empty)
-
-        if version_info.major == 2:
-            self.assertRegexpMatches(self.ocb.__repr__(), "No data loaded")
-        else:
-            self.assertRegex(self.ocb.__repr__(), "No data loaded")
+        self.assertRegex(self.ocb.__repr__(), "No data loaded")
 
     def test_nofile_init(self):
         """ Ensure that the class can be initialised without loading a file.
@@ -1268,10 +1114,7 @@ class TestOCBoundaryMatchData(unittest.TestCase):
 
 class TestOCBoundaryFailure(unittest.TestCase):
     def setUp(self):
-        """ Initialize the OCBoundary object using the test file
-        """
-        if version_info.major == 2:
-            self.assertRaisesRegex = self.assertRaisesRegexp
+        pass
 
     def tearDown(self):
         pass

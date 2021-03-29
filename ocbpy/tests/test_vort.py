@@ -10,7 +10,6 @@ from io import StringIO
 import logging
 import numpy as np
 import os
-from sys import version_info
 import platform
 import unittest
 
@@ -62,57 +61,6 @@ class TestVortLogWarnings(unittest.TestCase):
         # Test logging error message
         self.assertTrue(self.lout.find(self.lwarn) >= 0)
 
-    @unittest.skipIf(version_info.major > 2,
-                     'Python 2.7 does not support subTest')
-    def test_vort_unexpected_line_data_block(self):
-        """ Test the vorticity catch for loading a file with a missing line """
-
-        self.lwarn = u'unexpected line encountered for a data block'
-
-        # Create the bad file
-        with open(self.temp_output, 'w') as fout:
-            with open(self.test_file, 'r') as fin:
-                data = fin.readlines()
-            data.pop()
-            fout.write(''.join(data))
-
-        # Load the bad file
-        data = ocb_ivort.load_vorticity_ascii_data(self.temp_output)
-        self.lout = self.log_capture.getvalue()
-
-        # Test logging error message and data output
-        self.assertTrue(self.lout.find(self.lwarn) >= 0)
-        self.assertIsNone(data)
-
-        del data, fout, fin
-
-    @unittest.skipIf(version_info.major > 2,
-                     'Python 2.7 does not support subTest')
-    def test_vort_unexpected_line_number_entries(self):
-        """ Testing vorticity catch for file loading with missing number line
-        """
-
-        self.lwarn = u'unexpected line encountered when number of entries line'
-
-        # Create the bad file
-        with open(self.temp_output, 'w') as fout:
-            with open(self.test_file, 'r') as fin:
-                data = fin.readlines()
-            data.pop(1)
-            fout.write(''.join(data))
-
-        # Load the bad file
-        data = ocb_ivort.load_vorticity_ascii_data(self.temp_output)
-        self.lout = self.log_capture.getvalue()
-
-        # Test logging error message and data output
-        self.assertTrue(self.lout.find(self.lwarn) >= 0)
-        self.assertIsNone(data)
-
-        del data, fout, fin
-
-    @unittest.skipIf(version_info.major < 3,
-                     'Already tested, remove in 2020')
     def test_vort_unexpected_line(self):
         """ Testing vorticity catch for file loading"""
 
@@ -168,10 +116,6 @@ class TestVort2AsciiMethods(unittest.TestCase):
                           'MONTH': 5}
         self.assertTrue(os.path.isfile(self.test_file))
 
-        # Remove in 2020
-        if version_info.major == 2:
-            self.assertRaisesRegex = self.assertRaisesRegexp
-
     def tearDown(self):
 
         if os.path.isfile(self.temp_output):
@@ -181,136 +125,6 @@ class TestVort2AsciiMethods(unittest.TestCase):
         del self.test_output_north, self.test_output_south, self.test_eq_file
         del self.test_empty
 
-    @unittest.skipIf(version_info.major > 2,
-                     'Python 2.7 does not support subTest')
-    def test_vort2ascii_ocb_north(self):
-        """ Test vorticity data conversion selecting just the north
-        """
-
-        ocb_ivort.vort2ascii_ocb(self.test_file, self.temp_output,
-                                 ocbfile=self.test_ocb, instrument='image',
-                                 hemisphere=1)
-
-        if platform.system().lower() == "windows":
-            # filecmp doesn't work on windows
-
-            ldtype = ['|U50' if i < 2 else float for i in range(5)]
-            test_out = np.genfromtxt(self.test_output_north, skip_header=1,
-                                     dtype=ldtype)
-            temp_out = np.genfromtxt(self.temp_output, skip_header=1,
-                                     dtype=ldtype)
-
-            # Test the number of rows and columns
-            self.assertTupleEqual(test_out.shape, temp_out.shape)
-
-            # Test the data in each row
-            for i, test_row in enumerate(test_out):
-                self.assertListEqual(list(test_row), list(temp_out[i]))
-
-            del ldtype, test_out, temp_out
-        else:
-            # Compare created file to stored test file
-            self.assertTrue(filecmp.cmp(self.test_output_north,
-                                        self.temp_output, shallow=False))
-
-    @unittest.skipIf(version_info.major > 2,
-                     'Python 2.7 does not support subTest')
-    def test_vort2ascii_north_from_ocb(self):
-        """ Test vorticity data conversion selecting the north from OCBoundary
-        """
-
-        ocb = ocbpy.ocboundary.OCBoundary(filename=self.test_ocb,
-                                          instrument='image', hemisphere=1)
-        ocb_ivort.vort2ascii_ocb(self.test_file, self.temp_output, ocb=ocb,
-                                 hemisphere=0)
-
-        if platform.system().lower() == "windows":
-            # filecmp doesn't work on windows
-
-            ldtype = ['|U50' if i < 2 else float for i in range(5)]
-            test_out = np.genfromtxt(self.test_output_north, skip_header=1,
-                                     dtype=ldtype)
-            temp_out = np.genfromtxt(self.temp_output, skip_header=1,
-                                     dtype=ldtype)
-
-            # Test the number of rows and columns
-            self.assertTupleEqual(test_out.shape, temp_out.shape)
-
-            # Test the data in each row
-            for i, test_row in enumerate(test_out):
-                self.assertListEqual(list(test_row), list(temp_out[i]))
-
-            del ldtype, test_out, temp_out
-        else:
-            # Compare created file to stored test file
-            self.assertTrue(filecmp.cmp(self.test_output_north,
-                                        self.temp_output, shallow=False))
-
-    @unittest.skipIf(version_info.major > 2,
-                     'Python 2.7 does not support subTest')
-    def test_vort2ascii_south_from_vortfile(self):
-        """ Test vorticity data conversion selecting the north from OCBoundary
-        """
-
-        ocb_ivort.vort2ascii_ocb(self.test_eq_file, self.temp_output,
-                                 ocbfile=self.test_ocb, instrument='image')
-
-        if platform.system().lower() == "windows":
-            # filecmp doesn't work on windows
-
-            ldtype = ['|U50' if i < 2 else float for i in range(5)]
-            test_out = np.genfromtxt(self.test_output_south, skip_header=1,
-                                     dtype=ldtype)
-            temp_out = np.genfromtxt(self.temp_output, skip_header=1,
-                                     dtype=ldtype)
-
-            # Test the number of rows and columns
-            self.assertTupleEqual(test_out.shape, temp_out.shape)
-
-            # Test the data in each row
-            for i, test_row in enumerate(test_out):
-                self.assertListEqual(list(test_row), list(temp_out[i]))
-
-            del ldtype, test_out, temp_out
-        else:
-            # Compare created file to stored test file
-            self.assertTrue(filecmp.cmp(self.test_output_south,
-                                        self.temp_output, shallow=False))
-
-    @unittest.skipIf(version_info.major > 2,
-                     'Python 2.7 does not support subTest')
-    def test_vort2ascii_ocb_south(self):
-        """ Test vorticity data conversion selecting just the south
-        """
-
-        ocb_ivort.vort2ascii_ocb(self.test_file, self.temp_output,
-                                 ocbfile=self.test_ocb, instrument='image',
-                                 hemisphere=-1)
-
-        if platform.system().lower() == "windows":
-            # filecmp doesn't work on windows
-
-            ldtype = ['|U50' if i < 2 else float for i in range(5)]
-            test_out = np.genfromtxt(self.test_output_south, skip_header=1,
-                                     dtype=ldtype)
-            temp_out = np.genfromtxt(self.temp_output, skip_header=1,
-                                     dtype=ldtype)
-
-            # Test the number of rows and columns
-            self.assertTupleEqual(test_out.shape, temp_out.shape)
-
-            # Test the data in each row
-            for i, test_row in enumerate(test_out):
-                self.assertListEqual(list(test_row), list(temp_out[i]))
-
-            del ldtype, test_out, temp_out
-        else:
-            # Compare created file to stored test file
-            self.assertTrue(filecmp.cmp(self.test_output_south,
-                                        self.temp_output, shallow=False))
-
-    @unittest.skipIf(version_info.major < 3,
-                     'Already tested, remove in 2020')
     def test_vort2ascii_ocb(self):
         """ Test vorticity conversion with different hemispheres and methods
         """

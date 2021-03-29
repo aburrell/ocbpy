@@ -10,7 +10,6 @@ from io import StringIO
 import logging
 import numpy as np
 from os import path
-from sys import version_info
 import unittest
 
 import ocbpy
@@ -103,9 +102,6 @@ class TestOCBScalingMethods(unittest.TestCase):
                                                   aacgm_e=0.0,
                                                   dat_name="Test Zero",
                                                   dat_units="$m s^{-1}$")
-
-        if version_info.major == 2:
-            self.assertRegex = self.assertRegexpMatches
 
     def tearDown(self):
         del self.ocb, self.vdata, self.wdata, self.zdata
@@ -386,8 +382,6 @@ class TestOCBScalingMethods(unittest.TestCase):
                          self.vdata.scale_func(0.0, self.vdata.unscaled_r,
                                                self.vdata.scaled_r))
 
-    @unittest.skipIf(version_info.major == 2,
-                     'Python 2.7 does not support subTest')
     def test_scale_vec_pole_angle_zero(self):
         """ Test the calculation of the OCB vector sign with no pole angle
         """
@@ -419,44 +413,6 @@ class TestOCBScalingMethods(unittest.TestCase):
                 self.assertEqual(self.vdata.ocb_e, tset[3])
 
         del nscale, escale, tset
-
-    @unittest.skipIf(version_info.major > 2, 'Already tested')
-    def test_scale_vec_pole_angle_zero_none(self):
-        """ Test the OCB vector sign routine with no pole angle or scaling
-        """
-        self.vdata.set_ocb(self.ocb)
-        self.vdata.pole_angle = 0.0
-
-        # Run the scale_vector routine with the new attributes
-        self.vdata.scale_vector()
-
-        # Assess the ocb north and east components
-        self.assertEqual(self.vdata.ocb_n, self.vdata.aacgm_n)
-        self.assertEqual(self.vdata.ocb_e, self.vdata.aacgm_e)
-
-    @unittest.skipIf(version_info.major > 2, 'Already tested')
-    def test_scale_vec_pole_angle_zero_scale_at_pole(self):
-        """ Test the OCB vector sign routine with no pole angle and data at pole
-        """
-        self.vdata.set_ocb(self.ocb, scale_func=ocbpy.ocb_scaling.normal_evar)
-        self.vdata.pole_angle = 0.0
-        self.vdata.ocb_aacgm_lat = self.vdata.aacgm_lat
-
-        nscale = -1.0 * ocbpy.ocb_scaling.normal_evar(self.vdata.aacgm_n,
-                                                      self.vdata.unscaled_r,
-                                                      self.vdata.scaled_r)
-        escale = -1.0 * ocbpy.ocb_scaling.normal_evar(self.vdata.aacgm_e,
-                                                      self.vdata.unscaled_r,
-                                                      self.vdata.scaled_r)
-
-        # Run the scale_vector routine with the new attributes
-        self.vdata.scale_vector()
-
-        # Assess the ocb north and east components
-        self.assertEqual(self.vdata.ocb_n, nscale)
-        self.assertEqual(self.vdata.ocb_e, escale)
-
-        del nscale, escale
 
     def test_set_ocb_zero(self):
         """ Test setting of OCB values in VectorData without any magnitude
@@ -526,9 +482,6 @@ class TestVectorDataRaises(unittest.TestCase):
         self.raise_out = list()
         self.hold_val = None
 
-        if version_info.major == 2:
-            self.assertRaisesRegex = self.assertRaisesRegexp
-
     def tearDown(self):
         del self.ocb, self.vdata, self.input_attrs, self.bad_input
         del self.raise_out, self.hold_val
@@ -559,8 +512,6 @@ class TestVectorDataRaises(unittest.TestCase):
             self.vdata = ocbpy.ocb_scaling.VectorData(*self.input_attrs,
                                                       **self.bad_input)
 
-    @unittest.skipIf(version_info.major == 2,
-                     'Python 2.7 does not support subTest')
     def test_init_vector_failure(self):
         """ Test init failure with a bad mix of vector and scalar input
         """
@@ -582,45 +533,6 @@ class TestVectorDataRaises(unittest.TestCase):
                     self.vdata = ocbpy.ocb_scaling.VectorData(*tset[0],
                                                               **tset[1])
 
-    @unittest.skipIf(version_info.major > 2, 'Already tested with subTest')
-    def test_init_vector_failure_dat_ind(self):
-        """ Test init failure with a bad data index shape
-        """
-        self.input_attrs = [0, self.ocb.rec_ind, [75.0, 70.0], [22.0, 20.0]]
-        self.bad_input = {'aacgm_n': 10.0}
-
-        with self.assertRaisesRegex(
-                ValueError, "data index shape must match vector shape"):
-            self.vdata = ocbpy.ocb_scaling.VectorData(*self.input_attrs,
-                                                      **self.bad_input)
-
-    @unittest.skipIf(version_info.major > 2, 'Already tested with subTest')
-    def test_init_vector_failure_many_array_size(self):
-        """ Test init failure with a bad vector lengths
-        """
-        self.input_attrs = [[0, 1], self.ocb.rec_ind, [75.0, 70.0], 20.0]
-        self.bad_input = {'aacgm_n': [100.0, 110.0, 30.0]}
-
-        with self.assertRaisesRegex(ValueError,
-                                    "mismatched VectorData input shapes"):
-            self.vdata = ocbpy.ocb_scaling.VectorData(*self.input_attrs,
-                                                      **self.bad_input)
-
-    @unittest.skipIf(version_info.major > 2, 'Already tested with subTest')
-    def test_init_vector_failure_bad_lat_array_size(self):
-        """ Test init failure with a bad vector lengths
-        """
-        self.input_attrs = [[0, 1, 3], self.ocb.rec_ind, [75.0, 70.0],
-                            [22.0, 20.0, 23.0]]
-        self.bad_input = {'aacgm_n': [100.0, 110.0, 30.0]}
-
-        with self.assertRaisesRegex(ValueError,
-                                    "mismatched VectorData input shapes"):
-            self.vdata = ocbpy.ocb_scaling.VectorData(*self.input_attrs,
-                                                      **self.bad_input)
-
-    @unittest.skipIf(version_info.major == 2,
-                     'Python 2.7 does not support subTest')
     def test_bad_calc_vec_pole_angle(self):
         """Test calc_vec_pole_angle failure with bad input"""
         self.input_attrs = ['aacgm_mlt', 'ocb_aacgm_mlt', 'aacgm_lat',
@@ -642,86 +554,6 @@ class TestVectorDataRaises(unittest.TestCase):
                     self.vdata.calc_vec_pole_angle()
 
                 setattr(self.vdata, tset[0], self.hold_val)
-
-    @unittest.skipIf(version_info.major > 2, 'Already tested with subTest')
-    def test_bad_calc_vec_pole_angle_mlt_float(self):
-        """Test calc_vec_pole_angle failure with bad AACGM MLT
-        """
-        self.vdata.set_ocb(self.ocb, None)
-        self.vdata.aacgm_mlt = self.bad_input[0]
-
-        with self.assertRaisesRegex(ValueError, "AACGM MLT of Vector"):
-            self.vdata.calc_vec_pole_angle()
-
-    @unittest.skipIf(version_info.major > 2, 'Already tested with subTest')
-    def test_bad_calc_vec_pole_angle_ocb_mlt_float_small(self):
-        """Test calc_vec_pole_angle failure with small bad OCB MLT
-        """
-        self.vdata.set_ocb(self.ocb, None)
-        self.vdata.ocb_aacgm_mlt = self.bad_input[0]
-
-        with self.assertRaisesRegex(ValueError, "AACGM MLT of OCB pole"):
-            self.vdata.calc_vec_pole_angle()
-
-    @unittest.skipIf(version_info.major > 2, 'Already tested with subTest')
-    def test_bad_calc_vec_pole_angle_vec_mlat_float(self):
-        """Test calc_vec_pole_angle failure with bad vector latitude
-        """
-        self.vdata.set_ocb(self.ocb, None)
-        self.vdata.aacgm_lat = self.bad_input[0]
-
-        with self.assertRaisesRegex(ValueError, "AACGM latitude of Vector"):
-            self.vdata.calc_vec_pole_angle()
-
-    @unittest.skipIf(version_info.major > 2, 'Already tested with subTest')
-    def test_bad_calc_vec_pole_angle_mlt_array(self):
-        """Test calc_vec_pole_angle failure with bad AACGM MLT
-        """
-        self.vdata.set_ocb(self.ocb, None)
-        self.vdata.aacgm_mlt = self.bad_input[1]
-
-        with self.assertRaisesRegex(ValueError, "AACGM MLT of Vector"):
-            self.vdata.calc_vec_pole_angle()
-
-    @unittest.skipIf(version_info.major > 2, 'Already tested with subTest')
-    def test_bad_calc_vec_pole_angle_ocb_mlt_float_big(self):
-        """Test calc_vec_pole_angle failure with bad OCB MLT
-        """
-        self.vdata.set_ocb(self.ocb, None)
-        self.vdata.ocb_aacgm_mlt = self.bad_input[1]
-
-        with self.assertRaisesRegex(ValueError, "AACGM MLT of OCB pole"):
-            self.vdata.calc_vec_pole_angle()
-
-    @unittest.skipIf(version_info.major > 2, 'Already tested with subTest')
-    def test_bad_calc_vec_pole_angle_ocb_mlat_float_small(self):
-        """Test calc_vec_pole_angle failure with barely bad OCB latitude
-        """
-        self.vdata.set_ocb(self.ocb, None)
-        self.vdata.ocb_aacgm_lat = self.bad_input[0]
-
-        with self.assertRaisesRegex(ValueError, "AACGM latitude of OCB pole"):
-            self.vdata.calc_vec_pole_angle()
-
-    @unittest.skipIf(version_info.major > 2, 'Already tested with subTest')
-    def test_bad_calc_vec_pole_angle_ocb_mlat_float_big(self):
-        """Test calc_vec_pole_angle failure with bad OCB latitude
-        """
-        self.vdata.set_ocb(self.ocb, None)
-        self.vdata.ocb_aacgm_lat = self.bad_input[1]
-
-        with self.assertRaisesRegex(ValueError, "AACGM latitude of OCB pole"):
-            self.vdata.calc_vec_pole_angle()
-
-    @unittest.skipIf(version_info.major > 2, 'Already tested with subTest')
-    def test_bad_calc_vec_aacgm_lat_float(self):
-        """Test calc_vec_pole_angle failure with bad vector latitude
-        """
-        self.vdata.set_ocb(self.ocb, None)
-        self.vdata.aacgm_lat = self.bad_input[1]
-
-        with self.assertRaisesRegex(ValueError, "AACGM latitude of Vector"):
-            self.vdata.calc_vec_pole_angle()
 
     def test_no_ocb_lat(self):
         """ Test failure when OCB latitude is not available
@@ -887,8 +719,6 @@ class TestHaversine(unittest.TestCase):
     def tearDown(self):
         del self.input_angles, self.hav_out, self.out, self.ahav_out
 
-    @unittest.skipIf(version_info.major == 2,
-                     'Python 2.7 does not support subTest')
     def test_haversine(self):
         """ Test implimentation of the haversine
         """
@@ -907,31 +737,6 @@ class TestHaversine(unittest.TestCase):
 
         del tset
 
-    @unittest.skipIf(version_info.major > 2, 'Already tested with subTest')
-    def test_haversine_float(self):
-        """ Test implimentation of the haversine with float inputs
-        """
-
-        for i, alpha in enumerate(self.input_angles):
-            self.assertAlmostEqual(ocbpy.ocb_scaling.hav(alpha),
-                                   self.hav_out[i])
-
-    @unittest.skipIf(version_info.major > 2, 'Already tested with subTest')
-    def test_haversine_list(self):
-        """ Test implimentation of the haversine with a list input
-        """
-        self.out = ocbpy.ocb_scaling.hav(list(self.input_angles))
-        self.assertTrue(np.all(abs(self.out - self.hav_out) < 1.0e-7))
-
-    @unittest.skipIf(version_info.major > 2, 'Already tested with subTest')
-    def test_haversine_array(self):
-        """ Test implimentation of the haversine with a array input
-        """
-        self.out = ocbpy.ocb_scaling.hav(self.input_angles)
-        self.assertTrue(np.all(abs(self.out - self.hav_out) < 1.0e-7))
-
-    @unittest.skipIf(version_info.major == 2,
-                     'Python 2.7 does not support subTest')
     def test_inverse_haversine(self):
         """ Test the implemenation of the inverse haversine
         """
@@ -949,32 +754,6 @@ class TestHaversine(unittest.TestCase):
                     self.assertTrue(np.all(self.out - tset[1] < 1.0e-7))
 
         del tset
-
-    @unittest.skipIf(version_info.major > 2,
-                     'Python 2.7 does not support subTest')
-    def test_inverse_haversine_float(self):
-        """ Test implimentation of the inverse haversine with float input
-        """
-        for i, self.out in enumerate(self.ahav_out):
-            self.assertAlmostEqual(ocbpy.ocb_scaling.archav(self.hav_out[i]),
-                                   self.out)
-
-    @unittest.skipIf(version_info.major > 2,
-                     'Python 2.7 does not support subTest')
-    def test_inverse_haversine_list(self):
-        """ Test implimentation of the inverse haversine with list input
-        """
-        self.out = ocbpy.ocb_scaling.archav(list(self.hav_out))
-        self.assertTrue(np.all(abs(self.out - self.ahav_out)
-                               < 1.0e-7))
-
-    @unittest.skipIf(version_info.major > 2,
-                     'Python 2.7 does not support subTest')
-    def test_inverse_haversine_array(self):
-        """ Test implimentation of the inverse haversine with array input
-        """
-        self.out = ocbpy.ocb_scaling.archav(self.hav_out)
-        self.assertTrue(np.all(abs(self.out - self.ahav_out) < 1.0e-7))
 
     def test_inverse_haversine_small_float(self):
         """ Test implimentation of the inverse haversine with very small numbers
@@ -1040,7 +819,7 @@ class TestOCBScalingArrayMethods(unittest.TestCase):
                                   4, 4],
                           'vec': [1, 2, 3, 4, 1, 2, 3, 4, 1, 2, 3, 4, 1, 2, 3,
                                   4, 1]}
-        
+
         self.vargs = [np.arange(0, 17, 1), 27, lats, mlts]
         self.vkwargs = {'aacgm_n': np.array(north), 'aacgm_e': np.array(east),
                         'aacgm_z': np.array(vert), 'dat_name': 'Test',
@@ -1051,10 +830,6 @@ class TestOCBScalingArrayMethods(unittest.TestCase):
         self.aacgm_mag = np.full(shape=(17,), fill_value=10.44030650891055)
         self.aacgm_mag[0] = 11.575836902790225
         self.aacgm_mag[-1] = 0.0
-
-        if version_info.major == 2:
-            self.assertRegex = self.assertRegexpMatches
-            self.assertNotRegex = self.assertNotRegexpMatches
 
     def tearDown(self):
         del self.ocb, self.vargs, self.vkwargs, self.out, self.vdata
@@ -1279,8 +1054,6 @@ class TestOCBScalingArrayMethods(unittest.TestCase):
         self.assertEqual(list(self.vdata.ocb_quad), self.ref_quads['ocb'])
         self.assertEqual(list(self.vdata.vec_quad), self.ref_quads['vec'])
 
-    @unittest.skipIf(version_info.major == 2,
-                     'Python 2.7 does not support subTest')
     def test_scale_vec_pole_angle_zero(self):
         """ Test the calculation of the OCB vector sign with no pole angle
         """
@@ -1315,42 +1088,3 @@ class TestOCBScalingArrayMethods(unittest.TestCase):
                 self.assertTrue(np.all(self.vdata.ocb_e == tset[3]))
 
         del nscale, escale, tset
-
-    @unittest.skipIf(version_info.major > 2, 'Already tested with subTest')
-    def test_scale_vec_pole_angle_zero_noscale(self):
-        """ Test the OCB vector sign calc with no pole angle or scaling
-        """
-        self.vdata = ocbpy.ocb_scaling.VectorData(*self.vargs, **self.vkwargs)
-        self.vdata.set_ocb(self.ocb)
-        self.vdata.pole_angle = np.zeros(shape=self.vargs[2].shape)
-        self.vdata.pole_angle[self.vdata.ocb_quad > 2] = 180.0
-
-        # Run the scale_vector routine with the new attributes
-        self.vdata.scale_vector()
-
-        # Assess the ocb north and east components
-        self.assertTrue(np.all(self.vdata.ocb_n == self.vkwargs['aacgm_n']))
-        self.assertTrue(np.all(self.vdata.ocb_e == self.vkwargs['aacgm_e']))
-
-    @unittest.skipIf(version_info.major > 2, 'Already tested with subTest')
-    def test_scale_vec_pole_angle_zero_scale(self):
-        """  Test the OCB vector sign calc with scaling but no pole angle
-        """
-        self.vdata = ocbpy.ocb_scaling.VectorData(*self.vargs, **self.vkwargs)
-        self.vdata.set_ocb(self.ocb, scale_func=ocbpy.ocb_scaling.normal_evar)
-        self.vdata.pole_angle = np.zeros(shape=self.vargs[2].shape)
-        self.vdata.pole_angle[self.vdata.ocb_quad > 2] = 180.0
-
-        # Run the scale_vector routine with the new attributes
-        self.vdata.scale_vector()
-
-        # Assess the ocb north and east components
-        self.out = ocbpy.ocb_scaling.normal_evar(self.vkwargs['aacgm_n'],
-                                                 self.vdata.unscaled_r,
-                                                 self.vdata.scaled_r)
-        self.assertTrue(np.all(self.vdata.ocb_n == self.out))
-
-        self.out = ocbpy.ocb_scaling.normal_evar(self.vkwargs['aacgm_e'],
-                                                 self.vdata.unscaled_r,
-                                                 self.vdata.scaled_r)
-        self.assertTrue(np.all(self.vdata.ocb_e == self.out))

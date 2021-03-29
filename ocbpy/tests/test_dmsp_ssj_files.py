@@ -4,7 +4,6 @@
 # Full license can be found in License.md
 # -----------------------------------------------------------------------------
 """ Tests the boundaries.dmsp_ssj_files functions"""
-from __future__ import absolute_import, unicode_literals
 
 import datetime as dt
 from glob import glob
@@ -12,7 +11,6 @@ from io import StringIO
 import logging
 import numpy as np
 import os
-import sys
 import unittest
 
 import ocbpy
@@ -33,11 +31,6 @@ class TestSSJFetch(unittest.TestCase):
                         os.path.join(self.ocb_dir, "tests", "test_data"),
                         self.sat_nums]
         self.fetch_files = list()
-
-        # Remove in 2020 when dropping support for 2.7
-        if sys.version_info.major == 2:
-            self.assertRegex = self.assertRegexpMatches
-            self.assertRaisesRegex = self.assertRaisesRegexp
 
     def tearDown(self):
         if len(self.fetch_files) > 0:
@@ -77,8 +70,6 @@ class TestSSJFetch(unittest.TestCase):
             *self.in_args)
         self.assertEqual(len(self.fetch_files), 0)
 
-    @unittest.skipIf(sys.version_info.major == 2,
-                     'Python 2.7 does not support subTest')
     def test_fetch_ssj_files_failure(self):
         """ Test fetch_ssj_files raising ValueError """
 
@@ -94,27 +85,6 @@ class TestSSJFetch(unittest.TestCase):
                             *self.in_args)
                 self.in_args[ii[0]] = temp
         del temp
-
-    @unittest.skipIf(sys.version_info.major == 3,
-                     'Already tested, remove in 2020')
-    def test_fetch_ssj_files_failure_fake_dir(self):
-        """ Test fetch_ssj_files raising ValueError for fake directory"""
-
-        self.in_args[2] = "fake_dir"
-        with self.assertRaisesRegexp(ValueError,
-                                     "can't find the output directory"):
-            self.fetch_files = boundaries.dmsp_ssj_files.fetch_ssj_files(
-                *self.in_args)
-
-    @unittest.skipIf(sys.version_info.major == 3,
-                     'Already tested, remove in 2020')
-    def test_fetch_ssj_files_failure_unknown_sat(self):
-        """ Test fetch_ssj_files raising ValueError for bad sat ID"""
-
-        self.in_args[-1] = [-47]
-        with self.assertRaisesRegexp(ValueError, "unknown satellite ID"):
-            self.fetch_files = boundaries.dmsp_ssj_files.fetch_ssj_files(
-                *self.in_args)
 
     def test_fetch_ssj_files_failure_bad_sat(self):
         """ Test fetch_ssj_files raising ValueError for bad sat ID"""
@@ -147,11 +117,6 @@ class TestSSJCreate(unittest.TestCase):
         ocbpy.logger.addHandler(logging.StreamHandler(self.log_capture))
         ocbpy.logger.setLevel(logging.WARNING)
 
-        # Remove in 2020 when dropping support for 2.7
-        if sys.version_info.major == 2:
-            self.assertRegex = self.assertRegexpMatches
-            self.assertRaisesRegex = self.assertRaisesRegexp
-
     def tearDown(self):
         if len(self.out) > 0:
             for ff in self.out:
@@ -161,8 +126,6 @@ class TestSSJCreate(unittest.TestCase):
         del self.comp_files, self.log_capture, self.lout, self.base_file
         del self.out_cols
 
-    @unittest.skipIf(sys.version_info.major == 2,
-                     'Python 2.7 does not support subTest')
     def test_create_ssj_boundary_files_failure(self):
         """ Test create_ssj_boundary_files raising ValueError """
 
@@ -176,52 +139,6 @@ class TestSSJCreate(unittest.TestCase):
                         boundaries.dmsp_ssj_files.create_ssj_boundary_files(
                             self.cdf_files, **ii[0])
 
-    @unittest.skipIf(sys.version_info.major == 3,
-                     'Already tested, remove in 2020')
-    def test_create_ssj_boundary_files_plotdir_failure(self):
-        """ Test create_ssj_boundary_files plot directory failure """
-
-        with self.assertRaisesRegex(ValueError, "unknown plot directory"):
-            self.out = boundaries.dmsp_ssj_files.create_ssj_boundary_files(
-                self.cdf_files, make_plots=True, plot_dir='fake_dir')
-
-    @unittest.skipIf(sys.version_info.major == 3,
-                     'Already tested, remove in 2020')
-    def test_create_ssj_boundary_files_outdir_failure(self):
-        """ Test create_ssj_boundary_files output directory failure """
-
-        with self.assertRaisesRegex(ValueError, "unknown output directory"):
-            self.out = boundaries.dmsp_ssj_files.create_ssj_boundary_files(
-                self.cdf_files, out_dir='fake_dir')
-
-    @unittest.skipIf(sys.version_info.major == 3,
-                     'Already tested, remove in 2020')
-    def test_create_ssj_boundary_files_cdfname_failure(self):
-        """ Test create_ssj_boundary_files bad cdf filename failure """
-
-        # Try to read in a bad CDF filename
-        self.out = boundaries.dmsp_ssj_files.create_ssj_boundary_files(
-            self.comp_files)
-        self.assertEqual(len(self.out), 0)
-
-        # Test the logging output
-        self.lout = self.log_capture.getvalue()
-        self.assertTrue(self.lout.find("CDF") >= 0)
-
-    @unittest.skipIf(sys.version_info.major == 3,
-                     'Already tested, remove in 2020')
-    def test_create_ssj_boundary_files_notafile_failure(self):
-        """ Test create_ssj_boundary_files bad filename failure """
-
-        # Try to read in a bad CDF filename
-        self.out = boundaries.dmsp_ssj_files.create_ssj_boundary_files(
-            [self.test_dir])
-        self.assertEqual(len(self.out), 0)
-
-        # Test the logging output
-        self.lout = self.log_capture.getvalue()
-        self.assertTrue(self.lout.find("bad input file") >= 0)
-
     def test_create_ssj_boundary_files_outcols_failure(self):
         """ Test create_ssj_boundary_files bad outcols failure """
 
@@ -229,8 +146,6 @@ class TestSSJCreate(unittest.TestCase):
             self.out = boundaries.dmsp_ssj_files.create_ssj_boundary_files(
                 self.cdf_files, out_dir=self.test_dir, out_cols=['fake'])
 
-    @unittest.skipIf(sys.version_info.major == 2,
-                     'Python 2.7 does not support subTest')
     def test_create_ssj_boundary_files_log_failure(self):
         """ Test create_ssj_boundary_files raising logging errors """
 
@@ -366,11 +281,6 @@ class TestSSJFormat(unittest.TestCase):
         self.log_capture = StringIO()
         ocbpy.logger.addHandler(logging.StreamHandler(self.log_capture))
         ocbpy.logger.setLevel(logging.WARNING)
-
-        # Remove in 2020 when dropping support for 2.7
-        if sys.version_info.major == 2:
-            self.assertRegex = self.assertRegexpMatches
-            self.assertRaisesRegex = self.assertRaisesRegexp
 
     def tearDown(self):
         if len(self.out) > 0:
@@ -512,10 +422,6 @@ class TestSSJFetchFormat(unittest.TestCase):
         self.ldtype = [int, '|U50', '|U50', float, float, float,
                        float, float, float, float, float]
 
-        # Remove in 2020 when dropping support for 2.7
-        if sys.version_info.major == 2:
-            self.assertRaisesRegex = self.assertRaisesRegexp
-
     def tearDown(self):
         if len(self.out) > 0:
             for ff in self.out:
@@ -638,10 +544,8 @@ class TestSSJFetchFormat(unittest.TestCase):
                  "ssj_auroral_boundary installed, cannot test failure")
 class TestSSJFailure(unittest.TestCase):
     def setUp(self):
-        """ Set up calls for python 2.7 """
-        # Remove in 2020 when dropping support for 2.7
-        if sys.version_info.major == 2:
-            self.assertRaisesRegex = self.assertRaisesRegexp
+        """ No setup needed"""
+        pass
 
     def tearDown(self):
         """ No teardown needed"""
@@ -652,4 +556,4 @@ class TestSSJFailure(unittest.TestCase):
 
         with self.assertRaisesRegex(ImportError,
                                     'unable to load the DMSP SSJ module'):
-            from ocbpy.boundaries import dmsp_ssj_files
+            from ocbpy.boundaries import dmsp_ssj_files  # NOQA F401
