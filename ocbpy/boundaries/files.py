@@ -29,7 +29,6 @@ Milan, S. E., et al. (2015), Principal component analysis of
   10,415–10,424, doi:10.1002/2015JA021680.
 
 """
-from __future__ import absolute_import, unicode_literals
 
 import datetime as dt
 import itertools
