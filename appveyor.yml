@@ -1,6 +1,6 @@
-#---------------------------------#
-#      general configuration      #
-#---------------------------------#
+# -----------------------------------------------------------------------------
+# General configuration
+# -----------------------------------------------------------------------------
 
 # version format
 version: '{branch}-{build}'
@@ -11,16 +11,20 @@ skip_tags: true
 # Maximum number of concurrent jobs for the project
 max_jobs: 2
 
-#---------------------------------#
-#    environment configuration    #
-#---------------------------------#
+# -----------------------------------------------------------------------------
+# Environment configuration
+#
+# Added image to ensure all Python versions are available
+# -----------------------------------------------------------------------------
 
 init:
   - ps: echo $env:TESTENV
 
+image:
+- Visual Studio 2019
 environment:
   global:
-    WITH_COMPILER: 'cmd /E:ON /V:ON /C .\ci\appveyor-with-compiler.cmd'
+    WITH_COMPILER: 'cmd /E:ON /V:ON /C'
     BASH_CMD: "bash requirements.extra 0"
   matrix:
     - job_name: P36-x32 basic
