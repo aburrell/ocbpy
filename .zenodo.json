@@ -1,0 +1,36 @@
+{
+    "license": {
+      "id": "bsd-license"
+    },
+    "keywords": [
+	"magnetic coordinates", 
+	"coordinate-transformation", 
+	"coordinate-systems", 
+	"space", 
+	"space-physics", 
+	"ionosphere", 
+	"magnetosphere",
+	"Conversion",
+	"Coordinate Conversion", 
+	"Converting",
+	"Magnetic Field",
+	"Space Physics",
+	"Heliophysics"
+    ],
+    "creators": [
+      {
+        "orcid": "0000-0001-8875-9326", 
+        "affiliation": "Naval Research Laboratory", 
+        "name": "Angeline G. Burrell"
+      },
+      {
+        "orcid": "0000-0003-1151-5934", 
+        "affiliation": "British Antarctic Survey", 
+        "name": "Gareth Chisham"
+      },
+      {
+        "affiliation": "Birkeland Centre for Space Science", 
+        "name": "Jone Reistad"
+      }
+    ]
+}
