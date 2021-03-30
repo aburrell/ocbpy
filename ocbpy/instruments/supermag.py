@@ -18,7 +18,6 @@ SuperMAG data available at: http://supermag.jhuapl.edu/
 
 """
 
-from __future__ import absolute_import, unicode_literals
 import datetime as dt
 import numpy as np
 

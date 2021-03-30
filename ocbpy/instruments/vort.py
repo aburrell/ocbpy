@@ -17,7 +17,6 @@ Data
 Specialised SuperDARN data product, available from: gchi@bas.ac.uk
 
 """
-from __future__ import absolute_import, unicode_literals
 import datetime as dt
 import numpy as np
 

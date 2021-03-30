@@ -12,7 +12,6 @@ load_ascii_data(filename, hlines, kwargs)
     Load time-sorted ascii data file
 
 """
-from __future__ import absolute_import, unicode_literals
 
 import numpy as np
 from os import path
@@ -54,8 +53,8 @@ def test_file(filename):
 
 
 def load_ascii_data(filename, hlines, gft_kwargs=dict(), hsplit=None,
-                    datetime_cols=list(), datetime_fmt=None, int_cols=list(),
-                    str_cols=list(), max_str_length=50, header=list()):
+                    datetime_cols=None, datetime_fmt=None, int_cols=None,
+                    str_cols=None, max_str_length=50, header=None):
     """ Load an ascii data file into a dict of numpy array
 
     Parameters
@@ -70,24 +69,26 @@ def load_ascii_data(filename, hlines, gft_kwargs=dict(), hsplit=None,
     hsplit : (str, NoneType)
         character seperating data labels in header.  None splits on all
         whitespace characters. (default=None)
-    datetime_cols : (list of ints)
+    datetime_cols : (list, NoneType)
         If there are date strings or values that should be converted to a
         datetime object, list them in order here. Not processed as floats.
-        (default=[])
-    datetime_fmt : (str or NoneType)
+        NoneType produces an empty list. (default=None)
+    datetime_fmt : (str, NoneType)
         Format needed to convert the datetime_cols entries into a datetime
         object.  Special formats permitted are: 'YEAR SOY', 'SOD'.
         'YEAR SOY' must be used together; 'SOD' indicates seconds of day, and
         may be used with any date format (default=None)
-    int_cols : (list of ints)
-        Data that should be processed as integers, not floats. (default=[])
-    str_cols : (list of ints)
-        Data that should be processed as strings, not floats. (default=[])
+    int_cols : (list, NoneType)
+        Data that should be processed as integers, not floats. NoneType
+        produces an empty list. (default=None)
+    str_cols : (list, NoneType)
+        Data that should be processed as strings, not floats. NoneType produces
+        an empty list. (default=None)
     max_str_length : (int)
         Maximum allowed string length. (default=50)
-    header : (list of str)
+    header : (list, NoneType)
         Header string(s) where the last line contains whitespace separated data
-        names (default=list())
+        names. NoneType produces an empty list. (default=None)
 
     Returns
     -------
@@ -102,6 +103,18 @@ def load_ascii_data(filename, hlines, gft_kwargs=dict(), hsplit=None,
     Data is assumed to be float unless otherwise stated.
 
     """
+    # Initialize the empty lists
+    if datetime_cols is None:
+        datetime_cols = list()
+
+    if int_cols is None:
+        int_cols = list()
+
+    if str_cols is None:
+        str_cols = list()
+
+    if header is None:
+        header = list()
 
     # Test to ensure the file is small enough to read in.  Python can only
     # allocate 2GB of data.  If you load something larger, python will crash

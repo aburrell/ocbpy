@@ -30,7 +30,6 @@ Research: Space Physics, 122, doi:10.1002/2016JA023235.
 
 """
 
-from __future__ import absolute_import, unicode_literals
 import numpy as np
 
 import ocbpy

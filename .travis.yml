@@ -11,11 +11,10 @@ env:
         - INSTALL_EXTRA=1
         - INSTALL_EXTRA=2
 python:
-    - 2.7
-    - 3.5
-    - 3.6
-    - 3.7
-    - 3.8
+    - "3.6"
+    - "3.7"
+    - "3.8"
+    - "3.9"
 
 jobs:
    allow_failures:

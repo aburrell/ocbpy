@@ -29,7 +29,6 @@ Chisham, G. (2017), A new methodology for the development of high-latitude
  Research: Space Physics, 122, doi:10.1002/2016JA023235.
 
 """
-from __future__ import absolute_import, unicode_literals
 
 import datetime as dt
 import numpy as np

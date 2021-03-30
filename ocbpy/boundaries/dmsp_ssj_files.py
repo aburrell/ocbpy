@@ -31,18 +31,11 @@ Kilcommons, L.M., et al. (2017), A new DMSP magnetometer and auroral boundary
 
 """
 
-from __future__ import absolute_import, unicode_literals
-
 import datetime as dt
 import numpy as np
 import os
-import sys
 
 import ocbpy
-
-if sys.version_info.major == 2:
-    import warnings
-    warnings.simplefilter('default')
 
 # AGB: The TypeError exception below is necessary due to a bug in
 # ssj_auroral_boundary that was introduced by a change in matplotlib

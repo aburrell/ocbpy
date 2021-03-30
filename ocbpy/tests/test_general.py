@@ -5,7 +5,6 @@
 # -----------------------------------------------------------------------------
 """ Tests the ocb_scaling class and functions
 """
-from __future__ import absolute_import, unicode_literals
 
 import datetime as dt
 import logging

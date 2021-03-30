@@ -5,13 +5,11 @@
 # -----------------------------------------------------------------------------
 """ Tests the ocb_scaling class and functions
 """
-from __future__ import absolute_import, unicode_literals
 
 from io import StringIO
 import logging
 import numpy as np
 from os import path
-from sys import version_info
 import unittest
 
 import ocbpy
@@ -43,11 +41,6 @@ class TestPysatUtils(unittest.TestCase):
         self.pysat_keys = list()
         self.arevectors = list(),
         self.nkeys = 0
-
-        # Remove in 2020 when dropping support for 2.7
-        if version_info.major == 2:
-            self.assertRegex = self.assertRegexpMatches
-            self.assertRaisesRegex = self.assertRaisesRegexp
 
     def tearDown(self):
         """Delete attributes"""
@@ -161,10 +154,8 @@ class TestPysatUtils(unittest.TestCase):
 @unittest.skipIf(not no_pysat, "pysat installed, cannot test failure")
 class TestPysatFailure(unittest.TestCase):
     def setUp(self):
-        """ Initialize, allowing use of python 2.7 """
-        # Remove in 2020 when dropping support for 2.7
-        if version_info.major == 2:
-            self.assertRaisesRegex = self.assertRaisesRegexp
+        """ No setup needed"""
+        pass
 
     def tearDown(self):
         """ No teardown needed"""
@@ -174,15 +165,14 @@ class TestPysatFailure(unittest.TestCase):
         """ Test pysat import failure"""
 
         with self.assertRaisesRegex(ImportError, 'unable to load the pysat'):
-            import ocbpy.instruments.pysat_instruments as ocb_pysat
+            import ocbpy.instruments.pysat_instruments as ocb_pysat  # NOQA 401
 
 
 @unittest.skipIf(no_pysat, "pysat not installed")
 class TestPysatStructure(unittest.TestCase):
     def setUp(self):
         """ No setup needed"""
-        if version_info.major == 2:
-            self.assertRegex = self.assertRegexpMatches
+        pass
 
     def tearDown(self):
         """ No teardown needed"""
@@ -190,11 +180,7 @@ class TestPysatStructure(unittest.TestCase):
 
     def test_add_ocb_to_data_defaults(self):
         """ test the add_ocb_to_data function defaults"""
-
-        if version_info.major == 2:
-            defaults = ocb_pysat.add_ocb_to_data.func_defaults
-        else:
-            defaults = ocb_pysat.add_ocb_to_data.__defaults__
+        defaults = ocb_pysat.add_ocb_to_data.__defaults__
 
         for i in [0, 1, 8]:
             self.assertEqual(len(defaults[i]), 0)
@@ -212,11 +198,7 @@ class TestPysatStructure(unittest.TestCase):
 
     def test_add_ocb_to_metadata_defaults(self):
         """ test the add_ocb_to_metadata function defaults"""
-
-        if version_info.major == 2:
-            defaults = ocb_pysat.add_ocb_to_metadata.func_defaults
-        else:
-            defaults = ocb_pysat.add_ocb_to_metadata.__defaults__
+        defaults = ocb_pysat.add_ocb_to_metadata.__defaults__
 
         for i in [0, 2]:
             self.assertFalse(defaults[i])
@@ -257,11 +239,6 @@ class TestPysatMethods(unittest.TestCase):
 
         self.utils = TestPysatUtils("test_ocb_metadata")
         self.utils.setUp()
-
-        # Remove in 2020 when dropping support for 2.7
-        if version_info.major == 2:
-            self.assertRegex = self.assertRegexpMatches
-            self.assertRaisesRegex = self.assertRaisesRegexp
 
     def tearDown(self):
         self.utils.tearDown()
@@ -599,11 +576,6 @@ class TestPysatCustMethods(unittest.TestCase):
 
         self.utils = TestPysatUtils("test_ocb_metadata")
         self.utils.setUp()
-
-        # Remove in 2020 when dropping support for 2.7
-        if version_info.major == 2:
-            self.assertRegex = self.assertRegexpMatches
-            self.assertRaisesRegex = self.assertRaisesRegexp
 
     def tearDown(self):
         self.utils.tearDown()

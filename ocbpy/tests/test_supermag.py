@@ -8,7 +8,6 @@
 import datetime as dt
 import numpy as np
 import os
-from sys import version_info
 import platform
 import unittest
 
@@ -40,10 +39,6 @@ class TestSuperMAG2AsciiMethods(unittest.TestCase):
         self.temp_output = os.path.join(self.ocb_dir, "tests", "test_data",
                                         "temp_smag")
 
-        # Remove this in 2020
-        if version_info.major == 2:
-            self.assertRaisesRegex = self.assertRaisesRegexp
-
     def tearDown(self):
         if os.path.isfile(self.temp_output):
             os.remove(self.temp_output)
@@ -51,8 +46,6 @@ class TestSuperMAG2AsciiMethods(unittest.TestCase):
         del self.test_file, self.test_output_north, self.test_ocb
         del self.test_output_south, self.temp_output, self.test_eq_file
 
-    @unittest.skipIf(version_info.major > 2,
-                     'Python 2.7 does not support subTest')
     def test_supermag2ascii_ocb_choose_north(self):
         """ Test the SuperMAG data processing for a mixed file choosing north
         """
@@ -83,8 +76,6 @@ class TestSuperMAG2AsciiMethods(unittest.TestCase):
             self.assertTrue(filecmp.cmp(self.test_output_north,
                                         self.temp_output, shallow=False))
 
-    @unittest.skipIf(version_info.major > 2,
-                     'Python 2.7 does not support subTest')
     def test_supermag2ascii_north_from_ocb(self):
         """ Test the SuperMAG data processing choosing north from OCBoundary
         """
@@ -119,8 +110,6 @@ class TestSuperMAG2AsciiMethods(unittest.TestCase):
 
         del ocb
 
-    @unittest.skipIf(version_info.major > 2,
-                     'Python 2.7 does not support subTest')
     def test_supermag2ascii_ocb_choose_south(self):
         """ Test the SuperMAG data processing for a mixed file choosing south
         """
@@ -151,8 +140,6 @@ class TestSuperMAG2AsciiMethods(unittest.TestCase):
             self.assertTrue(filecmp.cmp(self.test_output_south,
                                         self.temp_output, shallow=False))
 
-    @unittest.skipIf(version_info.major > 2,
-                     'Python 2.7 does not support subTest')
     def test_supermag2ascii_ocb_eq(self):
         """ Test hemisphere choice with southern and equatorial data
         """
@@ -183,8 +170,6 @@ class TestSuperMAG2AsciiMethods(unittest.TestCase):
             self.assertTrue(filecmp.cmp(self.test_output_south,
                                         self.temp_output, shallow=False))
 
-    @unittest.skipIf(version_info.major < 3,
-                     'Already tested, remove in 2020')
     def test_supermag2ascii_hemi_options(self):
         """ Test SuperMAG conversion with different hemisphere options
         """
@@ -248,27 +233,6 @@ class TestSuperMAG2AsciiMethods(unittest.TestCase):
                                          instrument='image', hemisphere=1,
                                          ocbfile=self.test_ocb)
 
-    @unittest.skipIf(version_info.major > 2,
-                     'Python 2.7 does not support subTest')
-    def test_supermag2ascii_ocb_bad_output_str(self):
-        """ Test failure caused by an non-string output name
-        """
-        with self.assertRaisesRegex(IOError,
-                                    "output filename is not a string"):
-            ocb_ismag.supermag2ascii_ocb(self.test_file, 1,
-                                         ocbfile=self.test_ocb)
-
-    @unittest.skipIf(version_info.major > 2,
-                     'Python 2.7 does not support subTest')
-    def test_supermag2ascii_ocb_bad_input(self):
-        """ Test the failure when a bad SuperMAG file is input
-        """
-        with self.assertRaisesRegex(IOError, "SuperMAG file cannot be opened"):
-            ocb_ismag.supermag2ascii_ocb("fake_file", "fake_out",
-                                         ocbfile=self.test_ocb)
-
-    @unittest.skipIf(version_info.major < 3,
-                     'Already tested, remove in 2020')
     def test_supermag2ascii_ioerr_messages(self):
         """ Test the failures that produce reliable IOError messages
         """
@@ -306,10 +270,6 @@ class TestSuperMAGLoadMethods(unittest.TestCase):
         self.out = list()
         self.assertTrue(os.path.isfile(self.test_file))
 
-        # Remove this in 2020
-        if version_info.major == 2:
-            self.assertRaisesRegex = self.assertRaisesRegexp
-
     def tearDown(self):
         del self.test_file, self.out, self.test_vals
 
@@ -328,29 +288,6 @@ class TestSuperMAGLoadMethods(unittest.TestCase):
         for kk in self.test_vals.keys():
             self.assertEqual(self.out[1][kk][-1], self.test_vals[kk])
 
-    @unittest.skipIf(version_info.major > 2,
-                     'Python 2.7 does not support subTest')
-    def test_load_failure(self):
-        """ Test the routine to load the SuperMAG data for bad filename """
-        self.out = ocb_ismag.load_supermag_ascii_data("fake_file")
-
-        # Test to see that the data keys are all in the header
-        self.assertListEqual(self.out[0], [])
-        self.assertListEqual(list(self.out[1].keys()), [])
-
-    @unittest.skipIf(version_info.major > 2,
-                     'Python 2.7 does not support subTest')
-    def test_wrong_load(self):
-        """ Test the routine to load the SuperMAG data """
-        bad_file = os.path.join(self.ocb_dir, "test", "test_data", "test_vort")
-        self.out = ocb_ismag.load_supermag_ascii_data(bad_file)
-
-        self.assertListEqual(self.out[0], list())
-        self.assertDictEqual(self.out[1], dict())
-        del bad_file
-
-    @unittest.skipIf(version_info.major < 3,
-                     'Already tested, remove in 2020')
     def test_load_failures(self):
         """ Test graceful failures with different bad file inputs"""
 

@@ -28,17 +28,16 @@ ocb_correction Boundary correction utilities
 
 """
 
-from __future__ import absolute_import, unicode_literals
-
+# Define a logger object to allow easier log handling
 import logging
 
+logging.raiseExceptions = False
+logger = logging.getLogger('ocbpy_logger')
+
+# Import the package modules and top-level classes
 from ocbpy import ocboundary, ocb_scaling, ocb_time, ocb_correction
 from ocbpy.ocboundary import OCBoundary, match_data_ocb
 from ocbpy import instruments, boundaries
 
 # Define the global variables
 __version__ = str('0.2.1')
-
-# Define a logger object to allow easier log handling
-logging.raiseExceptions = False
-logger = logging.getLogger('ocbpy_logger')

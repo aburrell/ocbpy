@@ -8,7 +8,6 @@
 
 import datetime as dt
 import numpy as np
-from sys import version_info
 import unittest
 
 from ocbpy import ocb_time
@@ -20,9 +19,6 @@ class TestOCBTimeMethods(unittest.TestCase):
 
         self.dtime = dt.datetime(2001, 1, 1)
         self.dtime2 = dt.datetime(1901, 1, 1)
-
-        if version_info.major == 2:
-            self.assertRaisesRegex = self.assertRaisesRegexp
 
     def tearDown(self):
         """ Clean up after each test """
@@ -327,8 +323,6 @@ class TestTimeFormatMethods(unittest.TestCase):
         """ Clean up after each test """
         del self.dt_formats, self.dtime, self.out_fmt, self.out_len
 
-    @unittest.skipIf(version_info.major < 3,
-                     'Already tested, remove in 2020')
     def test_get_datetime_fmt_len(self):
         """ Test the datetime format length determination"""
         # Cycle through the different formatting options
@@ -344,104 +338,6 @@ class TestTimeFormatMethods(unittest.TestCase):
                 # equal to the formatted time string
                 self.assertGreaterEqual(self.out_len, len(self.out_fmt))
 
-    @unittest.skipIf(version_info.major > 2,
-                     'Python 2.7 does not support subTest')
-    def test_get_datetime_fmt_len_nodate(self):
-        """ Test the datetime format length determination for string w/o date
-        """
-        # Get the function format string length maximum
-        self.out_len = ocb_time.get_datetime_fmt_len(self.dt_formats[0])
-
-        # Get the formatted time string
-        self.out_fmt = self.dtime.strftime(self.dt_formats[0])
-
-        # Test to see that the returned length equalsthe formatted time string
-        self.assertEqual(self.out_len, len(self.out_fmt))
-
-    @unittest.skipIf(version_info.major > 2,
-                     'Python 2.7 does not support subTest')
-    def test_get_datetime_fmt_len_samelength(self):
-        """ Test the datetime format length cal for a string of the same length
-        """
-        # Get the function format string length maximum
-        self.out_len = ocb_time.get_datetime_fmt_len(self.dt_formats[1])
-
-        # Get the formatted time string
-        self.out_fmt = self.dtime.strftime(self.dt_formats[1])
-
-        # Test to see that the returned length equalsthe formatted time string
-        self.assertEqual(self.out_len, len(self.out_fmt))
-
-    @unittest.skipIf(version_info.major > 2,
-                     'Python 2.7 does not support subTest')
-    def test_get_datetime_fmt_len_abYf(self):
-        """ Test the datetime format length calc for the %a %b %Y %f directives
-        """
-        # Get the function format string length maximum
-        self.out_len = ocb_time.get_datetime_fmt_len(self.dt_formats[2])
-
-        # Get the formatted time string
-        self.out_fmt = self.dtime.strftime(self.dt_formats[2])
-
-        # Test to see that the returned length equalsthe formatted time string
-        self.assertGreaterEqual(self.out_len, len(self.out_fmt))
-
-    @unittest.skipIf(version_info.major > 2,
-                     'Python 2.7 does not support subTest')
-    def test_get_datetime_fmt_len_ABzZ(self):
-        """ Test the datetime format length calc for the %A %B %z %Z directives
-        """
-        # Get the function format string length maximum
-        self.out_len = ocb_time.get_datetime_fmt_len(self.dt_formats[3])
-
-        # Get the formatted time string
-        self.out_fmt = self.dtime.strftime(self.dt_formats[3])
-
-        # Test to see that the returned length equalsthe formatted time string
-        self.assertGreaterEqual(self.out_len, len(self.out_fmt))
-
-    @unittest.skipIf(version_info.major > 2,
-                     'Python 2.7 does not support subTest')
-    def test_get_datetime_fmt_len_c(self):
-        """ Test the datetime format length calc for the %c directive
-        """
-        # Get the function format string length maximum
-        self.out_len = ocb_time.get_datetime_fmt_len(self.dt_formats[4])
-
-        # Get the formatted time string
-        self.out_fmt = self.dtime.strftime(self.dt_formats[4])
-
-        # Test to see that the returned length equalsthe formatted time string
-        self.assertGreaterEqual(self.out_len, len(self.out_fmt))
-
-    @unittest.skipIf(version_info.major > 2,
-                     'Python 2.7 does not support subTest')
-    def test_get_datetime_fmt_len_x(self):
-        """ Test the datetime format length calc for the %x directive
-        """
-        # Get the function format string length maximum
-        self.out_len = ocb_time.get_datetime_fmt_len(self.dt_formats[5])
-
-        # Get the formatted time string
-        self.out_fmt = self.dtime.strftime(self.dt_formats[5])
-
-        # Test to see that the returned length equalsthe formatted time string
-        self.assertGreaterEqual(self.out_len, len(self.out_fmt))
-
-    @unittest.skipIf(version_info.major > 2,
-                     'Python 2.7 does not support subTest')
-    def test_get_datetime_fmt_len_X(self):
-        """ Test the datetime format length calc for the %X directive
-        """
-        # Get the function format string length maximum
-        self.out_len = ocb_time.get_datetime_fmt_len(self.dt_formats[6])
-
-        # Get the formatted time string
-        self.out_fmt = self.dtime.strftime(self.dt_formats[6])
-
-        # Test to see that the returned length equalsthe formatted time string
-        self.assertGreaterEqual(self.out_len, len(self.out_fmt))
-
 
 class TestFixRange(unittest.TestCase):
     def setUp(self):
@@ -449,9 +345,6 @@ class TestFixRange(unittest.TestCase):
 
         self.vals = np.linspace(-190.0, 360.0, 37)
         self.out = None
-
-        if version_info.major == 2:
-            self.assertRaisesRegex = self.assertRaisesRegexp
 
     def tearDown(self):
         """ Clean up after each test """
@@ -468,8 +361,6 @@ class TestFixRange(unittest.TestCase):
         with self.assertRaisesRegex(ValueError, "Value range must be greater"):
             ocb_time.fix_range(self.vals, -10.0, 10.0, 0.0)
 
-    @unittest.skipIf(version_info.major < 3,
-                     'Already tested, remove in 2020')
     def test_fix_range(self):
         """ Test fix_range success """
         for tset in [([self.vals, 0.0, 360.0], {}),
@@ -482,48 +373,3 @@ class TestFixRange(unittest.TestCase):
 
                 self.assertTrue(np.all(np.greater_equal(self.out, tset[0][1])))
                 self.assertTrue(np.all(np.less(self.out, tset[0][2])))
-
-    @unittest.skipIf(version_info.major > 2,
-                     'Python 2.7 does not support subTest')
-    def test_fix_range_default_array(self):
-        """ Test fix_range success for array input and default value range
-        """
-        self.out = ocb_time.fix_range(self.vals, 0.0, 360.0)
-        self.assertTrue(np.all(np.greater_equal(self.out, 0.0)))
-        self.assertTrue(np.all(np.less(self.out, 360.0)))
-
-    @unittest.skipIf(version_info.major > 2,
-                     'Python 2.7 does not support subTest')
-    def test_fix_range_default_list(self):
-        """ Test fix_range success for list input and default value range
-        """
-        self.out = ocb_time.fix_range(list(self.vals), 0.0, 360.0)
-        self.assertTrue(np.all(np.greater_equal(self.out, 0.0)))
-        self.assertTrue(np.all(np.less(self.out, 360.0)))
-
-    @unittest.skipIf(version_info.major > 2,
-                     'Python 2.7 does not support subTest')
-    def test_fix_range_set_range_array(self):
-        """ Test fix_range success for array input and specified value range
-        """
-        self.out = ocb_time.fix_range(self.vals, -180.0, 360.0, 360.0)
-        self.assertTrue(np.all(np.greater_equal(self.out, -180.0)))
-        self.assertTrue(np.all(np.less(self.out, 360.0)))
-
-    @unittest.skipIf(version_info.major > 2,
-                     'Python 2.7 does not support subTest')
-    def test_fix_range_large_range(self):
-        """ Test fix_range success for input that deviates far from max/min
-        """
-        self.out = ocb_time.fix_range(self.vals, 0.0, 24.0)
-        self.assertTrue(np.all(np.greater_equal(self.out, 0.0)))
-        self.assertTrue(np.all(np.less(self.out, 24.0)))
-
-    @unittest.skipIf(version_info.major > 2,
-                     'Python 2.7 does not support subTest')
-    def test_fix_range_default_float(self):
-        """ Test fix_range success for a single value
-        """
-        self.out = ocb_time.fix_range(self.vals[0], 0.0, 360.0)
-        self.assertGreaterEqual(self.out, 0.0)
-        self.assertLess(self.out, 360.0)
