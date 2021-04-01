@@ -34,7 +34,8 @@ install:
 
 script:
     - |
-      if [ $INSTALL_EXTRA == 0 && $TRAVIS_PYTHON_VERSION == "3.9" ]; then
+      if [ $INSTALL_EXTRA == 0 && "$TRAVIS_PYTHON_VERSION" == "3.9" ]; then
+        echo "Running Flake8"
         flake8 ocbpy
       fi
     - coverage run --rcfile=.coveragerc -m unittest discover
