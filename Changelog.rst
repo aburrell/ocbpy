@@ -9,6 +9,7 @@ Summary of all changes made since the first stable release
 * DOC: Improved the PEP8 compliance in the documentation examples
 * BUG: Fixed header initialization error general instrument loading routine
 * MAINT: Removed support for Python 2.7 and 3.5
+* TST: Integrated Requires.io
 
 
 0.2.1 (11-24-2020)
