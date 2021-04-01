@@ -26,7 +26,7 @@ addons:
         - gcc
 
 before_install:
-    - pip install -rrequirements.txt coveralls
+    - pip install -rrequirements.txt coveralls flake8
     - bash requirements.extra $INSTALL_EXTRA
 
 install:
