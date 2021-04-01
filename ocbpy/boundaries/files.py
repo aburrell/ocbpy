@@ -184,8 +184,8 @@ def get_default_file(stime, etime, hemisphere, instrument='', bound='ocb'):
             # Select by instrument
             if bdict['instrument'] in inst:
                 # Select by time
-                if(stime is None or etime is None or
-                   (stime <= bdict['etime'] and etime >= bdict['stime'])):
+                if(stime is None or etime is None
+                   or (stime <= bdict['etime'] and etime >= bdict['stime'])):
                     good_files.append(bfile)
 
     # Get the default file and instrument (returning at most one)

@@ -337,14 +337,15 @@ def format_ssj_boundary_files(csv_files, ref_alt=830.0,
             else:
                 # Establish the desired data indices
                 time_ind = {bb: [header_list.index('UTSec {:s}{:d}'.format(
-                    bb, i)) for i in [1, 2]]
-                            for bb in bound_prefix.keys()}
-                lat_ind = {bb: [header_list.index(
-                    'SC_GEOCENTRIC_LAT {:s}{:d}'.format(bb, i))
-                                for i in [1, 2]] for bb in bound_prefix.keys()}
-                lon_ind = {bb: [header_list.index(
-                    'SC_GEOCENTRIC_LON {:s}{:d}'.format(bb, i))
-                                for i in [1, 2]] for bb in bound_prefix.keys()}
+                    bb, i)) for i in [1, 2]] for bb in bound_prefix.keys()}
+                lat_ind = {bb:
+                           [header_list.index(
+                               'SC_GEOCENTRIC_LAT {:s}{:d}'.format(bb, i))
+                            for i in [1, 2]] for bb in bound_prefix.keys()}
+                lon_ind = {bb:
+                           [header_list.index(
+                               'SC_GEOCENTRIC_LON {:s}{:d}'.format(bb, i))
+                            for i in [1, 2]] for bb in bound_prefix.keys()}
 
                 # Calculate the midpoint seconds of day
                 mid_utsec = {bb: 0.5 * (data[:, time_ind[bb][1]]
@@ -371,7 +372,7 @@ def format_ssj_boundary_files(csv_files, ref_alt=830.0,
                             ref_alt, mid_time, method=method)
 
                         # Determine the circle radius in degrees
-                        rad = 0.5 * abs(mloc[0][0]-mloc[0][1])
+                        rad = 0.5 * abs(mloc[0][0] - mloc[0][1])
 
                         # Get the X-Y coordinates of each pass where X is
                         # positive towards dawn and Y is positive towards noon
