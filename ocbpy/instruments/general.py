@@ -21,8 +21,7 @@ import ocbpy.ocb_time as ocbt
 
 
 def test_file(filename):
-    """Test to ensure the file is small enough to read in.  Python can only
-    allocate 2GB of data without crashing
+    """Test to ensure the file is small enough to read in
 
     Parameters
     ----------
@@ -34,6 +33,10 @@ def test_file(filename):
     good_flag : (bool)
         True if good, bad if false
 
+    Notes
+    -----
+    Python can only allocate 2GB of data without crashing
+
     """
 
     if not path.isfile(filename):
@@ -43,7 +46,8 @@ def test_file(filename):
     fsize = path.getsize(filename)
 
     if(fsize > 2.0e9):
-        ocbpy.logger.warning("File size [{:.2f} GB > 2 GB]".format(fsize*1e-9))
+        ocbpy.logger.warning(
+            "File size [{:.2f} GB > 2 GB]".format(fsize * 1e-9))
         return False
     elif(fsize == 0):
         ocbpy.logger.warning("empty file [{:s}]".format(filename))
@@ -134,11 +138,11 @@ def load_ascii_data(filename, hlines, gft_kwargs=dict(), hsplit=None,
 
         if datetime_fmt.upper().find("YEAR") >= 0:
             ipart = datetime_fmt.upper().find("YEAR")
-            case_part = datetime_fmt[ipart:ipart+4]
+            case_part = datetime_fmt[ipart:ipart + 4]
             int_cols.append(dfmt_parts.index(case_part))
         if datetime_fmt.upper().find("SOY") >= 0:
             ipart = datetime_fmt.upper().find("SOY")
-            case_part = datetime_fmt[ipart:ipart+3]
+            case_part = datetime_fmt[ipart:ipart + 3]
             int_cols.append(dfmt_parts.index(case_part))
 
     # Open the data file and read the header rows

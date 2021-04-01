@@ -256,8 +256,8 @@ def load_vorticity_ascii_data(vortfile, save_all=False):
 
                 # Calculate and save the datetime
                 stime = " ".join(vsplit)
-                dtime = (dt.datetime.strptime(stime, "%Y %m %d") +
-                         dt.timedelta(seconds=np.floor(hh * 3600.0)))
+                dtime = (dt.datetime.strptime(stime, "%Y %m %d")
+                         + dt.timedelta(seconds=np.floor(hh * 3600.0)))
                 vinc += 1
             elif vinc == 1:
                 # This is a number of entries line

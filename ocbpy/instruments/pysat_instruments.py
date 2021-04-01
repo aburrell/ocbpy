@@ -121,12 +121,13 @@ def add_ocb_to_data(pysat_inst, mlat_name='', mlt_name='', evar_names=list(),
             'unknown magnetic local time name {:}'.format(mlt_name))
 
     # Test to see that the rest of the data names are present
-    if not np.all([eattr in pysat_inst.data.columns or
-                   eattr in vector_names.keys() for eattr in evar_names]):
+    if not np.all([eattr in pysat_inst.data.columns
+                   or eattr in vector_names.keys() for eattr in evar_names]):
         raise ValueError('at least one unknown E field name')
 
-    if not np.all([eattr in pysat_inst.data.columns or
-                   eattr in vector_names.keys() for eattr in curl_evar_names]):
+    if not np.all([eattr in pysat_inst.data.columns
+                   or eattr in vector_names.keys()
+                   for eattr in curl_evar_names]):
         raise ValueError('at least one unknown E field name')
 
     # Format the new data column names
@@ -202,8 +203,8 @@ def add_ocb_to_data(pysat_inst, mlat_name='', mlt_name='', evar_names=list(),
 
     # Load the OCB data for the data period, if desired
     if ocb is None or not isinstance(ocb, ocbpy.ocboundary.OCBoundary):
-        dstart = pysat_inst.index[0] - dt.timedelta(seconds=max_sdiff+1)
-        dend = pysat_inst.index[-1] + dt.timedelta(seconds=max_sdiff+1)
+        dstart = pysat_inst.index[0] - dt.timedelta(seconds=max_sdiff + 1)
+        dend = pysat_inst.index[-1] + dt.timedelta(seconds=max_sdiff + 1)
 
         # If hemisphere isn't specified, set it here
         if hemisphere == 0:
