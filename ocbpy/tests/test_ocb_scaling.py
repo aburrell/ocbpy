@@ -233,7 +233,7 @@ class TestOCBScalingMethods(unittest.TestCase):
         self.vdata.aacgm_mlt = -22.0
         self.vdata.aacgm_e *= -1.0
         self.vdata.set_ocb(self.ocb)
-        self.assertGreater(self.vdata.ocb_aacgm_mlt-self.vdata.aacgm_mlt, 24)
+        self.assertGreater(self.vdata.ocb_aacgm_mlt - self.vdata.aacgm_mlt, 24)
         self.assertEqual(self.vdata.ocb_quad, 1)
         self.assertEqual(self.vdata.vec_quad, 2)
 
@@ -708,8 +708,9 @@ class TestHaversine(unittest.TestCase):
     def setUp(self):
         """ Initialize the tests for the haversine and archaversine functions
         """
-        self.input_angles = np.linspace(-2.0*np.pi, 2.0*np.pi, 9)
+        self.input_angles = np.linspace(-2.0 * np.pi, 2.0 * np.pi, 9)
         self.hav_out = np.array([0.0, 0.5, 1.0, 0.5, 0.0, 0.5, 1.0, 0.5, 0.0])
+
         # archaversine is confinded to 0-pi
         self.ahav_out = abs(np.array([aa - np.sign(aa) * 2.0 * np.pi
                                       if abs(aa) > np.pi

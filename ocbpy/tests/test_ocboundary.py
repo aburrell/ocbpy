@@ -319,15 +319,15 @@ class TestOCBoundaryMethodsNorth(unittest.TestCase):
         self.out = self.ocb.normal_coord(self.lat, self.mlt)
 
         self.assertTrue(np.all(np.less(abs(self.out[0] - self.ocb_lat), 1.0e-7,
-                                       where=~np.isnan(self.out[0])) |
-                               np.isnan(self.out[0])))
+                                       where=~np.isnan(self.out[0]))
+                               | np.isnan(self.out[0])))
         self.assertTrue(np.all(np.less(abs(self.out[1] - self.ocb_mlt), 1.0e-7,
-                                       where=(~np.isnan(self.out[1]))) |
-                               np.isnan(self.out[1])))
-        self.assertTrue(np.where(np.isnan(self.out[0])) ==
-                        np.where(np.isnan(self.ocb_lat)))
-        self.assertTrue(np.where(np.isnan(self.out[1])) ==
-                        np.where(np.isnan(self.ocb_mlt)))
+                                       where=(~np.isnan(self.out[1])))
+                               | np.isnan(self.out[1])))
+        self.assertTrue(np.where(np.isnan(self.out[0]))
+                        == np.where(np.isnan(self.ocb_lat)))
+        self.assertTrue(np.where(np.isnan(self.out[1]))
+                        == np.where(np.isnan(self.ocb_mlt)))
         self.assertTrue(np.all(self.out[2] == self.r_corr))
 
     def test_normal_coord_north_alt_mag_label(self):
@@ -398,13 +398,13 @@ class TestOCBoundaryMethodsNorth(unittest.TestCase):
                                          self.r_corr)
 
         self.assertTrue(np.all(np.less(abs(self.out[0] - self.lat), 1.0e-7,
-                                       where=~np.isnan(self.out[0])) |
-                               (np.isnan(self.out[0]))))
+                                       where=~np.isnan(self.out[0]))
+                               | (np.isnan(self.out[0]))))
         self.assertTrue(np.all(np.less(abs(self.out[1] - self.mlt),
                                        1.0e-7,
                                        where=(~np.isnan(self.out[1])
-                                              & (self.lat < 90.0))) |
-                               np.isnan(self.out[0]) | (self.lat >= 90.0)))
+                                              & (self.lat < 90.0)))
+                               | np.isnan(self.out[0]) | (self.lat >= 90.0)))
         self.assertTrue(np.where(np.isnan(self.out[0]))
                         == np.where(np.isnan(self.ocb_lat)))
         self.assertTrue(np.where(np.isnan(self.out[1]))
@@ -585,8 +585,10 @@ class TestOCBoundaryMethodsNorth(unittest.TestCase):
         # Initialize the attributes with values for the good location
         rind = 27
         self.test_aacgm_boundary_location_good()
+
         # This should not raise a warning
-        self.ocb.get_aacgm_boundary_lat(150.0, rec_ind=rind-1)
+        self.ocb.get_aacgm_boundary_lat(150.0, rec_ind=rind - 1)
+
         # This should raise a warning
         self.ocb.get_aacgm_boundary_lat(150.0, rec_ind=rind)
 
@@ -712,10 +714,10 @@ class TestOCBoundaryMethodsSouth(unittest.TestCase):
                                        where=~np.isnan(self.out[0]))))
         self.assertTrue(np.all(np.less(abs(self.out[1] - self.ocb_mlt), 1.0e-7,
                                        where=~np.isnan(self.out[1]))))
-        self.assertTrue(np.where(np.isnan(self.out[0])) ==
-                        np.where(np.isnan(self.ocb_lat)))
-        self.assertTrue(np.where(np.isnan(self.out[1])) ==
-                        np.where(np.isnan(self.ocb_mlt)))
+        self.assertTrue(np.where(np.isnan(self.out[0]))
+                        == np.where(np.isnan(self.ocb_lat)))
+        self.assertTrue(np.where(np.isnan(self.out[1]))
+                        == np.where(np.isnan(self.ocb_mlt)))
         self.assertTrue(np.all(self.out[2] == self.r_corr))
 
     def test_normal_coord_south_geocentric(self):
@@ -764,13 +766,13 @@ class TestOCBoundaryMethodsSouth(unittest.TestCase):
                                          self.r_corr)
 
         self.assertTrue(np.all(np.less(abs(self.out[0] - self.lat), 1.0e-7,
-                                       where=~np.isnan(self.out[0])) |
-                               np.isnan(self.out[0])))
+                                       where=~np.isnan(self.out[0]))
+                               | np.isnan(self.out[0])))
         self.assertTrue(np.all(np.less(abs(self.out[1] - self.mlt),
                                        1.0e-7,
                                        where=(~np.isnan(self.out[1])
-                                              & (self.lat > -90.0))) |
-                               np.isnan(self.out[0]) | (self.lat <= -90.0)))
+                                              & (self.lat > -90.0)))
+                               | np.isnan(self.out[0]) | (self.lat <= -90.0)))
         self.assertTrue(np.where(np.isnan(self.out[0]))
                         == np.where(np.isnan(self.ocb_lat)))
         self.assertTrue(np.where(np.isnan(self.out[1]))
@@ -1080,7 +1082,7 @@ class TestOCBoundaryMatchData(unittest.TestCase):
 
         # Match OCB with data that occurs after the boundaries end
         self.idat = ocbpy.ocboundary.match_data_ocb(
-            self.ocb, [self.ocb.dtime[self.ocb.records-1]
+            self.ocb, [self.ocb.dtime[self.ocb.records - 1]
                        + dt.timedelta(days=2)], idat=self.idat)
         self.assertEqual(self.idat, 0)
         self.assertGreaterEqual(self.ocb.rec_ind, self.ocb.records)

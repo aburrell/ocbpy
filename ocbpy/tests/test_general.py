@@ -169,9 +169,9 @@ class TestGeneralLoadMethods(unittest.TestCase):
         self.assertListEqual(self.out[0], self.headers[self.test_file_dt])
 
         # Test to see that the data keys are all in the header
-        self.assertListEqual(sorted([kk for kk in self.test_out[
-            self.test_file_dt].keys()]),
-                             sorted([kk for kk in self.out[1].keys()]))
+        self.assertListEqual(
+            sorted([kk for kk in self.test_out[self.test_file_dt].keys()]),
+            sorted([kk for kk in self.out[1].keys()]))
 
         # Test the length of the data file
         self.assertTupleEqual(self.out[1]['fom'].shape, (7,))
@@ -216,9 +216,9 @@ class TestGeneralLoadMethods(unittest.TestCase):
         self.assertListEqual(self.out[0], self.headers[self.test_file_soy])
 
         # Test to see that the data keys are all in the header
-        self.assertListEqual(sorted([kk for kk in self.test_out[
-            self.test_file_soy].keys()]),
-                             sorted([kk for kk in self.out[1].keys()]))
+        self.assertListEqual(
+            sorted([kk for kk in self.test_out[self.test_file_soy].keys()]),
+            sorted([kk for kk in self.out[1].keys()]))
 
         # Test the length of the data file
         self.assertTupleEqual(self.out[1]['A'].shape, (75,))
@@ -242,9 +242,9 @@ class TestGeneralLoadMethods(unittest.TestCase):
         self.assertListEqual(self.out[0], self.headers[self.test_file_sod])
 
         # Test to see that the data keys are all in the header
-        self.assertListEqual(sorted([kk for kk in self.test_out[
-            self.test_file_sod].keys()]),
-                             sorted([kk for kk in self.out[1].keys()]))
+        self.assertListEqual(
+            sorted([kk for kk in self.test_out[self.test_file_sod].keys()]),
+            sorted([kk for kk in self.out[1].keys()]))
 
         # Test the length of the data file
         self.assertTupleEqual(self.out[1]['A'].shape, (9,))
@@ -269,9 +269,9 @@ class TestGeneralLoadMethods(unittest.TestCase):
         self.assertListEqual(self.out[0], self.headers[self.test_file_soy])
 
         # Test to see that the data keys are all in the header
-        self.assertListEqual(sorted([kk for kk in self.test_out[
-            self.test_file_soy].keys()]),
-                             sorted([kk for kk in self.out[1].keys()]))
+        self.assertListEqual(
+            sorted([kk for kk in self.test_out[self.test_file_soy].keys()]),
+            sorted([kk for kk in self.out[1].keys()]))
 
         # Test the length of the data file
         self.assertTupleEqual(self.out[1]['A'].shape, (75,))
@@ -302,9 +302,9 @@ class TestGeneralLoadMethods(unittest.TestCase):
         self.assertListEqual(self.out[0], self.headers[self.test_file_soy])
 
         # Test to see that the data keys are all in the header
-        self.assertListEqual(sorted([kk for kk in self.test_out[
-            self.test_file_soy].keys()]),
-                             sorted([kk for kk in self.out[1].keys()]))
+        self.assertListEqual(
+            sorted([kk for kk in self.test_out[self.test_file_soy].keys()]),
+            sorted([kk for kk in self.out[1].keys()]))
 
         # Test the length of the data file
         self.assertEqual(self.out[1]['A'].shape, (75,))
@@ -313,7 +313,7 @@ class TestGeneralLoadMethods(unittest.TestCase):
         for kk in self.test_out[self.test_file_soy].keys():
             if kk in str_keys:
                 self.assertEqual(self.out[1][kk][-1], "{:.0f}".format(
-                                     self.test_out[self.test_file_soy][kk]))
+                    self.test_out[self.test_file_soy][kk]))
             else:
                 self.assertEqual(self.out[1][kk][-1],
                                  self.test_out[self.test_file_soy][kk])

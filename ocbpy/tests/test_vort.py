@@ -105,9 +105,9 @@ class TestVort2AsciiMethods(unittest.TestCase):
         self.test_empty = os.path.join(self.ocb_dir, "tests", "test_data",
                                        "test_empty")
         self.test_output_north = os.path.join(self.ocb_dir, "tests",
-                                              "test_data",  "out_vort")
+                                              "test_data", "out_vort")
         self.test_output_south = os.path.join(self.ocb_dir, "tests",
-                                              "test_data",  "out_south_vort")
+                                              "test_data", "out_south_vort")
         self.temp_output = os.path.join(self.ocb_dir, "tests", "test_data",
                                         "temp_vort")
         self.test_vals = {'CENTRE_MLAT': 67.27, 'DAY': 5, 'MLT': 3.127,

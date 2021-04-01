@@ -189,7 +189,7 @@ class TestPysatStructure(unittest.TestCase):
             self.assertListEqual(defaults[i], list())
 
         for i, val in enumerate([600, 7, 8.0, 23.0, 10.0]):
-            self.assertEqual(defaults[i+9], val)
+            self.assertEqual(defaults[i + 9], val)
 
         self.assertDictEqual(defaults[4], dict())
         self.assertEqual(defaults[5], 0)
