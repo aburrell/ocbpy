@@ -8,8 +8,11 @@ Summary of all changes made since the first stable release
 * REL: Added a .zenodo.json file
 * DOC: Improved the PEP8 compliance in the documentation examples
 * BUG: Fixed header initialization error general instrument loading routine
+* ENH: Added a setup configuration file
 * MAINT: Removed support for Python 2.7 and 3.5
+* MAINT: Improved PEP8 compliance
 * TST: Integrated Requires.io
+* TST: Added flake8 tests to Travis CI
 
 
 0.2.1 (11-24-2020)
