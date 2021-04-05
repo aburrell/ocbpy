@@ -226,9 +226,12 @@ def add_ocb_to_data(pysat_inst, mlat_name='', mlt_name='', evar_names=list(),
         hemisphere = ocb.hemisphere
 
     # Ensure all data is from one hemisphere and is finite
-    dat_ind = np.where((np.sign(aacgm_lat) == hemisphere)
-                       & (np.isfinite(pysat_inst[:,
-                                                 pysat_names].max(axis=1))))[0]
+    if pysat_inst.pandas_format:
+        finite_mask = np.isfinite(pysat_inst[:, pysat_names].max(axis=1))
+    else:
+        finite_mask = np.isfinite(
+            pysat_inst[:, pysat_names].to_array().max('variable'))
+    dat_ind = np.where((np.sign(aacgm_lat) == hemisphere) & finite_mask)[0]
 
     # Test the OCB data
     if ocb.filename is None or ocb.records == 0:
