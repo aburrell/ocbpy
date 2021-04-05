@@ -370,8 +370,8 @@ class OCBoundary(object):
 
             if stime is None and etime is None:
                 dt_list.append(dtime)
-            elif((stime is None or stime <= dtime) and
-                 (etime is None or etime >= dtime)):
+            elif((stime is None or stime <= dtime)
+                 and (etime is None or etime >= dtime)):
                 dt_list.append(dtime)
                 itime.append(i)
 
@@ -469,8 +469,8 @@ class OCBoundary(object):
             # Evaluate the current boundary for quality, using optional
             # parameters
             good = True
-            if(hasattr(self, "num_sectors") and
-               self.num_sectors[self.rec_ind] < min_sectors):
+            if(hasattr(self, "num_sectors")
+               and self.num_sectors[self.rec_ind] < min_sectors):
                 good = False
             elif(hasattr(self, "fom")
                  and self.fom[self.rec_ind] < self.min_fom):
@@ -952,8 +952,8 @@ def match_data_ocb(ocb, dat_dtime, idat=0, max_tol=600, min_sectors=7,
                                       min_r=min_r)
 
             if ocb.rec_ind < ocb.records:
-                sdiff = (ocb.dtime[ocb.rec_ind] -
-                         dat_dtime[idat]).total_seconds()
+                sdiff = (ocb.dtime[ocb.rec_ind]
+                         - dat_dtime[idat]).total_seconds()
 
                 while abs(sdiff) < abs(last_sdiff):
                     last_sdiff = sdiff
@@ -962,8 +962,8 @@ def match_data_ocb(ocb, dat_dtime, idat=0, max_tol=600, min_sectors=7,
                                               rcent_dev=rcent_dev, max_r=max_r,
                                               min_r=min_r)
                     if ocb.rec_ind < ocb.records:
-                        sdiff = (ocb.dtime[ocb.rec_ind] -
-                                 dat_dtime[idat]).total_seconds()
+                        sdiff = (ocb.dtime[ocb.rec_ind]
+                                 - dat_dtime[idat]).total_seconds()
 
             sdiff = last_sdiff
             ocb.rec_ind = last_iocb

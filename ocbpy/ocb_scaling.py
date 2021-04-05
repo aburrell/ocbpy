@@ -438,8 +438,8 @@ class VectorData(object):
 
         # If the OCB vector coordinates weren't included in the initial info,
         # update them here
-        if(np.all(np.isnan(self.ocb_lat)) or np.all(np.isnan(self.ocb_mlt)) or
-           np.all(np.isnan(self.r_corr))):
+        if(np.all(np.isnan(self.ocb_lat)) or np.all(np.isnan(self.ocb_mlt))
+           or np.all(np.isnan(self.r_corr))):
             # Because the OCB and AACGM magnetic field are both time dependent,
             # can't call this function with multiple OCBs
             if self.ocb_ind.shape == ():
@@ -458,8 +458,8 @@ class VectorData(object):
                                                             self.aacgm_mlt)
 
         # Exit if the OCB coordinates can't be calculated at this location
-        if(np.all(np.isnan(self.ocb_lat)) or np.all(np.isnan(self.ocb_mlt)) or
-           np.all(np.isnan(self.r_corr))):
+        if(np.all(np.isnan(self.ocb_lat)) or np.all(np.isnan(self.ocb_mlt))
+           or np.all(np.isnan(self.r_corr))):
             return
 
         # Set the AACGM coordinates of the OCB pole
@@ -598,9 +598,9 @@ class VectorData(object):
                       & nan_mask)
         quad2_mask = (np.greater_equal(self.aacgm_n, 0.0, where=nan_mask)
                       & np.less(self.aacgm_e, 0.0, where=nan_mask) & nan_mask)
-        quad3_mask = (np.less(self.aacgm_n, 0.0,  where=nan_mask)
+        quad3_mask = (np.less(self.aacgm_n, 0.0, where=nan_mask)
                       & np.less(self.aacgm_e, 0.0, where=nan_mask) & nan_mask)
-        quad4_mask = (np.less(self.aacgm_n, 0.0,  where=nan_mask)
+        quad4_mask = (np.less(self.aacgm_n, 0.0, where=nan_mask)
                       & np.greater_equal(self.aacgm_e, 0.0, where=nan_mask)
                       & nan_mask)
 
@@ -731,10 +731,10 @@ class VectorData(object):
 
             # Determine if the measurement is on or between the poles
             # This does not affect the vertical direction
-            sign_mask = ((self.pole_angle == 0.0) &
-                         np.greater_equal(self.aacgm_lat, self.ocb_aacgm_lat,
-                                          where=~np.isnan(self.aacgm_lat)) &
-                         ~np.isnan(self.aacgm_lat))
+            sign_mask = ((self.pole_angle == 0.0)
+                         & np.greater_equal(self.aacgm_lat, self.ocb_aacgm_lat,
+                                            where=~np.isnan(self.aacgm_lat))
+                         & ~np.isnan(self.aacgm_lat))
             if np.any(sign_mask):
                 if self.ocb_n.shape == ():
                     self.ocb_n *= -1.0
@@ -782,7 +782,7 @@ class VectorData(object):
                     a_z = self.aacgm_z[norm_mask]
 
                 vmag = self.scale_func(vmag, un_r, self.scaled_r)
-                vz = self.scale_func(a_z,  un_r, self.scaled_r)
+                vz = self.scale_func(a_z, un_r, self.scaled_r)
             else:
                 if self.aacgm_z.shape == ():
                     vz = self.aacgm_z
@@ -1029,10 +1029,10 @@ class VectorData(object):
         if east:
             minus_pole = 180.0 - self.pole_angle
 
-            pmask = (quads[1][4] | quads[2][1] | quads[3][2] | quads[4][3] |
-                     ((quads[1][1] | quads[4][4])
-                      & np.greater_equal(self.aacgm_naz, self.pole_angle,
-                                         where=nan_mask))
+            pmask = (quads[1][4] | quads[2][1] | quads[3][2] | quads[4][3]
+                     | ((quads[1][1] | quads[4][4])
+                        & np.greater_equal(self.aacgm_naz, self.pole_angle,
+                                           where=nan_mask))
                      | ((quads[3][1] | quads[2][4])
                         & np.less_equal(self.aacgm_naz, minus_pole,
                                         where=nan_mask))
@@ -1105,7 +1105,7 @@ class VectorData(object):
 
         # Convert the AACGM MLT of the observation and OCB pole to radians,
         # then calculate the difference between them.
-        del_long = ocbpy.ocb_time.hr2rad(self.ocb_aacgm_mlt-self.aacgm_mlt)
+        del_long = ocbpy.ocb_time.hr2rad(self.ocb_aacgm_mlt - self.aacgm_mlt)
 
         if del_long.shape == ():
             if del_long < -np.pi:

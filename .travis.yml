@@ -26,13 +26,14 @@ addons:
         - gcc
 
 before_install:
-    - pip install -rrequirements.txt coveralls
+    - pip install -rrequirements.txt coveralls flake8
     - bash requirements.extra $INSTALL_EXTRA
 
 install:
     - python setup.py install
 
 script:
+    - if [[ $INSTALL_EXTRA == 0 ]]; then flake8 ocbpy; fi
     - coverage run --rcfile=.coveragerc -m unittest discover
 
 after_success:

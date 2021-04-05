@@ -190,7 +190,7 @@ def convert_time(year=None, soy=None, yyddd=None, sod=None, date=None,
                 if datetime_fmt.find("%Y-%m-%d") < 0:
                     ifmt = datetime_fmt.upper().find("YYDDD")
                     if ifmt >= 0:
-                        old_fmt = datetime_fmt[ifmt:ifmt+5]
+                        old_fmt = datetime_fmt[ifmt:ifmt + 5]
                         datetime_fmt = datetime_fmt.replace(old_fmt,
                                                             "%Y-%m-%d")
                     else:
@@ -219,8 +219,8 @@ def convert_time(year=None, soy=None, yyddd=None, sod=None, date=None,
                     dtime += dt.timedelta(microseconds=int(microsec))
 
     except ValueError as verr:
-        if(len(verr.args) > 0 and
-           verr.args[0].startswith('unconverted data remains: ')):
+        if(len(verr.args) > 0
+           and verr.args[0].startswith('unconverted data remains: ')):
             vsplit = verr.args[0].split(" ")
             dtime = dt.datetime.strptime(str_time[:-(len(vsplit[-1]))],
                                          datetime_fmt)
