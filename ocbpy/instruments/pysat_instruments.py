@@ -227,7 +227,8 @@ def add_ocb_to_data(pysat_inst, mlat_name='', mlt_name='', evar_names=list(),
 
     # Ensure all data is from one hemisphere and is finite
     dat_ind = np.where((np.sign(aacgm_lat) == hemisphere)
-                       & (np.isfinite(pysat_inst[:, pysat_names].max())))[0]
+                       & (np.isfinite(pysat_inst[:,
+                                                 pysat_names].max(axis=1))))[0]
 
     # Test the OCB data
     if ocb.filename is None or ocb.records == 0:
