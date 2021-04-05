@@ -314,12 +314,11 @@ def add_ocb_to_data(pysat_inst, mlat_name='', mlt_name='', evar_names=list(),
         # The update procedure is different for pandas and xarray
         if pysat_inst.pandas_format:
             set_data = {oattr: ocb_output[oattr]}
+            pysat_inst.data = pysat_inst.data.assign(**set_data)
         else:
             # The OCB variable has the same dimensions as magnetic latitude
             set_data = {oattr: (pysat_inst[mlat_name].dims, ocb_output[oattr])}
-
-        # Add the OCB data to the pysat Instrument data object
-        pysat_inst.data = pysat_inst.data.assign(set_data)
+            pysat_inst.data = pysat_inst.data.assign(set_data)
 
         # Update the pysat Metadata
         eattr = oattr[:-4]
