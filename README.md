@@ -1,4 +1,4 @@
-[![Linux Status](https://www.travis-ci.org/aburrell/ocbpy.svg)](https://www.travis-ci.org/aburrell/ocbpy)
+[![Linux Status](https://www.travis-ci.com/aburrell/ocbpy.svg)](https://www.travis-ci.com/aburrell/ocbpy)
 [![Windows Status](https://ci.appveyor.com/api/projects/status/741n3cv8n68s280v?svg=true)](https://ci.appveyor.com/project/aburrell/ocbpy)
 [![Coverage Status](https://coveralls.io/repos/github/aburrell/ocbpy/badge.svg)](https://coveralls.io/github/aburrell/ocbpy)
 [![Documentation Status](https://readthedocs.org/projects/ocbpy/badge/?version=latest)](http://ocbpy.readthedocs.io/en/latest/?badge=latest)
