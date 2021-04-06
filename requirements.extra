@@ -10,7 +10,7 @@ if [ $EXTRAS = 1 ]; then
     # Although ocbpy works with pysat >= 2.0.0, the testing suite is not
     # provided in versions below 2.2.1. The way custom functions work changed
     # in pysat 3.0.0.  The next OCBpy release will require pysat >= 3.0.0
-    pip install -v pysat>=2.2.1,<3.0.0
+    pip install -v "pysat>=2.2.1,<3.0.0"
     mkdir $HOME/pysatData
     echo "Installed pysat"
 elif [ $EXTRAS = 2 ]; then
