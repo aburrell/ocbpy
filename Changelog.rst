@@ -11,8 +11,10 @@ Summary of all changes made since the first stable release
 * ENH: Added a setup configuration file
 * MAINT: Removed support for Python 2.7 and 3.5
 * MAINT: Improved PEP8 compliance
+* MAINT: Updated pysat routines to v3.0.0 standards
 * TST: Integrated Requires.io
 * TST: Added flake8 tests to Travis CI
+* TST: Added pysat xarray tests to the pysat test suite
 
 
 0.2.1 (11-24-2020)

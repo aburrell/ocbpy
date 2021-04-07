@@ -7,10 +7,12 @@ EXTRAS=$1
 
 if [ $EXTRAS = 1 ]; then
     # Install pysat, which currently is not vetted for Windows.
-    # Although ocbpy works with pysat >= 2.0.0, the testing suite is not
-    # provided in versions below 2.2.1.
-    pip install -v pysat>=2.2.1
+    # Although older ocbpy work with pysat >= 2.0.0, the testing suite is not
+    # provided in versions below 2.2.1 and the custom function interface
+    # changed in pysat 3.0.0
+    pip install pysat>=3.0.0
     mkdir $HOME/pysatData
+    python -c "import pysat; pysat.params['data_dirs'] = '$HOME/pysatData'"
     echo "Installed pysat"
 elif [ $EXTRAS = 2 ]; then
     # Install code for ssj_auroral_boundary on linux
