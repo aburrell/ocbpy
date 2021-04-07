@@ -162,7 +162,7 @@ class TestFilesMethods(unittest.TestCase):
         """ Test the failure of the default boundary directory definition
         """
         ocbpy.__file__ = "/fake_dir/test_file"
-        with self.assertRaisesRegexp(OSError, "boundary file directory"):
+        with self.assertRaisesRegex(OSError, "boundary file directory"):
             files.get_boundary_directory()
 
     def test_get_boundary_files_unknown_boundary(self):
