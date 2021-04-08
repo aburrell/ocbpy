@@ -9,13 +9,14 @@ Summary of all changes made since the first stable release
 * DOC: Improved the PEP8 compliance in the documentation examples
 * BUG: Fixed header initialization error general instrument loading routine
 * ENH: Added a setup configuration file
+* ENH: Changed class `__repr__` to produce a string `eval` can use as input
 * MAINT: Removed support for Python 2.7 and 3.5
 * MAINT: Improved PEP8 compliance
 * MAINT: Updated pysat routines to v3.0.0 standards
 * TST: Integrated Requires.io
 * TST: Added flake8 tests to Travis CI
 * TST: Added pysat xarray tests to the pysat test suite
-
+* TST: Added new unit tests for `__repr__` methods
 
 0.2.1 (11-24-2020)
 ------------------
