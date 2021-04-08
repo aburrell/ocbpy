@@ -206,6 +206,47 @@ class OCBoundary(object):
         return
 
     def __repr__(self):
+        """ Provide an evaluatable representation of the OCBoundary object """
+        # Get the start and end times
+        stime = None if self.dtime is None else self.dtime[0]
+        etime = None if self.dtime is None else self.dtime[-1]
+
+        # Format the function representations
+        if self.rfunc is None:
+            repr_rfunc = self.rfunc.__repr__()
+        else:
+            rfuncs = [".".join([ff.__module__, ff.__name__])
+                      for ff in self.rfunc]
+            
+            if len(set(rfuncs)) == 1:
+                repr_rfunc = rfuncs[0]
+            else:
+                repr_rfunc = 'numpy.array([{:s}], dtype=object)'.format(
+                    ', '.join(rfuncs))
+
+        # Format the function kwarg representations
+        if self.rfunc_kwargs is None:
+            repr_rfunc_kwargs = self.rfunc_kwargs.__repr__()
+        else:
+            rfuncs_kwargs = [rkwarg.__repr__() for rkwarg in self.rfunc_kwargs]
+
+            if len(set(rfuncs_kwargs)) == 1:
+                repr_rfunc_kwargs = rfuncs_kwargs[0]
+            else:
+                repr_rfunc_kwargs = 'numpy.array([{:s}], dtype=object)'.format(
+                    ', '.join(rfuncs_kwargs))
+
+        # Format the output
+        out = "".join(["ocbpy.OCBoundary(filename=", self.filename.__repr__(),
+                       ", instrument=", self.instrument.__repr__(),
+                       ", hemisphere={:d}, ".format(self.hemisphere),
+                       "boundary_lat={:f}, stime=".format(self.boundary_lat),
+                       stime.__repr__(), ", etime=", etime.__repr__(),
+                       ", rfunc=", repr_rfunc, ", rfunc_kwargs=",
+                       repr_rfunc_kwargs, ")"])
+        return out
+
+    def __str__(self):
         """ Provide readable representation of the OCBoundary object """
 
         if self.filename is None:
@@ -241,22 +282,17 @@ class OCBoundary(object):
                 # Determine which scaling functions are used
                 if self.rfunc is not None:
                     out = "{:s}\nUses scaling function(s):\n".format(out)
-                    fnames = list(set([ff.__name__ for ff in self.rfunc]))
+                    fnames = list(set([".".join([ff.__module__, ff.__name__])
+                                       for ff in self.rfunc]))
 
                     for ff in fnames:
                         kw = list(set([self.rfunc_kwargs[i].__str__()
                                        for i, rf in enumerate(self.rfunc)
-                                       if rf.__name__ == ff]))
+                                       if rf.__name__ == ff.split(".")[-1]]))
 
                         for kk in kw:
                             out = "{:s}{:s}(**{:s})\n".format(out, ff, kk)
 
-        return out
-
-    def __str__(self):
-        """ Provide readable representation of the OCBoundary object """
-
-        out = self.__repr__()
         return out
 
     def inst_defaults(self):
