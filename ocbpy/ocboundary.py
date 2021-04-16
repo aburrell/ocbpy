@@ -217,7 +217,7 @@ class OCBoundary(object):
         else:
             rfuncs = [".".join([ff.__module__, ff.__name__])
                       for ff in self.rfunc]
-            
+
             if len(set(rfuncs)) == 1:
                 repr_rfunc = rfuncs[0]
             else:
