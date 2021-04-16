@@ -117,25 +117,20 @@ class TestOCBScalingMethods(unittest.TestCase):
         """
         self.assertAlmostEqual(self.wdata.aacgm_mag, 100.036243432)
 
-    def test_vector_repr_str(self):
-        """ Test the VectorData print statement using repr and str
-        """
-        self.assertTrue(self.vdata.__repr__() == self.vdata.__str__())
-
-    def test_vector_repr_no_scaling(self):
+    def test_vector_str_no_scaling(self):
         """ Test the VectorData print statement without a scaling function
         """
-        out = self.vdata.__repr__()
+        out = self.vdata.__str__()
 
         self.assertRegex(out, "Vector data:")
         self.assertRegex(out, "No magnitude scaling function")
         del out
 
-    def test_vector_repr_with_scaling(self):
+    def test_vector_str_with_scaling(self):
         """ Test the VectorData print statement with a scaling function
         """
         self.vdata.set_ocb(self.ocb, scale_func=ocbpy.ocb_scaling.normal_evar)
-        out = self.vdata.__repr__()
+        out = self.vdata.__str__()
 
         self.assertRegex(out, "Vector data:")
         self.assertRegex(out, "Scaling function")
@@ -842,34 +837,34 @@ class TestOCBScalingArrayMethods(unittest.TestCase):
         self.vargs[1] = np.full(shape=self.vargs[-1].shape, fill_value=27)
         self.vargs[1][8:] = 31
 
-    def test_array_vector_repr_not_calc(self):
+    def test_array_vector_str_not_calc(self):
         """ Test the VectorData print statement with uncalculated array input
         """
         self.vdata = ocbpy.ocb_scaling.VectorData(*self.vargs, **self.vkwargs)
-        self.out = self.vdata.__repr__()
+        self.out = self.vdata.__str__()
         self.assertRegex(self.out, "Index")
         self.assertRegex(self.out, "nan, nan, {:d}".format(self.vargs[1]))
 
-    def test_array_vector_repr_calc(self):
+    def test_array_vector_str_calc(self):
         """ Test the VectorData print statement with calculated array input
         """
         self.vdata = ocbpy.ocb_scaling.VectorData(*self.vargs, **self.vkwargs)
         self.vdata.set_ocb(self.ocb)
-        self.out = self.vdata.__repr__()
+        self.out = self.vdata.__str__()
         self.assertRegex(self.out, "Index")
         self.assertNotRegex(self.out, "nan, nan")
 
-    def test_array_vector_repr_calc_ocb_vec_array(self):
+    def test_array_vector_str_calc_ocb_vec_array(self):
         """ Test the VectorData print statement with calculated ocb/vec arrays
         """
         self.set_vector_ocb_ind()
         self.vdata = ocbpy.ocb_scaling.VectorData(*self.vargs, **self.vkwargs)
         self.vdata.set_ocb(self.ocb)
-        self.out = self.vdata.__repr__()
+        self.out = self.vdata.__str__()
         self.assertRegex(self.out, "Index")
         self.assertNotRegex(self.out, "nan, nan")
 
-    def test_array_vector_repr_calc_ocb_array(self):
+    def test_array_vector_str_calc_ocb_array(self):
         """ Test the VectorData print statement with calculated ocb arrays
         """
         self.vargs[0] = self.vargs[0][0]
@@ -881,7 +876,7 @@ class TestOCBScalingArrayMethods(unittest.TestCase):
         self.vkwargs['aacgm_z'] = self.vkwargs['aacgm_z'][0]
         self.vdata = ocbpy.ocb_scaling.VectorData(*self.vargs, **self.vkwargs)
         self.vdata.set_ocb(self.ocb)
-        self.out = self.vdata.__repr__()
+        self.out = self.vdata.__str__()
         self.assertRegex(self.out, "Index")
         self.assertNotRegex(self.out, "nan, nan")
 

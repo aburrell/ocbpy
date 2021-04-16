@@ -170,20 +170,17 @@ class TestOCBoundaryMethodsGeneral(unittest.TestCase):
     def tearDown(self):
         del self.set_empty, self.set_default, self.ocb
 
-    def test_default_repr(self):
-        """ Test the default class representation """
+    def test_default_str(self):
+        """ Test the default class print output """
         self.ocb = ocbpy.ocboundary.OCBoundary(**self.set_default)
+        self.assertRegex(self.ocb.__str__(), "Open-Closed Boundary file:")
 
-        self.assertRegex(self.ocb.__repr__(), "Open-Closed Boundary file:")
-        self.assertTrue(self.ocb.__str__() == self.ocb.__repr__())
-
-    def test_short_repr(self):
-        """ Test the default class representation """
+    def test_short_str(self):
+        """ Test the default class print output """
         self.ocb = ocbpy.ocboundary.OCBoundary(**self.set_default)
         self.ocb.records = 1
 
-        self.assertRegex(self.ocb.__repr__(), "1 records from")
-        self.assertTrue(self.ocb.__str__() == self.ocb.__repr__())
+        self.assertRegex(self.ocb.__str__(), "1 records from")
 
     def test_bad_rfunc_inst(self):
         """Test failure setting default rfunc for unknown instrument"""
@@ -193,18 +190,18 @@ class TestOCBoundaryMethodsGeneral(unittest.TestCase):
             self.set_empty['rfunc'] = None
             self.ocb = ocbpy.ocboundary.OCBoundary(**self.set_empty)
 
-    def test_no_file_repr(self):
-        """ Test the unset class representation """
+    def test_no_file_str(self):
+        """ Test the unset class print output """
 
         self.ocb = ocbpy.ocboundary.OCBoundary(filename=None)
-        self.assertRegex(self.ocb.__repr__(),
+        self.assertRegex(self.ocb.__str__(),
                          "No Open-Closed Boundary file specified")
 
-    def test_empty_file_repr(self):
-        """ Test the class representation with an empty data file"""
+    def test_empty_file_str(self):
+        """ Test the class print output with an empty data file"""
 
         self.ocb = ocbpy.ocboundary.OCBoundary(**self.set_empty)
-        self.assertRegex(self.ocb.__repr__(), "No data loaded")
+        self.assertRegex(self.ocb.__str__(), "No data loaded")
 
     def test_nofile_init(self):
         """ Ensure that the class can be initialised without loading a file.
