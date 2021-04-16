@@ -290,6 +290,37 @@ class VectorData(object):
         return
 
     def __repr__(self):
+        """ Provide an evaluatable representation of the DataVector object
+        """
+
+        # Format the function representations
+        if self.scale_func is None:
+            repr_func = self.scale_func.__repr__()
+        else:
+            repr_func = ".".join([self.scale_func.__module__,
+                                  self.scale_func.__name__])
+
+        # Format the base output
+        out = "".join(["ocbpy.ocb_scaling.VectorData(", self.dat_ind.__repr__(),
+                       ", ", self.ocb_ind.__repr__(), ", ",
+                       self.aacgm_lat.__repr__(), ", ",
+                       self.aacgm_mlt.__repr__(), ", ocb_lat=",
+                       self.ocb_lat.__repr__(), ", ocb_mlt=",
+                       self.ocb_mlt.__repr__(), ", r_corr=",
+                       self.r_corr.__repr__(), ", aacgm_n=",
+                       self.aacgm_n.__repr__(), ", aacgm_e=",
+                       self.aacgm_e.__repr__(), ", aacgm_z=",
+                       self.aacgm_z.__repr__(), ", aacgm_mag=",
+                       self.aacgm_mag.__repr__(), ", dat_name=",
+                       self.dat_name.__repr__(), ", dat_units=",
+                       self.dat_units.__repr__(), ", scale_func=", repr_func])
+
+        # Reformat the numpy representations
+        out = out.replace('array', 'numpy.array')
+
+        return out
+
+    def __str__(self):
         """ Provide readable representation of the DataVector object
         """
 
@@ -369,13 +400,6 @@ class VectorData(object):
         else:
             out += "Scaling function: {:s}\n".format(self.scale_func.__name__)
 
-        return out
-
-    def __str__(self):
-        """ Provide readable representation of the DataVector object
-        """
-
-        out = self.__repr__()
         return out
 
     def set_ocb(self, ocb, scale_func=None):
