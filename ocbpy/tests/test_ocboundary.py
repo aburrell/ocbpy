@@ -9,7 +9,7 @@
 import datetime as dt
 from io import StringIO
 import logging
-import numpy as np
+import numpy
 from os import path
 import unittest
 
@@ -170,6 +170,18 @@ class TestOCBoundaryMethodsGeneral(unittest.TestCase):
     def tearDown(self):
         del self.set_empty, self.set_default, self.ocb
 
+    def test_repr_string(self):
+        """Test __repr__ method string
+        """
+        self.ocb = ocbpy.ocboundary.OCBoundary(**self.set_default)
+        self.assertRegex(self.ocb.__repr__(), "ocbpy.OCBoundary")
+
+    def test_repr_eval(self):
+        """Test __repr__ method's ability to reproduce a class
+        """
+        test_ocb = eval(self.ocb.__repr__())
+        self.assertEqual(self.ocb.__repr__(), test_ocb.__repr__())
+
     def test_default_str(self):
         """ Test the default class print output """
         self.ocb = ocbpy.ocboundary.OCBoundary(**self.set_default)
@@ -225,11 +237,11 @@ class TestOCBoundaryMethodsNorth(unittest.TestCase):
         self.ocb = ocbpy.ocboundary.OCBoundary(**self.set_north)
         self.ocb.rec_ind = 27
 
-        self.mlt = np.linspace(0.0, 24.0, num=6)
-        self.lat = np.linspace(0.0, 90.0, num=len(self.mlt))
-        self.ocb_lat = [np.nan, 11.25588586, 30.35153908, 47.0979063,
+        self.mlt = numpy.linspace(0.0, 24.0, num=6)
+        self.lat = numpy.linspace(0.0, 90.0, num=len(self.mlt))
+        self.ocb_lat = [numpy.nan, 11.25588586, 30.35153908, 47.0979063,
                         66.59889231, 86.86586231]
-        self.ocb_mlt = [np.nan, 4.75942194, 9.76745427, 14.61843964,
+        self.ocb_mlt = [numpy.nan, 4.75942194, 9.76745427, 14.61843964,
                         19.02060793, 17.832]
         self.r_corr = 0.0
         self.out = None
@@ -315,17 +327,19 @@ class TestOCBoundaryMethodsNorth(unittest.TestCase):
         """
         self.out = self.ocb.normal_coord(self.lat, self.mlt)
 
-        self.assertTrue(np.all(np.less(abs(self.out[0] - self.ocb_lat), 1.0e-7,
-                                       where=~np.isnan(self.out[0]))
-                               | np.isnan(self.out[0])))
-        self.assertTrue(np.all(np.less(abs(self.out[1] - self.ocb_mlt), 1.0e-7,
-                                       where=(~np.isnan(self.out[1])))
-                               | np.isnan(self.out[1])))
-        self.assertTrue(np.where(np.isnan(self.out[0]))
-                        == np.where(np.isnan(self.ocb_lat)))
-        self.assertTrue(np.where(np.isnan(self.out[1]))
-                        == np.where(np.isnan(self.ocb_mlt)))
-        self.assertTrue(np.all(self.out[2] == self.r_corr))
+        self.assertTrue(numpy.all(numpy.less(abs(self.out[0] - self.ocb_lat),
+                                             1.0e-7,
+                                             where=~numpy.isnan(self.out[0]))
+                                  | numpy.isnan(self.out[0])))
+        self.assertTrue(numpy.all(numpy.less(abs(self.out[1] - self.ocb_mlt),
+                                             1.0e-7,
+                                             where=(~numpy.isnan(self.out[1])))
+                                  | numpy.isnan(self.out[1])))
+        self.assertTrue(numpy.where(numpy.isnan(self.out[0]))
+                        == numpy.where(numpy.isnan(self.ocb_lat)))
+        self.assertTrue(numpy.where(numpy.isnan(self.out[1]))
+                        == numpy.where(numpy.isnan(self.ocb_mlt)))
+        self.assertTrue(numpy.all(self.out[2] == self.r_corr))
 
     def test_normal_coord_north_alt_mag_label(self):
         """ Test the normalisation calculation with good, but odd coord label
@@ -360,7 +374,7 @@ class TestOCBoundaryMethodsNorth(unittest.TestCase):
         self.out = self.ocb.normal_coord(-self.lat[-1], self.mlt[-1])
 
         self.assertEqual(len(self.out), 3)
-        self.assertTrue(np.all(np.isnan(self.out)))
+        self.assertTrue(numpy.all(numpy.isnan(self.out)))
 
     def test_normal_coord_low_rec_ind(self):
         """ Test the normalization calculation failure with low record index
@@ -369,7 +383,7 @@ class TestOCBoundaryMethodsNorth(unittest.TestCase):
         self.out = self.ocb.normal_coord(self.lat[-1], self.mlt[-1])
 
         self.assertEqual(len(self.out), 3)
-        self.assertTrue(np.all(np.isnan(self.out)))
+        self.assertTrue(numpy.all(numpy.isnan(self.out)))
 
     def test_normal_coord_high_rec_ind(self):
         """ Test the normalization calculation failure with high record index
@@ -378,7 +392,7 @@ class TestOCBoundaryMethodsNorth(unittest.TestCase):
         self.out = self.ocb.normal_coord(self.lat[-1], self.mlt[-1])
 
         self.assertEqual(len(self.out), 3)
-        self.assertTrue(np.all(np.isnan(self.out)))
+        self.assertTrue(numpy.all(numpy.isnan(self.out)))
 
     def test_revert_coord_north_float(self):
         """ Test the reversion to AACGM coordinates in the north
@@ -394,18 +408,20 @@ class TestOCBoundaryMethodsNorth(unittest.TestCase):
         self.out = self.ocb.revert_coord(self.ocb_lat, self.ocb_mlt,
                                          self.r_corr)
 
-        self.assertTrue(np.all(np.less(abs(self.out[0] - self.lat), 1.0e-7,
-                                       where=~np.isnan(self.out[0]))
-                               | (np.isnan(self.out[0]))))
-        self.assertTrue(np.all(np.less(abs(self.out[1] - self.mlt),
-                                       1.0e-7,
-                                       where=(~np.isnan(self.out[1])
-                                              & (self.lat < 90.0)))
-                               | np.isnan(self.out[0]) | (self.lat >= 90.0)))
-        self.assertTrue(np.where(np.isnan(self.out[0]))
-                        == np.where(np.isnan(self.ocb_lat)))
-        self.assertTrue(np.where(np.isnan(self.out[1]))
-                        == np.where(np.isnan(self.ocb_mlt)))
+        self.assertTrue(numpy.all(numpy.less(abs(self.out[0] - self.lat),
+                                             1.0e-7,
+                                             where=~numpy.isnan(self.out[0]))
+                                  | (numpy.isnan(self.out[0]))))
+        self.assertTrue(numpy.all(numpy.less(abs(self.out[1] - self.mlt),
+                                             1.0e-7,
+                                             where=(~numpy.isnan(self.out[1])
+                                                    & (self.lat < 90.0)))
+                                  | numpy.isnan(self.out[0])
+                                  | (self.lat >= 90.0)))
+        self.assertTrue(numpy.where(numpy.isnan(self.out[0]))
+                        == numpy.where(numpy.isnan(self.ocb_lat)))
+        self.assertTrue(numpy.where(numpy.isnan(self.out[1]))
+                        == numpy.where(numpy.isnan(self.ocb_mlt)))
 
     def test_revert_coord_north_coord_label(self):
         """ Test the reversion to AACGM coordinates in the north with Mag label
@@ -437,7 +453,7 @@ class TestOCBoundaryMethodsNorth(unittest.TestCase):
         self.out = self.ocb.revert_coord(-self.ocb_lat[-2], self.ocb_mlt[-2],
                                          self.r_corr)
         self.assertEqual(len(self.out), 2)
-        self.assertTrue(np.all(np.isnan(self.out)))
+        self.assertTrue(numpy.all(numpy.isnan(self.out)))
 
     def test_revert_coord_low_rec_ind(self):
         """ Test the reversion calculation failure with low record index
@@ -447,7 +463,7 @@ class TestOCBoundaryMethodsNorth(unittest.TestCase):
         self.out = self.ocb.revert_coord(self.ocb_lat[-2], self.ocb_mlt[-2],
                                          self.r_corr)
         self.assertEqual(len(self.out), 2)
-        self.assertTrue(np.all(np.isnan(self.out)))
+        self.assertTrue(numpy.all(numpy.isnan(self.out)))
 
     def test_revert_coord_high_rec_ind(self):
         """ Test the reversion calculation failure with high record index
@@ -457,7 +473,7 @@ class TestOCBoundaryMethodsNorth(unittest.TestCase):
         self.out = self.ocb.revert_coord(self.ocb_lat[-2], self.ocb_mlt[-2],
                                          self.r_corr)
         self.assertEqual(len(self.out), 2)
-        self.assertTrue(np.all(np.isnan(self.out)))
+        self.assertTrue(numpy.all(numpy.isnan(self.out)))
 
     def test_default_boundary_input(self):
         """ Test to see that the boundary latitude has the correct sign
@@ -543,7 +559,7 @@ class TestOCBoundaryMethodsNorth(unittest.TestCase):
         self.ocb.get_aacgm_boundary_lat(self.mlt, rec_ind=rind)
 
         # Test value of latitude attribute
-        self.assertTrue(np.all(self.ocb.aacgm_boundary_lat[rind] > 0.0))
+        self.assertTrue(numpy.all(self.ocb.aacgm_boundary_lat[rind] > 0.0))
         self.assertAlmostEqual(self.ocb.aacgm_boundary_lat[rind].min(),
                                73.26939247752293)
         self.assertEqual(self.ocb.aacgm_boundary_lat[rind].argmin(), 1)
@@ -560,9 +576,10 @@ class TestOCBoundaryMethodsNorth(unittest.TestCase):
         self.ocb.get_aacgm_boundary_lat(self.mlt, rec_ind=rind)
 
         # Test value of latitude attribute
-        self.assertFalse(np.all(self.ocb.aacgm_boundary_lat[rind] > 0.0))
-        self.assertTrue(np.any(self.ocb.aacgm_boundary_lat[rind] > 0.0))
-        self.assertTrue(np.any(np.isnan(self.ocb.aacgm_boundary_lat[rind])))
+        self.assertFalse(numpy.all(self.ocb.aacgm_boundary_lat[rind] > 0.0))
+        self.assertTrue(numpy.any(self.ocb.aacgm_boundary_lat[rind] > 0.0))
+        self.assertTrue(numpy.any(numpy.isnan(
+            self.ocb.aacgm_boundary_lat[rind])))
         self.assertAlmostEqual(self.ocb.aacgm_boundary_lat[rind][1],
                                72.82502115387997)
 
@@ -635,12 +652,12 @@ class TestOCBoundaryMethodsSouth(unittest.TestCase):
         self.ocb = ocbpy.ocboundary.OCBoundary(**self.set_south)
         self.ocb.rec_ind = 8
 
-        self.mlt = np.linspace(0.0, 24.0, num=6)
-        self.lat = np.linspace(-90.0, 0.0, num=len(self.mlt))
+        self.mlt = numpy.linspace(0.0, 24.0, num=6)
+        self.lat = numpy.linspace(-90.0, 0.0, num=len(self.mlt))
         self.ocb_lat = [-86.8, -58.14126906, -30.46277504, -5.44127327,
-                        22.16097829, np.nan]
+                        22.16097829, numpy.nan]
         self.ocb_mlt = [6.0, 4.91857824, 9.43385497, 14.28303702, 19.23367655,
-                        np.nan]
+                        numpy.nan]
         self.r_corr = 0.0
         self.out = None
 
@@ -707,15 +724,17 @@ class TestOCBoundaryMethodsSouth(unittest.TestCase):
         """
         self.out = self.ocb.normal_coord(self.lat, self.mlt)
 
-        self.assertTrue(np.all(np.less(abs(self.out[0] - self.ocb_lat), 1.0e-7,
-                                       where=~np.isnan(self.out[0]))))
-        self.assertTrue(np.all(np.less(abs(self.out[1] - self.ocb_mlt), 1.0e-7,
-                                       where=~np.isnan(self.out[1]))))
-        self.assertTrue(np.where(np.isnan(self.out[0]))
-                        == np.where(np.isnan(self.ocb_lat)))
-        self.assertTrue(np.where(np.isnan(self.out[1]))
-                        == np.where(np.isnan(self.ocb_mlt)))
-        self.assertTrue(np.all(self.out[2] == self.r_corr))
+        self.assertTrue(numpy.all(numpy.less(abs(self.out[0] - self.ocb_lat),
+                                             1.0e-7,
+                                             where=~numpy.isnan(self.out[0]))))
+        self.assertTrue(numpy.all(numpy.less(abs(self.out[1] - self.ocb_mlt),
+                                             1.0e-7,
+                                             where=~numpy.isnan(self.out[1]))))
+        self.assertTrue(numpy.where(numpy.isnan(self.out[0]))
+                        == numpy.where(numpy.isnan(self.ocb_lat)))
+        self.assertTrue(numpy.where(numpy.isnan(self.out[1]))
+                        == numpy.where(numpy.isnan(self.ocb_mlt)))
+        self.assertTrue(numpy.all(self.out[2] == self.r_corr))
 
     def test_normal_coord_south_geocentric(self):
         """ Test the geocentric normalisation calculation in the south
@@ -762,18 +781,20 @@ class TestOCBoundaryMethodsSouth(unittest.TestCase):
         self.out = self.ocb.revert_coord(self.ocb_lat, self.ocb_mlt,
                                          self.r_corr)
 
-        self.assertTrue(np.all(np.less(abs(self.out[0] - self.lat), 1.0e-7,
-                                       where=~np.isnan(self.out[0]))
-                               | np.isnan(self.out[0])))
-        self.assertTrue(np.all(np.less(abs(self.out[1] - self.mlt),
-                                       1.0e-7,
-                                       where=(~np.isnan(self.out[1])
-                                              & (self.lat > -90.0)))
-                               | np.isnan(self.out[0]) | (self.lat <= -90.0)))
-        self.assertTrue(np.where(np.isnan(self.out[0]))
-                        == np.where(np.isnan(self.ocb_lat)))
-        self.assertTrue(np.where(np.isnan(self.out[1]))
-                        == np.where(np.isnan(self.ocb_mlt)))
+        self.assertTrue(numpy.all(numpy.less(abs(self.out[0] - self.lat),
+                                             1.0e-7,
+                                             where=~numpy.isnan(self.out[0]))
+                                  | numpy.isnan(self.out[0])))
+        self.assertTrue(numpy.all(numpy.less(abs(self.out[1] - self.mlt),
+                                             1.0e-7,
+                                             where=(~numpy.isnan(self.out[1])
+                                                    & (self.lat > -90.0)))
+                                  | numpy.isnan(self.out[0])
+                                  | (self.lat <= -90.0)))
+        self.assertTrue(numpy.where(numpy.isnan(self.out[0]))
+                        == numpy.where(numpy.isnan(self.ocb_lat)))
+        self.assertTrue(numpy.where(numpy.isnan(self.out[1]))
+                        == numpy.where(numpy.isnan(self.ocb_mlt)))
 
     def test_revert_coord_south_coord_label(self):
         """ Test the reversion to AACGM coordinates in the south with Mag label
@@ -805,7 +826,7 @@ class TestOCBoundaryMethodsSouth(unittest.TestCase):
         self.out = self.ocb.revert_coord(-self.ocb_lat[1], self.ocb_mlt[1],
                                          self.r_corr)
         self.assertEqual(len(self.out), 2)
-        self.assertTrue(np.all(np.isnan(self.out)))
+        self.assertTrue(numpy.all(numpy.isnan(self.out)))
 
     def test_default_boundary_input(self):
         """ Test to see that the boundary latitude has the correct sign
@@ -828,7 +849,7 @@ class TestOCBoundaryMethodsSouth(unittest.TestCase):
         self.ocb.get_aacgm_boundary_lat(self.mlt, rec_ind=rind)
 
         # Test value of latitude attribute
-        self.assertTrue(np.all(self.ocb.aacgm_boundary_lat[rind] < 0.0))
+        self.assertTrue(numpy.all(self.ocb.aacgm_boundary_lat[rind] < 0.0))
         self.assertAlmostEqual(self.ocb.aacgm_boundary_lat[rind].min(),
                                -81.92122960532046)
         self.assertEqual(self.ocb.aacgm_boundary_lat[rind].argmin(), 1)
@@ -840,17 +861,17 @@ class TestOCBoundaryMethodsSouth(unittest.TestCase):
         """ Test func array init with good, southern, corrected OCB
         """
         rind = 8
-        self.set_south['rfunc'] = np.full(
+        self.set_south['rfunc'] = numpy.full(
             shape=self.ocb.r.shape, fill_value=ocbpy.ocb_correction.circular)
-        self.set_south['rfunc_kwargs'] = np.full(shape=self.ocb.r.shape,
-                                                 fill_value={"r_add": 1.0})
+        self.set_south['rfunc_kwargs'] = numpy.full(shape=self.ocb.r.shape,
+                                                    fill_value={"r_add": 1.0})
         self.ocb = ocbpy.ocboundary.OCBoundary(**self.set_south)
 
         # Add the attribute at the good location
         self.ocb.get_aacgm_boundary_lat(self.mlt, rec_ind=rind)
 
         # Test value of latitude attribute
-        self.assertTrue(np.all(self.ocb.aacgm_boundary_lat[rind] < 0.0))
+        self.assertTrue(numpy.all(self.ocb.aacgm_boundary_lat[rind] < 0.0))
         self.assertAlmostEqual(self.ocb.aacgm_boundary_lat[rind].min(),
                                -80.91948884759928)
         self.assertEqual(self.ocb.aacgm_boundary_lat[rind].argmin(), 1)
@@ -864,15 +885,15 @@ class TestOCBoundaryMethodsSouth(unittest.TestCase):
         """ Test kwarg array init with good, southern, corrected OCB
         """
         rind = 8
-        self.set_south['rfunc_kwargs'] = np.full(shape=self.ocb.r.shape,
-                                                 fill_value={"r_add": 1.0})
+        self.set_south['rfunc_kwargs'] = numpy.full(shape=self.ocb.r.shape,
+                                                    fill_value={"r_add": 1.0})
         self.ocb = ocbpy.ocboundary.OCBoundary(**self.set_south)
 
         # Add the attribute at the good location
         self.ocb.get_aacgm_boundary_lat(self.mlt, rec_ind=rind)
 
         # Test value of latitude attribute
-        self.assertTrue(np.all(self.ocb.aacgm_boundary_lat[rind] < 0.0))
+        self.assertTrue(numpy.all(self.ocb.aacgm_boundary_lat[rind] < 0.0))
         self.assertAlmostEqual(self.ocb.aacgm_boundary_lat[rind].min(),
                                -80.91948884759928)
         self.assertEqual(self.ocb.aacgm_boundary_lat[rind].argmin(), 1)
@@ -893,7 +914,7 @@ class TestOCBoundaryMethodsSouth(unittest.TestCase):
         self.ocb.get_aacgm_boundary_lat(self.mlt, rec_ind=rind)
 
         # Test value of latitude attribute
-        self.assertTrue(np.all(self.ocb.aacgm_boundary_lat[rind] < 0.0))
+        self.assertTrue(numpy.all(self.ocb.aacgm_boundary_lat[rind] < 0.0))
         self.assertAlmostEqual(self.ocb.aacgm_boundary_lat[rind].min(),
                                -80.91948884759928)
         self.assertEqual(self.ocb.aacgm_boundary_lat[rind].argmin(), 1)
@@ -911,7 +932,7 @@ class TestOCBoundaryMethodsSouth(unittest.TestCase):
         self.ocb.get_aacgm_boundary_lat(self.mlt, rec_ind=self.out)
 
         # Test value of latitude attribute
-        self.assertTrue(np.all(self.ocb.aacgm_boundary_lat[self.out] < 0.0))
+        self.assertTrue(numpy.all(self.ocb.aacgm_boundary_lat[self.out] < 0.0))
         self.assertAlmostEqual(self.ocb.aacgm_boundary_lat[self.out].min(),
                                -80.91948884759928)
         self.assertEqual(self.ocb.aacgm_boundary_lat[self.out].argmin(), 1)
@@ -967,9 +988,9 @@ class TestOCBoundaryMatchData(unittest.TestCase):
         """
         # Build a array of times for a test dataset
         self.ocb.rec_ind = 27
-        test_times = np.arange(self.ocb.dtime[self.ocb.rec_ind],
-                               self.ocb.dtime[self.ocb.rec_ind + 5],
-                               dt.timedelta(seconds=600)).astype(dt.datetime)
+        test_times = numpy.arange(self.ocb.dtime[self.ocb.rec_ind],
+                                  self.ocb.dtime[self.ocb.rec_ind + 5],
+                                  dt.timedelta(seconds=600)).astype(dt.datetime)
 
         # Because the array starts at the first good OCB, will return zero
         self.idat = ocbpy.ocboundary.match_data_ocb(self.ocb, test_times,
@@ -1139,13 +1160,13 @@ class TestOCBoundaryFailure(unittest.TestCase):
         with self.assertRaisesRegex(ValueError,
                                     "Misshaped correction function array"):
             ocbpy.ocboundary.OCBoundary(
-                rfunc=np.array([ocbpy.ocb_correction.circular]))
+                rfunc=numpy.array([ocbpy.ocb_correction.circular]))
 
     def test_bad_shape_rfunc_kwarg_input(self):
         """ Test failure when badly shaped radial correction function kwargs"""
         with self.assertRaisesRegex(ValueError,
                                     "Misshaped correction function keyword"):
-            ocbpy.ocboundary.OCBoundary(rfunc_kwargs=np.array([{}]))
+            ocbpy.ocboundary.OCBoundary(rfunc_kwargs=numpy.array([{}]))
 
     def test_bad_rfunc_input(self):
         """ Test failure with bad radial correction function input"""
