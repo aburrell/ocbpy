@@ -1,3 +1,4 @@
-numpy
-numpydoc
 aacgmv2
+numpy
+pysat
+ssj_auroral_boundary
