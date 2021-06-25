@@ -27,9 +27,6 @@ environment:
     WITH_COMPILER: 'cmd /E:ON /V:ON /C'
     BASH_CMD: "bash requirements.extra 0"
   matrix:
-    - job_name: P36-x32 basic
-      PYTHON: "C:\\Python36"
-      NUMPY: "numpy>=1.19.0"
     - job_name: P37-x32 basic
       PYTHON: "C:\\Python37"
       NUMPY: "numpy>=1.19.0"
@@ -38,9 +35,6 @@ environment:
       NUMPY: "numpy>=1.19.0"
     - job_name: P39-x32 basic
       PYTHON: "C:\\Python39"
-      NUMPY: "numpy>=1.19.0"
-    - job_name: P36-x64 basic
-      PYTHON: "C:\\Python36-x64"
       NUMPY: "numpy>=1.19.0"
     - job_name: P37-x64 basic
       PYTHON: "C:\\Python37-x64"
