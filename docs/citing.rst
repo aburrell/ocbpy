@@ -1,9 +1,14 @@
+.. _cite:
+
 Citation Guide
 ==============
 
 When publishing work that uses OCBpy, please cite both the package and the
 boundary data set.  Specifying which version of OCBpy used will also improve
 the reproducibility of your presented results.
+
+
+.. _cite-ocbpy:
 
 OCBpy
 -----
@@ -31,6 +36,9 @@ which may also be cited if a description of the package is desired.
 
 .. include:: ../AUTHORS.rst
 
+
+.. _cite-image:
+	     
 IMAGE FUV Boundaries
 --------------------
 
@@ -38,17 +46,21 @@ Please cite both the papers discussing both the instrument and the boundary
 retrieval method.
 
 * **SI12/SI13**: Mende, S., et al. Space Science Reviews (2000) 91: 287-318.
-  doi:10.1023/A:1005292301251.
+  http://doi.org/10.1023/A:1005292301251.
 * **WIC**: Mende, S., et al. Space Science Reviews (2000) 91: 271-285.
-  doi:10.1023/A:1005227915363.
-* **OCB**: Chisham, G. (2017), A new methodology for the development of
+  http://doi.org/10.1023/A:1005227915363.
+* **OCB**: Chisham, G. (2017) A new methodology for the development of
   high‐latitude ionospheric climatologies and empirical models,
-  J. Geophys. Res. Space Physics, 122, 932–947, doi:10.1002/2016JA023235.
-*    : Chisham, G. (2017) Auroral Boundary Derived from IMAGE Satellite Mission
-     Data (May 2000 - Oct 2002), Version 1.1, Polar Data Centre, Natural
-     Environment Research Council, UK.
-     doi:10.5285/75aa66c1-47b4-4344-ab5d-52ff2913a61e.
-     
+  J. Geophys. Res. Space Physics, 122, 932–947,
+  http://doi.org/10.1002/2016JA023235.
+* **OCB**: Chisham, G. (2017) Auroral Boundary Derived from IMAGE Satellite
+  Mission Data (May 2000 - Oct 2002), Version 1.1, Polar Data Centre, Natural
+  Environment Research Council, UK.
+  http://doi.org/10.5285/75aa66c1-47b4-4344-ab5d-52ff2913a61e.
+
+
+.. _cite-ampere:
+
 AMPERE Boundaries
 -----------------
 
@@ -59,12 +71,15 @@ boundary retrieval method and the OCB correction method.
 * **FAC**: Milan, S. E. (2019): AMPERE R1/R2 FAC radii. figshare. Dataset.
   https://doi.org/10.25392/leicester.data.11294861.v1
 * **OCB**: Burrell, A. G., et al. (2020): AMPERE Polar Cap Boundaries,
-  Ann. Geophys., 38, 481-490, doi:10.5194/angeo-38-481-2020
+  Ann. Geophys., 38, 481-490, http://doi.org/10.5194/angeo-38-481-2020
+
+
+.. _cite-dmsp:
 
 DMSP SSJ Boundaries
 -------------------
 
-The DMSO SSJ boundaries are retrieved using
+The DMSP SSJ boundaries are retrieved using
 `ssj_auroral_boundary <https://github.com/lkilcommons/ssj_auroral_boundary>`_.
 Please follow the citation guidelines on their page.  The general reference
 for the DMSP SSJ boundary data set is provided below.

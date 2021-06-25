@@ -5,9 +5,10 @@ with the package.  However, routines to obtain them are.  To use them, you need
 to install the
 `ssj_auroral_boundary <https://github.com/lkilcommons/ssj_auroral_boundary>`__
 package.  Once installed, you can download DMSP SSJ data and obtain a boundary
-file for a specified time period.  For this example, we'll use a single day.
-You can download the files into any directory, but this example will put them
-in the same directory as the other OCB files.
+file for a specified time period using
+:py:mod:`ocbpy.boundaries.dmsp_ssj_files`.  For this example, we'll use a
+single day. You can download the files into any directory, but this example will
+put them in the same directory as the other OCB files.
 
 ::
    
@@ -19,17 +20,18 @@ in the same directory as the other OCB files.
    etime = stime + dt.datetime(days=1)
    out_dir = os.path.join(os.path.split(ocbpy.__file__)[0], "boundaries")
 
-   bfiles = ocbpy.boundaries.dmsp_ssj_files.fetch_format_ssj_boundary_files(stime, etime, out_dir=out_dir, rm_temp=False)
+   bfiles = ocbpy.boundaries.dmsp_ssj_files.fetch_format_ssj_boundary_files(
+       stime, etime, out_dir=out_dir, rm_temp=False)
 
 
-By setting `rm_temp=False`, all of the different DMSP files will be kept in the
-specified output directory.  You should have three CDF files (the data
+By setting ``rm_temp=False``, all of the different DMSP files will be kept in
+the specified output directory.  You should have three CDF files (the data
 downloaded from each DMSP spacecraft), the CSV files (the boundaries calculated
 for each DMSP spacecraft) and four boundary files.  The boundary files have
-an extention of `.eab` for the Equatorial Auroral Boundary and `.ocb` for the
-Open-Closed field line Boundary.  The files are separated by hemisphere, and
+an extention of ``.eab`` for the Equatorial Auroral Boundary and ``.ocb`` for
+the Open-Closed field line Boundary.  The files are separated by hemisphere, and
 also specify the date range.  Because only one day was obtained, the start and
-end dates in the filename are identical.  When `rm_temp=True`, the CDF and CSV
+end dates in the filename are identical.  When ``rm_temp=True``, the CDF and CSV
 files are removed.
 
 You can now load the DMSP SSJ boundaries by specifying the desired filename,
@@ -39,8 +41,10 @@ instrument, and hemisphere or merely the instrument and hemisphere.
 ::
    
    # Load with filename, instrument, and hemisphere
-   south_file = os.path.join(out_dir, "dmsp-ssj_south_20101231_20101231_v1.1.2.ocb")
-   ocb_south = ocbpy.ocboundary.OCBoundary(filename=south_file, instrument='dmsp-ssj', hemisphere=-1)
+   south_file = os.path.join(out_dir,
+                             "dmsp-ssj_south_20101231_20101231_v1.1.2.ocb")
+   ocb_south = ocbpy.ocboundary.OCBoundary(filename=south_file,
+                                           instrument='dmsp-ssj', hemisphere=-1)
    print(ocb_south)
 
    Open-Closed Boundary file: ~/ocbpy/ocbpy/boundaries/dmsp-ssj_south_20101231_20101231_v1.1.2.ocb
@@ -60,7 +64,8 @@ instrument, and hemisphere or merely the instrument and hemisphere.
    circular(**{})
 
    # Load with date, instrument, and hemisphere
-   ocb_north = ocbpy.ocboundary.OCBoundary(stime=stime, instrument='dmsp-ssj', hemisphere=1)
+   ocb_north = ocbpy.ocboundary.OCBoundary(stime=stime, instrument='dmsp-ssj',
+                                           hemisphere=1)
    print(ocb_north)
 
    Open-Closed Boundary file: ~/ocbpy/ocbpy/boundaries/dmsp-ssj_north_20101231_20101231_v1.1.2.ocb

@@ -1,3 +1,5 @@
+.. _exconvert:
+
 Convert between AACGM and OCB coordinates
 -----------------------------------------
 
@@ -39,8 +41,9 @@ Calculate at plot the location of the OCB in AACGM coordinates
    ax.text(theta[35], rad[35] + 1.5, "74$^\circ$", fontsize="medium", color="m")
 
 Add more reference labels for OCB coordinates.  Since we know the location that
-we want to place these labels in OCB coordinates, the **OCBoundary** function
-**revert_coord** can be used to get the location in AACGM coordinates.
+we want to place these labels in OCB coordinates, the
+:py:meth:`~ocbpy.ocboundary.OCBoundary.revert_coord` method can be used to get
+the location in AACGM coordinates.
 
 ::
 
@@ -72,7 +75,10 @@ location relative to the OCB, and output both coordinates in the legend
    aacgm_lon = np.pi
    ocb_lat, ocb_mlt = ocb.normal_coord(aacgm_lat, aacgm_lon * 12.0 / np.pi)
    
-   plabel = "Point (MLT, lat)\nAACGM (12:00, 85.0$^\circ$)\nOCB ({:.0f}:{:.0f},{:.1f}$^\circ$)".format(np.floor(ocb_mlt), (ocb_mlt - np.floor(ocb_mlt)) * 60.0, ocb_lat)
+   plabel = "\n".join(["Point (MLT, lat)", "AACGM (12:00, 85.0$^\circ$)",
+                       "OCB ({:.0f}:{:.0f},{:.1f}$^\circ$)".format(
+		           np.floor(ocb_mlt),
+			   (ocb_mlt - np.floor(ocb_mlt)) * 60.0, ocb_lat)])
    ax.plot([aacgm_lon], [90.0-aacgm_lat], "ko", ms=5, label=plabel)
    
 Find the location relative to the current OCB.  Note that the AACGM coordinates
@@ -95,4 +101,4 @@ Add a legend to finish the figure.
 .. image:: ../figures/example_ocb_location.png
 
 Scaling of values dependent on the electric potential can be found in the
-**ocbpy.ocb_scaling** `module <ocb_gridding.html#ocb-scaling>`__.
+:py:mod:`ocbpy.ocb_scaling` module.

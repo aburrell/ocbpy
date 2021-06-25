@@ -1,12 +1,13 @@
 
 Grid and scale vector data
----------------------------------------------
+--------------------------
+
 Many space science observations, such as ion drifts, are vectors.  The
-**ocbpy.ocb_scaling.VectorData** class ensures that the vector location,
+:py:class:`ocbpy.ocb_scaling.VectorData` class ensures that the vector location,
 direction, and magnitude are gridded and scaled appropriately.
 
 The example presented here uses SuperDARN data.  The example file,
-*20010214.0100.00.pgr.grd* may be obtained by fitting and then gridding the
+**20010214.0100.00.pgr.grd** may be obtained by fitting and then gridding the
 rawacf file, available from any of the SuperDARN mirrors.  FitACF v3.0 was used
 to create this file.  See the `Radar Software Toolkit <https://radar-software-toolkit-rst.readthedocs.io/en/latest/>`__ for more information.
 
@@ -79,13 +80,14 @@ each case is appropriate.
     0:01:24
 
 
-If you are using a different file, you can use **ocbpy.match_data_ocb** to
-find an appropriate pairing, as illustrated in previous examples.
+If you are using a different file, you can use
+:py:func:`~ocbpy.ocboundary.match_data_ocb` to find an appropriate pairing, as
+illustrated in previous examples.
 
 Now that the data are paired, we can initialize an
-**ocbpy.ocb_scaling.VectorData** object.  To do this, however, we need the
-SuperDARN LoS velocity data in North-East-Vertical coordinates.  SuperDARN grid
-files determine the median magnitude and direction of Line-of-Sight (LoS)
+:py:class:`ocbpy.ocb_scaling.VectorData` object.  To do this, however, we need
+the SuperDARN LoS velocity data in North-East-Vertical coordinates.  SuperDARN
+grid files determine the median magnitude and direction of Line-of-Sight (LoS)
 Doppler velocities.  For each period of time, the velocity is expressed in terms
 of a median vector magnitude and an angle off of magnetic north.  To convert
 between the two, use the following routine.
@@ -108,25 +110,24 @@ between the two, use the following routine.
     mlt = aacgmv2.convert_mlt(grd_data[0]['vector.mlon'], stime)
 
     # Initialize the vector data object
-    pgr_vect = ocbpy.ocb_scaling.VectorData(dat_ind, ocb.rec_ind,
-                                            grd_data[0]['vector.mlat'], mlt,
-					    aacgm_n=drifts_n, aacgm_e=drifts_e,
-					    aacgm_mag=grd_data[0]['vector.vel.median'],
-					    dat_name='LoS Velocity',
-					    dat_units='m s$^{-1}$',
-					    scale_func=ocbpy.ocb_scaling.normal_curl_evar)
+    pgr_vect = ocbpy.ocb_scaling.VectorData(
+        dat_ind, ocb.rec_ind, grd_data[0]['vector.mlat'], mlt,
+        aacgm_n=drifts_n, aacgm_e=drifts_e,
+        aacgm_mag=grd_data[0]['vector.vel.median'], dat_name='LoS Velocity',
+        dat_units='m s$^{-1}$', scale_func=ocbpy.ocb_scaling.normal_curl_evar)
 
     # Calculate the OCB coordinates of the vector data
     pgr_vect.set_ocb(ocb)
 
 
-Because there are 110 vectors at this time and location, printing ``pgr_vect``
-will create a long string!  Vector data does not require array input, but does
-allow it to reduce the time needed for calculating data observed at the same
-time.  A better way to visualise the array of vector velocity data is to plot
-it.  The following code will create a figure that shows the AACGMV2
-velocities on the left and the OCB velocities on the right.  Because data from
-only one radar is plotted, only a fraction of the polar region is plotted.
+Because there are 110 vectors at this time and location, printing
+:py:data:`pgr_vect` will create a long string!  Vector data does not require
+array input, but does allow it to reduce the time needed for calculating data
+observed at the same time.  A better way to visualise the array of vector
+velocity data is to plot it.  The following code will create a figure that
+shows the AACGMV2 velocities on the left and the OCB velocities on the right.
+Because data from only one radar is plotted, only a fraction of the polar
+region is plotted.
 
 ::
 
@@ -137,7 +138,7 @@ only one radar is plotted, only a fraction of the polar region is plotted.
     axo = fig.add_subplot(1,2,2, projection='polar')
 
     # Format the axes
-    xticks = np.linspace(0, 2.0*np.pi, 9) 
+    xticks = np.linspace(0, 2.0 * np.pi, 9) 
     for aa in [axa, axo]: 
         aa.set_theta_zero_location('S') 
         aa.xaxis.set_ticks(xticks) 
@@ -152,7 +153,10 @@ only one radar is plotted, only a fraction of the polar region is plotted.
 	aa.set_ylabel('MLat ($^\circ$)', labelpad=30)
 	aa.yaxis.set_label_position('right')
 
-    fig.suptitle('PGR Gridded Median Velocity at {:} UT\n{:s} Boundary'.format(stime.strftime('%d %b %Y %H:%M:%S'), ocb.instrument.upper()), fontsize='medium')
+    fig.suptitle(
+        'PGR Gridded Median Velocity at {:} UT\n{:s} Boundary'.format(
+	    stime.strftime('%d %b %Y %H:%M:%S'), ocb.instrument.upper()),
+	fontsize='medium')
     axa.set_title('AACGMV2 Coordinates', fontsize='medium')
     axo.set_title('OCB Coordinates', fontsize='medium')
 
@@ -179,9 +183,9 @@ only one radar is plotted, only a fraction of the polar region is plotted.
     vmax = 850.0
     vnorm = mpl.colors.Normalize(vmin, vmax)
 
-    axa.quiver(ocbpy.ocb_time.hr2rad(mlt), 90.0-grd_data[i]['vector.mlat'],
+    axa.quiver(ocbpy.ocb_time.hr2rad(mlt), 90.0 - grd_data[i]['vector.mlat'],
                adrift_x, adrift_y, grd_data[i]['vector.vel.median'], norm=vnorm)
-    axo.quiver(ocbpy.ocb_time.hr2rad(pgr_vect.ocb_mlt), 90.0-pgr_vect.ocb_lat,
+    axo.quiver(ocbpy.ocb_time.hr2rad(pgr_vect.ocb_mlt), 90.0 - pgr_vect.ocb_lat,
                odrift_x, odrift_y, pgr_vect.ocb_mag, norm=vnorm)
 
     # Add a colour bar
