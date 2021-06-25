@@ -173,8 +173,32 @@ class TestOCBoundaryMethodsGeneral(unittest.TestCase):
     def test_repr_string(self):
         """Test __repr__ method string
         """
+        # Initalize the class object
         self.ocb = ocbpy.ocboundary.OCBoundary(**self.set_default)
-        self.assertRegex(self.ocb.__repr__(), "ocbpy.OCBoundary")
+
+        # Set the different types of correction function attributes
+        rfuncs = [self.ocb.rfunc, None,
+                  numpy.array([ocbpy.ocb_correction.circular if i == 0 else
+                               ocbpy.ocb_correction.elliptical
+                               for i, val in enumerate(self.ocb.dtime)])]
+        rfunc_kwargs = [self.ocb.rfunc_kwargs, None,
+                        numpy.array([{'r_add': 1} if i == 0 else
+                                     {'method': 'gaussian'}
+                                     for i, val in enumerate(self.ocb.dtime)])]
+
+        # Test each type of correction function attribute
+        for i, val in enumerate(rfuncs):
+            with self.subTest(val=val, i=i):
+                self.ocb.rfunc = val
+                self.ocb.rfunc_kwargs = rfunc_kwargs[i]
+                self.assertRegex(self.ocb.__repr__(), "ocbpy.OCBoundary")
+                if val is None:
+                    self.assertRegex(self.ocb.__repr__(), val.__repr__())
+                else:
+                    self.assertRegex(self.ocb.__repr__(), val[0].__name__)
+                    if i == 2:
+                        self.assertRegex(self.ocb.__repr__(), 'numpy.array')
+                        self.assertRegex(self.ocb.__repr__(), 'dtype=object')
 
     def test_repr_eval(self):
         """Test __repr__ method's ability to reproduce a class

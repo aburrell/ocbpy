@@ -121,7 +121,14 @@ class TestOCBScalingMethods(unittest.TestCase):
     def test_repr_string(self):
         """Test __repr__ method string
         """
-        self.assertRegex(self.vdata.__repr__(), "ocbpy.ocb_scaling.VectorData")
+        for val in [None, ocbpy.ocb_correction.circular]:
+            with self.subTest(val=val):
+                self.vdata.scale_func = val
+                self.assertRegex(self.vdata.__repr__(),
+                                 "ocbpy.ocb_scaling.VectorData")
+
+                if val is not None:
+                    self.assertRegex(self.vdata.__repr__(), val.__name__)
 
     def test_repr_eval(self):
         """Test __repr__ method's ability to reproduce a class
