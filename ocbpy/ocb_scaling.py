@@ -4,29 +4,11 @@
 # ----------------------------------------------------------------------------
 """Scale data affected by magnetic field direction or electric field
 
-Routines
---------
-normal_evar(evar, unscaled_r, scaled_r)
-    Normalise a variable proportaional to the electric field (such as velocity)
-normal_curl_evar(curl_evar, unscaled_r, scaled_r)
-    Normalise a variable proportional to the curl of the electric field (such
-    as vorticity)
-
-Classes
--------
-VectorData(object)
-    Holds vector data in AACGM N-E-Z coordinates along with location
-    information.  Converts vector from AACGM to OCB coordinates.
-
-Moduleauthor
-------------
-Angeline G. Burrell (AGB), 12 May 2017, University of Texas, Dallas
-
 References
 ----------
-Chisham, G. (2017), A new methodology for the development of high-latitude
-ionospheric climatologies and empirical models, Journal of Geophysical
-Research: Space Physics, 122, doi:10.1002/2016JA023235.
+.. [1] Chisham, G. (2017), A new methodology for the development of
+   high-latitude ionospheric climatologies and empirical models, Journal of
+   Geophysical Research: Space Physics, 122, doi:10.1002/2016JA023235.
 
 """
 
@@ -40,97 +22,63 @@ class VectorData(object):
 
     Parameters
     ----------
-    dat_ind : (int or array-like)
+    dat_ind : int or array-like
         Data index (zero offset)
-    ocb_ind : (int or array-like)
+    ocb_ind : int or array-like
         OCBoundary record index matched to this data index (zero offset)
-    aacgm_lat : (float or array-like)
+    aacgm_lat : float or array-like
         Vector AACGM latitude (degrees)
-    aacgm_mlt : (float or array-like)
+    aacgm_mlt : float or array-like
         Vector AACGM MLT (hours)
-    ocb_lat : (float or array-like)
+    ocb_lat : float or array-like
         Vector OCB latitude (degrees) (default=np.nan)
-    ocb_mlt : (float or array-like)
+    ocb_mlt : float or array-like
         Vector OCB MLT (hours) (default=np.nan)
-    aacgm_n : (float or array-like)
+    aacgm_n : float or array-like
         AACGM North pointing vector (positive towards North) (default=0.0)
-    aacgm_e : (float or array-like)
+    aacgm_e : float or array-like
         AACGM East pointing vector (completes right-handed coordinate system
         (default = 0.0)
-    aacgm_z : (float or array-like)
+    aacgm_z : float or array-like
         AACGM Vertical pointing vector (positive down) (default=0.0)
-    aacgm_mag : (float or array-like)
+    aacgm_mag : float or array-like
         Vector magnitude (default=np.nan)
-    scale_func : (function)
-        Function for scaling AACGM magnitude with arguements:
-        [measurement value, mesurement AACGM latitude (degrees),
-        mesurement OCB latitude (degrees)]
-        (default=None)
-    dat_name : (str)
+    dat_name : str
         Data name (default=None)
-    dat_units : (str)
+    dat_units : str
         Data units (default=None)
+    scale_func : function
+        Function for scaling AACGM magnitude with arguements: [measurement
+        value, mesurement AACGM latitude (degrees), mesurement OCB latitude
+        (degrees)] (default=None)
 
     Attributes
     ----------
-    dat_name : (str or NoneType)
-        Name of data
-    dat_units : (str or NoneType)
-        Units of data
-    dat_ind : (int or array-like)
-        Vector data index in external data array
-    ocb_ind : (int or array-like)
-        OCBoundary rec_ind value(s) that matches dat_ind or a single rec_ind
-        value for all dat_ind
-    unscaled_r : (float or array-like)
+    unscaled_r : float or array-like
         Radius of polar cap in degrees
-    scaled_r : (float or array-like)
+    scaled_r : float or array-like
         Radius of normalised OCB polar cap in degrees
-    aacgm_n : (float or array-like)
-        AACGM north component of data vector (default=0.0)
-    aacgm_e : (float or array-like)
-        AACGM east component of data vector (default=0.0)
-    aacgm_z : (float or array-like)
-        AACGM vertical component of data vector (default=0.0)
-    aacgm_mag : (float or array-like)
-        Magnitude of data vector in AACGM coordinates (default=np.nan)
-    aacgm_lat : (float or array-like)
-        AACGM latitude of data vector in degrees
-    aacgm_mlt : (float or array-like)
-        AACGM MLT of data vector in hours
-    ocb_n : (float or array-like)
+    ocb_n : float or array-like
         OCB north component of data vector (default=np.nan)
-    ocb_e : (float or array-like)
+    ocb_e : float or array-like
         OCB east component of data vector (default=np.nan)
-    ocb_z : (float or array-like)
+    ocb_z : float or array-like
         OCB vertical component of data vector (default=np.nan)
-    ocb_mag : (float or array-like)
+    ocb_mag : float or array-like
         OCB magnitude of data vector (default=np.nan)
-    ocb_lat : (float or array-like)
-        OCB latitude of data vector in degrees (default=np.nan)
-    ocb_mlt : (float or array-like)
-        OCB MLT of data vector in hours (default=np.nan)
-    ocb_quad : (int or array-like)
+    ocb_quad : int or array-like
         AACGM quadrant of OCB pole (default=0)
-    vec_quad : (int or array-like)
+    vec_quad : int or array-like
         AACGM quadrant of Vector (default=0)
-    pole_angle : (float or array-like)
+    pole_angle : float or array-like
         Angle at vector location appended by AACGM and OCB poles in degrees
         (default=np.nan)
-    aacgm_naz : (float or array-like)
+    aacgm_naz : float or array-like
         AACGM north azimuth of data vector in degrees (default=np.nan)
-    ocb_aacgm_lat : (float or array-like)
+    ocb_aacgm_lat : float or array-like
         AACGM latitude of OCB pole in degrees (default=np.nan)
-    ocb_aacgm_mlt : (float or array-like)
+    ocb_aacgm_mlt : float or array-like
         AACGM MLT of OCB pole in hours (default=np.nan)
-    scale_func : (function or NoneType)
-        Funciton that scales the magnitude of the data vector from AACGM
-        polar cap coverage to OCB polar cap coverage
-
-    Methods
-    -------
-    set_ocb(ocb, scale_func=None)
-        Set the ocb coordinates and vector values
 
     Notes
     -----
@@ -142,47 +90,6 @@ class VectorData(object):
                  ocb_mlt=np.nan, r_corr=np.nan, aacgm_n=0.0, aacgm_e=0.0,
                  aacgm_z=0.0, aacgm_mag=np.nan, dat_name=None, dat_units=None,
                  scale_func=None):
-        """ Initialize VectorData object
-
-        Parameters
-        ----------
-        dat_ind : (int or array-like)
-            Data index (zero offset)
-        ocb_ind : (int or array-like)
-            OCBoundary record index matched to this data index (zero offset)
-        aacgm_lat : (float or array-like)
-            Vector AACGM latitude (degrees)
-        aacgm_mlt : (float or array-like)
-            Vector AACGM MLT (hours)
-        ocb_lat : (float or array-like)
-            Vector OCB latitude (degrees) (default=np.nan)
-        ocb_mlt : (float or array-like)
-            Vector OCB MLT (hours) (default=np.nan)
-        aacgm_n : (float or array-like)
-            AACGM North pointing vector (positive towards North) (default=0.0)
-        aacgm_e : (float or array-like)
-            AACGM East pointing vector (completes right-handed coordinate
-            system (default=0.0)
-        aacgm_z : (float or array-like)
-            AACGM Vertical pointing vector (positive down) (default=0.0)
-        aacgm_mag : (float or array-like)
-            Vector magnitude (default = np.nan)
-        dat_name : (str)
-            Data name (default=None)
-        dat_units : (str)
-            Data units (default=None)
-        scale_func : (function)
-            Function for scaling AACGM magnitude with arguements:
-            [measurement value, mesurement AACGM latitude (degrees),
-            mesurement OCB latitude (degrees)]
-            Not necessary if no magnitude scaling is needed. (default=None)
-
-        Raises
-        ------
-        ValueError
-            If the vector magnitude and AACGM components are inconsistent
-
-        """
 
         # Assign the vector data name and units
         self.dat_name = dat_name
@@ -404,57 +311,18 @@ class VectorData(object):
         return out
 
     def set_ocb(self, ocb, scale_func=None):
-        """ Set the OCBoundary values for this data point
+        """ Set the OCBoundary values for provided data (updates all attributes)
 
         Parameters
         ----------
-        ocb : (OCBoundary)
+        ocb : ocbpy.OCBoundary
             Open Closed Boundary class object
-        scale_func : (function)
+        scale_func : function
             Function for scaling AACGM magnitude with arguements:
             [measurement value, mesurement AACGM latitude (degrees),
             mesurement OCB latitude (degrees)]
             Not necessary if defined earlier or no scaling is needed.
             (default=None)
-
-        Updates
-        -------
-        self.unscaled_r : (float or array-like)
-            Radius of polar cap in degrees
-        self.scaled_r : (float)
-            Radius of normalised OCB polar cap in degrees
-        self.ocb_n : (float or array-like)
-            Vector OCB North component
-        self.ocb_e : (float or array-like)
-            Vector OCB East component
-        self.ocb_z : (float or array-like)
-            Vector OCB vertical component (positive downward)
-        self.ocb_mag : (float or array-like)
-            Vector OCB magnitude
-        self.ocb_lat : (float or array-like)
-            Vector OCB latitude, if not updated already (degrees)
-        self.ocb_mlt : (float or array-like)
-            Vector OCB MLT, if not updated already (hours)
-        self.r_corr : (float or array-like)
-            OCB radius correction for vector location (degrees)
-        self.ocb_quad : (int or array-like)
-            OCB pole AACGM quadrant
-        self.vec_quad : (int or array-like)
-            Vector AACGM quadrant
-        self.pole_angle : (float or array-like)
-            Angle at the vector in the triangle formed by the poles and vector
-            (degrees)
-        self.aacgm_naz : (float or array-like)
-            AACGM north azimuth angle (degrees)
-        self.ocb_aacgm_lat : (float or array-like)
-            AACGM latitude of the OCB pole (degrees)
-        self.ocb_aacgm_mlt : (float or array-like)
-            AACGM MLT of the OCB pole (hours)
-        self.scale_func : (function)
-            Function for scaling AACGM magnitude with arguements:
-            [measurement value, unscaled polar cap radius (degrees),
-            scaled polar cap radius (degrees)]
-            Not necessary if defined earlier or if no scaling is needed.
 
         """
 
@@ -519,27 +387,14 @@ class VectorData(object):
         """ Find the MLT quadrants (in AACGM coordinates) for the OCB pole
         and data vector
 
-        Requires
-        --------
-        self.ocb_aacgm_mlt : (float or array-like)
-            OCB pole MLT in AACGM coordinates in hours
-        self.aacgm_mlt : (float or array-like)
-            Vector AACGM MLT in hours
-        self.pole_angle : (float or array-like)
-            vector angle in poles-vector triangle in degrees
-
-        Updates
-        -------
-        self.ocb_quad : (int or array-like)
-            OCB pole quadrant
-        self.vec_quad : (int or array-like)
-            Vector quadrant
-
         Notes
         -----
         North (N) and East (E) are defined by the AACGM directions centred on
         the data vector location, assuming vertical is positive downwards
         Quadrants: 1 [N, E]; 2 [N, W]; 3 [S, W]; 4 [S, E]
+
+        Requires `ocb_aacgm_mlt`, `aacgm_mlt`, and `pole_angle`.
+        Updates `ocb_quad` and `vec_quad`
 
         Raises
         ------
@@ -649,32 +504,15 @@ class VectorData(object):
     def scale_vector(self):
         """ Normalise a variable proportional to the curl of the electric field.
 
-        Requires
-        --------
-        self.ocb_lat : (float or array-like)
-            OCB latitude in degrees
-        self.ocb_mlt : (float or array-like)
-            OCB MLT in hours
-        self.ocb_aacgm_mlt : (float or array-like)
-            OCB pole MLT in AACGM coordinates in hours
-        self.pole_angle : (float or array-like)
-            vector angle in poles-vector triangle
-
-        Updates
-        -------
-        ocb_n : (float or array-like)
-            OCB scaled north component
-        ocb_e : (float or array-like)
-            OCB scaled east component
-        ocb_z : (float or array-like)
-            OCB scaled vertical component
-        ocb_mag : (float or array-like)
-            OCB scaled magnitude
-
         Raises
         ------
         ValueError
             If the required input is not defined
+
+        Notes
+        -----
+        Requires `ocb_lat`, `ocb_mlt`, `ocb_aacgm_mlt`, and `pole_angle`.
+        Updates `ocb_n`, `ocb_e`, `ocb_z`, and `ocb_mag`
 
         """
 
@@ -851,26 +689,19 @@ class VectorData(object):
     def calc_ocb_polar_angle(self):
         """ Calculate the OCB north azimuth angle
 
-        Requires
-        --------
-        self.ocb_quad : (int or array-like)
-            OCB quadrant
-        self.vec_quad : (int or array-like)
-            Vector quadrant
-        self.aacgm_naz : (float or array-like)
-            AACGM polar angle
-        self.pole_angle : (float or array-like)
-            Vector angle between AACGM pole, vector origin, and OCB pole
-
         Returns
         -------
-        ocb_naz : (float or array-like)
+        ocb_naz : float or array-like
             Angle between measurement vector and OCB pole in degrees
 
         Raises
         ------
         ValueError
             If the required input is undefined
+
+        Notes
+        -----
+        Requires `ocb_quad`, `vec_quad`, `aacgm_naz`, and `pole_angle`
 
         """
 
@@ -953,28 +784,17 @@ class VectorData(object):
 
         Parameters
         ----------
-        north : (boolean)
+        north : bool
             Get the sign of the north component(s) (default=False)
-        east : (boolean)
+        east : bool
             Get the sign of the east component(s) (default=False)
-        quads : (dictionary)
+        quads : dict
             Dictionary of boolean values or arrays of boolean values for OCB
             and Vector quadrants. (default=dict())
 
-        Requires
-        --------
-        self.ocb_quad : (int or array-like)
-            OCB pole quadrant
-        self.vec_quad : (int or array-like)
-            Vector quadrant
-        self.aacgm_naz : (float or array-like)
-            AACGM polar angle in degrees
-        self.pole_angle : (float or array-like)
-            Vector angle in degrees
-
         Returns
         -------
-        vsigns : (dict)
+        vsigns : dict
             Dictionary with keys 'north' and 'east' containing the desired
             signs
 
@@ -982,6 +802,10 @@ class VectorData(object):
         ------
         ValueError
             If the required input is undefined
+
+        Notes
+        -----
+        Requires `ocb_quad`, `vec_quad`, `aacgm_naz`, and `pole_angle`
 
         """
 
@@ -1086,26 +910,15 @@ class VectorData(object):
         """Calculate the angle between the AACGM pole, a measurement, and the
         OCB pole using spherical triginometry
 
-        Requires
-        --------
-        self.aacgm_mlt : (float or array-like)
-            AACGM MLT of vector origin in hours
-        self.aacgm_lat : (float or array-like)
-            AACGM latitude of vector origin in degrees
-        self.ocb_aacgm_mlt : (float or array-like)
-            AACGM MLT of the OCB pole in hours
-        self.ocb_aacgm_lat : (float or array-like)
-            AACGM latitude of the OCB pole in degrees
-
-        Updates
-        -------
-        self.pole_angle : (float or array-like)
-            Angle in degrees between AACGM north, a measurement, and OCB north
-
         Raises
         ------
         ValueError
             If the input is undefined or inappropriately sized arrays
+
+        Notes
+        -----
+        Requires `aacgm_mlt`, `aacgm_lat`, `ocb_aacgm_mlt`, and `ocb_aacgm_lat`.
+        Updates `pole_angle`.
 
         """
 
@@ -1209,16 +1022,16 @@ def normal_evar(evar, unscaled_r, scaled_r):
 
     Parameters
     ----------
-    evar : (float or array)
+    evar : float or array
         Variable related to electric field (e.g. velocity)
-    unscaled_r : (float or array)
+    unscaled_r : float or array
         Radius of polar cap in degrees
-    scaled_r : (float or array)
+    scaled_r : float or array
         Radius of normalised OCB polar cap in degrees
 
     Returns
     -------
-    nvar : (float or array)
+    nvar : float or array
         Normalised variable
 
     Notes
@@ -1227,13 +1040,7 @@ def normal_evar(evar, unscaled_r, scaled_r):
     regardless of the radius of the Open Closed field line Boundary.  This is
     commonly assumed when looking at statistical patterns that control the IMF
     (which accounts for dayside reconnection) and assume that the nightside
-    reconnection influence is averaged out over the averaged period.
-
-    References
-    ----------
-    Chisham, G. (2017), A new methodology for the development of high‐latitude
-    ionospheric climatologies and empirical models, Journal of Geophysical
-    Research: Space Physics, doi:10.1002/2016JA023235.
+    reconnection influence is averaged out over the averaged period [1]_.
 
     """
 
@@ -1247,16 +1054,16 @@ def normal_curl_evar(curl_evar, unscaled_r, scaled_r):
 
     Parameters
     ----------
-    curl_evar : (float or array)
+    curl_evar : float or array
         Variable related to electric field (e.g. vorticity)
-    unscaled_r : (float or array)
+    unscaled_r : float or array
         Radius of polar cap in degrees
-    scaled_r : (float or array)
+    scaled_r : float or array
         Radius of normalised OCB polar cap in degrees
 
     Returns
     -------
-    nvar : (float or array)
+    nvar : float or array
         Normalised variable
 
     Notes
@@ -1265,13 +1072,7 @@ def normal_curl_evar(curl_evar, unscaled_r, scaled_r):
     regardless of the radius of the Open Closed field line Boundary.  This is
     commonly assumed when looking at statistical patterns that control the IMF
     (which accounts for dayside reconnection) and assume that the nightside
-    reconnection influence is averaged out over the averaged period.
-
-    References
-    ----------
-    Chisham, G. (2017), A new methodology for the development of high‐latitude
-    ionospheric climatologies and empirical models, Journal of Geophysical
-    Research: Space Physics, doi:10.1002/2016JA023235.
+    reconnection influence is averaged out over the averaged period [1]_.
 
     """
 
@@ -1285,12 +1086,12 @@ def hav(alpha):
 
     Parameters
     ----------
-    alpha : (float or array-like)
+    alpha : float or array-like
         Angle in radians
 
     Returns
     -------
-    hav_alpha : (float or array-like)
+    hav_alpha : float or array-like
         Haversine of alpha, equal to the square of the sine of half-alpha
 
     """
@@ -1305,12 +1106,12 @@ def archav(hav):
 
     Parameters
     ----------
-    hav : (float or array-like)
+    hav : float or array-like
         Haversine of an angle
 
     Returns
     -------
-    alpha : (float or array-like)
+    alpha : float or array-like
         Angle in radians
 
     Notes

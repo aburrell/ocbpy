@@ -4,38 +4,6 @@
 # Full license can be found in License.md
 # ----------------------------------------------------------------------------
 """Routines to convert from different file timekeeping methods to datetime
-
-Functions
----------
-get_datetime_fmt_len(datetime_fmt)
-    Gets the length of a string line needed to hold a specified datetime format
-year_soy_to_datetime(yyyy, soy)
-    Converts from seconds of year to datetime
-yyddd_to_date(yyddd)
-    Converts from years since 1900 and day of year to datetime
-convert_time(kwargs)
-    Convert to datetime from multiple time formats
-deg2hr(lon)
-    Convert from degrees to hours
-hr2deg(lt)
-    Convert from hours to degrees
-rad2hr(lon)
-    Convert from radians to hours
-hr2rad(lt)
-    Convert from hours to radians
-datetime2hr(dtime)
-    Calculate fractional hours of day from timestamp
-slt2glon(slt, dtime)
-    Convert from solar local time to geographic longitude
-glon2slt(glon, dtime)
-    Convert from geographic longitude to solar local time
-fix_range(values, max_val, min_val)
-    Ensure cyclic values lie within a specified range
-
-Moduleauthor
-------------
-Angeline G. Burrell (AGB), 15 April 2017, University of Texas, Dallas
-
 """
 
 import datetime as dt
@@ -47,12 +15,12 @@ def get_datetime_fmt_len(datetime_fmt):
 
     Parameters
     ----------
-    datetime_fmt : (str)
+    datetime_fmt : str
         Formatting string used to convert between datetime and string object
 
     Returns
     -------
-    str_len : (int)
+    str_len : int
         Minimum length of a string needed to hold the specified data
 
     Notes
@@ -82,14 +50,14 @@ def year_soy_to_datetime(yyyy, soy):
 
     Parameters
     ----------
-    yyyy : (int)
+    yyyy : int
         4 digit year
-    soy : (float)
+    soy : float
         seconds of year
 
     Returns
     -------
-    dtime : (dt.datetime)
+    dtime : dt.datetime
         datetime object
 
     """
@@ -121,13 +89,13 @@ def yyddd_to_date(yyddd):
 
     Parameters
     ----------
-    yyddd : (str)
+    yyddd : str
         String containing years since 1900 and day of year
         (e.g. 100126 = 2000-05-5).
 
     Returns
     -------
-    dtime : (dt.datetime)
+    dtime : dt.datetime
         Datetime object containing date information
 
     """
@@ -152,28 +120,28 @@ def convert_time(year=None, soy=None, yyddd=None, sod=None, date=None,
 
     Parameters
     ----------
-    year : (int or NoneType)
+    year : int or NoneType
         Year or None if not in year-soy format (default=None)
-    soy : (int or NoneType)
+    soy : int or NoneType
         Seconds of year or None if not in year-soy format (default=None)
-    yyddd : (str or NoneType)
+    yyddd : str or NoneType
         String containing years since 1900 and 3-digit day of year
         (default=None)
-    sod : (int,float or NoneType)
+    sod : int, float, or NoneType
         Seconds of day or None if the time of day is not in this format
         (default=None)
-    date : (str or NoneType)
+    date : str or NoneType
         String containing date information or None if not in date-time format
         (default=None)
-    tod : (str or NoneType)
+    tod : str or NoneType
         String containing time of day information or None if not in date-time
         format (default=None)
-    datetime_fmt : (str)
+    datetime_fmt : str
         String with the date-time or date format (default='%Y-%m-%d %H:%M:%S')
 
     Returns
     -------
-    dtime : (datetime)
+    dtime : dt.datetime
         Datetime object
 
     """
@@ -235,12 +203,12 @@ def deg2hr(lon):
 
     Parameters
     ----------
-    lon : (float or array-like)
+    lon : float or array-like
         Longitude-like value in degrees
 
     Returns
     -------
-    lt : (float or array-like)
+    lt : float or array-like
         Local time-like value in hours
 
     """
@@ -256,12 +224,12 @@ def hr2deg(lt):
 
     Parameters
     ----------
-    lt : (float or array-like)
+    lt : float or array-like
         Local time-like value in hours
 
     Returns
     -------
-    lon : (float or array-like)
+    lon : float or array-like
         Longitude-like value in degrees
 
     """
@@ -277,12 +245,12 @@ def hr2rad(lt):
 
     Parameters
     ----------
-    lt : (float or array-like)
+    lt : float or array-like
         Local time-like value in hours
 
     Returns
     -------
-    lon : (float or array-like)
+    lon : float or array-like
         Longitude-like value in radians
 
     """
@@ -298,12 +266,12 @@ def rad2hr(lon):
 
     Parameters
     ----------
-    lon : (float or array-like)
+    lon : float or array-like
         Longitude-like value in radians
 
     Returns
     -------
-    lt : (float or array-like)
+    lt : float or array-like
         Local time-like value in hours
 
     """
@@ -319,12 +287,12 @@ def datetime2hr(dtime):
 
     Parameters
     ----------
-    dtime : (dt.datetime)
+    dtime : dt.datetime
         Universal time as a timestamp
 
     Returns
     -------
-    uth : (float)
+    uth : float
         Hours of day, includes fractional hours
 
     """
@@ -340,14 +308,14 @@ def slt2glon(slt, dtime):
 
     Parameters
     ----------
-    slt : (float or array-like)
+    slt : float or array-like
         Solar local time in hours
-    dtime : (dt.datetime)
+    dtime : dt.datetime
         Universal time as a timestamp
 
     Returns
     -------
-    glon : (float or array-like)
+    glon : float or array-like
         Geographic longitude in degrees
 
     """
@@ -370,14 +338,14 @@ def glon2slt(glon, dtime):
 
     Parameters
     ----------
-    glon : (float or array-like)
+    glon : float or array-like
         Geographic longitude in degrees
-    dtime : (dt.datetime)
+    dtime : dt.datetime
         Universal time as a timestamp
 
     Returns
     -------
-    slt : (float or array-like)
+    slt : float or array-like
         Solar local time in hours
 
     """
@@ -396,18 +364,18 @@ def fix_range(values, min_val, max_val, val_range=None):
 
     Parameters
     ----------
-    values : (int, float, or array-like)
+    values : int, float, or array-like
         Values to adjust
-    min_val : (int or float)
+    min_val : int or float
         Maximum that values may not meet or exceed
-    max_val : (int or float)
+    max_val : int or float
         Minimum that values may not lie below
-    val_range : (int, float, or NoneType)
+    val_range : int, float, or NoneType
         Value range or None to calculate from min and max (default=None)
 
     Returns
     -------
-    fixed_vals : (int, float, or array-like)
+    fixed_vals : int, float, or array-like
         Values adjusted to lie min_val <= fixed_vals < max_val
 
     """

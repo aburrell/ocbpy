@@ -3,14 +3,6 @@
 # Full license can be found in LICENSE.txt
 # ---------------------------------------------------------------------------
 """ General loading routines for data files
-
-Functions
----------
-test_file(filename)
-    Test to see whether file exists and is small enough to load
-load_ascii_data(filename, hlines, kwargs)
-    Load time-sorted ascii data file
-
 """
 
 import numpy as np
@@ -25,12 +17,12 @@ def test_file(filename):
 
     Parameters
     ----------
-    filename : (str)
+    filename : str
         Filename to test
 
     Returns
     -------
-    good_flag : (bool)
+    good_flag : bool
         True if good, bad if false
 
     Notes
@@ -63,42 +55,42 @@ def load_ascii_data(filename, hlines, gft_kwargs=dict(), hsplit=None,
 
     Parameters
     ----------
-    filename : (str)
+    filename : str
         data file name
-    hlines : (int)
+    hlines : int
         number of lines in header.  If zero, must include header.
-    gft_kwargs : (dict)
+    gft_kwargs : dict
         Dictionary holding optional keyword arguments for the numpy genfromtxt
         routine (default=dict())
-    hsplit : (str, NoneType)
+    hsplit : str, NoneType
         character seperating data labels in header.  None splits on all
         whitespace characters. (default=None)
-    datetime_cols : (list, NoneType)
+    datetime_cols : list, NoneType
         If there are date strings or values that should be converted to a
         datetime object, list them in order here. Not processed as floats.
         NoneType produces an empty list. (default=None)
-    datetime_fmt : (str, NoneType)
+    datetime_fmt : str, NoneType
         Format needed to convert the datetime_cols entries into a datetime
         object.  Special formats permitted are: 'YEAR SOY', 'SOD'.
         'YEAR SOY' must be used together; 'SOD' indicates seconds of day, and
         may be used with any date format (default=None)
-    int_cols : (list, NoneType)
+    int_cols : list, NoneType
         Data that should be processed as integers, not floats. NoneType
         produces an empty list. (default=None)
-    str_cols : (list, NoneType)
+    str_cols : list, NoneType
         Data that should be processed as strings, not floats. NoneType produces
         an empty list. (default=None)
-    max_str_length : (int)
+    max_str_length : int
         Maximum allowed string length. (default=50)
-    header : (list, NoneType)
+    header : list, NoneType
         Header string(s) where the last line contains whitespace separated data
         names. NoneType produces an empty list. (default=None)
 
     Returns
     -------
-    header : (list of strings)
+    header : list of strings
         Contains all specified header lines
-    out : (dict of numpy.arrays)
+    out : dict of numpy.arrays
         The dict keys are specified by the header data line, the data
         for each key are stored in the numpy array
 

@@ -5,19 +5,10 @@
 # ----------------------------------------------------------------------------
 """ Functions that specify the boundary location as a function of MLT
 
-Functions
----------
-circular(mlt, [r_add])
-    Return a circular boundary correction for a specified offset
-elliptical(mlt, [instrument, method])
-    Return the ellptical boundary correction for a data set and method
-harmonic(mlt, [instrument, method])
-    Return the harmonic boundary correction for a data set and method
-
 References
 ----------
-Burrell, A. G. et al.: AMPERE Polar Cap Boundaries, Ann. Geophys., 38, 481-490,
-doi:10.5194/angeo-38-481-2020, 2020.
+.. [4] Burrell, A. G. et al.: AMPERE Polar Cap Boundaries, Ann. Geophys., 38,
+   481-490, doi:10.5194/angeo-38-481-2020, 2020.
 
 """
 
@@ -31,16 +22,16 @@ def circular(mlt, r_add=0.0):
 
     Parameters
     ----------
-    mlt : (float or array-like)
+    mlt : float or array-like
         Magnetic local time in hours (not actually used)
-    r_add : (float)
+    r_add : float
         Offset added to default radius in degrees.  Positive values shift the
         boundary equatorward, whilst negative values shift the boundary
         poleward.  (default=0.0)
 
     Returns
     -------
-    r_corr : (float or array-like)
+    r_corr : float or array-like
         Radius correction in degrees at this MLT
 
     """
@@ -51,27 +42,22 @@ def circular(mlt, r_add=0.0):
 
 
 def elliptical(mlt, instrument='ampere', method='median'):
-    """ Return the results of an elliptical correction to the data boundary
+    """Return the results of an elliptical correction to the data boundary [4]_
 
     Parameters
     ----------
-    mlt : (float or array-like)
+    mlt : float or array-like
         Magnetic local time in hours
-    instrument : (str)
+    instrument : str
         Data set's instrument name (default='ampere')
-    method : (str)
+    method : str
         Method used to calculate the elliptical correction, accepts
         'median' or 'gaussian'. (default='median')
 
     Returns
     -------
-    r_corr : (float or array-like)
+    r_corr : float or array-like
         Radius correction in degrees at this MLT
-
-    References
-    ----------
-    Burrell, A. G. et al.: AMPERE Polar Cap Boundaries, Ann. Geophys., 38,
-    481-490, doi:10.5194/angeo-38-481-2020, 2020.
 
     """
 
@@ -95,27 +81,22 @@ def elliptical(mlt, instrument='ampere', method='median'):
 
 
 def harmonic(mlt, instrument='ampere', method='median'):
-    """Return the results of a harmonic fit correction to the data boundary
+    """Return the results of a harmonic fit correction to the data boundary [4]_
 
     Parameters
     ----------
-    mlt : (float or array-like)
+    mlt : float or array-like
         Magnetic local time in hours
-    instrument : (str)
+    instrument : str
         Data set's instrument name (default='ampere')
-    method : (str)
+    method : str
         Method used to determine coefficients; accepts 'median' or
         'gaussian' (default='median')
 
     Returns
     -------
-    r_corr : (float or array-like)
+    r_corr : float or array-like
         Radius correction in degrees at this MLT
-
-    References
-    ----------
-    Burrell, A. G. et al.: AMPERE Polar Cap Boundaries, Ann. Geophys., 38,
-    481-490, doi:10.5194/angeo-38-481-2020, 2020.
 
     """
     if instrument.lower() != 'ampere':

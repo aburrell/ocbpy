@@ -4,16 +4,8 @@
 # ---------------------------------------------------------------------------
 """ Perform OCB gridding for SuperMAG data
 
-Functions
----------
-supermag2ascii_ocb(smagfile, outfile, kwargs)
-     Write and ASCII file with SuperMAG data and the OCB coordinates for each
-     data point
-load_supermag_ascii_data(filename)
-     Load SuperMAG ASCII data files
-
-Data
-----
+Notes
+-----
 SuperMAG data available at: http://supermag.jhuapl.edu/
 
 """
@@ -32,42 +24,51 @@ def supermag2ascii_ocb(smagfile, outfile, hemisphere=0, ocb=None,
 
     Parameters
     ----------
-    smagfile : (str)
+    smagfile : str
         file containing the required SuperMAG file sorted by time
-    outfile : (str)
+    outfile : str
         filename for the output data
-    hemisphere : (int)
+    hemisphere : int
         Hemisphere to process (can only do one at a time).  1=Northern,
         -1=Southern, 0=Determine from data (default=0)
-    ocb : (OCBoundary or NoneType)
+    ocb : ocbpy.OCBoundary or NoneType
         OCBoundary object with data loaded from an OC boundary data file.
         If None, looks to ocbfile
-    ocbfile : (str)
+    ocbfile : str
         file containing the required OC boundary data sorted by time, or
         'default' to load default file for time and hemisphere.  Only used if
         no OCBoundary object is supplied (default='default')
-    instrument : (str)
+    instrument : str
         Instrument providing the OCBoundaries.  Requires 'image' or 'ampere'
         if a file is provided.  If using filename='default', also accepts
         'amp', 'si12', 'si13', 'wic', and ''.  (default='')
-    max_sdiff : (int)
+    max_sdiff : int
         maximum seconds between OCB and data record in sec (default=600)
-    min_sectors : (int)
+    min_sectors : int
         Minimum number of MLT sectors required for good OCB (default=7).
-    rcent_dev : (float)
+    rcent_dev : float
         Maximum number of degrees between the new centre and the AACGM pole
         (default=8.0)
-    max_r : (float)
+    max_r : float
         Maximum radius for open-closed field line boundary in degrees
         default=23.0)
-    min_r : (float)
+    min_r : float
         Minimum radius for open-closed field line boundary in degrees
         (default=10.0)
+
+    Raises
+    ------
+    IOError
+        If unable to open the input or output file
 
     Notes
     -----
     May only process one hemisphere at a time.  Scales the magnetic field
     observations using `ocbpy.ocb_scale.normal_curl_evar`.
+
+    See Also
+    --------
+    ocbpy.ocb_scale.normal_curl_evar
 
     """
 
@@ -201,12 +202,12 @@ def load_supermag_ascii_data(filename):
 
     Parameters
     ----------
-    filename : (str)
+    filename : str
         SuperMAG ASCI data file name
 
     Returns
     -------
-    out : (dict of numpy.arrays)
+    out : dict
         The dict keys are specified by the header data line, the data
         for each key are stored in the numpy array
 
