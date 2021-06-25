@@ -313,7 +313,8 @@ class VectorData(object):
                        self.aacgm_z.__repr__(), ", aacgm_mag=",
                        self.aacgm_mag.__repr__(), ", dat_name=",
                        self.dat_name.__repr__(), ", dat_units=",
-                       self.dat_units.__repr__(), ", scale_func=", repr_func])
+                       self.dat_units.__repr__(), ", scale_func=",
+                       repr_func, ")"])
 
         # Reformat the numpy representations
         out = out.replace('array', 'numpy.array')
