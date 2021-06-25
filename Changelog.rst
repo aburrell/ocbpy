@@ -7,6 +7,8 @@ Summary of all changes made since the first stable release
 ------------------
 * REL: Added a .zenodo.json file
 * DOC: Improved the PEP8 compliance in the documentation examples
+* DOC: Improved the docstring numpydoc compliance
+* DOC: Updated cross-referencing and added missing API sections
 * BUG: Fixed header initialization error general instrument loading routine
 * ENH: Added a setup configuration file
 * ENH: Changed class `__repr__` to produce a string `eval` can use as input
