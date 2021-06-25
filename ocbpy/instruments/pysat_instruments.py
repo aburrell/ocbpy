@@ -112,7 +112,7 @@ def add_ocb_to_data(pysat_inst, mlat_name='', mlt_name='', evar_names=None,
 
     if vector_names is None:
         vector_names = {}
-    
+
     if not isinstance(pysat_inst, pysat.Instrument):
         raise ValueError('unknown class, expected pysat.Instrument')
 
