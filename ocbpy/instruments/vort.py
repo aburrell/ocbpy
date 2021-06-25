@@ -4,16 +4,8 @@
 # ---------------------------------------------------------------------------
 """ Perform OCB gridding for SuperDARN vorticity data
 
-Functions
----------
-vort2ascii_ocb(vortfile, outfile, kwargs)
-    Write and ASCII file with SuperDARN data and the OCB coordinates for each
-    data point
-load_vorticity_ascii_data(filename, save_all=False)
-    Load vorticity block ASCII data files
-
-Data
-----
+Notes
+-----
 Specialised SuperDARN data product, available from: gchi@bas.ac.uk
 
 """
@@ -32,38 +24,45 @@ def vort2ascii_ocb(vortfile, outfile, hemisphere=0, ocb=None,
 
     Parameters
     ----------
-    vortfile : (str)
+    vortfile : str
         file containing the required vorticity file sorted by time
-    outfile : (str)
+    outfile : str
         filename for the output data
-    hemisphere : (int)
+    hemisphere : int
         Hemisphere to process (can only do one at a time).  1=Northern,
         -1=Southern, 0=Determine from data (default=0)
-    ocb : (ocbpy.ocboundary.OCBoundary or NoneType)
+    ocb : ocbpy.ocboundary.OCBoundary or NoneType)
         Object containing open closed boundary data or None to load from file
-    ocbfile : (str)
+    ocbfile : str
         file containing the required OC boundary data sorted by time, ignorned
         if OCBoundary object supplied. (default='default')
-    instrument : (str)
+    instrument : str
         Instrument providing the OCBoundaries.  Requires 'image' or 'ampere'
         if a file is provided.  If using filename='default', also accepts
         'amp', 'si12', 'si13', 'wic', and ''.  (default='')
-    max_sdiff : (int)
+    max_sdiff : int
         maximum seconds between OCB and data record in sec (default=600)
-    save_all : (bool)
+    save_all : bool
         Save all data (True), or only that needed to calcuate OCB and vorticity
         (False). (default=False)
-    min_sectors : (int)
+    min_sectors : int
         Minimum number of MLT sectors required for good OCB. (default=7)
-    rcent_dev : (float)
+    rcent_dev : float
         Maximum number of degrees between the new centre and the AACGM pole
         (default=8.0).
-    max_r : (float)
+    max_r : float
         Maximum radius for open-closed field line boundary in degrees.
         (default=23.0)
-    min_r : (float)
+    min_r : float
         Minimum radius for open-closed field line boundary in degrees
         (default=10.0)
+
+    Raises
+    ------
+    IOError
+        If unable to open input or output file
+    ValueError
+        If unable to retrieve all necessary data from the input file
 
     Notes
     -----
@@ -191,15 +190,15 @@ def load_vorticity_ascii_data(vortfile, save_all=False):
 
     Parameters
     ----------
-    vortfile : (str)
+    vortfile : str
         SuperDARN vorticity file in block format
-    save_all : (bool)
+    save_all : bool
         Save all data from the file (True), or only data needed to calculate
         the OCB coordinates and normalised vorticity (False). (default=False)
 
     Returns
     -------
-    vdata : (dict)
+    vdata : dict
         Dictionary of numpy arrays
 
     """

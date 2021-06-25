@@ -27,11 +27,11 @@ and selecting ASCII instead of HDF5 will provide you with a file named
    (200060,), ['PH+', 'KINST', 'MIN', 'RPA_FLAG_UT', 'KINDAT', 'datetime', 'MLAT', 'UT2_UNIX', 'ION_V_SAT_FOR', 'ION_V_SAT_LEFT', 'GDALT', 'UT1_UNIX', 'GDLAT', 'HOUR', 'PHE+', 'IDM_FLAG_UT', 'SIGMA_VZ', 'SIGMA_VY', 'SEC', 'RMS_X', 'TI', 'TE', 'DAY', 'GLON', 'NI', 'RECNO', 'PO+', 'MLT', 'YEAR', 'MONTH', 'VERT_ION_V']
 
 
-In the call to ocbpy.instruments.general.load_ascii_data, quality flags and
-number of points are saved as integers by specifying int_cols.  The header
-needs to be specified using **header** because, as of the time of publication,
-the ASCII header does not correctly specify the ``ION_V_SAT_FOR`` and
-``ION_V_SAT_LEFT`` keys, labelling them both ``ION_V_SAT_``.
+In the call to :py:func:`ocbpy.instruments.general.load_ascii_data`, quality
+flags and number of points are saved as integers by specifying int_cols.  The
+header may not need to be specified using :py:data:`header`; have a go loading
+it without this keyword arguement.  The results will be the same as long as
+there are no errors in the file header specification.
 
 Before calculating the OCB coordinates, add space in the data dictionary for the
 OCB coordinates and find out which data have a good quality flag.

@@ -1,9 +1,9 @@
 Examples
-============
+========
 
-Here are some simple examples that will show how to initialise an OCBoundary
-object, find a trustworthy open-closed boundary, convert between AACGM and OCB
-coordinates, and more.
+Here are some simple examples that will show how to initialise an
+:py:class:`~ocbpy.OCBoundary` object, find a trustworthy open-closed boundary,
+convert between AACGM and OCB coordinates, and more.
 
 .. toctree::
 

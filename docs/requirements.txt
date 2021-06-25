@@ -1,3 +1,2 @@
-numpy
-numpydoc
 aacgmv2
+numpy

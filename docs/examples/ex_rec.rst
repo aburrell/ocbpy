@@ -8,7 +8,8 @@ Get the first good OCB record, which will be record index 27.
    ocb.get_next_good_ocb_ind()
    print(ocb.rec_ind)
 
-To get the OCB record closest to a specified time, use **ocbpy.match_data_ocb**
+To get the OCB record closest to a specified time, use
+:py:func:`~ocbpy.ocboundary.match_data_ocb`
 
 ::
 

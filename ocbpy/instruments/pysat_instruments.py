@@ -4,15 +4,8 @@
 # ---------------------------------------------------------------------------
 """ Perform OCB gridding for appropriate instrument data loaded in pysat
 
-Functions
----------
-add_ocb_to_data()
-    Add OCB coordinates to the pysat Instrument.DataFrame object
-add_ocb_to_metadata()
-    Update pysat Metadata with OCB information
-
-Module
-------
+Notes
+-----
 pysat is available at: http://github.com/pysat/pysat or pypi
 
 """
@@ -31,59 +24,59 @@ import ocbpy
 import ocbpy.ocb_scaling as ocbscal
 
 
-def add_ocb_to_data(pysat_inst, mlat_name='', mlt_name='', evar_names=list(),
-                    curl_evar_names=list(), vector_names=dict(),
-                    hemisphere=0, ocb=None, ocbfile='default', instrument='',
-                    max_sdiff=600, min_sectors=7, rcent_dev=8.0, max_r=23.0,
-                    min_r=10.0):
+def add_ocb_to_data(pysat_inst, mlat_name='', mlt_name='', evar_names=None,
+                    curl_evar_names=None, vector_names=None, hemisphere=0,
+                    ocb=None, ocbfile='default', instrument='', max_sdiff=600,
+                    min_sectors=7, rcent_dev=8.0, max_r=23.0, min_r=10.0):
     """ Coverts the location of pysat data into OCB coordinates
 
     Parameters
     ----------
-    pysat_inst : (pysat.Instrument)
+    pysat_inst : pysat.Instrument
         pysat.Instrument class object containing magnetic coordinates
-    mlat_name : (str)
+    mlat_name : str
         Instrument data key or column for magnetic latitudes (default='')
-    mlt_name : (str)
+    mlt_name : str
         Instrument data key or column formagnetic longitudes (default='')
-    evar_names : (list)
+    evar_names : list or NoneType
         List of Instrument data keys or columns pointing to measurements that
-        are proportional to the electric field (E); e.g. ion drift (default=[])
-    curl_evar_names : (list)
+        are proportional to the electric field (E); e.g. ion drift
+        (default=None)
+    curl_evar_names : list or NoneType
         List of Instrument data keys or columns pointing to measurements that
-        are proportional to the curl of E; e.g. ion vorticity (default=[])
-    vector_names : (dict)
+        are proportional to the curl of E; e.g. ion vorticity (default=None)
+    vector_names : dict or NoneType
         Dict of Instrument data keys or columns pointing to measurements that
         are vectors that are proportional to either E or the curl of E. The
         key should correspond to one of the values in the evar_names or
         curl_evar_names list.  If this is not done, a scaling function must be
         provided.  The value corresponding to each key must be a dict that
         indicates the names holding data needed to initialise the
-        ocbpy.ocb_scaling.VectorData object (default={})
-    hemisphere : (int)
+        ocbpy.ocb_scaling.VectorData object (default=None)
+    hemisphere : int
         Hemisphere to process (can only do one at a time).  1=Northern,
         -1=Southern, 0=Determine from data (default=0)
-    ocb : (OCBoundary or NoneType)
+    ocb : OCBoundary or NoneType)
         OCBoundary object with data loaded from an OC boundary data file.
         If None, looks to ocbfile
-    ocbfile : (str)
+    ocbfile : str
         file containing the required OC boundary data sorted by time, ignorned
         if OCBoundary object supplied (default='default')
-    instrument : (str)
+    instrument : str
         Instrument providing the OCBoundaries.  Requires 'image' or 'ampere'
         if a file is provided.  If using filename='default', also accepts
         'amp', 'si12', 'si13', 'wic', and '' (default='')
-    max_sdiff : (int)
+    max_sdiff : int
         maximum seconds between OCB and data record in sec (default=600)
-    min_sectors : (int)
+    min_sectors : int
         Minimum number of MLT sectors required for good OCB (default=7)
-    rcent_dev : (float)
+    rcent_dev : float
         Maximum number of degrees between the new centre and the AACGM pole
         (default=8.0)
-    max_r : (float)
+    max_r : float
         Maximum radius for open-closed field line boundary in degrees
         (default=23.0)
-    min_r : (float)
+    min_r : float
         Minimum radius for open-closed field line boundary in degrees
         (default=10.0)
 
@@ -98,17 +91,28 @@ def add_ocb_to_data(pysat_inst, mlat_name='', mlt_name='', evar_names=list(),
     This may be run on a pysat instrument or as a custom function when loading
     pysat data.
 
-    Example
-    -------
-    Example vector name input looks like:
-    vector_names={'vel': {'aacgm_n': 'vel_n', 'aacgm_e': 'vel_e',
-                          'dat_name': 'velocity', 'dat_units': 'm/s'},
-                   'dat': {'aacgm_n': 'dat_n', 'aacgm_e': 'dat_e',
-                           'scale_func': local_scale_func}}
+    Examples
+    --------
+    ::
+
+       # Example vector name input looks like:
+       vector_names={'vel': {'aacgm_n': 'vel_n', 'aacgm_e': 'vel_e',
+                             'dat_name': 'velocity', 'dat_units': 'm/s'},
+                      'dat': {'aacgm_n': 'dat_n', 'aacgm_e': 'dat_e',
+                              'scale_func': local_scale_func}}
 
     """
 
     # Test the input
+    if evar_names is None:
+        evar_names = []
+
+    if curl_evar_names is None:
+        curl_evar_names = []
+
+    if vector_names is None:
+        vector_names = {}
+
     if not isinstance(pysat_inst, pysat.Instrument):
         raise ValueError('unknown class, expected pysat.Instrument')
 
@@ -352,17 +356,17 @@ def add_ocb_to_metadata(pysat_inst, ocb_name, pysat_name, overwrite=False,
 
     Parameters
     ----------
-    pysat_inst : (pysat.Instrument)
+    pysat_inst : pysat.Instrument
         pysat.Instrument class object containing magnetic coordinates
-    ocb_name : (str)
+    ocb_name : str
         Data column name for OCB data
-    pysat_name : (str)
+    pysat_name : str
         Data column name for non-OCB version of this data
-    overwrite : (boolean)
+    overwrite : bool
         Overwrite existing metadata, if present (default=False)
-    notes : (str)
+    notes : str)
         Notes about this OCB data (default='')
-    isvector : (boolean)
+    isvector : bool
         Is this vector data or not (default=False)
 
     Raises

@@ -11,7 +11,6 @@ env:
         - INSTALL_EXTRA=1
         - INSTALL_EXTRA=2
 python:
-    - "3.6"
     - "3.7"
     - "3.8"
     - "3.9"
@@ -34,10 +33,10 @@ install:
 
 script:
     - if [[ $INSTALL_EXTRA == 0 ]]; then flake8 ocbpy; fi
-    - coverage run --rcfile=.coveragerc -m unittest discover
+    - coverage run --rcfile=setup.cfg -m unittest discover
 
 after_success:
-    - coveralls --rcfile=.coveragerc
+    - coveralls --rcfile=setup.cfg
 
 notifications:
   webhooks: https://coveralls.io/webhook
