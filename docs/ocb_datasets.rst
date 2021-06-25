@@ -1,4 +1,4 @@
-OCB Data sets
+OCB Data Sets
 =============
 
 OCBs must be obtained from observations for this coordinate transformation.
@@ -56,4 +56,3 @@ DMSP SSJ File Module
 
 .. automodule:: ocbpy.boundaries.dmsp_ssj_files
     :members:
-
