@@ -188,15 +188,13 @@ class TestPysatStructure(unittest.TestCase):
         for i in [0, 1, 8]:
             self.assertEqual(len(defaults[i]), 0)
 
-        for i in [2, 3]:
-            self.assertListEqual(defaults[i], list())
+        for i in [2, 3, 4, 6]:
+            self.assertIsNone(defaults[i])
 
         for i, val in enumerate([600, 7, 8.0, 23.0, 10.0]):
             self.assertEqual(defaults[i + 9], val)
 
-        self.assertDictEqual(defaults[4], dict())
         self.assertEqual(defaults[5], 0)
-        self.assertIsNone(defaults[6])
         self.assertRegex(defaults[7], 'default')
 
     def test_add_ocb_to_metadata_defaults(self):
