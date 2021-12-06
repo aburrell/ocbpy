@@ -48,7 +48,9 @@ def get_boundary_files(bound='ocb'):
 
     Notes
     -----
-    IMAGE instruments are separated into WIC, SI12, and SI13
+    IMAGE instruments may be separated into WIC, SI12, and SI13. If IMAGE is
+    desired, the combined file will be used.
+
     Unknown instruments should have filenames of the format,
     instrument_hemisphere_%Y%m%d_%Y%m%d.boundary
 
@@ -56,13 +58,15 @@ def get_boundary_files(bound='ocb'):
     hemi = {"north": 1, "south": -1}
     stime = {"amp": dt.datetime(2010, 1, 1),
              "si12": dt.datetime(2000, 5, 4),
-             "si13": dt.datetime(2000, 5, 5),
-             "wic": dt.datetime(2000, 5, 3),
+             "si13": dt.datetime(2000, 5, 3),
+             "wic": dt.datetime(2000, 5, 4),
+             "image": dt.datetime(2000, 5, 3),
              "dmsp-ssj": dt.datetime(2010, 1, 1)}
     etime = {"amp": dt.datetime(2017, 1, 1),
-             "si12": dt.datetime(2002, 8, 23),
-             "si13": dt.datetime(2002, 8, 23),
-             "wic": dt.datetime(2002, 8, 22),
+             "si12": dt.datetime(2002, 11, 1),
+             "si13": dt.datetime(2002, 11, 1),
+             "wic": dt.datetime(2002, 11, 1),
+             "image": dt.datetime(2002, 11, 1),
              "dmsp-ssj": dt.datetime.today().replace(hour=0, minute=0,
                                                      second=0, microsecond=0)
              + dt.timedelta(days=1)}
