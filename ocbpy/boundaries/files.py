@@ -137,8 +137,8 @@ def get_default_file(stime, etime, hemisphere, instrument='', bound='ocb'):
         Default filename with full path defined or None if no file was
         available for the specified input constraints
     instrument : str
-        Instrument for the default file (either 'ampere', 'image',
-        or 'dmsp-ssj')
+        Instrument for the default file (either 'ampere', 'image', or
+        'dmsp-ssj')
 
     """
 
@@ -147,7 +147,8 @@ def get_default_file(stime, etime, hemisphere, instrument='', bound='ocb'):
     boundary_files = get_boundary_files(bound=bound)
 
     # Determine the list of acceptable instruments
-    long_to_short = {"ampere": ["amp"], "image": ["si12", "si13", "wic"],
+    long_to_short = {"ampere": ["amp"],
+                     "image": ["image", "si12", "si13", "wic"],
                      "dmsp-ssj": ["dmsp-ssj"]}
     if len(instrument) == 0:
         inst = list(itertools.chain.from_iterable(long_to_short.values()))
@@ -187,7 +188,7 @@ def get_default_file(stime, etime, hemisphere, instrument='', bound='ocb'):
             instrument = boundary_files[good_files[0]]['instrument']
     else:
         # Rate files by instrument
-        default_inst = ['si13', 'si12', 'wic', 'amp', 'dmsp-ssj']
+        default_inst = ['image', 'si13', 'si12', 'wic', 'amp', 'dmsp-ssj']
         ordered_files = {default_inst.index(boundary_files[bb]['instrument']):
                          bb for bb in good_files}
         bfile = ordered_files[min(ordered_files.keys())]
