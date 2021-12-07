@@ -2,4 +2,4 @@ aacgmv2
 numpy
 pysat
 spacepy
-ssj_auroral_boundaries+https://github.com/lkilcommons/ssj_auroral_boundary
+git://github.com/lkilcommons/ssj_auroral_boundary.git
