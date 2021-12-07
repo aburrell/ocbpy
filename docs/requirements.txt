@@ -1,5 +1,5 @@
 aacgmv2
+git+git://github.com/lkilcommons/ssj_auroral_boundary.git
 numpy
 pysat
 spacepy
-git://github.com/lkilcommons/ssj_auroral_boundary.git
