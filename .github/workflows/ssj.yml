@@ -24,6 +24,9 @@ jobs:
       with:
         python-version: ${{ matrix.python-version }}
 
+    - name: Set CDF Lib environment variable
+      run: echo "CDF_LIB=$HOME/lib" >> $GITHUB_ENV
+
     - name: Install standard and test dependencies, then ocbpy
       env:
         CDF_LIB: $HOME/lib
@@ -34,11 +37,7 @@ jobs:
         python setup.py install
 
     - name: Run unit and integration tests
-      env:
-        CDF_LIB: $HOME/lib
       run: coverage run --rcfile=setup.cfg -m unittest discover
 
     - name: Publish results to coveralls
-      env:
-        GITHUB_TOKEN: ${{ secrets.GITHUB_TOKEN }}
       run: coveralls --rcfile=setup.cfg --service=github
