@@ -5,7 +5,6 @@
 [![Linux/Mac Status](https://github.com/aburrell/ocbpy/actions/workflows/main.yml/badge.svg)](https://github.com/aburrell/ocbpy/actions/workflows/main.yml)
 [![Windows Status](https://github.com/aburrell/ocbpy/actions/workflows/windows.yml/badge.svg)](https://github.com/aburrell/ocbpy/actions/workflows/windows.yml)
 [![Coverage Status](https://coveralls.io/repos/github/aburrell/ocbpy/badge.svg)](https://coveralls.io/github/aburrell/ocbpy)
-[![Requirements Status](https://requires.io/github/aburrell/ocbpy/requirements.svg?branch=main)](https://requires.io/github/aburrell/ocbpy/requirements/?branch=main)
 
 <h1> <img width="128" height="128" src="/docs/figures/ocbpy_logo.gif" alt="Planet with auroral oval and two pythons representing closed and open magnetic field lines" title="OCBpy Logo" style="float:left;">
 Overview </h1>
