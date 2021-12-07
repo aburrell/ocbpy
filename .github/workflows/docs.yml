@@ -26,8 +26,7 @@ jobs:
         python-version: ${{ matrix.python-version }}
 
     - name: Set CDF Lib environment variable
-      run: |
-        echo "export CDF_LIB=$HOME/lib" > ~/.bashrc
+      run: echo "CDF_LIB=$GITHUB_WORKSPACE/lib" >> $GITHUB_ENV
 
     - name: Install standard and test dependencies, then ocbpy
       run: |
