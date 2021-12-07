@@ -2,10 +2,9 @@
 [![DOI](https://zenodo.org/badge/96153180.svg)](https://zenodo.org/badge/latestdoi/96153180)
 [![PyPI version](https://badge.fury.io/py/ocbpy.svg)](https://badge.fury.io/py/ocbpy)
 
-[![Linux Status](https://www.travis-ci.com/aburrell/ocbpy.svg)](https://www.travis-ci.com/aburrell/ocbpy)
-[![Windows Status](https://ci.appveyor.com/api/projects/status/741n3cv8n68s280v?svg=true)](https://ci.appveyor.com/project/aburrell/ocbpy)
+[![Linux/Mac Status](https://github.com/aburrell/ocbpy/actions/workflows/main.yml/badge.svg)](https://github.com/aburrell/ocbpy/actions/workflows/main.yml)
+[![Windows Status](https://github.com/aburrell/ocbpy/actions/workflows/windows.yml/badge.svg)](https://github.com/aburrell/ocbpy/actions/workflows/windows.yml)
 [![Coverage Status](https://coveralls.io/repos/github/aburrell/ocbpy/badge.svg)](https://coveralls.io/github/aburrell/ocbpy)
-[![Requirements Status](https://requires.io/github/aburrell/ocbpy/requirements.svg?branch=main)](https://requires.io/github/aburrell/ocbpy/requirements/?branch=main)
 
 <h1> <img width="128" height="128" src="/docs/figures/ocbpy_logo.gif" alt="Planet with auroral oval and two pythons representing closed and open magnetic field lines" title="OCBpy Logo" style="float:left;">
 Overview </h1>
