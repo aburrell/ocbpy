@@ -8,6 +8,8 @@ name: DMSP-SSJ unittest with flake8
 on: [push, pull_request]
 
 jobs:
+  env:
+    CDF_LIB: $HOME/lib
   build:
     strategy:
       fail-fast: false
