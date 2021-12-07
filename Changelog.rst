@@ -16,7 +16,7 @@ Summary of all changes made since the first stable release
 * MAINT: Improved PEP8 compliance
 * MAINT: Updated pysat routines to v3.0.0 standards
 * TST: Integrated Requires.io
-* TST: Added flake8 tests to Travis CI
+* TST: Added flake8 and documentation tests to CI
 * TST: Moved all configurations to setup.cfg, removing .coveragecfg
 * TST: Added pysat xarray tests to the pysat test suite
 * TST: Added new unit tests for `__repr__` methods
