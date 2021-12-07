@@ -28,7 +28,7 @@ jobs:
     - name: Install standard and test dependencies, then ocbpy
       run: |
         python -m pip install --upgrade pip
-        pip install -rrequirements.txt sphinx sphinx_rtd_theme numpydoc
+        pip install -rdocs/requirements.txt sphinx sphinx_rtd_theme numpydoc
         bash requirements.extra 0
         python setup.py install
 
