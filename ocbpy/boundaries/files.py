@@ -48,7 +48,9 @@ def get_boundary_files(bound='ocb'):
 
     Notes
     -----
-    IMAGE instruments are separated into WIC, SI12, and SI13
+    IMAGE instruments may be separated into WIC, SI12, and SI13. If IMAGE is
+    desired, the combined file will be used.
+
     Unknown instruments should have filenames of the format,
     instrument_hemisphere_%Y%m%d_%Y%m%d.boundary
 
@@ -56,13 +58,15 @@ def get_boundary_files(bound='ocb'):
     hemi = {"north": 1, "south": -1}
     stime = {"amp": dt.datetime(2010, 1, 1),
              "si12": dt.datetime(2000, 5, 4),
-             "si13": dt.datetime(2000, 5, 5),
-             "wic": dt.datetime(2000, 5, 3),
+             "si13": dt.datetime(2000, 5, 3),
+             "wic": dt.datetime(2000, 5, 4),
+             "image": dt.datetime(2000, 5, 3),
              "dmsp-ssj": dt.datetime(2010, 1, 1)}
     etime = {"amp": dt.datetime(2017, 1, 1),
-             "si12": dt.datetime(2002, 8, 23),
-             "si13": dt.datetime(2002, 8, 23),
-             "wic": dt.datetime(2002, 8, 22),
+             "si12": dt.datetime(2002, 11, 1),
+             "si13": dt.datetime(2002, 11, 1),
+             "wic": dt.datetime(2002, 11, 1),
+             "image": dt.datetime(2002, 11, 1),
              "dmsp-ssj": dt.datetime.today().replace(hour=0, minute=0,
                                                      second=0, microsecond=0)
              + dt.timedelta(days=1)}
@@ -133,8 +137,8 @@ def get_default_file(stime, etime, hemisphere, instrument='', bound='ocb'):
         Default filename with full path defined or None if no file was
         available for the specified input constraints
     instrument : str
-        Instrument for the default file (either 'ampere', 'image',
-        or 'dmsp-ssj')
+        Instrument for the default file (either 'ampere', 'image', or
+        'dmsp-ssj')
 
     """
 
@@ -143,7 +147,8 @@ def get_default_file(stime, etime, hemisphere, instrument='', bound='ocb'):
     boundary_files = get_boundary_files(bound=bound)
 
     # Determine the list of acceptable instruments
-    long_to_short = {"ampere": ["amp"], "image": ["si12", "si13", "wic"],
+    long_to_short = {"ampere": ["amp"],
+                     "image": ["image", "si12", "si13", "wic"],
                      "dmsp-ssj": ["dmsp-ssj"]}
     if len(instrument) == 0:
         inst = list(itertools.chain.from_iterable(long_to_short.values()))
@@ -183,7 +188,7 @@ def get_default_file(stime, etime, hemisphere, instrument='', bound='ocb'):
             instrument = boundary_files[good_files[0]]['instrument']
     else:
         # Rate files by instrument
-        default_inst = ['si13', 'si12', 'wic', 'amp', 'dmsp-ssj']
+        default_inst = ['image', 'si13', 'si12', 'wic', 'amp', 'dmsp-ssj']
         ordered_files = {default_inst.index(boundary_files[bb]['instrument']):
                          bb for bb in good_files}
         bfile = ordered_files[min(ordered_files.keys())]

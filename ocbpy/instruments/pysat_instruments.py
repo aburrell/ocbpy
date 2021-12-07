@@ -2,7 +2,7 @@
 # Copyright (C) 2017 AGB
 # Full license can be found in LICENSE.txt
 # ---------------------------------------------------------------------------
-""" Perform OCB gridding for appropriate instrument data loaded in pysat
+"""Perform OCB gridding for appropriate instrument data loaded in pysat.
 
 Notes
 -----
@@ -28,7 +28,7 @@ def add_ocb_to_data(pysat_inst, mlat_name='', mlt_name='', evar_names=None,
                     curl_evar_names=None, vector_names=None, hemisphere=0,
                     ocb=None, ocbfile='default', instrument='', max_sdiff=600,
                     min_sectors=7, rcent_dev=8.0, max_r=23.0, min_r=10.0):
-    """ Coverts the location of pysat data into OCB coordinates
+    """Covert the location of pysat data into OCB coordinates.
 
     Parameters
     ----------
@@ -352,7 +352,7 @@ def add_ocb_to_data(pysat_inst, mlat_name='', mlt_name='', evar_names=None,
 
 def add_ocb_to_metadata(pysat_inst, ocb_name, pysat_name, overwrite=False,
                         notes='', isvector=False):
-    """ Update pysat metadata for OCB data
+    """Update pysat metadata for OCB data.
 
     Parameters
     ----------
@@ -394,7 +394,7 @@ def add_ocb_to_metadata(pysat_inst, ocb_name, pysat_name, overwrite=False,
                         pysat_inst.meta.labels.max_val: np.inf}
         elif isvector:
             name = ("OCB_" + ocb_name.split("_ocb")[0]).replace("_", " ")
-            new_meta = {pysat_inst.meta.labels.fill_val: None,
+            new_meta = {pysat_inst.meta.labels.fill_val: np.nan,
                         pysat_inst.meta.labels.name: name,
                         pysat_inst.meta.labels.desc: "".join([
                             "Open Closed field-line Boundary vector ",
