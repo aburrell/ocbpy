@@ -1,2 +1,5 @@
 aacgmv2
 numpy
+pysat
+spacepy
+ssj_auroral_boundaries
