@@ -483,7 +483,7 @@ class TestPysatMethods(unittest.TestCase):
         self.utils.test_ocb_added()
 
     def test_add_ocb_to_data_no_file(self):
-        """Test adding ocb to pydat data when no OCB file or data is provided."""
+        """Test adding ocb to pydat when no OCB file or data is provided."""
         self.ocb_kw['ocbfile'] = None
         ocb_pysat.add_ocb_to_data(self.test_inst, "latitude", "mlt",
                                   **self.ocb_kw)
@@ -1006,7 +1006,7 @@ class TestPysatCustMethodsXarray(TestPysatCustMethods):
 @unittest.skipIf(no_pysat, "pysat not installed")
 class TestPysatCustMethods2DXarray(TestPysatCustMethods):
     """Integration tests for using ocbpy with pysat 2D Xarray data."""
-    
+
     def setUp(self):
         """Initialize the tests for using the pysat.Custom methods."""
         self.test_file = path.join(path.dirname(ocbpy.__file__), "tests",
