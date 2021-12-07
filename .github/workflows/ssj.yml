@@ -8,7 +8,6 @@ name: DMSP-SSJ unittest with flake8
 on: [push, pull_request]
 
 jobs:
-  continue-on-error: true
   build:
     strategy:
       fail-fast: false

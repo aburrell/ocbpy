@@ -32,11 +32,11 @@ jobs:
         python setup.py install
 
     - name: Test PEP8 compliance
-      if: ${{ matrix.os == ubuntu-latest }}
+      if: matrix.os == 'ubuntu-latest'
       run: flake8 . --count --show-source --statistics
 
     - name: Evaluate complexity
-      if: ${{ matrix.os == ubuntu-latest }}
+      if: matrix.os == 'ubuntu-latest'
       run: flake8 . --count --exit-zero --max-complexity=10 --statistics
 
     - name: Run unit and integration tests
