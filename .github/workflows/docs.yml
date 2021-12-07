@@ -25,11 +25,12 @@ jobs:
       with:
         python-version: ${{ matrix.python-version }}
 
-    - name: Install dependencies
+    - name: Install standard and test dependencies, then ocbpy
       run: |
         python -m pip install --upgrade pip
         pip install -rrequirements.txt sphinx sphinx_rtd_theme numpydoc
-	python setup.py install
+        bash requirements.extra 0
+        python setup.py install
 
     - name: Check documentation build
       run: sphinx-build -E -b html docs dist/docs
