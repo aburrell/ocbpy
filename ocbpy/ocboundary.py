@@ -3,7 +3,7 @@
 # Copyright (C) 2019, AGB & GC
 # Full license can be found in License.md
 # ----------------------------------------------------------------------------
-"""Hold, manipulate, and load the open-closed field line boundary data
+"""Hold, manipulate, and load the open-closed field line boundary data.
 
 References
 ----------
@@ -30,13 +30,13 @@ from ocbpy.boundaries.files import get_default_file
 
 
 class OCBoundary(object):
-    """ Object containing open-closed field-line boundary (OCB) data
+    """Object containing open-closed field-line boundary (OCB) data.
 
     Parameters
     ----------
     filename : str or NoneType
-        File containing the required open-closed circle boundary data sorted by
-        time.  If NoneType, no file is loaded.  If 'default',
+        File containing the required open-closed boundary data sorted by time.
+        If NoneType, no file is loaded.  If 'default',
         `ocbpy.boundaries.files.get_default_file` is called. (default='default')
     instrument : str
         Instrument providing the OCBoundaries.  Requires 'image', 'ampere', or
@@ -56,7 +56,7 @@ class OCBoundary(object):
         to end after the last data point you wish to match to, to ensure the
         best match within the allowable time tolerance is made. (default=None)
     rfunc : numpy.ndarray, function, or NoneType
-        OCB radius correction function, if None will use instrument
+        OCB radius correction function. If None, will use the instrument
         default. Function must have AACGM MLT (in hours) as argument input.
         To allow the boundary shape to change with univeral time, each temporal
         instance may have a different function (array input). If a single
@@ -100,6 +100,11 @@ class OCBoundary(object):
     def __init__(self, filename="default", instrument='', hemisphere=1,
                  boundary_lat=74.0, stime=None, etime=None, rfunc=None,
                  rfunc_kwargs=None):
+        warnings.warn("".join(["class moved to `ocbpy._boundary` ",
+                               "sub-module.  This class will be removed in ",
+                               "version 0.3.1+"]),
+                  DeprecationWarning, stacklevel=2)
+        
         # Test the instrument input
         if not hasattr(instrument, "lower"):
             estr = "OCB instrument must be a string [{:}]".format(instrument)
@@ -167,14 +172,16 @@ class OCBoundary(object):
         return
 
     def __repr__(self):
-        """ Provide an evaluatable representation of the OCBoundary object """
+        """Provide an evaluatable representation of the OCBoundary object."""
+        class_name = repr(self.__class__).split("'")[1]
+
         # Get the start and end times
         stime = None if self.dtime is None else self.dtime[0]
         etime = None if self.dtime is None else self.dtime[-1]
 
         # Format the function representations
         if self.rfunc is None:
-            repr_rfunc = self.rfunc.__repr__()
+            repr_rfunc = repr(self.rfunc)
         else:
             rfuncs = [".".join([ff.__module__, ff.__name__])
                       for ff in self.rfunc]
@@ -187,9 +194,9 @@ class OCBoundary(object):
 
         # Format the function kwarg representations
         if self.rfunc_kwargs is None:
-            repr_rfunc_kwargs = self.rfunc_kwargs.__repr__()
+            repr_rfunc_kwargs = repr(self.rfunc_kwargs)
         else:
-            rfuncs_kwargs = [rkwarg.__repr__() for rkwarg in self.rfunc_kwargs]
+            rfuncs_kwargs = [repr(rkwarg) for rkwarg in self.rfunc_kwargs]
 
             if len(set(rfuncs_kwargs)) == 1:
                 repr_rfunc_kwargs = rfuncs_kwargs[0]
@@ -198,25 +205,26 @@ class OCBoundary(object):
                     ', '.join(rfuncs_kwargs))
 
         # Format the output
-        out = "".join(["ocbpy.OCBoundary(filename=", self.filename.__repr__(),
-                       ", instrument=", self.instrument.__repr__(),
+        out = "".join([class_name, "(filename=", repr(self.filename),
+                       ", instrument=", repr(self.instrument),
                        ", hemisphere={:d}, ".format(self.hemisphere),
                        "boundary_lat={:f}, stime=".format(self.boundary_lat),
-                       stime.__repr__(), ", etime=", etime.__repr__(),
-                       ", rfunc=", repr_rfunc, ", rfunc_kwargs=",
-                       repr_rfunc_kwargs, ")"])
+                       repr(stime), ", etime=", repr(etime), ", rfunc=",
+                       repr_rfunc, ", rfunc_kwargs=", repr_rfunc_kwargs, ")"])
         return out
 
     def __str__(self):
-        """ Provide readable representation of the OCBoundary object """
+        """Provide readable representation of the OCBoundary object."""
+
+        class_name = repr(self.__class__).split("'")[1]
 
         if self.filename is None:
-            out = "No Open-Closed Boundary file specified\n"
+            out = "No {:s} file specified\n".format(class_name)
         else:
-            out = "Open-Closed Boundary file: {:s}\n".format(self.filename)
+            out = "Boundary file: {:s}\n".format(self.filename)
             out = "{:s}Source instrument: ".format(out)
             out = "{:s}{:s}\n".format(out, self.instrument.upper())
-            out = "{:s}Open-Closed Boundary reference latitude: ".format(out)
+            out = "{:s}Boundary reference latitude: ".format(out)
             out = "{:s}{:.1f} degrees\n\n".format(out, self.boundary_lat)
 
             if self.records == 0:
@@ -257,8 +265,7 @@ class OCBoundary(object):
         return out
 
     def inst_defaults(self):
-        """ Get the information needed to load an OCB file using instrument
-        specific formatting
+        """Get the instrument-specific OCB file loading information.
 
         Returns
         -------
@@ -299,7 +306,7 @@ class OCBoundary(object):
     def load(self, hlines=0,
              ocb_cols="year soy num_sectors phi_cent r_cent r a r_err",
              datetime_fmt="", stime=None, etime=None):
-        """Load the data from the specified Open-Closed Boundary file
+        """Load the data from the specified Open-Closed Boundary file.
 
         Parameters
         ----------
@@ -483,7 +490,7 @@ class OCBoundary(object):
 
     def normal_coord(self, lat, lt, coords='magnetic', height=350.0,
                      method='ALLOWTRACE'):
-        """Converts position(s) to normalised co-ordinates relative to the OCB
+        """Converts position(s) to normalised co-ordinates relative to the OCB.
 
         Parameters
         ----------
@@ -584,7 +591,7 @@ class OCBoundary(object):
 
     def revert_coord(self, ocb_lat, ocb_mlt, r_corr=0.0, coords='magnetic',
                      height=350.0, method='ALLOWTRACE'):
-        """Converts the position of a measurement in OCB into AACGM co-ordinates
+        """Convert the position of a measurement in OCB into AACGM co-ordinates.
 
         Parameters
         ----------
@@ -687,7 +694,7 @@ class OCBoundary(object):
 
     def get_aacgm_boundary_lat(self, aacgm_mlt, rec_ind=None,
                                overwrite=False, set_lon=True):
-        """Get the OCB latitude in AACGM coordinates at specified longitudes
+        """Get the OCB latitude in AACGM coordinates at specified longitudes.
 
         Parameters
         ----------
@@ -792,7 +799,7 @@ class OCBoundary(object):
         return
 
     def _set_default_rfunc(self):
-        """Set the default instrument OCB boundary function
+        """Set the default instrument OCB boundary function.
 
         Notes
         -----
@@ -814,7 +821,7 @@ class OCBoundary(object):
 
 
 def retrieve_all_good_indices(ocb):
-    """Retrieve all good indices from the ocb structure
+    """Retrieve all good indices from the ocb structure.
 
     Parameters
     ----------
@@ -828,23 +835,12 @@ def retrieve_all_good_indices(ocb):
 
     """
 
-    # Save the current record index
-    icurrent = ocb.rec_ind
+    warnings.warn("".join(["function moved to `ocbpy.cycle_boundary` ",
+                           "sub-module.  This function will be removed in ",
+                           "version 0.3.1+"]),
+                  DeprecationWarning, stacklevel=2)
 
-    # Set the record index to allow us to cycle through the entire data set
-    ocb.rec_ind = -1
-
-    # Initialize the output data
-    good_ind = list()
-
-    # Cycle through all records
-    while ocb.rec_ind < ocb.records:
-        ocb.get_next_good_ocb_ind()
-        if ocb.rec_ind < ocb.records:
-            good_ind.append(int(ocb.rec_ind))
-
-    # Reset the record index
-    ocb.rec_ind = icurrent
+    good_ind = cycle_boundary.retrieve_all_good_indices(ocb)
 
     # Return the good indices
     return good_ind
@@ -852,8 +848,7 @@ def retrieve_all_good_indices(ocb):
 
 def match_data_ocb(ocb, dat_dtime, idat=0, max_tol=600, min_sectors=7,
                    rcent_dev=8.0, max_r=23.0, min_r=10.0):
-    """Matches data records with OCB records, locating the closest values
-    within a specified tolerance
+    """Match data records with OCB records.
 
     Parameters
     ----------
@@ -889,93 +884,13 @@ def match_data_ocb(ocb, dat_dtime, idat=0, max_tol=600, min_sectors=7,
 
     """
 
-    dat_records = len(dat_dtime)
+    warnings.warn("".join(["function moved to `ocbpy.cycle_boundary` ",
+                           "sub-module.  This function will be removed in ",
+                           "version 0.3.1+"]),
+                  DeprecationWarning, stacklevel=2)
 
-    # Ensure that the indices are good
-    if idat >= dat_records:
-        return idat
-    if ocb.rec_ind >= ocb.records:
-        return idat
-
-    # Get the first reliable circle boundary estimate if none was provided
-    if ocb.rec_ind < 0:
-        ocb.get_next_good_ocb_ind(min_sectors=min_sectors, rcent_dev=rcent_dev,
-                                  max_r=max_r, min_r=min_r)
-        if ocb.rec_ind >= ocb.records:
-            estr = "".join(["unable to find a good OCB record in ",
-                            ocb.filename])
-            ocbpy.logger.error(estr)
-            return idat
-        else:
-            estr = "".join(["found first good OCB record at ",
-                            "{:}".format(ocb.dtime[ocb.rec_ind])])
-            ocbpy.logger.info(estr)
-
-        # Cycle past data occuring before the specified OC boundary point
-        first_ocb = ocb.dtime[ocb.rec_ind] - dt.timedelta(seconds=max_tol)
-        while dat_dtime[idat] < first_ocb:
-            idat += 1
-
-            if idat >= dat_records:
-                ocbpy.logger.error("".join(["no input data close enough ",
-                                            "to first record"]))
-                return None
-
-    # If the times match, return
-    if ocb.dtime[ocb.rec_ind] == dat_dtime[idat]:
-        return idat
-
-    # If the times don't match, cycle through both datasets until they do
-    while idat < dat_records and ocb.rec_ind < ocb.records:
-        # Increase the OCB index until one lies within the desired boundary
-        sdiff = (ocb.dtime[ocb.rec_ind] - dat_dtime[idat]).total_seconds()
-
-        if sdiff < -max_tol:
-            # Cycle to the next OCB value since the lowest vorticity value
-            # is in the future
-            ocb.get_next_good_ocb_ind(min_sectors=min_sectors,
-                                      rcent_dev=rcent_dev, max_r=max_r,
-                                      min_r=min_r)
-        elif sdiff > max_tol:
-            # Cycle to the next value if no OCB values were close enough
-            estr = "".join(["no OCB data available within ",
-                            "[{:d} s] of input measurement at".format(max_tol),
-                            " [{:}]".format(dat_dtime[idat])])
-            ocbpy.logger.info(estr)
-            idat += 1
-        else:
-            # Make sure this is the OCB value closest to the input record
-            last_sdiff = sdiff
-            last_iocb = ocb.rec_ind
-            ocb.get_next_good_ocb_ind(min_sectors=min_sectors,
-                                      rcent_dev=rcent_dev, max_r=max_r,
-                                      min_r=min_r)
-
-            if ocb.rec_ind < ocb.records:
-                sdiff = (ocb.dtime[ocb.rec_ind]
-                         - dat_dtime[idat]).total_seconds()
-
-                while abs(sdiff) < abs(last_sdiff):
-                    last_sdiff = sdiff
-                    last_iocb = ocb.rec_ind
-                    ocb.get_next_good_ocb_ind(min_sectors=min_sectors,
-                                              rcent_dev=rcent_dev, max_r=max_r,
-                                              min_r=min_r)
-                    if ocb.rec_ind < ocb.records:
-                        sdiff = (ocb.dtime[ocb.rec_ind]
-                                 - dat_dtime[idat]).total_seconds()
-
-            sdiff = last_sdiff
-            ocb.rec_ind = last_iocb
-
-            # Return the requested indices
-            return idat
-
-    # Return from the last loop
-    if idat == 0 and abs(sdiff) > max_tol:
-        estr = "".join(["no OCB data available within ",
-                        "[{:d} s] of first measurement ".format(max_tol),
-                        "[{:}]".format(dat_dtime[idat])])
-        ocbpy.logger.info(estr)
+    idat = ocbpy.cycle_boundary.match_data_ocb(
+        ocb, dat_dtime, idat=idat, max_tol=max_tol, min_sectors=min_sectors,
+        rcent_dev=rcent_dev, max_r=max_r, min_r=min_r)
 
     return idat
