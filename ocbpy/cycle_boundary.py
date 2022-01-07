@@ -167,6 +167,6 @@ def match_data_ocb(ocb, dat_dtime, idat=0, max_tol=600, min_sectors=7,
     if idat == 0 and abs(sdiff) > max_tol:
         logger.info("".join(["no OCB data available within ",
                              "[{:d} s] of first measurement ".format(max_tol),
-                             "[{:}]".format(dat_dtime[idat])])
+                             "[{:}]".format(dat_dtime[idat])]))
 
     return idat
