@@ -24,6 +24,7 @@ import aacgmv2
 
 from ocbpy import logger
 import ocbpy.ocb_correction as ocbcor
+from ocbpy import cycle_boundary
 from ocbpy import ocb_time
 from ocbpy.boundaries.files import get_default_file
 from ocbpy.instruments import test_file
@@ -211,12 +212,12 @@ class OCBoundary(object):
     def __str__(self):
         """Provide readable representation of the OCBoundary object."""
 
-        class_name = repr(self.__class__).split("'")[1]
+        class_name = repr(self.__class__).split("'")[1].split(".")[-1]
 
         if self.filename is None:
             out = "No {:s} file specified\n".format(class_name)
         else:
-            out = "Boundary file: {:s}\n".format(self.filename)
+            out = "{:s} file: {:s}\n".format(class_name, self.filename)
             out = "{:s}Source instrument: ".format(out)
             out = "{:s}{:s}\n".format(out, self.instrument.upper())
             out = "{:s}Boundary reference latitude: ".format(out)
@@ -688,7 +689,7 @@ class OCBoundary(object):
 
     def get_aacgm_boundary_lat(self, aacgm_mlt, rec_ind=None,
                                overwrite=False, set_lon=True):
-        """Get the OCB latitude in AACGM coordinates at specified longitudes.
+        """Calculate the OCB latitude in AACGM coordinates at specified MLTs.
 
         Parameters
         ----------
@@ -983,13 +984,14 @@ class DualBoundary(object):
                  eab_instrument='', ocb_instrument='', hemisphere=1,
                  eab_lat=64.0, ocb_lat=74.0, stime=None, etime=None,
                  eab_rfunc=None, eab_rfunc_kwargs=None, ocb_rfunc=None,
-                 ocb_rfunc_kwargs=None, eab=None, ocb=None):
+                 ocb_rfunc_kwargs=None, eab=None, ocb=None, max_delta=60,
+                 min_sectors=7, rcent_dev=8.0, max_r=23.0, min_r=10.0):
 
         # Initalize the subclass attributes
         if eab is None:
             self.eab = EABoundary(filename=eab_filename,
                                   instrument=eab_instrument,
-                                  hemisphere=hemisphere, boundar_lat=eab_lat,
+                                  hemisphere=hemisphere, boundary_lat=eab_lat,
                                   stime=stime, etime=etime, rfunc=eab_rfunc,
                                   rfunc_kwargs=eab_rfunc_kwargs)
         else:
@@ -998,22 +1000,239 @@ class DualBoundary(object):
         if ocb is None:
             self.ocb = OCBoundary(filename=ocb_filename,
                                   instrument=ocb_instrument,
-                                  hemisphere=hemisphere, boundar_lat=ocb_lat,
+                                  hemisphere=hemisphere, boundary_lat=ocb_lat,
                                   stime=stime, etime=etime, rfunc=ocb_rfunc,
                                   rfunc_kwargs=ocb_rfunc_kwargs)
         else:
             self.ocb = ocb
 
+        # Create a time index, saving indices where both boundaries are good
+        self.min_sectors = min_sectors
+        self.rcent_dev = rcent_dev
+        self.max_r = max_r
+        self.min_r = min_r
+        self.max_delta = max_delta
+        self.set_good_ind()
+
+        # Set the number of good paired records
+        self.records = len(self.dtime)
+        self.rec_ind = -1
+
+        # Cycle record indices to the first good record pair
+        self.get_next_good_ind()
+
         return
 
     def __repr__(self):
         out_str = "".join([repr(self.__class__).split("'")[1], "(eab=",
-                           repr(self.eab), ", ocb=", repr(self.ocb), ")"])
+                           repr(self.eab), ", ocb=", repr(self.ocb),
+                           ", max_delta=", repr(self.max_delta),
+                           ", min_sectors=", repr(self.min_sectors),
+                           ", rcent_dev=", repr(self.rcent_dev),
+                           ", max_r=", repr(self.max_r),
+                           ", min_r=", repr(self.min_r), ")"])
 
         return out_str
 
     def __str__(self):
-        out_str = "Dual Boundary data\n{:s}\n{:s}".format(self.eab.__str__(),
-                                                          self.ocb.__str__())
+        out = "Dual Boundary data\n{:d} good boundary ".format(self.records)
+        out = "{:s}pairs from {:} to {:}\nMaximum ".format(out, self.dtime[0],
+                                                           self.dtime[-1])
+        out = "{:s} boundary difference of {:.1f} s\n\n".format(self.delta_max)
+        out = "{:s}{:s}\n{:s}\n".format(out, self.eab.__str__(),
+                                        self.ocb.__str__())
 
-        return out_str
+        return out
+
+    def set_good_ind(self):
+        """Pair the good indices for the quality EABs and OCBs."""
+
+        # Initalize the class attributes
+        self.dtime = list()
+        self.ocb_ind = list()
+        self.eab_ind = list()
+        
+        # Save the current EAB record index
+        icurrent = self.eab.rec_ind
+        self.eab.rec_ind = -1
+        
+        # Get the good OCB indices
+        good_ocb = cycle_boundary.retrieve_all_good_indices(self.ocb)
+
+        # Match the EABs with the good OCB times
+        iocb = 0
+        while self.eab.rec_ind < self.eab.records and iocb is not None:
+            # Cycle the OCB record index to match the next good EAB index
+            iocb = cycle_boundary.match_data_ocb(
+                self.eab, self.ocb.dtime[good_ocb], idat=iocb,
+                max_tol=self.max_delta, min_sectors=self.min_sectors,
+                rcent_dev=self.rcent_dev, max_r=self.max_r, min_r=self.min_r)
+
+            # Save the paired data
+            if iocb is not None and iocb < len(good_ocb):
+                self.dtime.append(self.ocb.dtime[good_ocb[iocb]])
+                self.ocb_ind.append(good_ocb[iocb])
+                self.eab_ind.append(self.eab.rec_ind)
+            else:
+                iocb = None
+
+            # Cycle to the next good EAB index
+            self.eab.get_next_good_ocb_ind(min_sectors=self.min_sectors,
+                                           rcent_dev=self.rcent_dev,
+                                           max_r=self.max_r, min_r=self.min_r)
+
+        # Re-cast the class attributes as arrays
+        self.dtime = np.asarray(self.dtime)
+        self.ocb_ind = np.asarray(self.ocb_ind)
+        self.eab_ind = np.asarray(self.eab_ind)
+
+        # Reset the EAB index
+        self.eab.rec_ind = icurrent
+
+        return
+
+    def get_next_good_ind(self):
+        """Cycle the boundary attributes to the next good paired index."""
+        # Cycle to next boundary
+        self.rec_ind += 1
+
+        # Set the EAB and OCB record indices
+        self.ocb.rec_ind = self.ocb_ind[self.rec_ind]
+        self.eab.rec_ind = self.eab_ind[self.rec_ind]
+
+        return
+
+    def normal_coord(self, lat, lt, coords='magnetic', height=350.0,
+                     method='ALLOWTRACE', overwrite=False):
+        """Convert coordinates to be normalised relative to the EAB and OCB.
+
+        Parameters
+        ----------
+        lat : float or array-like
+            Input latitude (degrees), must be geographic, geodetic, or AACGMV2
+        lt : float or array-like
+            Input local time (hours), must be solar or AACGMV2 magnetic
+        coords : str
+            Input coordiate system.  Accepts 'magnetic', 'geocentric', or
+            'geodetic' (default='magnetic')
+        height : float or array-like
+            Height (km) at which AACGMV2 coordinates will be calculated, if
+            geographic coordinates are provided (default=350.0)
+        method : str
+            String denoting which type(s) of conversion to perform, if
+            geographic coordinates are provided. Expects either 'TRACE' or
+            'ALLOWTRACE'. See AACGMV2 for details [2]_. (default='ALLOWTRACE')
+        overwrite : bool
+            Allow the OCB and EAB AACGM boundary locations to be overwritten
+            (default=False)
+
+        Returns
+        -------
+        ocb_lat : float or array-like
+            Magnetic latitude relative to EAB and OCB (degrees)
+        ocb_mlt : float or array-like
+            Magnetic local time relative to EAB and OCB (hours)
+        r_corr : float or array-like
+            Radius correction to OCB (degrees)
+
+        Notes
+        -----
+        Approximation - Conversion assumes a planar surface
+
+        See Also
+        --------
+        aacgmv2
+
+        """
+
+        # Cast input as arrays
+        lat = np.asarray(lat)
+        lt = np.asarray(lt)
+        height = np.asarray(height)
+
+        # Test the dual-boundary record index
+        if self.rec_ind < 0 or self.rec_ind >= self.records:
+            out_shape = max([lat.shape, lt.shape, height.shape])
+            ocb_lat = np.full(shape=out_shape, fill_value=np.nan)
+            ocb_mlt = np.full(shape=out_shape, fill_value=np.nan)
+            r_corr = np.full(shape=out_shape, fill_value=np.nan)
+            return ocb_lat, ocb_mlt, r_corr
+
+        # If needed, convert from geographic to magnetic coordinates
+        if coords.lower().find('mag') < 0:
+            # Convert from lt to longitude
+            lon = ocb_time.slt2glon(lt, self.dtime[self.rec_ind])
+            # If geocentric coordinates are specified, add this info to the
+            # method flag
+            if coords.lower() == 'geocentric':
+                method = "|".join([method, coords.upper()])
+            aacgm_lat, _, aacgm_mlt = aacgmv2.get_aacgm_coord_arr(
+                lat, lon, height, self.dtime[self.rec_ind], method)
+        else:
+            aacgm_lat = lat
+            aacgm_mlt = lt
+
+        # Calculate the coordinates relative to the OCB
+        ocb_lat, ocb_mlt, r_corr = self.ocb.normal_coord(aacgm_lat, aacgm_mlt,
+                                                         coords='magnetic',
+                                                         height=height,
+                                                         method=method)
+
+        if np.isnan(ocb_lat).all():
+            return ocb_lat, ocb_mlt, r_corr
+
+        # Get the boundary locations in AACGM coordinates
+        if not overwrite:
+            if hasattr(self.ocb, "aacgm_boundary_lat"):
+                orig_ocb_blat = self.ocb.aacgm_boundary_lat[self.ocb.rec_ind]
+                orig_ocb_bmlt = self.ocb.aacgm_boundary_mlt[self.ocb.rec_ind]
+            else:
+                orig_ocb_blat = None
+                orig_ocb_bmlt = None
+
+            if hasattr(self.eab, "aacgm_boundary_lat"):
+                orig_eab_blat = self.eab.aacgm_boundary_lat[self.eab.rec_ind]
+                orig_eab_bmlt = self.eab.aacgm_boundary_mlt[self.eab.rec_ind]
+            else:
+                if orig_ocb_blat is None:
+                    overwrite = True
+                else:
+                    orig_eab_blat = None
+                    orig_eab_bmlt = None
+
+        self.ocb.get_aacgm_boundary_lat(aacgm_mlt, rec_ind=self.ocb.rec_ind,
+                                        overwrite=True, set_lon=False)
+        ocb_aacgm_boundary = self.ocb.aacgm_boundary_lat[self.ocb.rec_ind]
+        self.eab.get_aacgm_boundary_lat(aacgm_mlt, rec_ind=self.eab.rec_ind,
+                                        overwrite=True, set_lon=False)
+        eab_aacgm_boundary = self.eab.aacgm_boundary_lat[self.eab.rec_ind]
+
+        # Normalize each of the points using the correct scaling factor
+        imid = np.where((aacgm_lat < ocb_aacgm_boundary)
+                        & (aacgm_lat >= eab_aacgm_boundary))[0]
+        iout = np.where(aacgm_lat < eab_aacgm_boundary)[0]
+
+        if len(imid) > 0:
+            ocb_lat[imid] = self.ocb.boundary_lat - (
+                ocb_aacgm_boundary[imid] - aacgm_lat[imid]) * (
+                    self.ocb.boundary_lat - self.eab.boundary_lat) / (
+                        ocb_aacgm_boundary[imid] - eab_aacgm_boundary[imid])
+
+        if len(iout) > 0:
+            ocb_lat[iout] = self.eab.boundary_lat - (
+                eab_aacgm_boundary[iout] - aacgm_lat[iout]) * (
+                    self.eab.boundary_lat / eab_aacgm_boundary[iout])
+
+        # Calculate the latitude and MLT
+        ocb_lat = self.ocb.hemisphere * (90.0 - np.sqrt(xn**2 + yn**2))
+
+        # If desired, replace the boundaries
+        if not overwrite:
+            if orig_ocb_blat is not None:
+                self.ocb.aacgm_boundary_lat = orig_ocb_blat
+                self.ocb.aacgm_boundary_mlt = orig_ocb_bmlt
+            if orig_eab_blat is not None:
+                self.eab.aacgm_boundary_lat = orig_eab_blat
+                self.eab.aacgm_boundary_mlt = orig_eab_bmlt
+
+        return ocb_lat, ocb_mlt, r_corr
