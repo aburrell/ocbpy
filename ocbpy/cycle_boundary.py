@@ -4,6 +4,8 @@
 # ----------------------------------------------------------------------------
 """Routines to cycle through the OCboundary class records."""
 
+import datetime as dt
+
 from ocbpy import logger
 
 
@@ -92,7 +94,7 @@ def match_data_ocb(ocb, dat_dtime, idat=0, max_tol=600, min_sectors=7,
     if ocb.rec_ind >= ocb.records:
         return idat
 
-    # Get the first reliable circle boundary estimate if none was provided
+    # Get the first reliable boundary estimate if none was provided
     if ocb.rec_ind < 0:
         ocb.get_next_good_ocb_ind(min_sectors=min_sectors, rcent_dev=rcent_dev,
                                   max_r=max_r, min_r=min_r)
@@ -168,5 +170,6 @@ def match_data_ocb(ocb, dat_dtime, idat=0, max_tol=600, min_sectors=7,
         logger.info("".join(["no OCB data available within ",
                              "[{:d} s] of first measurement ".format(max_tol),
                              "[{:}]".format(dat_dtime[idat])]))
+        idat = None
 
     return idat
