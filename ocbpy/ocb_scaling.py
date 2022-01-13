@@ -18,7 +18,7 @@ import ocbpy
 
 
 class VectorData(object):
-    """ Object containing a vector data point
+    """Object containing a vector data.
 
     Parameters
     ----------
@@ -197,8 +197,7 @@ class VectorData(object):
         return
 
     def __repr__(self):
-        """ Provide an evaluatable representation of the DataVector object
-        """
+        """Provide an evaluatable representation of the VectorData object."""
 
         # Format the function representations
         if self.scale_func is None:
@@ -229,8 +228,7 @@ class VectorData(object):
         return out
 
     def __str__(self):
-        """ Provide readable representation of the DataVector object
-        """
+        """Provide user readable representation of the VectorData object."""
 
         out = "Vector data:"
         if self.dat_name is not None:
@@ -238,8 +236,8 @@ class VectorData(object):
         if self.dat_units is not None:
             out += " ({:s})".format(self.dat_units)
 
-        out += "\nData Index {:}\tOCB Index {:}\n".format(self.dat_ind,
-                                                          self.ocb_ind)
+        out += "\nData Index {:}\tBoundary Index {:}\n".format(self.dat_ind,
+                                                               self.ocb_ind)
         out += "-------------------------------------------\n"
 
         # Print AACGM vector location(s)
@@ -311,14 +309,14 @@ class VectorData(object):
         return out
 
     def set_ocb(self, ocb, scale_func=None):
-        """ Set the OCBoundary values for provided data (updates all attributes)
+        """Set the OCBoundary values for provided data (updates all attributes).
 
         Parameters
         ----------
-        ocb : ocbpy.OCBoundary
-            Open Closed Boundary class object
+        ocb : ocbpy.OCBoundary or ocbpy.DualBoundary
+            OCB, EAB, or Dual boundary object
         scale_func : function
-            Function for scaling AACGM magnitude with arguements:
+            Function for scaling AACGM magnitude with arguments:
             [measurement value, mesurement AACGM latitude (degrees),
             mesurement OCB latitude (degrees)]
             Not necessary if defined earlier or no scaling is needed.
@@ -356,10 +354,18 @@ class VectorData(object):
             return
 
         # Set the AACGM coordinates of the OCB pole
-        self.unscaled_r = ocb.r[self.ocb_ind] + self.r_corr
-        self.scaled_r = 90.0 - abs(ocb.boundary_lat)
-        self.ocb_aacgm_mlt = ocbpy.ocb_time.deg2hr(ocb.phi_cent[self.ocb_ind])
-        self.ocb_aacgm_lat = 90.0 - ocb.r_cent[self.ocb_ind]
+        if hasattr(ocb, "ocb"):
+            self.unscaled_r = ocb.ocb.r[self.ocb_ind] + self.r_corr
+            self.scaled_r = 90.0 - abs(ocb.ocb.boundary_lat)
+            self.ocb_aacgm_mlt = ocbpy.ocb_time.deg2hr(
+                ocb.ocb.phi_cent[self.ocb_ind])
+            self.ocb_aacgm_lat = 90.0 - ocb.ocb.r_cent[self.ocb_ind]
+        else:
+            self.unscaled_r = ocb.r[self.ocb_ind] + self.r_corr
+            self.scaled_r = 90.0 - abs(ocb.boundary_lat)
+            self.ocb_aacgm_mlt = ocbpy.ocb_time.deg2hr(
+                ocb.phi_cent[self.ocb_ind])
+            self.ocb_aacgm_lat = 90.0 - ocb.r_cent[self.ocb_ind]
 
         # Get the angle at the data vector appended by the AACGM and OCB poles
         self.calc_vec_pole_angle()
@@ -379,7 +385,11 @@ class VectorData(object):
 
             # Assign the OCB vector default values and location.  Will also
             # update the AACGM north azimuth of the vector.
-            self.scale_vector()
+            if hasattr(ocb, "ocb"):
+                ocbpy.logger.critical("DETERMINE WHETHER AURORAL SHOULD BE SCALED")
+                self.scale_vector()
+            else:
+                self.scale_vector()
 
         return
 
@@ -502,7 +512,7 @@ class VectorData(object):
         return
 
     def scale_vector(self):
-        """ Normalise a variable proportional to the curl of the electric field.
+        """Normalise a variable proportional to the curl of the electric field.
 
         Raises
         ------
