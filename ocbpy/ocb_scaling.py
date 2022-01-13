@@ -334,35 +334,44 @@ class VectorData(object):
             # Because the OCB and AACGM magnetic field are both time dependent,
             # can't call this function with multiple OCBs
             if self.ocb_ind.shape == ():
-                (self.ocb_lat, self.ocb_mlt,
-                 self.r_corr) = ocb.normal_coord(self.aacgm_lat,
-                                                 self.aacgm_mlt)
+                out_coord = ocb.normal_coord(self.aacgm_lat, self.aacgm_mlt)
+
+                if len(out_coord) == 3:
+                    (self.ocb_lat, self.ocb_mlt, self.r_corr) = out_coord
+                else:
+                    (self.ocb_lat, self.ocb_mlt, _, self.r_corr) = out_coord
             else:
                 for i, ocb.rec_ind in enumerate(self.ocb_ind):
                     if self.ocb_ind.shape == self.dat_ind.shape:
-                        (self.ocb_lat[i], self.ocb_mlt[i],
-                         self.r_corr[i]) = ocb.normal_coord(self.aacgm_lat[i],
-                                                            self.aacgm_mlt[i])
+                        out_coord = ocb.normal_coord(self.aacgm_lat[i],
+                                                     self.aacgm_mlt[i])
                     else:
+                        out_coord = ocb.normal_coord(self.aacgm_lat,
+                                                     self.aacgm_mlt)
+
+                    if len(out_coord) == 3:
                         (self.ocb_lat[i], self.ocb_mlt[i],
-                         self.r_corr[i]) = ocb.normal_coord(self.aacgm_lat,
-                                                            self.aacgm_mlt)
+                         self.r_corr[i]) = out_coord
+                    else:
+                        (self.ocb_lat[i], self.ocb_mlt[i], _,
+                         self.r_corr[i]) = out_coord
 
         # Exit if the OCB coordinates can't be calculated at this location
         if(np.all(np.isnan(self.ocb_lat)) or np.all(np.isnan(self.ocb_mlt))
            or np.all(np.isnan(self.r_corr))):
             return
 
-        # Set the AACGM coordinates of the OCB pole
+        # Set the AACGM coordinates of the OCB pole HERE
         if hasattr(ocb, "ocb"):
-            self.unscaled_r = ocb.ocb.r[self.ocb_ind] + self.r_corr
-            self.scaled_r = 90.0 - abs(ocb.ocb.boundary_lat)
+            self.scaled_r, self.unscaled_r = ocb.calc_r(
+                self.ocb_lat, self.ocb_mlt, self.r_corr)
             self.ocb_aacgm_mlt = ocbpy.ocb_time.deg2hr(
                 ocb.ocb.phi_cent[self.ocb_ind])
             self.ocb_aacgm_lat = 90.0 - ocb.ocb.r_cent[self.ocb_ind]
         else:
             self.unscaled_r = ocb.r[self.ocb_ind] + self.r_corr
-            self.scaled_r = 90.0 - abs(ocb.boundary_lat)
+            self.scaled_r = np.full(shape=self.unscaled_r.shape,
+                                    fill_value=(90.0 - abs(ocb.boundary_lat)))
             self.ocb_aacgm_mlt = ocbpy.ocb_time.deg2hr(
                 ocb.phi_cent[self.ocb_ind])
             self.ocb_aacgm_lat = 90.0 - ocb.r_cent[self.ocb_ind]
@@ -385,11 +394,7 @@ class VectorData(object):
 
             # Assign the OCB vector default values and location.  Will also
             # update the AACGM north azimuth of the vector.
-            if hasattr(ocb, "ocb"):
-                ocbpy.logger.critical("DETERMINE WHETHER AURORAL SHOULD BE SCALED")
-                self.scale_vector()
-            else:
-                self.scale_vector()
+            self.scale_vecto()
 
         return
 
@@ -594,13 +599,13 @@ class VectorData(object):
                 else:
                     self.ocb_n[ns_mask] = self.scale_func(
                         self.aacgm_n[ns_mask], self.unscaled_r[ns_mask],
-                        self.scaled_r)
+                        self.scaled_r[ns_mask])
                     self.ocb_e[ns_mask] = self.scale_func(
                         self.aacgm_e[ns_mask], self.unscaled_r[ns_mask],
-                        self.scaled_r)
+                        self.scaled_r[ns_mask])
                     self.ocb_z[ns_mask] = self.scale_func(
                         self.aacgm_z[ns_mask], self.unscaled_r[ns_mask],
-                        self.scaled_r)
+                        self.scaled_r[ns_mask])
 
             # Determine if the measurement is on or between the poles
             # This does not affect the vertical direction
@@ -646,16 +651,18 @@ class VectorData(object):
             if self.scale_func is not None:
                 if self.unscaled_r.shape == ():
                     un_r = self.unscaled_r
+                    sc_r = self.scaled_r
                 else:
                     un_r = self.unscaled_r[norm_mask]
+                    sc_r = self.scaled_r[norm_mask]
 
                 if self.aacgm_z.shape == ():
                     a_z = self.aacgm_z
                 else:
                     a_z = self.aacgm_z[norm_mask]
 
-                vmag = self.scale_func(vmag, un_r, self.scaled_r)
-                vz = self.scale_func(a_z, un_r, self.scaled_r)
+                vmag = self.scale_func(vmag, un_r, sc_r)
+                vz = self.scale_func(a_z, un_r, sc_r)
             else:
                 if self.aacgm_z.shape == ():
                     vz = self.aacgm_z
@@ -1028,7 +1035,7 @@ class VectorData(object):
 
 
 def normal_evar(evar, unscaled_r, scaled_r):
-    """ Normalise a variable proportional to the electric field
+    """Normalise a variable proportional to the electric field.
 
     Parameters
     ----------
@@ -1060,7 +1067,7 @@ def normal_evar(evar, unscaled_r, scaled_r):
 
 
 def normal_curl_evar(curl_evar, unscaled_r, scaled_r):
-    """ Normalise a variable proportional to the curl of the electric field
+    """Normalise a variable proportional to the curl of the electric field.
 
     Parameters
     ----------
@@ -1092,7 +1099,7 @@ def normal_curl_evar(curl_evar, unscaled_r, scaled_r):
 
 
 def hav(alpha):
-    """ Formula for haversine
+    """Calculate the haversine.
 
     Parameters
     ----------
@@ -1112,7 +1119,7 @@ def hav(alpha):
 
 
 def archav(hav):
-    """ Formula for the inverse haversine
+    """Calculate the inverse haversine.
 
     Parameters
     ----------
