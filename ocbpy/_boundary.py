@@ -1049,6 +1049,8 @@ class DualBoundary(object):
         Convert the position of a measurement in OCB into AACGM co-ordinates.
     get_aacgm_boundary_lats
         Calculate the EAB and OCB latitude in AACGM coordinates.
+    calc_r
+        Calculate the scaled and unscaled radius at a normalised co-ordinates.
 
     Raises
     ------
@@ -1486,3 +1488,99 @@ class DualBoundary(object):
         self.ocb.get_aacgm_boundary_lat(aacgm_mlt, rec_ind=ocb_rec_ind,
                                         overwrite=overwrite, set_lon=set_lon)
         return
+
+    def calc_r(self, bound_lat, bound_mlt, r_corr, overwrite=False):
+        """Calculate the scaled and unscaled radius at a normalised co-ordinate.
+
+        Parameters
+        ----------
+        bound_lat : array-like or float
+           Normalised dual-boundary latitude in degrees
+        bound_mlt : array-like or float
+           Normalised dual-boundary MLT in hours
+        r_corr : array-like or float
+           OCB radial correction in degrees
+        overwrite : bool
+            Overwrite previous boundary locations if this time already has
+            calculated boundary latitudes for a different set of input
+            longitudes (default=False).
+
+        Returns
+        -------
+        scaled_r : array-like
+            Scaled radius for the region (OCB, EAB, Sub-auroral) in degrees
+        unscaled_r : array-like
+            Unscaled radius for the region (OCB, EAB, Sub-auroral) in degrees
+
+        """
+
+        # Ensure all data is array-like
+        bound_lat = np.asarray(bound_lat)
+        bound_mlt = np.asarray(bound_mlt)
+        r_corr = np.asarray(r_corr)
+
+        # Initialize the output, start by assuming the data is inside the OCB
+        out_shape = max([bound_lat.shape, bound_mlt.shape, r_corr.shape])
+        scaled_r = np.full(shape=out_shape,
+                           fill_value=90.0 - abs(self.ocb.boundary_lat))
+
+        if self.rec_ind < 0 or self.rec_ind >= self.records:
+            unscaled_r = np.full(shape=out_shape, fill_value=np.nan)
+            return scaled_r, unscaled_r
+
+        if out_shape == r_corr.shape:
+            unscaled_r = self.ocb.r[self.ocb_ind[self.rec_ind]] + self.r_corr
+        else:
+            unscaled_r = np.full(shape=out_shape, fill_value=self.ocb.r[
+                self.ocb_ind[self.rec_ind]] + self.r_corr)
+
+        # Identify points in the other regions
+        imid = np.where((bound_lat < self.ocb.boundary_lat)
+                        & (bound_lat >= self.eab.boundary_lat))[0]
+        iout = np.where(bound_lat < self.eab.boundary_lat)[0]
+
+        # Get the boundary locations in AACGM coordinates
+        if not overwrite:
+            if hasattr(self.ocb, "aacgm_boundary_lat"):
+                orig_ocb_blat = self.ocb.aacgm_boundary_lat[self.ocb.rec_ind]
+                orig_ocb_bmlt = self.ocb.aacgm_boundary_mlt[self.ocb.rec_ind]
+            else:
+                orig_ocb_blat = None
+                orig_ocb_bmlt = None
+
+            if hasattr(self.eab, "aacgm_boundary_lat"):
+                orig_eab_blat = self.eab.aacgm_boundary_lat[self.eab.rec_ind]
+                orig_eab_bmlt = self.eab.aacgm_boundary_mlt[self.eab.rec_ind]
+            else:
+                if orig_ocb_blat is None:
+                    overwrite = True
+                else:
+                    orig_eab_blat = None
+                    orig_eab_bmlt = None
+
+        self.get_aacgm_boundary_lats(aacgm_mlt, rec_ind=self.rec_ind,
+                                     overwrite=True, set_lon=False)
+        ocb_aacgm_boundary = self.ocb.aacgm_boundary_lat[self.ocb.rec_ind]
+        eab_aacgm_boundary = self.eab.aacgm_boundary_lat[self.eab.rec_ind]
+
+        # Calculate the radii in the auroral region
+        if len(imid) > 0:
+            scaled_r[imid] = self.ocb.boundary_lat - self.eab.boundary_lat
+            unscaled_r[imid] = ocb_aacgm_boundary[imid] \
+                - eab_aacgm_boundary[imid]
+
+        if len(iout) > 0:
+            scaled_r[iout] = self.eab.boundary_lat
+            unscaled_r[iout] = eab_aacgm_boundary[iout]
+
+        # If desired, replace the boundaries
+        if not overwrite:
+            if orig_ocb_blat is not None:
+                self.ocb.aacgm_boundary_lat = orig_ocb_blat
+                self.ocb.aacgm_boundary_mlt = orig_ocb_bmlt
+            if orig_eab_blat is not None:
+                self.eab.aacgm_boundary_lat = orig_eab_blat
+                self.eab.aacgm_boundary_mlt = orig_eab_bmlt
+
+        return scaled_r, unscaled_r
+                
