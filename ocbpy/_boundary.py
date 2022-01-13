@@ -91,6 +91,21 @@ class OCBoundary(object):
     x, y, j_mag, etc. : numpy.ndarray or NoneType
         Numpy array of floats that hold the remaining values held in `filename`
 
+    Methods
+    -------
+    inst_defaults
+        Get the instrument-specific OCB file loading information.
+    load
+        Load the data from the specified boundary file.
+    get_next_good_ocb_ind
+        Cycle to the the next quality OCB record.
+    normal_coord
+        Convert data position(s) to normalised co-ordinates relative to the OCB.
+    revert_coord
+        Convert the position of a measurement in OCB into AACGM co-ordinates.
+    get_aacgm_boundary_lat
+        Calculate the OCB latitude in AACGM coordinates at specified MLTs.
+
     Raises
     ------
     ValueError
@@ -302,7 +317,7 @@ class OCBoundary(object):
     def load(self, hlines=0,
              ocb_cols="year soy num_sectors phi_cent r_cent r a r_err",
              datetime_fmt="", stime=None, etime=None):
-        """Load the data from the specified Open-Closed Boundary file.
+        """Load the data from the specified boundary file.
 
         Parameters
         ----------
@@ -426,7 +441,7 @@ class OCBoundary(object):
 
     def get_next_good_ocb_ind(self, min_sectors=7, rcent_dev=8.0, max_r=23.0,
                               min_r=10.0):
-        """Read in the next usuable OCB record from the data file.
+        """Cycle to the the next quality OCB record.
 
         Parameters
         ----------
@@ -485,7 +500,7 @@ class OCBoundary(object):
 
     def normal_coord(self, lat, lt, coords='magnetic', height=350.0,
                      method='ALLOWTRACE'):
-        """Converts position(s) to normalised co-ordinates relative to the OCB.
+        """Convert position(s) to normalised co-ordinates relative to the OCB.
 
         Parameters
         ----------
@@ -670,6 +685,7 @@ class OCBoundary(object):
             # Convert from mlt to longitude
             lon = aacgmv2.convert_mlt(aacgm_mlt, self.dtime[self.rec_ind],
                                       m2a=True)
+
             # If geocentric coordinates are specified, add this info to the
             # method flag
             if coords.lower() == 'geocentric':
@@ -875,6 +891,21 @@ class EABoundary(OCBoundary):
     x, y, j_mag, etc. : numpy.ndarray or NoneType
         Numpy array of floats that hold the remaining values held in `filename`
 
+    Methods
+    -------
+    inst_defaults
+        Get the instrument-specific EAB file loading information.
+    load
+        Load the data from the specified boundary file.
+    get_next_good_ocb_ind
+        Cycle to the the next quality EAB record.
+    normal_coord
+        Convert data position(s) to normalised co-ordinates relative to the EAB.
+    revert_coord
+        Convert the position of a measurement in EAB into AACGM co-ordinates.
+    get_aacgm_boundary_lat
+        Calculate the EAB latitude in AACGM coordinates at specified MLTs.
+
     Raises
     ------
     ValueError
@@ -965,13 +996,59 @@ class DualBoundary(object):
         uses function defaults.  If dict is specified, recasts as an array
         of this dict for all times.  Array must be an array of dicts.
         (default=None)
+    eab : ocbpy.EABoundary or NoneType
+        Equatorward auroral boundary data object or None to initialize here
+        (default=None)
+    ocb : ocbpy.OCBoundary
+        Open-closed field line boundary data oject or Noneto initialize here
+        (default=None)
+    max_delta : int
+        Maximum number of seconds allowed between paired EAB and OCB records
+        (default=60)
+    min_sectors : int
+        Minimum number of MLT sectors required for good OCB. (default=7)
+    rcent_dev : float
+        Maximum number of degrees between the new centre and the AACGM pole
+        (default=8.0)
+    max_r : float
+        Maximum radius for open-closed field line boundary in degrees.
+        (default=23.0)
+    min_r : float
+        Minimum radius for open-closed field line boundary in degrees
+        (default=10.0)
 
     Attributes
     ----------
-    eab : ocbpy.EABoundary
-        Equatorward auroral boundary data
-    ocb : ocbpy.OCBoundary
-        Open-closed field line boundary data
+    eab
+    ocb
+    min_sectors
+    rcent_dev
+    max_r
+    min_r
+    max_delta
+    dtime : numpy.ndarray
+        Numpy array of paired boundary datetimes
+    eab_ind : numpy.ndarray
+        Numpy array of EAB indices for a good quality paired boundary
+    ocb_ind : numpy.ndarray
+        Numpy array of OCB indices for a good quality paired boundary
+    rec_ind : int
+        Current OCB record index (default=0; initialised=-1)
+    records : int
+        Maximum number of paired boundary records
+
+    Methods
+    -------
+    set_good_ind
+        Pair the good indices for the quality EABs and OCBs.
+    get_next_good_ind
+        Cycle to the the next quality paired boundary record.
+    normal_coord
+        Convert data position(s) to normalised co-ordinates relative to the OCB.
+    revert_coord
+        Convert the position of a measurement in OCB into AACGM co-ordinates.
+    get_aacgm_boundary_lats
+        Calculate the EAB and OCB latitude in AACGM coordinates.
 
     Raises
     ------
@@ -1128,10 +1205,12 @@ class DualBoundary(object):
 
         Returns
         -------
-        ocb_lat : float or array-like
+        bound_lat : float or array-like
             Magnetic latitude relative to EAB and OCB (degrees)
-        ocb_mlt : float or array-like
+        bound_mlt : float or array-like
             Magnetic local time relative to EAB and OCB (hours)
+        ocb_lat : float or array-like
+            Magnetic latitude relative to only the OCB (degrees)
         r_corr : float or array-like
             Radius correction to OCB (degrees)
 
@@ -1139,9 +1218,12 @@ class DualBoundary(object):
         -----
         Approximation - Conversion assumes a planar surface
 
+        Defines `bound_mlt` relative to only the OCB.
+
         See Also
         --------
         aacgmv2
+        ocbpy.OCBoundary.normal_coord
 
         """
 
@@ -1153,10 +1235,11 @@ class DualBoundary(object):
         # Test the dual-boundary record index
         if self.rec_ind < 0 or self.rec_ind >= self.records:
             out_shape = max([lat.shape, lt.shape, height.shape])
+            bound_lat = np.full(shape=out_shape, fill_value=np.nan)
+            bound_mlt = np.full(shape=out_shape, fill_value=np.nan)
             ocb_lat = np.full(shape=out_shape, fill_value=np.nan)
-            ocb_mlt = np.full(shape=out_shape, fill_value=np.nan)
             r_corr = np.full(shape=out_shape, fill_value=np.nan)
-            return ocb_lat, ocb_mlt, r_corr
+            return bound_lat, bound_mlt, ocb_lat, r_corr
 
         # If needed, convert from geographic to magnetic coordinates
         if coords.lower().find('mag') < 0:
@@ -1173,13 +1256,14 @@ class DualBoundary(object):
             aacgm_mlt = lt
 
         # Calculate the coordinates relative to the OCB
-        ocb_lat, ocb_mlt, r_corr = self.ocb.normal_coord(aacgm_lat, aacgm_mlt,
-                                                         coords='magnetic',
-                                                         height=height,
-                                                         method=method)
+        ocb_lat, bound_mlt, r_corr = self.ocb.normal_coord(aacgm_lat, aacgm_mlt,
+                                                           coords='magnetic',
+                                                           height=height,
+                                                           method=method)
+        bound_lat = np.array(ocb_lat)
 
         if np.isnan(ocb_lat).all():
-            return ocb_lat, ocb_mlt, r_corr
+            return bound_lat, bound_mlt, ocb_lat, r_corr
 
         # Get the boundary locations in AACGM coordinates
         if not overwrite:
@@ -1200,11 +1284,9 @@ class DualBoundary(object):
                     orig_eab_blat = None
                     orig_eab_bmlt = None
 
-        self.ocb.get_aacgm_boundary_lat(aacgm_mlt, rec_ind=self.ocb.rec_ind,
-                                        overwrite=True, set_lon=False)
+        self.get_aacgm_boundary_lats(aacgm_mlt, rec_ind=self.rec_ind,
+                                     overwrite=True, set_lon=False)
         ocb_aacgm_boundary = self.ocb.aacgm_boundary_lat[self.ocb.rec_ind]
-        self.eab.get_aacgm_boundary_lat(aacgm_mlt, rec_ind=self.eab.rec_ind,
-                                        overwrite=True, set_lon=False)
         eab_aacgm_boundary = self.eab.aacgm_boundary_lat[self.eab.rec_ind]
 
         # Normalize each of the points using the correct scaling factor
@@ -1213,18 +1295,15 @@ class DualBoundary(object):
         iout = np.where(aacgm_lat < eab_aacgm_boundary)[0]
 
         if len(imid) > 0:
-            ocb_lat[imid] = self.ocb.boundary_lat - (
+            bound_lat[imid] = self.ocb.boundary_lat - (
                 ocb_aacgm_boundary[imid] - aacgm_lat[imid]) * (
                     self.ocb.boundary_lat - self.eab.boundary_lat) / (
                         ocb_aacgm_boundary[imid] - eab_aacgm_boundary[imid])
 
         if len(iout) > 0:
-            ocb_lat[iout] = self.eab.boundary_lat - (
+            bound_lat[iout] = self.eab.boundary_lat - (
                 eab_aacgm_boundary[iout] - aacgm_lat[iout]) * (
                     self.eab.boundary_lat / eab_aacgm_boundary[iout])
-
-        # Calculate the latitude and MLT
-        ocb_lat = self.ocb.hemisphere * (90.0 - np.sqrt(xn**2 + yn**2))
 
         # If desired, replace the boundaries
         if not overwrite:
@@ -1235,4 +1314,175 @@ class DualBoundary(object):
                 self.eab.aacgm_boundary_lat = orig_eab_blat
                 self.eab.aacgm_boundary_mlt = orig_eab_bmlt
 
-        return ocb_lat, ocb_mlt, r_corr
+        return bound_lat, bound_mlt, ocb_lat, r_corr
+
+    def revert_coord(self, bound_lat, bound_mlt, ocb_lat, r_corr=0.0,
+                     coords='magnetic', height=350.0, method='ALLOWTRACE'):
+        """Convert the position of a measurement in OCB into AACGM co-ordinates.
+
+        Parameters
+        ----------
+        bound_lat : float or array-like
+            Input Dual-boundary latitude in degrees
+        bound_mlt : float or array-like
+            Input Dual-boundary (OCB) local time in hours
+        ocb_lat : float or array-like
+            Input OCB latitude in degrees
+        r_corr : float or array-like
+            Input OCB radial correction in degrees, may be a function of
+            AACGM MLT (default=0.0)
+        coords : str
+            Output coordiate system.  Accepts 'magnetic', 'geocentric', or
+            'geodetic' (default='magnetic')
+        height : float or array-like
+            Geocentric height above sea level (km) at which AACGMV2 coordinates
+            will be calculated, if geographic coordinates are desired
+            (default=350.0)
+        method : str
+            String denoting which type(s) of conversion to perform, if
+            geographic coordinates are provided.  Expects either 'TRACE' or
+            'ALLOWTRACE'.  See AACGMV2 for details [2]_.  (default='ALLOWTRACE')
+
+        Returns
+        -------
+        lat : float or array-like
+            latitude (degrees)
+        lt : float or array-like
+            local time (hours)
+
+        Notes
+        -----
+        Approximation - Conversion assumes a planar surface
+
+        See Also
+        --------
+        aacgmv2
+
+        """
+
+        # Cast input as arrays
+        bound_lat = np.asarray(bound_lat)
+        bound_mlt = np.asarray(bound_mlt)
+        ocb_lat = np.asarray(ocb_lat)
+        r_corr = np.asarray(r_corr)
+        height = np.asarray(height)
+
+        # Revert the standard OCB coordinates to AACGM coordinates
+        aacgm_lat, aacgm_mlt = self.ocb.revert_coord(ocb_lat, ocb_mlt,
+                                                     r_corr=r_corr,
+                                                     coords="magnetic",
+                                                     height=height,
+                                                     method=method)
+
+        # Get the boundary locations in AACGM coordinates
+        if not overwrite:
+            if hasattr(self.ocb, "aacgm_boundary_lat"):
+                orig_ocb_blat = self.ocb.aacgm_boundary_lat[self.ocb.rec_ind]
+                orig_ocb_bmlt = self.ocb.aacgm_boundary_mlt[self.ocb.rec_ind]
+            else:
+                orig_ocb_blat = None
+                orig_ocb_bmlt = None
+
+            if hasattr(self.eab, "aacgm_boundary_lat"):
+                orig_eab_blat = self.eab.aacgm_boundary_lat[self.eab.rec_ind]
+                orig_eab_bmlt = self.eab.aacgm_boundary_mlt[self.eab.rec_ind]
+            else:
+                if orig_ocb_blat is None:
+                    overwrite = True
+                else:
+                    orig_eab_blat = None
+                    orig_eab_bmlt = None
+
+        self.get_aacgm_boundary_lats(aacgm_mlt, rec_ind=self.rec_ind,
+                                     overwrite=True, set_lon=False)
+        ocb_aacgm_boundary = self.ocb.aacgm_boundary_lat[self.ocb.rec_ind]
+        eab_aacgm_boundary = self.eab.aacgm_boundary_lat[self.eab.rec_ind]
+
+        # Revert the Dual-boundary coordinates outside of the OCB
+        imid = np.where((bound_lat < self.ocb.boundary_lat)
+                        & (bound_lat >= self.eab.boundary_lat))[0]
+        iout = np.where(bound_lat < self.eab.boundary_lat)[0]
+
+        if len(imid) > 0:
+            aacgm_lat[imid] = ocb_aacgm_boundary[imid] - (
+                self.ocb.boundary_lat - ocb_lat[imid]) * (
+                    ocb_aacgm_boundary[imid] - eab_aacgm_boundary[imid]) / (
+                        self.ocb.boundary_lat - self.eab.boundary_lat)
+
+        if len(iout) > 0:
+            aacgm_lat[iout] = eab_aacgm_boundary[iout] - (
+                self.eab.boundary_lat - ocb_lat[iout]) * (
+                    eab_aacgm_boundary[iout] / self.eab.boundary_lat)
+
+        # If desired, replace the boundaries
+        if not overwrite:
+            if orig_ocb_blat is not None:
+                self.ocb.aacgm_boundary_lat = orig_ocb_blat
+                self.ocb.aacgm_boundary_mlt = orig_ocb_bmlt
+            if orig_eab_blat is not None:
+                self.eab.aacgm_boundary_lat = orig_eab_blat
+                self.eab.aacgm_boundary_mlt = orig_eab_bmlt
+
+        # If desired, convert from magnetic to geographic coordinates
+        if coords.lower().find('mag') < 0:
+            # Convert from mlt to longitude
+            lon = aacgmv2.convert_mlt(aacgm_mlt, self.dtime[self.rec_ind],
+                                      m2a=True)
+
+            # If geocentric coordinates are specified, add this info to the
+            # method flag
+            if coords.lower() == 'geocentric':
+                method = "|".join([method, coords.upper()])
+            method = "|".join([method, "A2G"])
+            lat, lon, _ = aacgmv2.convert_latlon_arr(aacgm_lat, lon, height,
+                                                     self.dtime[self.rec_ind],
+                                                     method)
+
+            # Convert from longitude to solar local time
+            lt = ocb_time.glon2slt(lon, self.dtime[self.rec_ind])
+        else:
+            lat = aacgm_lat
+            lt = aacgm_mlt
+
+        return lat, lt
+
+    def get_aacgm_boundary_lats(self, aacgm_mlt, rec_ind=None,
+                                overwrite=False, set_lon=True):
+        """Calculate the OCB latitude in AACGM coordinates at specified MLTs.
+
+        Parameters
+        ----------
+        aacgm_mlt : int, float, or array-like
+            AACGM longitude location(s) (in degrees) for which the OCB latitude
+            will be calculated.
+        rec_ind : int, array-like, or NoneType
+            Record index for which the OCB AACGM latitude will be calculated,
+            or None to calculate all boundary locations (default=None).
+        overwrite : bool
+            Overwrite previous boundary locations if this time already has
+            calculated boundary latitudes for a different set of input
+            longitudes (default=False).
+        set_lon : bool
+            Calculate the AACGM longitude of the OCB alongside the MLT
+            (default=True).
+
+        See Also
+        --------
+        ocbpy.OCBoundary.get_aacgm_boundary_lat
+
+        """
+
+        # Get the desired EAB and OCB record indices
+        if rec_ind is None:
+            eab_rec_ind = None
+            ocb_rec_ind = None
+        else:
+            eab_rec_ind = self.eab_ind[rec_ind]
+            ocb_rec_ind = self.ocb_ind[rec_ind]
+
+        # Calculate the boundary locations
+        self.eab.get_aacgm_boundary_lat(aacgm_mlt, rec_ind=eab_rec_ind,
+                                        overwrite=overwrite, set_lon=set_lon)
+        self.ocb.get_aacgm_boundary_lat(aacgm_mlt, rec_ind=ocb_rec_ind,
+                                        overwrite=overwrite, set_lon=set_lon)
+        return
