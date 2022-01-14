@@ -206,30 +206,24 @@ class TestCycleGoodIndices(unittest.TestCase):
         del self.ocb, self.test_func
         return
 
-    def eval_retrieved_indices(self):
-        """Evaluate the retrieved indices."""
-
-        self.assertEqual(self.out[0], 27)
-        self.assertEqual(self.out[1], 31)
-        self.assertEqual(len(self.out), 36)
-        return
-
     def test_retrieve_all_good_ind(self):
-        """Test that all good indices are retrieved with index at start."""
-        self.ocb.rec_ind = -1
-        self.out = self.test_func(self.ocb)
+        """Test all good indices are retrieved with different rec_ind values."""
 
-        self.eval_retrieved_indices()
-        self.assertEqual(self.ocb.rec_ind, -1)
-        return
-    
-    def test_retrieve_all_good_ind_init_middle(self):
-        """Test that all good indices are retrieved with index in the middle."""
-        self.ocb.rec_ind = 65
-        self.out = self.test_func(self.ocb)
+        for rec_ind in [-1, 0, 65, self.ocb.records - 1]:
+            with self.subTest(rec_ind=rec_ind):
+                # Initalize the OCBoundary record index
+                self.ocb.rec_ind = rec_ind
 
-        self.eval_retrieved_indices()
-        self.assertEqual(self.ocb.rec_ind, 65)
+                # Retrive all good record indices
+                self.out = self.test_func(self.ocb)
+
+                # Test that all records were retrieved
+                self.assertEqual(self.out[0], 27)
+                self.assertEqual(self.out[1], 31)
+                self.assertEqual(len(self.out), 36)
+
+                # Test that the OCBoundary record index has not changed
+                self.assertEqual(self.ocb.rec_ind, rec_ind)
         return
 
     def test_retrieve_all_good_ind_empty(self):

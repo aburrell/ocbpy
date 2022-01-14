@@ -252,7 +252,7 @@ class TestOCBoundaryMethodsGeneral(unittest.TestCase):
 
 class TestOCBoundaryMethodsNorth(unittest.TestCase):
     """Unit tests for the OCBoundary class in the northern hemisphere."""
-    
+
     def setUp(self):
         """Initialize the test environment."""
         self.test_class = ocbpy.OCBoundary
@@ -319,9 +319,9 @@ class TestOCBoundaryMethodsNorth(unittest.TestCase):
 
         # Load all but the first and last records
         self.out = self.test_class(filename=self.ocb.filename,
-                                               instrument=self.ocb.instrument,
-                                               stime=stime, etime=etime,
-                                               boundary_lat=75.0)
+                                   instrument=self.ocb.instrument,
+                                   stime=stime, etime=etime,
+                                   boundary_lat=75.0)
 
         self.assertEqual(self.ocb.records, self.out.records + 2)
         self.assertEqual(self.out.boundary_lat, 75.0)
