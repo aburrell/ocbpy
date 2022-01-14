@@ -221,12 +221,12 @@ class OCBoundary(object):
     def __str__(self):
         """Provide readable representation of the OCBoundary object."""
 
-        class_name = repr(self.__class__).split("'")[1]
+        class_name = repr(self.__class__).split("'")[1].split(".")[-1]
 
         if self.filename is None:
             out = "No {:s} file specified\n".format(class_name)
         else:
-            out = "Boundary file: {:s}\n".format(self.filename)
+            out = "{:s} file: {:s}\n".format(class_name, self.filename)
             out = "{:s}Source instrument: ".format(out)
             out = "{:s}{:s}\n".format(out, self.instrument.upper())
             out = "{:s}Boundary reference latitude: ".format(out)

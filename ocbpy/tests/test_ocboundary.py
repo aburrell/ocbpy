@@ -8,12 +8,14 @@
 import datetime as dt
 from io import StringIO
 import logging
+import numpy
 from os import path
 import unittest
 import warnings
 
 import ocbpy
 from test_cycle_boundary import TestCycleMatchData, TestCycleGoodIndices
+import test_boundary_ocboundary as test_ocb
 
 
 class TestOCBoundaryDeprecation(unittest.TestCase):
@@ -123,4 +125,162 @@ class TestOCBGoodIndices(TestCycleGoodIndices):
     def tearDown(self):
         """Clean up the test environment."""
         del self.ocb, self.test_func
+        return
+
+
+class TestOldOCBoundaryLogFailure(test_ocb.TestOCBoundaryLogFailure):
+    """Test the logging messages raised by the deprecated OCBoundary class."""
+
+    def setUp(self):
+        """Initialize the test class."""
+        warnings.simplefilter("ignore", DeprecationWarning)
+        self.test_class = ocbpy.ocboundary.OCBoundary
+        self.lwarn = ""
+        self.lout = ""
+        self.log_capture = StringIO()
+        ocbpy.logger.addHandler(logging.StreamHandler(self.log_capture))
+        ocbpy.logger.setLevel(logging.WARNING)
+
+    def tearDown(self):
+        """Tear down the test case."""
+        del self.lwarn, self.lout, self.log_capture, self.test_class
+
+
+class TestOldOCBoundaryInstruments(test_ocb.TestOCBoundaryInstruments):
+    def setUp(self):
+        """Initialize the instrument information."""
+        warnings.simplefilter("ignore", DeprecationWarning)
+        self.test_class = ocbpy.ocboundary.OCBoundary
+        self.test_dir = path.join(path.dirname(ocbpy.__file__), "tests",
+                                  "test_data")
+        self.inst_attrs = {"image": ["year", "soy", "num_sectors", "a",
+                                     "r_err"],
+                           "ampere": ["date", "time", "x", "y", "fom"],
+                           "dmsp-ssj": ["date", "time", "sc", "x", "y", "fom",
+                                        "x_1", "x_2", "y_1", "y_2"]}
+        self.not_attrs = {"image": ["date", "time", "x", "y", "fom", "x_1",
+                                    "x_2", "y_1", "y_2", "sc"],
+                          "ampere": ["year", "soy", "x_1", "y_1", "x_2",
+                                     "y_2", "sc", "num_sectors", "a",
+                                     "r_err"],
+                          "dmsp-ssj": ["year", "soy", "num_sectors", "a",
+                                       "r_err"]}
+        self.inst_init = [{"instrument": "image", "hemisphere": 1,
+                           "filename": path.join(self.test_dir,
+                                                 "test_north_circle")},
+                          {"instrument": "dmsp-ssj", "hemisphere": 1,
+                           "filename": path.join(self.test_dir,
+                                                 "dmsp-ssj_north_out.ocb")},
+                          {"instrument": "dmsp-ssj", "hemisphere": -1,
+                           "filename": path.join(self.test_dir,
+                                                 "dmsp-ssj_south_out.ocb")},
+                          {"instrument": "ampere", "hemisphere": -1,
+                           "filename": path.join(self.test_dir,
+                                                 "test_south_circle")}]
+        self.ocb = None
+
+    def tearDown(self):
+        """Clean up the test environment."""
+        del self.test_dir, self.inst_attrs, self.inst_init, self.ocb
+        del self.test_class
+
+
+class TestOldOCBoundaryMethodsGeneral(test_ocb.TestOCBoundaryMethodsGeneral):
+    def setUp(self):
+        """Initialize the test environment."""
+        warnings.simplefilter("ignore", DeprecationWarning)
+        self.test_class = ocbpy.ocboundary.OCBoundary
+        ocb_dir = path.dirname(ocbpy.__file__)
+        self.set_empty = {"filename": path.join(ocb_dir, "tests", "test_data",
+                                                "test_empty"),
+                          "instrument": "image"}
+        self.set_default = {"filename": path.join(ocb_dir, "tests",
+                                                  "test_data",
+                                                  "test_north_circle"),
+                            "instrument": "image"}
+        self.assertTrue(path.isfile(self.set_empty['filename']))
+        self.assertTrue(path.isfile(self.set_default['filename']))
+        self.ocb = None
+
+    def tearDown(self):
+        """Clean up the test environment."""
+        del self.set_empty, self.set_default, self.ocb, self.test_class
+
+
+class TestOldOCBoundaryMethodsNorth(test_ocb.TestOCBoundaryMethodsNorth):
+    """Unit tests for the OCBoundary class in the northern hemisphere."""
+
+    def setUp(self):
+        """Initialize the test environment."""
+        warnings.simplefilter("ignore", DeprecationWarning)
+        self.test_class = ocbpy.ocboundary.OCBoundary
+        self.set_north = {'filename': path.join(path.dirname(ocbpy.__file__),
+                                                "tests", "test_data",
+                                                "test_north_circle"),
+                          'instrument': 'image'}
+        self.assertTrue(path.isfile(self.set_north['filename']))
+        self.ocb = self.test_class(**self.set_north)
+        self.ocb.rec_ind = 27
+
+        self.mlt = numpy.linspace(0.0, 24.0, num=6)
+        self.lat = numpy.linspace(0.0, 90.0, num=len(self.mlt))
+        self.ocb_lat = [numpy.nan, 11.25588586, 30.35153908, 47.0979063,
+                        66.59889231, 86.86586231]
+        self.ocb_mlt = [numpy.nan, 4.75942194, 9.76745427, 14.61843964,
+                        19.02060793, 17.832]
+        self.r_corr = 0.0
+        self.out = None
+
+    def tearDown(self):
+        """Clean up the test environment."""
+        del self.ocb, self.set_north, self.mlt, self.lat, self.ocb_lat
+        del self.ocb_mlt, self.r_corr, self.out, self.test_class
+
+
+class TestOldOCBoundaryMethodsSouth(test_ocb.TestOCBoundaryMethodsSouth):
+    """Unit tests for the OCBoundary methods in the southern hemisphere."""
+
+    def setUp(self):
+        """Initialize the test environment."""
+        warnings.simplefilter("ignore", DeprecationWarning)
+        self.test_class = ocbpy.ocboundary.OCBoundary
+
+        self.set_south = {"filename": path.join(path.dirname(ocbpy.__file__),
+                                                "tests", "test_data",
+                                                "test_south_circle"),
+                          "instrument": "ampere",
+                          "hemisphere": -1,
+                          "rfunc": ocbpy.ocb_correction.circular}
+        self.ocb = self.test_class(**self.set_south)
+        self.ocb.rec_ind = 8
+
+        self.mlt = numpy.linspace(0.0, 24.0, num=6)
+        self.lat = numpy.linspace(-90.0, 0.0, num=len(self.mlt))
+        self.ocb_lat = [-86.8, -58.14126906, -30.46277504, -5.44127327,
+                        22.16097829, numpy.nan]
+        self.ocb_mlt = [6.0, 4.91857824, 9.43385497, 14.28303702, 19.23367655,
+                        numpy.nan]
+        self.r_corr = 0.0
+        self.out = None
+
+    def tearDown(self):
+        """Clean up the test environment."""
+        del self.ocb, self.set_south, self.mlt, self.lat, self.ocb_lat
+        del self.ocb_mlt, self.r_corr, self.out, self.test_class
+
+
+class TestOldOCBoundaryFailure(test_ocb.TestOCBoundaryFailure):
+    """Test the deprecated OCBoundary class failures raise appropriate errors.
+
+    """
+
+    def setUp(self):
+        """Set up the test environment."""
+        warnings.simplefilter("ignore", DeprecationWarning)
+        self.test_class = ocbpy.ocboundary.OCBoundary
+        return
+
+    def tearDown(self):
+        """Clean up the test environment."""
+        del self.test_class
         return
