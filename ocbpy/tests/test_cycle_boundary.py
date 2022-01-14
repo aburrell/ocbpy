@@ -183,3 +183,59 @@ class TestCycleMatchData(unittest.TestCase):
         self.lwarn = "of input measurement"
         self.assertRegex(self.lout, self.lwarn)
         return
+
+
+class TestCycleGoodIndices(unittest.TestCase):
+    """Unit tests for the `retrieve_all_good_indices` function."""
+
+    def setUp(self):
+        """Initialize the test environment."""
+        set_north = {"filename": path.join(path.dirname(ocbpy.__file__),
+                                           "tests", "test_data",
+                                           "test_north_circle"),
+                     "instrument": "image"}
+        self.ocb = ocbpy.OCBoundary(**set_north)
+        self.ocb.rec_ind = -1
+        self.test_func = ocbpy.cycle_boundary.retrieve_all_good_indices
+
+        del set_north
+        return
+
+    def tearDown(self):
+        """Clean up the test environment."""
+        del self.ocb, self.test_func
+        return
+
+    def eval_retrieved_indices(self):
+        """Evaluate the retrieved indices."""
+
+        self.assertEqual(self.out[0], 27)
+        self.assertEqual(self.out[1], 31)
+        self.assertEqual(len(self.out), 36)
+        return
+
+    def test_retrieve_all_good_ind(self):
+        """Test that all good indices are retrieved with index at start."""
+        self.ocb.rec_ind = -1
+        self.out = self.test_func(self.ocb)
+
+        self.eval_retrieved_indices()
+        self.assertEqual(self.ocb.rec_ind, -1)
+        return
+    
+    def test_retrieve_all_good_ind_init_middle(self):
+        """Test that all good indices are retrieved with index in the middle."""
+        self.ocb.rec_ind = 65
+        self.out = self.test_func(self.ocb)
+
+        self.eval_retrieved_indices()
+        self.assertEqual(self.ocb.rec_ind, 65)
+        return
+
+    def test_retrieve_all_good_ind_empty(self):
+        """Test routine that retrieves all good indices, no data loaded."""
+        self.ocb = ocbpy.OCBoundary(filename=None)
+        self.out = self.test_func(self.ocb)
+
+        self.assertEqual(len(self.out), 0)
+        return

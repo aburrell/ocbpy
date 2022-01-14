@@ -13,7 +13,7 @@ import unittest
 import warnings
 
 import ocbpy
-from test_cycle_boundary import TestCycleMatchData
+from test_cycle_boundary import TestCycleMatchData, TestCycleGoodIndices
 
 
 class TestOCBoundaryDeprecation(unittest.TestCase):
@@ -100,4 +100,27 @@ class TestOCBMatchData(TestCycleMatchData):
         """Clean up the test environment."""
         del self.ocb, self.lwarn, self.lout, self.log_capture, self.idat
         del self.test_func
+        return
+
+
+class TestOCBGoodIndices(TestCycleGoodIndices):
+    """Unit tests for the deprecated `retrieve_all_good_indices` function."""
+
+    def setUp(self):
+        """Initialize the test environment."""
+        warnings.simplefilter("ignore", DeprecationWarning)
+        set_north = {"filename": path.join(path.dirname(ocbpy.__file__),
+                                           "tests", "test_data",
+                                           "test_north_circle"),
+                     "instrument": "image"}
+        self.ocb = ocbpy.OCBoundary(**set_north)
+        self.ocb.rec_ind = -1
+        self.test_func = ocbpy.ocboundary.retrieve_all_good_indices
+
+        del set_north
+        return
+
+    def tearDown(self):
+        """Clean up the test environment."""
+        del self.ocb, self.test_func
         return
