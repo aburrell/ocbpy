@@ -20,6 +20,7 @@ References
 import datetime as dt
 import numpy as np
 import types
+import warnings
 
 import aacgmv2
 
@@ -95,16 +96,20 @@ class OCBoundary(object):
     ValueError
         Incorrect or incompatible input
 
+    Warnings
+    --------
+    DeprecationWarning
+        Class moved to `ocbpy._boundary` sub-module; use `ocbpy.OCBoundary`
+
     """
 
     def __init__(self, filename="default", instrument='', hemisphere=1,
                  boundary_lat=74.0, stime=None, etime=None, rfunc=None,
                  rfunc_kwargs=None):
-        warnings.warn("".join(["class moved to `ocbpy._boundary` ",
-                               "sub-module.  This class will be removed in ",
-                               "version 0.3.1+"]),
-                  DeprecationWarning, stacklevel=2)
-        
+        warnings.warn("".join(["Class moved to `ocbpy._boundary` sub-module. ",
+                               "It will be removed in version 0.3.1+."]),
+                      DeprecationWarning, stacklevel=2)
+
         # Test the instrument input
         if not hasattr(instrument, "lower"):
             estr = "OCB instrument must be a string [{:}]".format(instrument)
@@ -833,14 +838,19 @@ def retrieve_all_good_indices(ocb):
     good_ind : list
         List of indices containing good OCBs
 
+    Warnings
+    --------
+    DeprecationWarning
+        Function moved to `ocbpy.cycle_boundary` sub-module
+
     """
 
-    warnings.warn("".join(["function moved to `ocbpy.cycle_boundary` ",
-                           "sub-module.  This function will be removed in ",
-                           "version 0.3.1+"]),
+    warnings.warn("".join(["Function moved to `ocbpy.cycle_boundary` ",
+                           "sub-module. It will be removed in version",
+                           " 0.3.1+."]),
                   DeprecationWarning, stacklevel=2)
 
-    good_ind = cycle_boundary.retrieve_all_good_indices(ocb)
+    good_ind = ocbpy.cycle_boundary.retrieve_all_good_indices(ocb)
 
     # Return the good indices
     return good_ind
@@ -882,11 +892,16 @@ def match_data_ocb(ocb, dat_dtime, idat=0, max_tol=600, min_sectors=7,
     Updates OCBoundary.rec_ind for matched value. None if all of the
     boundaries have been searched.
 
+    Warnings
+    --------
+    DeprecationWarning
+        Function moved to `ocbpy.cycle_boundary` sub-module
+
     """
 
-    warnings.warn("".join(["function moved to `ocbpy.cycle_boundary` ",
-                           "sub-module.  This function will be removed in ",
-                           "version 0.3.1+"]),
+    warnings.warn("".join(["Function moved to `ocbpy.cycle_boundary` ",
+                           "sub-module. It will be removed in version",
+                           " 0.3.1+."]),
                   DeprecationWarning, stacklevel=2)
 
     idat = ocbpy.cycle_boundary.match_data_ocb(
