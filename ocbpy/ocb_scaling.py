@@ -394,7 +394,7 @@ class VectorData(object):
 
             # Assign the OCB vector default values and location.  Will also
             # update the AACGM north azimuth of the vector.
-            self.scale_vecto()
+            self.scale_vector()
 
         return
 
