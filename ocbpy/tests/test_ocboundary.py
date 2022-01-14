@@ -6,11 +6,14 @@
 """Tests the deprecated ocboundary sub-module."""
 
 import datetime as dt
+from io import StringIO
+import logging
 from os import path
 import unittest
 import warnings
 
 import ocbpy
+from test_cycle_boundary import TestCycleMatchData
 
 
 class TestOCBoundaryDeprecation(unittest.TestCase):
@@ -66,4 +69,35 @@ class TestOCBoundaryDeprecation(unittest.TestCase):
             ocbpy.ocboundary.match_data_ocb(ocb, ocb.dtime)
 
         del ocb
+        return
+
+
+class TestOCBMatchData(TestCycleMatchData):
+    """Unit tests for the deprecated `match_data_ocb` function."""
+
+    def setUp(self):
+        """Initialize the test environment."""
+        warnings.simplefilter("ignore", DeprecationWarning)
+        set_north = {"filename": path.join(path.dirname(ocbpy.__file__),
+                                           "tests", "test_data",
+                                           "test_north_circle"),
+                     "instrument": "image"}
+        self.ocb = ocbpy.OCBoundary(**set_north)
+        self.ocb.rec_ind = -1
+        self.idat = 0
+        self.test_func = ocbpy.ocboundary.match_data_ocb
+
+        # Initialize logging
+        self.lwarn = u""
+        self.lout = u""
+        self.log_capture = StringIO()
+        ocbpy.logger.addHandler(logging.StreamHandler(self.log_capture))
+        ocbpy.logger.setLevel(logging.WARNING)
+        del set_north
+        return
+
+    def tearDown(self):
+        """Clean up the test environment."""
+        del self.ocb, self.lwarn, self.lout, self.log_capture, self.idat
+        del self.test_func
         return
