@@ -21,8 +21,8 @@ class TestOCBoundaryLogFailure(unittest.TestCase):
     def setUp(self):
         """Initialize the test class."""
         self.test_class = ocbpy.OCBoundary
-        self.lwarn = u""
-        self.lout = u""
+        self.lwarn = ""
+        self.lout = ""
         self.log_capture = StringIO()
         ocbpy.logger.addHandler(logging.StreamHandler(self.log_capture))
         ocbpy.logger.setLevel(logging.WARNING)
@@ -33,7 +33,7 @@ class TestOCBoundaryLogFailure(unittest.TestCase):
 
     def test_bad_instrument_name(self):
         """Test OCB initialization with bad instrument name."""
-        self.lwarn = u"OCB instrument must be a string"
+        self.lwarn = "OCB instrument must be a string"
 
         # Initialize the OCBoundary class with bad instrument names
         for val in [1, None, True]:
@@ -44,7 +44,7 @@ class TestOCBoundaryLogFailure(unittest.TestCase):
 
                 self.lout = self.log_capture.getvalue()
                 # Test logging error message for each bad initialization
-                self.assertRegex(self.lout.find, self.lwarn)
+                self.assertRegex(self.lout, self.lwarn)
 
         del val, ocb
 
@@ -75,13 +75,13 @@ class TestOCBoundaryLogFailure(unittest.TestCase):
         self.lout = self.log_capture.getvalue()
 
         # Test logging error message for each bad initialization
-        self.assertRegex(self.lout, self.lwarn)
+        self.assertTrue(self.lout.find(self.lwarn) >= 0)
 
         del ocb
 
     def test_bad_time_structure(self):
         """Test initialization without complete time data in file."""
-        self.lwarn = u"missing time columns in"
+        self.lwarn = "missing time columns in"
 
         # Initialize without a file so that custom loading is performed
         ocb = self.test_class(filename=None)
@@ -103,6 +103,8 @@ class TestOCBoundaryLogFailure(unittest.TestCase):
 
 
 class TestOCBoundaryInstruments(unittest.TestCase):
+    """Test the OCBoundary handling of different instruments."""
+
     def setUp(self):
         """Initialize the instrument information."""
         self.test_class = ocbpy.OCBoundary
@@ -194,14 +196,16 @@ class TestOCBoundaryMethodsGeneral(unittest.TestCase):
             with self.subTest(val=val, i=i):
                 self.ocb.rfunc = val
                 self.ocb.rfunc_kwargs = rfunc_kwargs[i]
-                self.assertRegex(repr(self.ocb), "ocbpy.OCBoundary")
+
+                ocb_str = repr(self.ocb)
+                self.assertRegex(ocb_str, self.test_class.__name__)
                 if val is None:
-                    self.assertRegex(repr(self.ocb), repr(val))
+                    self.assertRegex(ocb_str, repr(val))
                 else:
-                    self.assertRegex(repr(self.ocb), val[0].__name__)
+                    self.assertRegex(ocb_str, val[0].__name__)
                     if i == 2:
-                        self.assertRegex(repr(self.ocb), 'numpy.array')
-                        self.assertRegex(repr(self.ocb), 'dtype=object')
+                        self.assertRegex(ocb_str, 'numpy.array')
+                        self.assertRegex(ocb_str, 'dtype=object')
 
     def test_repr_eval(self):
         """Test __repr__ method's ability to reproduce a class."""
@@ -211,7 +215,8 @@ class TestOCBoundaryMethodsGeneral(unittest.TestCase):
     def test_default_str(self):
         """Test the default class print output."""
         self.ocb = self.test_class(**self.set_default)
-        self.assertRegex(self.ocb.__str__(), "Open-Closed Boundary file:")
+        self.assertRegex(self.ocb.__str__(),
+                         "{:s} file:".format(self.test_class.__name__))
 
     def test_short_str(self):
         """Test the default class print output."""
@@ -232,8 +237,9 @@ class TestOCBoundaryMethodsGeneral(unittest.TestCase):
         """Test the unset class print output."""
 
         self.ocb = self.test_class(filename=None)
-        self.assertRegex(self.ocb.__str__(),
-                         "No Open-Closed Boundary file specified")
+        self.assertRegex(
+            self.ocb.__str__(),
+            "No {:s} file specified".format(self.test_class.__name__))
 
     def test_empty_file_str(self):
         """Test the class print output with an empty data file."""
