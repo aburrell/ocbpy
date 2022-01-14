@@ -1117,9 +1117,9 @@ class DualBoundary(object):
         out = "Dual Boundary data\n{:d} good boundary ".format(self.records)
         out = "{:s}pairs from {:} to {:}\nMaximum ".format(out, self.dtime[0],
                                                            self.dtime[-1])
-        out = "{:s} boundary difference of {:.1f} s\n\n".format(self.delta_max)
-        out = "{:s}{:s}\n{:s}\n".format(out, self.eab.__str__(),
-                                        self.ocb.__str__())
+        out = "{:s} boundary difference of {:.1f} s".format(out, self.delta_max)
+        out = "{:s}\n\n{:s}\n{:s}\n".format(out, self.eab.__str__(),
+                                            self.ocb.__str__())
 
         return out
 
@@ -1130,11 +1130,11 @@ class DualBoundary(object):
         self.dtime = list()
         self.ocb_ind = list()
         self.eab_ind = list()
-        
+
         # Save the current EAB record index
         icurrent = self.eab.rec_ind
         self.eab.rec_ind = -1
-        
+
         # Get the good OCB indices
         good_ocb = cycle_boundary.retrieve_all_good_indices(self.ocb)
 
@@ -1319,7 +1319,8 @@ class DualBoundary(object):
         return bound_lat, bound_mlt, ocb_lat, r_corr
 
     def revert_coord(self, bound_lat, bound_mlt, ocb_lat, r_corr=0.0,
-                     coords='magnetic', height=350.0, method='ALLOWTRACE'):
+                     coords='magnetic', height=350.0, method='ALLOWTRACE',
+                     overwrite=False):
         """Convert the position of a measurement in OCB into AACGM co-ordinates.
 
         Parameters
@@ -1344,6 +1345,9 @@ class DualBoundary(object):
             String denoting which type(s) of conversion to perform, if
             geographic coordinates are provided.  Expects either 'TRACE' or
             'ALLOWTRACE'.  See AACGMV2 for details [2]_.  (default='ALLOWTRACE')
+        overwrite : bool
+            Allow the OCB and EAB AACGM boundary locations to be overwritten
+            (default=False)
 
         Returns
         -------
@@ -1370,7 +1374,7 @@ class DualBoundary(object):
         height = np.asarray(height)
 
         # Revert the standard OCB coordinates to AACGM coordinates
-        aacgm_lat, aacgm_mlt = self.ocb.revert_coord(ocb_lat, ocb_mlt,
+        aacgm_lat, aacgm_mlt = self.ocb.revert_coord(ocb_lat, bound_mlt,
                                                      r_corr=r_corr,
                                                      coords="magnetic",
                                                      height=height,
@@ -1489,17 +1493,19 @@ class DualBoundary(object):
                                         overwrite=overwrite, set_lon=set_lon)
         return
 
-    def calc_r(self, bound_lat, bound_mlt, r_corr, overwrite=False):
+    def calc_r(self, bound_lat, bound_mlt, aacgm_mlt, r_corr, overwrite=False):
         """Calculate the scaled and unscaled radius at a normalised co-ordinate.
 
         Parameters
         ----------
         bound_lat : array-like or float
-           Normalised dual-boundary latitude in degrees
+            Normalised dual-boundary latitude in degrees
         bound_mlt : array-like or float
-           Normalised dual-boundary MLT in hours
+            Normalised dual-boundary MLT in hours
+        aacgm_mlt : array-like or float
+            MLT in AACGM coordinates in hours
         r_corr : array-like or float
-           OCB radial correction in degrees
+            OCB radial correction in degrees
         overwrite : bool
             Overwrite previous boundary locations if this time already has
             calculated boundary latitudes for a different set of input
@@ -1583,4 +1589,3 @@ class DualBoundary(object):
                 self.eab.aacgm_boundary_mlt = orig_eab_bmlt
 
         return scaled_r, unscaled_r
-                

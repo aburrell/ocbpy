@@ -364,7 +364,7 @@ class VectorData(object):
         # Set the AACGM coordinates of the OCB pole HERE
         if hasattr(ocb, "ocb"):
             self.scaled_r, self.unscaled_r = ocb.calc_r(
-                self.ocb_lat, self.ocb_mlt, self.r_corr)
+                self.ocb_lat, self.ocb_mlt, self.aacgm_mlt, self.r_corr)
             self.ocb_aacgm_mlt = ocbpy.ocb_time.deg2hr(
                 ocb.ocb.phi_cent[self.ocb_ind])
             self.ocb_aacgm_lat = 90.0 - ocb.ocb.r_cent[self.ocb_ind]
