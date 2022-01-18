@@ -315,7 +315,7 @@ class OCBoundary(object):
         return hlines, ocb_cols, datetime_fmt
 
     def load(self, hlines=0,
-             ocb_cols="year soy num_sectors phi_cent r_cent r a r_err",
+             ocb_cols="year soy num_sectors phi_cent r_cent r a r_err r_merit",
              datetime_fmt="", stime=None, etime=None):
         """Load the data from the specified boundary file.
 
@@ -326,7 +326,7 @@ class OCBoundary(object):
             columns must be included in the string, additional data values will
             be ignored.  If 'year soy' aren't used, expects
             'date time' in 'YYYY-MM-DD HH:MM:SS' format.
-            (default='year soy num_sectors phi_cent r_cent r a r_err')
+            (default='year soy num_sectors phi_cent r_cent r a r_err r_merit')
         hlines : int
             Number of header lines preceeding data in the OCB file (default=0)
         datetime_fmt : str
