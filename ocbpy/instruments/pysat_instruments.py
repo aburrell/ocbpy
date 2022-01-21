@@ -205,7 +205,7 @@ def add_ocb_to_data(pysat_inst, mlat_name='', mlt_name='', evar_names=None,
     ndat = len(aacgm_lat)
 
     # Load the OCB data for the data period, if desired
-    if ocb is None or not isinstance(ocb, ocbpy.ocboundary.OCBoundary):
+    if ocb is None or not isinstance(ocb, ocbpy.OCBoundary):
         dstart = pysat_inst.index[0] - dt.timedelta(seconds=max_sdiff + 1)
         dend = pysat_inst.index[-1] + dt.timedelta(seconds=max_sdiff + 1)
 
