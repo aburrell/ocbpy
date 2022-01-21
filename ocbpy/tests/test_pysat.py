@@ -28,7 +28,7 @@ class TestPysatUtils(unittest.TestCase):
     """Tests for using ocbpy with pysat data."""
 
     def setUp(self):
-        """Initialization performed through input."""
+        """Initialize the test environment."""
 
         # Set the default function values
         self.meta = None
