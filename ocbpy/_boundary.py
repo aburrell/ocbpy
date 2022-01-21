@@ -19,6 +19,7 @@ References
 import datetime as dt
 import numpy as np
 import types
+import warnings
 
 import aacgmv2
 
@@ -72,33 +73,38 @@ class OCBoundary(object):
     Attributes
     ----------
     records : int
-        Number of OCB records (default=0)
+        Number of boundary records (default=0)
     rec_ind : int
-        Current OCB record index (default=0; initialised=-1)
+        Current boundary record index (default=0; initialised=-1)
     dtime : numpy.ndarray or NoneType
-        Numpy array of OCB datetimes (default=None)
+        Numpy array of boundary datetimes (default=None)
     phi_cent : numpy.ndarray or NoneType
         Numpy array of floats that give the angle from AACGM midnight
-        of the OCB pole in degrees (default=None)
+        of the boundary pole in degrees (default=None)
     r_cent : numpy.ndarray or NoneType
-        Numpy array of floats that give the AACGM co-latitude of the OCB
+        Numpy array of floats that give the AACGM co-latitude of the boundary
         pole in degrees (default=None)
     r : numpy.ndarray or NoneType
-        Numpy array of floats that give the radius of the OCBoundary
-        in degrees (default=None)
+        Numpy array of floats that give the radius of the boundary in degrees
+        (default=None)
+    fom : numpy.ndarray or NoneType
+        Numpy array of floats that provides a figure of merit that can be used
+        to evaluate the quality of the boundary (default=None)
     min_fom : float
-        Minimum acceptable figure of merit for data (default=0)
-    x, y, j_mag, etc. : numpy.ndarray or NoneType
+        Minimum acceptable figure of merit for data (default=-np.inf)
+    max_fom : float
+        Maximum acceptable figure of merit for data (default=np.inf)
+    x, y, etc. : numpy.ndarray or NoneType
         Numpy array of floats that hold the remaining values held in `filename`
 
     Methods
     -------
     inst_defaults
-        Get the instrument-specific OCB file loading information.
+        Get the instrument-specific boundary file loading information.
     load
         Load the data from the specified boundary file.
     get_next_good_ocb_ind
-        Cycle to the the next quality OCB record.
+        Cycle to the the next quality boundary record.
     normal_coord
         Convert data position(s) to normalised co-ordinates relative to the OCB.
     revert_coord
@@ -158,9 +164,11 @@ class OCBoundary(object):
         self.phi_cent = None
         self.r_cent = None
         self.r = None
+        self.fom = None
         self.rfunc = rfunc
         self.rfunc_kwargs = rfunc_kwargs
-        self.min_fom = 0
+        self.min_fom = -np.inf
+        self.max_fom = np.inf
 
         # Get the instrument defaults
         hlines, ocb_cols, datetime_fmt = self.inst_defaults()
@@ -295,8 +303,9 @@ class OCBoundary(object):
 
         if self.instrument == "image":
             hlines = 0
-            ocb_cols = "year soy num_sectors phi_cent r_cent r a r_err"
+            ocb_cols = "year soy num_sectors phi_cent r_cent r a r_err fom"
             datetime_fmt = ""
+            self.max_fom = 5.0  # From Chisham et al. (in prep)
         elif self.instrument == "ampere":
             hlines = 0
             ocb_cols = "date time r x y fom"
@@ -315,7 +324,7 @@ class OCBoundary(object):
         return hlines, ocb_cols, datetime_fmt
 
     def load(self, hlines=0,
-             ocb_cols="year soy num_sectors phi_cent r_cent r a r_err r_merit",
+             ocb_cols="year soy num_sectors phi_cent r_cent r a r_err fom",
              datetime_fmt="", stime=None, etime=None):
         """Load the data from the specified boundary file.
 
@@ -439,23 +448,34 @@ class OCBoundary(object):
 
         return
 
-    def get_next_good_ocb_ind(self, min_sectors=7, rcent_dev=8.0, max_r=23.0,
-                              min_r=10.0):
+    def get_next_good_ocb_ind(self, min_merit=None, max_merit=None, **kwargs):
         """Cycle to the the next quality OCB record.
 
         Parameters
         ----------
+        min_merit : float or NoneType
+            Minimum value for the default figure of merit or None to not
+            apply a custom minimum (default=None)
+        max_merit : float or NoneTye
+            Maximum value for the default figure of merit or None to not apply
+            a custom maximum (default=None)
         min_sectors : int
-            Minimum number of MLT sectors required for good OCB. (default=7)
+            Minimum number of MLT sectors required for good OCB. Deprecated,
+            will be removed in version 0.3.1+ (default=7)
         rcent_dev : float
             Maximum number of degrees between the new centre and the AACGM pole
-            (default=8.0)
+             Deprecated, will be removed in version 0.3.1+ (default=8.0)
         max_r : float
             Maximum radius for open-closed field line boundary in degrees.
-            (default=23.0)
+            Deprecated, will be removed in version 0.3.1+ (default=23.0)
         min_r : float
             Minimum radius for open-closed field line boundary in degrees
-            (default=10.0)
+            Deprecated, will be removed in version 0.3.1+ (default=10.0)
+        kwargs : dict
+            Dict with optional selection criteria.  The key should correspond
+            to a data attribute and the value must be a tuple with the first
+            value specifying 'max', 'min', 'maxeq', 'mineq', or 'equal' and the
+            second value specifying the value to use in the comparison.
 
         Notes
         -----
@@ -463,14 +483,45 @@ class OCBoundary(object):
         greater than self.records if there aren't any more good records
         available after the starting point
 
-        IMAGE FUV checks that:
+        Deprecated IMAGE FUV checks that:
         - more than 6 MLT boundary values have contributed to OCB circle
         - the OCB 'pole' is with 8 degrees of the AACGM pole
         - the OCB 'radius' is greater than 10 and less than 23 degrees
-        AMPERE/DMSP-SSJ checks that:
+        AMPERE/DMSP-SSJ and new IMAGE FUV checks that:
         - the Figure of Merit is greater than or equal to the specified minimum
+          (`min_fom`) or less than or equal to the specified maximum (`max_fom`)
 
         """
+
+        # Add check for deprecated and custom kwargs
+        dep_comp = {'min_sectors': ['num_sectors', ('mineq', 7)],
+                    'rcent_dev': ['r_cent', ('maxeq', 8.0)],
+                    'max_r': ['r', ('maxeq', 23.0)],
+                    'min_r': ['r', ('mineq', 10.0)]}
+        cust_keys = list(kwargs.keys())
+
+        for ckey in cust_keys:
+            if ckey in dep_comp.keys():
+                warnings.warn("".join(["Deprecated kwarg will be removed in ",
+                                       "version 0.3.1+. To replecate behaviour",
+                                       ", use {", dep_comp[ckey][0], ": ",
+                                       repr(dep_comp[ckey][1]), "}"]))
+                del kwargs[ckey]
+
+                if hasattr(self, dep_comp[ckey][0]):
+                    kwargs[dep_comp[ckey][0]] = dep_comp[ckey][1]
+            else:
+                if not hasattr(self, ckey):
+                    logger.warning(
+                        "Removing unknown selection attribute {:}".format(ckey))
+                    del kwargs[ckey]
+
+        # Adjust the FoM determination for custom inputs
+        if min_merit is None:
+            min_merit = self.min_fom
+
+        if max_merit is None:
+            max_merit = self.max_fom
 
         # Incriment forward from previous boundary
         self.rec_ind += 1
@@ -479,19 +530,31 @@ class OCBoundary(object):
             # Evaluate the current boundary for quality, using optional
             # parameters
             good = True
-            if(hasattr(self, "num_sectors")
-               and self.num_sectors[self.rec_ind] < min_sectors):
-                good = False
-            elif(hasattr(self, "fom")
-                 and self.fom[self.rec_ind] < self.min_fom):
-                good = False
+
+            for ckey in kwargs.keys():
+                test_val = getattr(self, ckey)[self.rec_ind]
+                if kwargs[ckey][0] == "min" and test_val <= kwargs[ckey][1]:
+                    good = False
+                    break
+                elif kwargs[ckey][0] == "mineq" and test_val < kwargs[ckey][1]:
+                    good = False
+                    break
+                elif kwargs[ckey][0] == "equal" and test_val != kwargs[ckey][1]:
+                    good = False
+                    break
+                elif kwargs[ckey][0] == "maxeq" and test_val > kwargs[ckey][1]:
+                    good = False
+                    break
+                elif kwargs[ckey][0] == "max" and test_val >= kwargs[ckey][1]:
+                    good = False
+                    break
 
             # Evaluate the current boundary for quality, using non-optional
             # parameters
-            if(good and self.r_cent[self.rec_ind] <= rcent_dev
-               and self.r[self.rec_ind] >= min_r
-               and self.r[self.rec_ind] <= max_r):
-                return
+            if good:
+                test_val = self.fom[self.rec_ind]
+                if test_val >= min_merit and test_val <= max_merit:
+                    return
 
             # Cycle to next boundary
             self.rec_ind += 1
@@ -869,42 +932,9 @@ class EABoundary(OCBoundary):
         of this dict for all times.  Array must be an array of dicts.
         (default=None)
 
-    Attributes
-    ----------
-    records : int
-        Number of EAB records (default=0)
-    rec_ind : int
-        Current EAB record index (default=0; initialised=-1)
-    dtime : numpy.ndarray or NoneType
-        Numpy array of EAB datetimes (default=None)
-    phi_cent : numpy.ndarray or NoneType
-        Numpy array of floats that give the angle from AACGM midnight
-        of the EAB pole in degrees (default=None)
-    r_cent : numpy.ndarray or NoneType
-        Numpy array of floats that give the AACGM co-latitude of the EAB
-        pole in degrees (default=None)
-    r : numpy.ndarray or NoneType
-        Numpy array of floats that give the radius of the EABoundary
-        in degrees (default=None)
-    min_fom : float
-        Minimum acceptable figure of merit for data (default=0)
-    x, y, j_mag, etc. : numpy.ndarray or NoneType
-        Numpy array of floats that hold the remaining values held in `filename`
-
-    Methods
-    -------
-    inst_defaults
-        Get the instrument-specific EAB file loading information.
-    load
-        Load the data from the specified boundary file.
-    get_next_good_ocb_ind
-        Cycle to the the next quality EAB record.
-    normal_coord
-        Convert data position(s) to normalised co-ordinates relative to the EAB.
-    revert_coord
-        Convert the position of a measurement in EAB into AACGM co-ordinates.
-    get_aacgm_boundary_lat
-        Calculate the EAB latitude in AACGM coordinates at specified MLTs.
+    See Also
+    --------
+    ocbpy.OCBoundary
 
     Raises
     ------
@@ -1005,26 +1035,11 @@ class DualBoundary(object):
     max_delta : int
         Maximum number of seconds allowed between paired EAB and OCB records
         (default=60)
-    min_sectors : int
-        Minimum number of MLT sectors required for good OCB. (default=7)
-    rcent_dev : float
-        Maximum number of degrees between the new centre and the AACGM pole
-        (default=8.0)
-    max_r : float
-        Maximum radius for open-closed field line boundary in degrees.
-        (default=23.0)
-    min_r : float
-        Minimum radius for open-closed field line boundary in degrees
-        (default=10.0)
 
     Attributes
     ----------
     eab
     ocb
-    min_sectors
-    rcent_dev
-    max_r
-    min_r
     max_delta
     dtime : numpy.ndarray
         Numpy array of paired boundary datetimes
@@ -1063,8 +1078,7 @@ class DualBoundary(object):
                  eab_instrument='', ocb_instrument='', hemisphere=1,
                  eab_lat=64.0, ocb_lat=74.0, stime=None, etime=None,
                  eab_rfunc=None, eab_rfunc_kwargs=None, ocb_rfunc=None,
-                 ocb_rfunc_kwargs=None, eab=None, ocb=None, max_delta=60,
-                 min_sectors=7, rcent_dev=8.0, max_r=23.0, min_r=10.0):
+                 ocb_rfunc_kwargs=None, eab=None, ocb=None, max_delta=60):
 
         # Initalize the subclass attributes
         if eab is None:
@@ -1086,10 +1100,6 @@ class DualBoundary(object):
             self.ocb = ocb
 
         # Create a time index, saving indices where both boundaries are good
-        self.min_sectors = min_sectors
-        self.rcent_dev = rcent_dev
-        self.max_r = max_r
-        self.min_r = min_r
         self.max_delta = max_delta
         self.set_good_ind()
 
@@ -1123,8 +1133,39 @@ class DualBoundary(object):
 
         return out
 
-    def set_good_ind(self):
-        """Pair the good indices for the quality EABs and OCBs."""
+    def set_good_ind(self, ocb_min_merit=None, ocb_max_merit=None,
+                     ocb_kwargs=None, eab_min_merit=None, eab_max_merit=None,
+                     eab_kwargs=None):
+        """Pair the good indices for the quality EABs and OCBs.
+
+        Parameters
+        ----------
+        ocb_min_merit : float or NoneType
+            Minimum value for the default figure of merit or None to not apply
+            a custom minimum (default=None)
+        ocb_max_merit : float or NoneTye
+            Maximum value for the default figure of merit or None to not apply
+            a custom maximum (default=None)
+        ocb_kwargs : dict or NoneType
+            Dict with optional selection criteria.  The key should correspond
+            to a data attribute and the value must be a tuple with the first
+            value specifying 'max', 'min', 'maxeq', 'mineq', or 'equal' and the
+            second value specifying the value to use in the comparison.
+            None provides no optional selection criteria. (default=None)
+        eab_min_merit : float or NoneType
+            Minimum value for the default figure of merit or None to not apply
+            a custom minimum (default=None)
+        eab_max_merit : float or NoneTye
+            Maximum value for the default figure of merit or None to not apply
+            a custom maximum (default=None)
+        eab_kwargs : dict or NoneType
+            Dict with optional selection criteria.  The key should correspond
+            to a data attribute and the value must be a tuple with the first
+            value specifying 'max', 'min', 'maxeq', 'mineq', or 'equal' and the
+            second value specifying the value to use in the comparison.
+            None provides no optional selection criteria. (default=None)
+
+        """
 
         # Initalize the class attributes
         self.dtime = list()
@@ -1136,7 +1177,18 @@ class DualBoundary(object):
         self.eab.rec_ind = -1
 
         # Get the good OCB indices
-        good_ocb = cycle_boundary.retrieve_all_good_indices(self.ocb)
+        if ocb_kwargs is None:
+            ocb_kwargs = {}
+        ocb_kwargs['min_merit'] = ocb_min_merit
+        ocb_kwargs['max_merit'] = ocb_max_merit
+        good_ocb = cycle_boundary.retrieve_all_good_indices(self.ocb,
+                                                            **ocb_kwargs)
+
+        # Initialize the EAB good index selection options
+        if eab_kwargs is None:
+            eab_kwargs = {}
+        eab_kwargs['min_merit'] = eab_min_merit
+        eab_kwargs['max_merit'] = eab_max_merit
 
         # Match the EABs with the good OCB times
         iocb = 0
@@ -1144,8 +1196,7 @@ class DualBoundary(object):
             # Cycle the OCB record index to match the next good EAB index
             iocb = cycle_boundary.match_data_ocb(
                 self.eab, self.ocb.dtime[good_ocb], idat=iocb,
-                max_tol=self.max_delta, min_sectors=self.min_sectors,
-                rcent_dev=self.rcent_dev, max_r=self.max_r, min_r=self.min_r)
+                max_tol=self.max_delta, **eab_kwargs)
 
             # Save the paired data
             if iocb is not None and iocb < len(good_ocb):
@@ -1156,9 +1207,7 @@ class DualBoundary(object):
                 iocb = None
 
             # Cycle to the next good EAB index
-            self.eab.get_next_good_ocb_ind(min_sectors=self.min_sectors,
-                                           rcent_dev=self.rcent_dev,
-                                           max_r=self.max_r, min_r=self.min_r)
+            self.eab.get_next_good_ocb_ind(**eab_kwargs)
 
         # Re-cast the class attributes as arrays
         self.dtime = np.asarray(self.dtime)
