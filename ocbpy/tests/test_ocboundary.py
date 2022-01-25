@@ -153,12 +153,12 @@ class TestOldOCBoundaryInstruments(test_ocb.TestOCBoundaryInstruments):
         self.test_class = ocbpy.ocboundary.OCBoundary
         self.test_dir = path.join(path.dirname(ocbpy.__file__), "tests",
                                   "test_data")
-        self.inst_attrs = {"image": ["year", "soy", "num_sectors", "a",
+        self.inst_attrs = {"image": ["year", "soy", "num_sectors", "a", "fom",
                                      "r_err"],
                            "ampere": ["date", "time", "x", "y", "fom"],
                            "dmsp-ssj": ["date", "time", "sc", "x", "y", "fom",
                                         "x_1", "x_2", "y_1", "y_2"]}
-        self.not_attrs = {"image": ["date", "time", "x", "y", "fom", "x_1",
+        self.not_attrs = {"image": ["date", "time", "x", "y", "x_1",
                                     "x_2", "y_1", "y_2", "sc"],
                           "ampere": ["year", "soy", "x_1", "y_1", "x_2",
                                      "y_2", "sc", "num_sectors", "a",

@@ -118,13 +118,15 @@ class OCBoundary(ocbpy.OCBoundary):
         return
 
 
-def retrieve_all_good_indices(ocb):
+def retrieve_all_good_indices(ocb, **kwargs):
     """Retrieve all good indices from the ocb structure.
 
     Parameters
     ----------
     ocb : ocbpy.OCBoundary
         Class containing the open-close field line boundary data
+    **kwargs : dict
+        Optional kwargs
 
     Returns
     -------
@@ -136,6 +138,10 @@ def retrieve_all_good_indices(ocb):
     DeprecationWarning
         Function moved to `ocbpy.cycle_boundary` sub-module
 
+    See Also
+    --------
+    ocbpy.cycle_boundary.retrieve_all_good_indices
+
     """
 
     warnings.warn("".join(["Function moved to `ocbpy.cycle_boundary` ",
@@ -143,14 +149,13 @@ def retrieve_all_good_indices(ocb):
                            " 0.3.1+."]),
                   DeprecationWarning, stacklevel=2)
 
-    good_ind = ocbpy.cycle_boundary.retrieve_all_good_indices(ocb)
+    good_ind = ocbpy.cycle_boundary.retrieve_all_good_indices(ocb, **kwargs)
 
     # Return the good indices
     return good_ind
 
 
-def match_data_ocb(ocb, dat_dtime, idat=0, max_tol=600, min_sectors=7,
-                   rcent_dev=8.0, max_r=23.0, min_r=10.0):
+def match_data_ocb(ocb, dat_dtime, idat=0, max_tol=600, **kwargs):
     """Match data records with OCB records.
 
     Parameters
@@ -162,18 +167,9 @@ def match_data_ocb(ocb, dat_dtime, idat=0, max_tol=600, min_sectors=7,
     idat : int
         Current data index (default=0)
     max_tol : int
-        maximum seconds between OCB and data record in sec (default=600)
-    min_sectors : int
-        Minimum number of MLT sectors required for good OCB. (default=7)
-    rcent_dev : float
-        Maximum number of degrees between the new centre and the AACGM pole
-        (default=8.0)
-    max_r : float
-        Maximum radius for open-closed field line boundary in degrees
-        (default=23.0)
-    min_r : float
-        Minimum radius for open-closed field line boundary in degrees
-        (default=10.0)
+        Maximum seconds between OCB and data record in sec (default=600)
+    **kwargs : dict
+        Optional keyword arguments
 
     Returns
     -------
@@ -190,6 +186,10 @@ def match_data_ocb(ocb, dat_dtime, idat=0, max_tol=600, min_sectors=7,
     DeprecationWarning
         Function moved to `ocbpy.cycle_boundary` sub-module
 
+    See Also
+    --------
+    ocbpy.cycle_boundary.match_data_ocb
+
     """
 
     warnings.warn("".join(["Function moved to `ocbpy.cycle_boundary` ",
@@ -197,8 +197,7 @@ def match_data_ocb(ocb, dat_dtime, idat=0, max_tol=600, min_sectors=7,
                            " 0.3.1+."]),
                   DeprecationWarning, stacklevel=2)
 
-    idat = ocbpy.cycle_boundary.match_data_ocb(
-        ocb, dat_dtime, idat=idat, max_tol=max_tol, min_sectors=min_sectors,
-        rcent_dev=rcent_dev, max_r=max_r, min_r=min_r)
+    idat = ocbpy.cycle_boundary.match_data_ocb(ocb, dat_dtime, idat=idat,
+                                               max_tol=max_tol, **kwargs)
 
     return idat

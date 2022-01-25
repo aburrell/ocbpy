@@ -89,7 +89,7 @@ class TestCycleMatchData(unittest.TestCase):
         """Test ability to not find a good OCB."""
         # Set requirements for good OCB so high that none will pass
         self.idat = self.test_func(self.ocb, [self.ocb.dtime[27]],
-                                   idat=self.idat, min_sectors=24)
+                                   idat=self.idat, max_merit=0.0)
         self.assertEqual(self.idat, 0)
         self.assertGreaterEqual(self.ocb.rec_ind, self.ocb.records)
 

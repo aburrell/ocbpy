@@ -75,7 +75,9 @@ class TestOCBoundaryLogFailure(unittest.TestCase):
         self.lout = self.log_capture.getvalue()
 
         # Test logging error message for each bad initialization
-        self.assertTrue(self.lout.find(self.lwarn) >= 0)
+        self.assertTrue(self.lout.find(self.lwarn) >= 0,
+                        msg="logging output {:} != expected output {:}".format(
+                            repr(self.lout), repr(self.lwarn)))
 
         del ocb
 
@@ -111,12 +113,12 @@ class TestOCBoundaryInstruments(unittest.TestCase):
         self.test_dir = path.join(path.dirname(ocbpy.__file__), "tests",
                                   "test_data")
         self.inst_attrs = {"image": ["year", "soy", "num_sectors", "a",
-                                     "r_err"],
+                                     "r_err", "fom"],
                            "ampere": ["date", "time", "x", "y", "fom"],
                            "dmsp-ssj": ["date", "time", "sc", "x", "y", "fom",
                                         "x_1", "x_2", "y_1", "y_2"]}
-        self.not_attrs = {"image": ["date", "time", "x", "y", "fom", "x_1",
-                                    "x_2", "y_1", "y_2", "sc"],
+        self.not_attrs = {"image": ["date", "time", "x", "y", "x_1", "x_2",
+                                    "y_1", "y_2", "sc"],
                           "ampere": ["year", "soy", "x_1", "y_1", "x_2",
                                      "y_2", "sc", "num_sectors", "a",
                                      "r_err"],
@@ -148,12 +150,18 @@ class TestOCBoundaryInstruments(unittest.TestCase):
                 self.ocb = self.test_class(**ocb_kwargs)
 
                 for tattr in self.inst_attrs[ocb_kwargs['instrument']]:
-                    self.assertTrue(hasattr(self.ocb, tattr))
+                    self.assertTrue(hasattr(self.ocb, tattr),
+                                    msg="{:}: missing attr: {:s}".format(
+                                        repr(ocb_kwargs), tattr))
 
                 for tattr in self.not_attrs[ocb_kwargs['instrument']]:
-                    self.assertFalse(hasattr(self.ocb, tattr))
+                    self.assertFalse(
+                        hasattr(self.ocb, tattr),
+                        msg="{:}: unexpected attr present: {:s}".format(
+                            repr(ocb_kwargs), tattr))
 
         del ocb_kwargs, tattr
+        return
 
 
 class TestOCBoundaryMethodsGeneral(unittest.TestCase):
@@ -171,10 +179,12 @@ class TestOCBoundaryMethodsGeneral(unittest.TestCase):
         self.assertTrue(path.isfile(self.set_empty['filename']))
         self.assertTrue(path.isfile(self.set_default['filename']))
         self.ocb = None
+        return
 
     def tearDown(self):
         """Clean up the test environment."""
         del self.set_empty, self.set_default, self.ocb, self.test_class
+        return
 
     def test_repr_string(self):
         """Test __repr__ method string."""
@@ -289,28 +299,38 @@ class TestOCBoundaryMethodsNorth(unittest.TestCase):
         for self.out in ["filename", "instrument", "hemisphere", "records",
                          "rec_ind", "dtime", "phi_cent", "r_cent", "r",
                          "boundary_lat"]:
-            self.assertTrue(hasattr(self.ocb, self.out))
+            self.assertTrue(hasattr(self.ocb, self.out),
+                            msg="missing attr: {:}".format(self.out))
 
         # Ensure optional attributes are absent
         for self.out in ["aacgm_boundary_lon", "aacgm_boundary_lat"]:
-            self.assertFalse(hasattr(self.ocb, self.out))
+            self.assertFalse(hasattr(self.ocb, self.out),
+                             msg="unexpected attr present: {:s}".format(
+                                 self.out))
 
     def test_image_attrs(self):
         """Test IMAGE attributes in the north."""
-        for self.out in ["num_sectors", "year", "soy", "r_err", "a"]:
-            self.assertTrue(hasattr(self.ocb, self.out))
+        for self.out in ["num_sectors", "year", "soy", "r_err", "a", "fom"]:
+            self.assertTrue(hasattr(self.ocb, self.out),
+                            msg="missing attr: {:s}".format(self.out))
+        return
 
     def test_ampere_attrs(self):
         """Test AMPERE attributes don't exist when IMAGE is loaded."""
-        for self.out in ['date', 'time', 'x', 'y', 'fom']:
-            self.assertFalse(hasattr(self.ocb, self.out))
+        for self.out in ['date', 'time', 'x', 'y']:
+            self.assertFalse(hasattr(self.ocb, self.out),
+                             msg="unexpected attr present: {:s}".format(
+                             self.out))
 
     def test_dmspssj_attrs(self):
         """Test DMSP-SSJ attributes don't exist when IMAGE is loaded."""
 
-        for self.out in ['sc', 'date', 'time', 'x', 'y', 'fom', 'x_1', 'x_2',
-                         'y_1', 'y_2']:
-            self.assertFalse(hasattr(self.ocb, self.out))
+        for self.out in ['sc', 'date', 'time', 'x', 'y', 'x_1', 'x_2', 'y_1',
+                         'y_2']:
+            self.assertFalse(hasattr(self.ocb, self.out),
+                             msg="unexpected attr present: {:s}".format(
+                                 self.out))
+        return
 
     def test_load(self):
         """Ensure correctly loaded defaults in the north."""
@@ -365,6 +385,7 @@ class TestOCBoundaryMethodsNorth(unittest.TestCase):
         self.assertTrue(numpy.where(numpy.isnan(self.out[1]))
                         == numpy.where(numpy.isnan(self.ocb_mlt)))
         self.assertTrue(numpy.all(self.out[2] == self.r_corr))
+        return
 
     def test_normal_coord_north_alt_mag_label(self):
         """Test normalisation calculation with good, but odd coord label."""
@@ -396,6 +417,7 @@ class TestOCBoundaryMethodsNorth(unittest.TestCase):
 
         self.assertEqual(len(self.out), 3)
         self.assertTrue(numpy.all(numpy.isnan(self.out)))
+        return
 
     def test_normal_coord_low_rec_ind(self):
         """Test the normalization calculation failure with low record index."""
@@ -412,6 +434,7 @@ class TestOCBoundaryMethodsNorth(unittest.TestCase):
 
         self.assertEqual(len(self.out), 3)
         self.assertTrue(numpy.all(numpy.isnan(self.out)))
+        return
 
     def test_revert_coord_north_float(self):
         """Test the reversion to AACGM coordinates in the north."""
@@ -467,6 +490,7 @@ class TestOCBoundaryMethodsNorth(unittest.TestCase):
                                          self.r_corr)
         self.assertEqual(len(self.out), 2)
         self.assertTrue(numpy.all(numpy.isnan(self.out)))
+        return
 
     def test_revert_coord_low_rec_ind(self):
         """Test the reversion calculation failure with low record index
@@ -477,6 +501,7 @@ class TestOCBoundaryMethodsNorth(unittest.TestCase):
                                          self.r_corr)
         self.assertEqual(len(self.out), 2)
         self.assertTrue(numpy.all(numpy.isnan(self.out)))
+        return
 
     def test_revert_coord_high_rec_ind(self):
         """Test the reversion calculation failure with high record index."""
@@ -509,8 +534,10 @@ class TestOCBoundaryMethodsNorth(unittest.TestCase):
         self.ocb.get_aacgm_boundary_lat(self.mlt)
 
         # Ensure new attriutes were added
-        self.assertTrue(hasattr(self.ocb, "aacgm_boundary_lon"))
-        self.assertTrue(hasattr(self.ocb, "aacgm_boundary_lat"))
+        self.assertTrue(hasattr(self.ocb, "aacgm_boundary_lon"),
+                        msg="missing attr 'aacgm_boundary_lon'")
+        self.assertTrue(hasattr(self.ocb, "aacgm_boundary_lat"),
+                        msg="missing attr 'aacgm_boundary_lat'")
 
         # Test shape of new attributes
         self.assertEqual(len(self.ocb.aacgm_boundary_mlt), self.ocb.records)
@@ -527,6 +554,7 @@ class TestOCBoundaryMethodsNorth(unittest.TestCase):
         # Test the value of the latitude attriubte at the good record location
         # Also tests that specifying the same longitude locations twice is ok
         self.test_aacgm_boundary_location_good()
+        return
 
     def test_aacgm_boundary_location_good(self):
         """Test calculation of the OCB in AACGM coordinates in the north."""
@@ -558,6 +586,7 @@ class TestOCBoundaryMethodsNorth(unittest.TestCase):
             self.ocb.aacgm_boundary_lat[rind])))
         self.assertAlmostEqual(self.ocb.aacgm_boundary_lat[rind][1],
                                72.82502115387997)
+        return
 
     def test_aacgm_boundary_location_no_input(self):
         """Test failure of OCB AACGM location calculation for no input."""
@@ -645,30 +674,38 @@ class TestOCBoundaryMethodsSouth(unittest.TestCase):
 
         for self.out in ["filename", "instrument", "hemisphere", "records",
                          "rec_ind", "dtime", "phi_cent", "r_cent", "r",
-                         "boundary_lat"]:
-            self.assertTrue(hasattr(self.ocb, self.out))
+                         "boundary_lat", "fom"]:
+            self.assertTrue(hasattr(self.ocb, self.out),
+                            msg="missing attr: {:s}".format(self.out))
 
         # Ensure optional attributes are absent
         for self.out in ["aacgm_boundary_lon", "aacgm_boundary_lat"]:
-            self.assertFalse(hasattr(self.ocb, self.out))
+            self.assertFalse(hasattr(self.ocb, self.out),
+                             msg="unexpected attr present: {:s}".format(
+                                 self.out))
 
     def test_image_attrs(self):
         """Test that IMAGE attributes are not available in the south."""
 
         for self.out in ["num_sectors", "year", "soy", "r_err", "a"]:
-            self.assertFalse(hasattr(self.ocb, self.out))
+            self.assertFalse(hasattr(self.ocb, self.out),
+                             msg="unexpected attr present: {:s}".format(
+                                 self.out))
 
     def test_dmspssj_attrs(self):
         """Test that DMSP-SSJ attributes are not available in the south."""
 
         for self.out in ["sc", "x_1", "x_2", "y_1", "y_2"]:
-            self.assertFalse(hasattr(self.ocb, self.out))
+            self.assertFalse(hasattr(self.ocb, self.out),
+                             msg="unexpected attr present: {:s}".format(
+                                 self.out))
 
     def test_ampere_attrs(self):
         """Test that AMPERE attributes are available in the south."""
 
         for self.out in ['date', 'time', 'x', 'y', 'fom']:
-            self.assertTrue(hasattr(self.ocb, self.out))
+            self.assertTrue(hasattr(self.ocb, self.out),
+                            msg="missing attr: {:s}".format(self.out))
 
     def test_load(self):
         """Ensure that the default options were correctly set in the south."""
@@ -938,6 +975,7 @@ class TestOCBoundaryFailure(unittest.TestCase):
             self.test_class(instrument="hi", filename=test_north)
 
         del test_north
+        return
 
     def test_bad_hemisphere_input(self):
         """Test failure when incorrect hemisphere value is input."""
