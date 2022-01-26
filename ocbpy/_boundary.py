@@ -643,8 +643,8 @@ class OCBoundary(object):
 
         # Calculate the desired point location relative to the AACGM pole
         scalep = 90.0 - self.hemisphere * aacgm_lat
-        xp = scalep * np.cos(np.radians(aacgm_mlt * 15.0))
-        yp = scalep * np.sin(np.radians(aacgm_mlt * 15.0))
+        xp = scalep * np.cos(ocb_time.hr2rad(aacgm_mlt))
+        yp = scalep * np.sin(ocb_time.hr2rad(aacgm_mlt))
 
         # Get the distance between the OCB pole and the point location.  This
         # distance is then scaled by r, the OCB radius.  For non-circular
@@ -952,7 +952,8 @@ class EABoundary(OCBoundary):
             # Set to a function that will not alter the data
             rfunc = ocbcor.circular
 
-        if hasattr(filename, "lower") and filename.lower() == "default":
+        if(hasattr(filename, "lower") and hasattr(instrument, "lower")
+           and filename.lower() == "default"):
             filename, instrument = get_default_file(stime, etime, hemisphere,
                                                     instrument, bound='eab')
 
