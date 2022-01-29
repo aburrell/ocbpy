@@ -990,7 +990,6 @@ class EABoundary(OCBoundary):
         return
 
 
-
 class DualBoundary(object):
     """Object containing EAB and OCB data for dual-boundary coordinates.
 
