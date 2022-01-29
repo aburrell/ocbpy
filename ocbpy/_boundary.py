@@ -950,7 +950,9 @@ class EABoundary(OCBoundary):
         # Process the defaults that differ for the EAB
         if rfunc is None:
             # Set to a function that will not alter the data
-            rfunc = ocbcor.circular
+            self._set_default_rfunc(instrument)
+            rfunc = self.rfunc
+            self.rfunc = None
 
         if(hasattr(filename, "lower") and hasattr(instrument, "lower")
            and filename.lower() == "default"):
@@ -964,6 +966,29 @@ class EABoundary(OCBoundary):
                             rfunc_kwargs=rfunc_kwargs)
 
         return
+
+    def _set_default_rfunc(self, input_instrument):
+        """Set the default instrument EAB boundary function.
+
+        Parameters
+        ----------
+        input_instrument : str
+           Input instrument name
+
+        Notes
+        -----
+        Assign a function for each time in case we have a data set with a
+        correction that changes with UT
+
+        """
+
+        if input_instrument in ["", "default", "image", "dmsp-ssj"]:
+            self.rfunc = ocbcor.circular
+        else:
+            raise ValueError("unknown instrument")
+
+        return
+
 
 
 class DualBoundary(object):
