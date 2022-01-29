@@ -182,11 +182,11 @@ class TestEABoundaryMethodsSouth(test_ocb.TestOCBoundaryMethodsSouth):
         self.ocb = self.test_class(**self.set_south)
         self.ocb.rec_ind = 0
 
-        self.mlt = numpy.array([10.16949153, 10.57627119, 14.6440678,
-                                15.05084746])
+        self.mlt = numpy.array([2.44067797, 2.84745763, 22.37288136,
+                                22.77966102])
         self.lat = numpy.full(shape=self.mlt.shape, fill_value=-75.0)
-        self.ocb_lat = []
-        self.ocb_mlt = []
+        self.ocb_lat = [-84.51747815, -82.89664467, -76.7993294, -78.4535674]
+        self.ocb_mlt = [6.02245268, 6.69193021, 18.56617597, 18.88837759]
         self.r_corr = 0.0
         self.out = None
         return
@@ -220,8 +220,8 @@ class TestEABoundaryMethodsSouth(test_ocb.TestOCBoundaryMethodsSouth):
         self.out = self.ocb.normal_coord(self.lat[0], self.mlt[0], height=830,
                                          coords='geocentric')
 
-        self.assertAlmostEqual(float(self.out[0]), -68.58362251, places=3)
-        self.assertAlmostEqual(float(self.out[1]), 20.56981238, places=3)
+        self.assertAlmostEqual(float(self.out[0]), -76.3801206, places=3)
+        self.assertAlmostEqual(float(self.out[1]), 20.494021798, places=3)
         self.assertEqual(float(self.out[2]), self.r_corr)
         return
 
@@ -230,7 +230,160 @@ class TestEABoundaryMethodsSouth(test_ocb.TestOCBoundaryMethodsSouth):
         self.out = self.ocb.normal_coord(self.lat[0], self.mlt[0], height=830,
                                          coords='geodetic')
 
-        self.assertAlmostEqual(float(self.out[0]), -68.53149555, places=3)
-        self.assertAlmostEqual(float(self.out[1]), 20.57270224, places=3)
+        self.assertAlmostEqual(float(self.out[0]), -76.34575670, places=3)
+        self.assertAlmostEqual(float(self.out[1]), 20.524524159, places=3)
         self.assertEqual(float(self.out[2]), self.r_corr)
+        return
+
+    def test_revert_coord_south_geodetic(self):
+        """Test the reversion to geodetic coordinates in the south."""
+        self.out = self.ocb.revert_coord(self.ocb_lat[1], self.ocb_mlt[1],
+                                         self.r_corr, coords='geodetic')
+        self.assertAlmostEqual(float(self.out[0]), -66.317542, places=3)
+        self.assertAlmostEqual(float(self.out[1]), 5.90843131, places=3)
+        return
+
+    def test_revert_coord_south_geocentric(self):
+        """Test the reversion to geocentric coordinates in the south."""
+        self.out = self.ocb.revert_coord(self.ocb_lat[1], self.ocb_mlt[1],
+                                         self.r_corr, coords='geocentric')
+        self.assertAlmostEqual(float(self.out[0]), -66.1832772, places=3)
+        self.assertAlmostEqual(float(self.out[1]), 5.90843131, places=3)
+        return
+
+    def test_normal_coord_south_corrected(self):
+        """Test normalisation calculation in the south with a corrected OCB."""
+        self.r_corr = 1.0
+        self.ocb.rfunc_kwargs[self.ocb.rec_ind]['r_add'] = self.r_corr
+        self.out = self.ocb.normal_coord(self.lat[0], self.mlt[0])
+
+        self.assertAlmostEqual(float(self.out[0]), -84.764005494, places=3)
+        self.assertAlmostEqual(float(self.out[1]), 6.02245269240, places=3)
+        self.assertEqual(float(self.out[2]), self.r_corr)
+        return
+
+    def test_aacgm_boundary_location_good_south(self):
+        """Test finding the EAB in AACGM coordinates in the south."""
+
+        # Add the attribute at the good location
+        self.ocb.get_aacgm_boundary_lat(self.mlt, rec_ind=self.ocb.rec_ind)
+
+        # Test value of latitude attribute
+        self.assertTrue(
+            numpy.all(self.ocb.aacgm_boundary_lat[self.ocb.rec_ind] < 0.0))
+        self.assertAlmostEqual(
+            self.ocb.aacgm_boundary_lat[self.ocb.rec_ind].min(),
+            -61.64470517204886)
+        self.assertEqual(
+            self.ocb.aacgm_boundary_lat[self.ocb.rec_ind].argmin(), 2)
+        self.assertAlmostEqual(
+            self.ocb.aacgm_boundary_lat[self.ocb.rec_ind].max(),
+            -56.71986304055978)
+        self.assertEqual(
+            self.ocb.aacgm_boundary_lat[self.ocb.rec_ind].argmax(), 0)
+        return
+
+    def test_aacgm_boundary_location_good_south_corrected_func_arr(self):
+        """Test func array init with good, southern, corrected EAB."""
+        self.set_south['rfunc'] = numpy.full(
+            shape=self.ocb.r.shape, fill_value=ocbpy.ocb_correction.circular)
+        self.set_south['rfunc_kwargs'] = numpy.full(shape=self.ocb.r.shape,
+                                                    fill_value={"r_add": 1.0})
+        self.ocb = self.test_class(**self.set_south)
+
+        # Add the attribute at the good location
+        self.ocb.get_aacgm_boundary_lat(self.mlt, rec_ind=self.ocb.rec_ind)
+
+        # Test value of latitude attribute
+        self.assertTrue(
+            numpy.all(self.ocb.aacgm_boundary_lat[self.ocb.rec_ind] < 0.0))
+        self.assertAlmostEqual(
+            self.ocb.aacgm_boundary_lat[self.ocb.rec_ind].min(),
+            -59.90673085116123)
+        self.assertEqual(
+            self.ocb.aacgm_boundary_lat[self.ocb.rec_ind].argmin(), 1)
+        self.assertAlmostEqual(
+            self.ocb.aacgm_boundary_lat[self.ocb.rec_ind].max(),
+            -56.588628664055825)
+        self.assertEqual(
+            self.ocb.aacgm_boundary_lat[self.ocb.rec_ind].argmax(), 3)
+        return
+
+    def test_aacgm_boundary_location_good_south_corrected_kwarg_arr(self):
+        """Test kwarg array init with good, southern, corrected OCB."""
+        self.set_south['rfunc_kwargs'] = numpy.full(shape=self.ocb.r.shape,
+                                                    fill_value={"r_add": 1.0})
+        self.ocb = self.test_class(**self.set_south)
+
+        # Add the attribute at the good location
+        self.ocb.get_aacgm_boundary_lat(self.mlt, rec_ind=self.ocb.rec_ind)
+
+        # Test value of latitude attribute
+        self.assertTrue(
+            numpy.all(self.ocb.aacgm_boundary_lat[self.ocb.rec_ind] < 0.0))
+        self.assertAlmostEqual(
+            self.ocb.aacgm_boundary_lat[self.ocb.rec_ind].min(),
+            -59.90673085116123)
+        self.assertEqual(
+            self.ocb.aacgm_boundary_lat[self.ocb.rec_ind].argmin(), 1)
+        self.assertAlmostEqual(
+            self.ocb.aacgm_boundary_lat[self.ocb.rec_ind].max(),
+            -56.588628664055825)
+        self.assertEqual(
+            self.ocb.aacgm_boundary_lat[self.ocb.rec_ind].argmax(), 3)
+        return
+
+    def test_aacgm_boundary_location_good_south_corrected_dict(self):
+        """Test dict init with good, southern, corrected OCB."""
+        self.set_south['rfunc_kwargs'] = {"r_add": 1.0}
+        self.ocb = self.test_class(**self.set_south)
+
+        # Add the attribute at the good location
+        self.ocb.get_aacgm_boundary_lat(self.mlt, rec_ind=self.ocb.rec_ind)
+
+        # Test value of latitude attribute
+        self.assertTrue(
+            numpy.all(self.ocb.aacgm_boundary_lat[self.ocb.rec_ind] < 0.0))
+        self.assertAlmostEqual(
+            self.ocb.aacgm_boundary_lat[self.ocb.rec_ind].min(),
+            -59.90673085116123)
+        self.assertEqual(
+            self.ocb.aacgm_boundary_lat[self.ocb.rec_ind].argmin(), 1)
+        self.assertAlmostEqual(
+            self.ocb.aacgm_boundary_lat[self.ocb.rec_ind].max(),
+            -56.588628664055825)
+        self.assertEqual(
+            self.ocb.aacgm_boundary_lat[self.ocb.rec_ind].argmax(), 3)
+        return
+
+    def test_aacgm_boundary_location_good_south_corrected(self):
+        """Test finding the corrected OCB in AACGM coordinates in the south."""
+        self.out = self.ocb.rec_ind
+        self.ocb.rfunc_kwargs[self.ocb.rec_ind]['r_add'] = 1.0
+
+        # Add the attribute at the good location
+        self.ocb.get_aacgm_boundary_lat(self.mlt, rec_ind=self.out)
+
+        # Test value of latitude attribute
+        self.assertTrue(numpy.all(self.ocb.aacgm_boundary_lat[self.out] < 0.0))
+        self.assertAlmostEqual(self.ocb.aacgm_boundary_lat[self.out].min(),
+                               -60.54469198966263)
+        self.assertEqual(self.ocb.aacgm_boundary_lat[self.out].argmin(), 2)
+        self.assertAlmostEqual(self.ocb.aacgm_boundary_lat[self.out].max(),
+                               -55.70577000484318)
+        self.assertEqual(self.ocb.aacgm_boundary_lat[self.out].argmax(), 0)
+        return
+
+
+class TestEABoundaryFailure(test_ocb.TestOCBoundaryFailure):
+    """Test the EABoundary class failures raise appropriate errors."""
+
+    def setUp(self):
+        """Set up the test environment."""
+        self.test_class = ocbpy.EABoundary
+        return
+
+    def tearDown(self):
+        """Clean up the test environment."""
+        del self.test_class
         return
