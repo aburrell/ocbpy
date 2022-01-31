@@ -984,7 +984,11 @@ class EABoundary(OCBoundary):
 
         if input_instrument in ["", "default", "image", "dmsp-ssj"]:
             self.rfunc = ocbcor.circular
+        elif not hasattr(input_instrument, "lower"):
+            # Allow an empty class object to be initialised
+            self.rfunc = None
         else:
+            # Only raise an error if the input instrument is a string
             raise ValueError("unknown instrument")
 
         return
