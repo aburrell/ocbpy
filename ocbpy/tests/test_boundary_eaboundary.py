@@ -94,10 +94,6 @@ class TestEABoundaryMethodsGeneral(test_ocb.TestOCBoundaryMethodsGeneral):
         del self.set_empty, self.set_default, self.ocb, self.test_class
         return
 
-    def test_bad_rfunc_inst(self):
-        """Test success setting default rfunc for unknown instrument."""
-        return
-
 
 class TestEABoundaryMethodsNorth(test_ocb.TestOCBoundaryMethodsNorth):
     """Unit tests for the EABoundary class in the northern hemisphere."""
