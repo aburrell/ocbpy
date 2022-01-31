@@ -93,7 +93,7 @@ class TestGeneralLoadMethods(unittest.TestCase):
         self.test_file_sod = os.path.join(ocb_dir, "tests", "test_data",
                                           "test_sod")
         self.headers = {self.test_file_soy:
-                        [u"YEAR SOY NB PHICENT RCENT R A RERR"],
+                        [u"YEAR SOY NB PHICENT RCENT R A RERR FOM"],
                         self.test_file_sod:
                         [u"YEAR DOY SOD NB PHICENT RCENT R A RERR"],
                         self.test_file_dt:
@@ -101,7 +101,7 @@ class TestGeneralLoadMethods(unittest.TestCase):
         self.test_out = {self.test_file_soy:
                          {"YEAR": 2000.0, "SOY": 11187202.0, "NB": 9.0,
                           "A": 1.302e+07, "PHICENT": 315.29, "RCENT": 2.67,
-                          "R": 18.38, "RERR": 0.47},
+                          "R": 18.38, "RERR": 0.47, "FOM": 4.0},
                          self.test_file_sod:
                          {"YEAR": '2000', "DOY": '108', "SOD": 43945.0,
                           "NB": 5.0, "A": 4078000.0, "PHICENT": 32.55,
@@ -109,7 +109,7 @@ class TestGeneralLoadMethods(unittest.TestCase):
                           "datetime": dt.datetime(2000, 4, 17, 12, 12, 25)},
                          self.test_file_dt:
                          {"sc": 16.0, "date": u"2010-12-31", "fom": 3.192,
-                          "r": 1.268, "time": u"23:24:53", "x": 0.437,
+                          "r": 8.174, "time": u"23:24:53", "x": 0.437,
                           "x_1": -7.61, "x_2": 8.485, "y": 6.999, "y_1": 5.564,
                           "y_2": 8.433,
                           "datetime": dt.datetime(2010, 12, 31, 23, 24, 53)}}
@@ -239,12 +239,14 @@ class TestGeneralLoadMethods(unittest.TestCase):
                                             **self.load_kwargs)
 
         # Test to ensure the output header equals the input header
-        self.assertListEqual(self.out[0], self.headers[self.test_file_sod])
+        self.assertListEqual(self.out[0], self.headers[self.test_file_sod],
+                             msg="output header not equal to input header")
 
         # Test to see that the data keys are all in the header
         self.assertListEqual(
             sorted([kk for kk in self.test_out[self.test_file_sod].keys()]),
-            sorted([kk for kk in self.out[1].keys()]))
+            sorted([kk for kk in self.out[1].keys()]),
+            msg="Unexpected data keys in output dictionary")
 
         # Test the length of the data file
         self.assertTupleEqual(self.out[1]['A'].shape, (9,))
