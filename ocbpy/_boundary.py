@@ -1133,7 +1133,7 @@ class DualBoundary(object):
         self.set_good_ind()
 
         # Set the number of good paired records
-        self.records = len(self.dtime)
+        self.records = 0 if self.dtime is None else len(self.dtime)
         self.rec_ind = -1
 
         # Cycle record indices to the first good record pair
@@ -1144,19 +1144,18 @@ class DualBoundary(object):
     def __repr__(self):
         out_str = "".join([repr(self.__class__).split("'")[1], "(eab=",
                            repr(self.eab), ", ocb=", repr(self.ocb),
-                           ", max_delta=", repr(self.max_delta),
-                           ", min_sectors=", repr(self.min_sectors),
-                           ", rcent_dev=", repr(self.rcent_dev),
-                           ", max_r=", repr(self.max_r),
-                           ", min_r=", repr(self.min_r), ")"])
+                           ", max_delta=", repr(self.max_delta), ")"])
 
         return out_str
 
     def __str__(self):
         out = "Dual Boundary data\n{:d} good boundary ".format(self.records)
-        out = "{:s}pairs from {:} to {:}\nMaximum ".format(out, self.dtime[0],
-                                                           self.dtime[-1])
-        out = "{:s} boundary difference of {:.1f} s".format(out, self.delta_max)
+        if self.records == 0:
+            out = "{:s}pairs\nMaximum ".format(out)
+        else:
+            out = "{:s}pairs from {:} to {:}\nMaximum ".format(
+                out, self.dtime[0], self.dtime[-1])
+        out = "{:s} boundary difference of {:.1f} s".format(out, self.max_delta)
         out = "{:s}\n\n{:s}\n{:s}\n".format(out, self.eab.__str__(),
                                             self.ocb.__str__())
 
@@ -1197,6 +1196,12 @@ class DualBoundary(object):
         """
 
         # Initalize the class attributes
+        if self.ocb.dtime is None or self.eab.dtime is None:
+            self.dtime = None
+            self.ocb_ind = None
+            self.eab_ind = None
+            return
+
         self.dtime = list()
         self.ocb_ind = list()
         self.eab_ind = list()
@@ -1250,12 +1255,13 @@ class DualBoundary(object):
 
     def get_next_good_ind(self):
         """Cycle the boundary attributes to the next good paired index."""
-        # Cycle to next boundary
-        self.rec_ind += 1
+        if self.records > 0:
+            # Cycle to next boundary
+            self.rec_ind += 1
 
-        # Set the EAB and OCB record indices
-        self.ocb.rec_ind = self.ocb_ind[self.rec_ind]
-        self.eab.rec_ind = self.eab_ind[self.rec_ind]
+            # Set the EAB and OCB record indices
+            self.ocb.rec_ind = self.ocb_ind[self.rec_ind]
+            self.eab.rec_ind = self.eab_ind[self.rec_ind]
 
         return
 
