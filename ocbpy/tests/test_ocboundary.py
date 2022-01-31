@@ -14,8 +14,8 @@ import unittest
 import warnings
 
 import ocbpy
-from test_cycle_boundary import TestCycleMatchData, TestCycleGoodIndices
-import test_boundary_ocboundary as test_ocb
+from .test_cycle_boundary import TestCycleMatchData, TestCycleGoodIndices
+from . import test_boundary_ocboundary as test_ocb
 
 
 class TestOCBoundaryDeprecation(unittest.TestCase):
@@ -140,10 +140,12 @@ class TestOldOCBoundaryLogFailure(test_ocb.TestOCBoundaryLogFailure):
         self.log_capture = StringIO()
         ocbpy.logger.addHandler(logging.StreamHandler(self.log_capture))
         ocbpy.logger.setLevel(logging.WARNING)
+        return
 
     def tearDown(self):
         """Tear down the test case."""
         del self.lwarn, self.lout, self.log_capture, self.test_class
+        return
 
 
 class TestOldOCBoundaryInstruments(test_ocb.TestOCBoundaryInstruments):
@@ -178,11 +180,13 @@ class TestOldOCBoundaryInstruments(test_ocb.TestOCBoundaryInstruments):
                            "filename": path.join(self.test_dir,
                                                  "test_south_circle")}]
         self.ocb = None
+        return
 
     def tearDown(self):
         """Clean up the test environment."""
         del self.test_dir, self.inst_attrs, self.inst_init, self.ocb
         del self.test_class
+        return
 
 
 class TestOldOCBoundaryMethodsGeneral(test_ocb.TestOCBoundaryMethodsGeneral):
@@ -201,10 +205,12 @@ class TestOldOCBoundaryMethodsGeneral(test_ocb.TestOCBoundaryMethodsGeneral):
         self.assertTrue(path.isfile(self.set_empty['filename']))
         self.assertTrue(path.isfile(self.set_default['filename']))
         self.ocb = None
+        return
 
     def tearDown(self):
         """Clean up the test environment."""
         del self.set_empty, self.set_default, self.ocb, self.test_class
+        return
 
 
 class TestOldOCBoundaryMethodsNorth(test_ocb.TestOCBoundaryMethodsNorth):
@@ -221,6 +227,7 @@ class TestOldOCBoundaryMethodsNorth(test_ocb.TestOCBoundaryMethodsNorth):
         self.assertTrue(path.isfile(self.set_north['filename']))
         self.ocb = self.test_class(**self.set_north)
         self.ocb.rec_ind = 27
+        self.ref_boundary = 74.0
 
         self.mlt = numpy.linspace(0.0, 24.0, num=6)
         self.lat = numpy.linspace(0.0, 90.0, num=len(self.mlt))
@@ -230,11 +237,14 @@ class TestOldOCBoundaryMethodsNorth(test_ocb.TestOCBoundaryMethodsNorth):
                         19.02060793, 17.832]
         self.r_corr = 0.0
         self.out = None
+        return
 
     def tearDown(self):
         """Clean up the test environment."""
         del self.ocb, self.set_north, self.mlt, self.lat, self.ocb_lat
         del self.ocb_mlt, self.r_corr, self.out, self.test_class
+        del self.ref_boundary
+        return
 
 
 class TestOldOCBoundaryMethodsSouth(test_ocb.TestOCBoundaryMethodsSouth):
@@ -253,6 +263,7 @@ class TestOldOCBoundaryMethodsSouth(test_ocb.TestOCBoundaryMethodsSouth):
                           "rfunc": ocbpy.ocb_correction.circular}
         self.ocb = self.test_class(**self.set_south)
         self.ocb.rec_ind = 8
+        self.ref_boundary = -74.0
 
         self.mlt = numpy.linspace(0.0, 24.0, num=6)
         self.lat = numpy.linspace(-90.0, 0.0, num=len(self.mlt))
@@ -262,11 +273,14 @@ class TestOldOCBoundaryMethodsSouth(test_ocb.TestOCBoundaryMethodsSouth):
                         numpy.nan]
         self.r_corr = 0.0
         self.out = None
+        return
 
     def tearDown(self):
         """Clean up the test environment."""
         del self.ocb, self.set_south, self.mlt, self.lat, self.ocb_lat
         del self.ocb_mlt, self.r_corr, self.out, self.test_class
+        del self.ref_boundary
+        return
 
 
 class TestOldOCBoundaryFailure(test_ocb.TestOCBoundaryFailure):

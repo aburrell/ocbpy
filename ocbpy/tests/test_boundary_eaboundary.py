@@ -13,7 +13,7 @@ from os import path
 import unittest
 
 import ocbpy
-import test_boundary_ocboundary as test_ocb
+from . import test_boundary_ocboundary as test_ocb
 
 
 class TestEABoundaryLogFailure(test_ocb.TestOCBoundaryLogFailure):
