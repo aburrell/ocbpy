@@ -5,7 +5,7 @@
 # -----------------------------------------------------------------------------
 """Tests the boundary OCBoundary class."""
 
-import datetime as dt
+import datetime
 from io import StringIO
 import logging
 import numpy
@@ -69,7 +69,7 @@ class TestOCBoundaryLogFailure(unittest.TestCase):
         """Test initialization with a bad default file/instrument pairing."""
         self.lwarn = "name provided is not a file\ncannot open OCB file [hi]"
 
-        # Try to load AMPERE data with an IMAGE file
+        # Try to load data with a non-existant file name
         ocb = self.test_class(filename="hi")
         self.assertIsNone(ocb.filename)
 
@@ -150,20 +150,30 @@ class TestOCBoundaryInstruments(unittest.TestCase):
         """Test OCB initialization with good instrument names."""
         for ocb_kwargs in self.inst_init:
             with self.subTest(ocb_kwargs=ocb_kwargs):
+                # Initalize the class object
                 self.ocb = self.test_class(**ocb_kwargs)
 
-                for tattr in self.inst_attrs[ocb_kwargs['instrument']]:
-                    self.assertTrue(hasattr(self.ocb, tattr),
-                                    msg="{:}: missing attr: {:s}".format(
-                                        repr(ocb_kwargs), tattr))
+                # Get a list of Instruments to examine
+                subclass = {ocb_kwargs[okey]: self.ocb if okey.find("_") < 0
+                            else getattr(self.ocb, okey.split("_")[0])
+                            for okey in ocb_kwargs.keys()
+                            if okey.find('instrument') >= 0}
 
-                for tattr in self.not_attrs[ocb_kwargs['instrument']]:
-                    self.assertFalse(
-                        hasattr(self.ocb, tattr),
-                        msg="{:}: unexpected attr present: {:s}".format(
-                            repr(ocb_kwargs), tattr))
+                # Test each Instrument for the desired attributes
+                for inst in subclass.keys():
+                    # Test that required attributes are present
+                    for tattr in self.inst_attrs[inst]:
+                        self.assertTrue(hasattr(subclass[inst], tattr),
+                                        msg="{:}: missing attr: {:s}".format(
+                                            repr(ocb_kwargs), tattr))
 
-        del ocb_kwargs, tattr
+                    # Test that unexpected attributes are missing
+                    for tattr in self.not_attrs[inst]:
+                        self.assertFalse(
+                            hasattr(subclass[inst], tattr),
+                            msg="{:}: unexpected attr present: {:s}".format(
+                                repr(ocb_kwargs), tattr))
+
         return
 
 
@@ -225,6 +235,7 @@ class TestOCBoundaryMethodsGeneral(unittest.TestCase):
 
     def test_repr_eval(self):
         """Test __repr__ method's ability to reproduce a class."""
+        self.ocb = self.test_class(**self.set_default)
         test_ocb = eval(repr(self.ocb))
         self.assertEqual(repr(self.ocb), repr(test_ocb))
         return
@@ -232,8 +243,20 @@ class TestOCBoundaryMethodsGeneral(unittest.TestCase):
     def test_default_str(self):
         """Test the default class print output."""
         self.ocb = self.test_class(**self.set_default)
-        self.assertRegex(self.ocb.__str__(),
-                         "{:s} file:".format(self.test_class.__name__))
+
+        if hasattr(self.ocb, "ocb"):
+            baseclasses = [self.ocb.ocb, self.ocb.eab]
+            basenames = [ocbpy.OCBoundary.__name__, ocbpy.EABoundary.__name__]
+            self.assertRegex(self.ocb.__str__(), "Dual Boundary data")
+        else:
+            baseclasses = [self.ocb]
+            basenames = [self.test_class.__name__]
+
+        for i, val in enumerate(baseclasses):
+            with self.subTest(val=val):
+                # Test the values for the base classes
+                self.assertRegex(self.ocb.__str__(),
+                                 "{:s} file:".format(basenames[i]))
         return
 
     def test_short_str(self):
@@ -358,8 +381,8 @@ class TestOCBoundaryMethodsNorth(unittest.TestCase):
     def test_partial_load(self):
         """Ensure limited sections of a file can be loaded in the north."""
 
-        stime = self.ocb.dtime[0] + dt.timedelta(seconds=1)
-        etime = self.ocb.dtime[-1] - dt.timedelta(seconds=1)
+        stime = self.ocb.dtime[0] + datetime.timedelta(seconds=1)
+        etime = self.ocb.dtime[-1] - datetime.timedelta(seconds=1)
 
         # Load all but the first and last records
         self.out = self.test_class(filename=self.ocb.filename,
