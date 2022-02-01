@@ -10,6 +10,7 @@ from io import StringIO
 import logging
 import numpy
 from os import path
+import platform
 import unittest
 
 import ocbpy
@@ -181,7 +182,12 @@ class TestDualBoundaryMethodsGeneral(test_ocb.TestOCBoundaryMethodsGeneral):
                 else:
                     test_str = "=".join([val, repr(self.set_default[val])])
 
-                # Test the correct part of the repr output
+                # Windows has trouble recognizing the filename in Regex
+                if(test_str.find("filename")
+                   and platform.system().lower() == "windows"):
+                    test_str = "filename="
+
+                # Test the correct part of the repr output.
                 self.assertRegex(rocb[i], test_str)
         return
 
