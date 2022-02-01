@@ -803,6 +803,10 @@ class OCBoundary(object):
         `aacgm_boundary_lon` holds the aacgm_lon input for each requested
         time.  This is calculated from `aacgm_boundary_mlt` by default [3]_.
 
+        If the boundary radius is not defined at all MLT (possible for
+        poorly constrained boundaries), then MLT with multiple boundary values
+        will only return one possible solution.
+
         """
 
         # Ensure the boundary longitudes span from 0-360 degrees
@@ -1161,6 +1165,44 @@ class DualBoundary(object):
 
         return out
 
+    def _get_current_aacgm_boundary(self):
+        """Get the current AACGM boundaries for the EAB and OCB classes.
+
+        Returns
+        -------
+        eab_blat : array-like or NoneType
+            EAB boundary latitude in AACGM coordinates at the record index,
+            None of no boundary is set.
+        eab_bmlt : array-like or NoneType
+            EAB boundary MLT in AACGM coordinates at the record index,
+            None of no boundary is set.
+        ocb_blat : array-like or NoneType
+            OCB boundary latitude in AACGM coordinates at the record index,
+            None of no boundary is set.
+        ocb_bmlt : array-like or NoneType
+            OCB boundary MLT in AACGM coordinates at the record index,
+            None of no boundary is set.
+
+        """
+
+        # Set the OCB output
+        if hasattr(self.ocb, "aacgm_boundary_lat"):
+            ocb_blat = self.ocb.aacgm_boundary_lat[self.ocb.rec_ind]
+            ocb_bmlt = self.ocb.aacgm_boundary_mlt[self.ocb.rec_ind]
+        else:
+            ocb_blat = None
+            ocb_bmlt = None
+
+        # Set the EAB output
+        if hasattr(self.eab, "aacgm_boundary_lat"):
+            eab_blat = self.eab.aacgm_boundary_lat[self.eab.rec_ind]
+            eab_bmlt = self.eab.aacgm_boundary_mlt[self.eab.rec_ind]
+        else:
+            eab_blat = None
+            eab_bmlt = None
+
+        return eab_blat, eab_bmlt, ocb_blat, ocb_bmlt
+
     def set_good_ind(self, ocb_min_merit=None, ocb_max_merit=None,
                      ocb_kwargs=None, eab_min_merit=None, eab_max_merit=None,
                      eab_kwargs=None):
@@ -1353,22 +1395,10 @@ class DualBoundary(object):
 
         # Get the boundary locations in AACGM coordinates
         if not overwrite:
-            if hasattr(self.ocb, "aacgm_boundary_lat"):
-                orig_ocb_blat = self.ocb.aacgm_boundary_lat[self.ocb.rec_ind]
-                orig_ocb_bmlt = self.ocb.aacgm_boundary_mlt[self.ocb.rec_ind]
-            else:
-                orig_ocb_blat = None
-                orig_ocb_bmlt = None
+            orig_bound = self._get_current_aacgm_boundary()
 
-            if hasattr(self.eab, "aacgm_boundary_lat"):
-                orig_eab_blat = self.eab.aacgm_boundary_lat[self.eab.rec_ind]
-                orig_eab_bmlt = self.eab.aacgm_boundary_mlt[self.eab.rec_ind]
-            else:
-                if orig_ocb_blat is None:
-                    overwrite = True
-                else:
-                    orig_eab_blat = None
-                    orig_eab_bmlt = None
+            if len(set(orig_bound)) == 1 and orig_bound[0] is None:
+                overwrite = True
 
         self.get_aacgm_boundary_lats(aacgm_mlt, rec_ind=self.rec_ind,
                                      overwrite=True, set_lon=False)
@@ -1393,12 +1423,12 @@ class DualBoundary(object):
 
         # If desired, replace the boundaries
         if not overwrite:
-            if orig_ocb_blat is not None:
-                self.ocb.aacgm_boundary_lat = orig_ocb_blat
-                self.ocb.aacgm_boundary_mlt = orig_ocb_bmlt
-            if orig_eab_blat is not None:
-                self.eab.aacgm_boundary_lat = orig_eab_blat
-                self.eab.aacgm_boundary_mlt = orig_eab_bmlt
+            if orig_bound[2] is not None:
+                self.ocb.aacgm_boundary_lat = orig_bound[2]
+                self.ocb.aacgm_boundary_mlt = orig_bound[3]
+            if orig_bound[0] is not None:
+                self.eab.aacgm_boundary_lat = orig_bound[0]
+                self.eab.aacgm_boundary_mlt = orig_bound[1]
 
         return bound_lat, bound_mlt, ocb_lat, r_corr
 
@@ -1465,23 +1495,12 @@ class DualBoundary(object):
                                                      method=method)
 
         # Get the boundary locations in AACGM coordinates
+        # Get the boundary locations in AACGM coordinates
         if not overwrite:
-            if hasattr(self.ocb, "aacgm_boundary_lat"):
-                orig_ocb_blat = self.ocb.aacgm_boundary_lat[self.ocb.rec_ind]
-                orig_ocb_bmlt = self.ocb.aacgm_boundary_mlt[self.ocb.rec_ind]
-            else:
-                orig_ocb_blat = None
-                orig_ocb_bmlt = None
+            orig_bound = self._get_current_aacgm_boundary()
 
-            if hasattr(self.eab, "aacgm_boundary_lat"):
-                orig_eab_blat = self.eab.aacgm_boundary_lat[self.eab.rec_ind]
-                orig_eab_bmlt = self.eab.aacgm_boundary_mlt[self.eab.rec_ind]
-            else:
-                if orig_ocb_blat is None:
-                    overwrite = True
-                else:
-                    orig_eab_blat = None
-                    orig_eab_bmlt = None
+            if len(set(orig_bound)) == 1 and orig_bound[0] is None:
+                overwrite = True
 
         self.get_aacgm_boundary_lats(aacgm_mlt, rec_ind=self.rec_ind,
                                      overwrite=True, set_lon=False)
@@ -1506,12 +1525,12 @@ class DualBoundary(object):
 
         # If desired, replace the boundaries
         if not overwrite:
-            if orig_ocb_blat is not None:
-                self.ocb.aacgm_boundary_lat = orig_ocb_blat
-                self.ocb.aacgm_boundary_mlt = orig_ocb_bmlt
-            if orig_eab_blat is not None:
-                self.eab.aacgm_boundary_lat = orig_eab_blat
-                self.eab.aacgm_boundary_mlt = orig_eab_bmlt
+            if orig_bound[2] is not None:
+                self.ocb.aacgm_boundary_lat = orig_bound[2]
+                self.ocb.aacgm_boundary_mlt = orig_bound[3]
+            if orig_bound[0] is not None:
+                self.eab.aacgm_boundary_lat = orig_bound[0]
+                self.eab.aacgm_boundary_mlt = orig_bound[1]
 
         # If desired, convert from magnetic to geographic coordinates
         if coords.lower().find('mag') < 0:
@@ -1631,22 +1650,10 @@ class DualBoundary(object):
 
         # Get the boundary locations in AACGM coordinates
         if not overwrite:
-            if hasattr(self.ocb, "aacgm_boundary_lat"):
-                orig_ocb_blat = self.ocb.aacgm_boundary_lat[self.ocb.rec_ind]
-                orig_ocb_bmlt = self.ocb.aacgm_boundary_mlt[self.ocb.rec_ind]
-            else:
-                orig_ocb_blat = None
-                orig_ocb_bmlt = None
+            orig_bound = self._get_current_aacgm_boundary()
 
-            if hasattr(self.eab, "aacgm_boundary_lat"):
-                orig_eab_blat = self.eab.aacgm_boundary_lat[self.eab.rec_ind]
-                orig_eab_bmlt = self.eab.aacgm_boundary_mlt[self.eab.rec_ind]
-            else:
-                if orig_ocb_blat is None:
-                    overwrite = True
-                else:
-                    orig_eab_blat = None
-                    orig_eab_bmlt = None
+            if len(set(orig_bound)) == 1 and orig_bound[0] is None:
+                overwrite = True
 
         self.get_aacgm_boundary_lats(aacgm_mlt, rec_ind=self.rec_ind,
                                      overwrite=True, set_lon=False)
@@ -1665,11 +1672,11 @@ class DualBoundary(object):
 
         # If desired, replace the boundaries
         if not overwrite:
-            if orig_ocb_blat is not None:
-                self.ocb.aacgm_boundary_lat = orig_ocb_blat
-                self.ocb.aacgm_boundary_mlt = orig_ocb_bmlt
-            if orig_eab_blat is not None:
-                self.eab.aacgm_boundary_lat = orig_eab_blat
-                self.eab.aacgm_boundary_mlt = orig_eab_bmlt
+            if orig_bound[2] is not None:
+                self.ocb.aacgm_boundary_lat = orig_bound[2]
+                self.ocb.aacgm_boundary_mlt = orig_bound[3]
+            if orig_bound[0] is not None:
+                self.eab.aacgm_boundary_lat = orig_bound[0]
+                self.eab.aacgm_boundary_mlt = orig_bound[1]
 
         return scaled_r, unscaled_r
