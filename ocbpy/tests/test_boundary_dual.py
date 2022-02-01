@@ -242,3 +242,170 @@ class TestDualBoundaryMethodsGeneral(test_ocb.TestOCBoundaryMethodsGeneral):
         self.assertIsNone(self.ocb.dtime)
         self.assertEqual(self.ocb.records, 0)
         return
+
+    def test_attrs(self):
+        """Test the default attributes in a DualBoundary object."""
+        self.ocb = self.test_class(**self.set_default)
+
+        # Ensure standard attributes are present
+        for attr in ['eab', 'ocb', 'max_delta', 'records', 'rec_ind', 
+                     'dtime', 'ocb_ind', 'eab_ind']:
+            assertTrue(hasattr(self.ocb, attr),
+                       msg="missing attr: {:}".format(attr))
+
+        return
+
+
+class TestDualBoundaryMethodsLocation(unittest.TestCase):
+    """Test the DualBoundary location methods."""
+
+    def setUp(self):
+        """Initialize the test environment."""
+        self.test_dir = path.join(path.dirname(ocbpy.__file__),
+                                  "tests", "test_data")
+        self.set_default = {"ocb_instrument": "dmsp-ssj",
+                            "eab_instrument": "dmsp-ssj",
+                            "max_delta": 60}
+        self.dual = None
+
+        # Set data test values
+        self.lat = {1: [50.0, 65.0, 66.0, 66.0, 75.0, 75.0, 75.0, 75.0],
+                    -1: [-75.0, -75.0, -65.0, -65.0, -50.0]}
+        self.mlt = {1: [17.49152542, 16.6779661, 8.94915254, 16.6779661,
+                        10.57627119, 10.98305085, 14.6440678 , 15.05084746],
+                    -1: [8.54237288, 17.08474576, 7.72881356, 17.89830508,
+                         18.30508475]}
+
+        # CHECK THESE HERE
+        self.nlat = {1: [42.2702821, 57.52102977, 68.549302, 71.92618313,
+                         75.36450117, 71.9639519],
+                     -1: [-74.19279356, -71.76459607, -64.26664886,
+                          -66.49974046,  -50.923274]}
+        self.nmlt = {1: [18.80644991, 18.85841629, 6.39130306, 6.7183392,
+                         18.93115591, 19.3161857],
+                     -1: [6.94756463, 18.65574753,  6.79635684, 18.83239647,
+                          18.88673298]}
+        self.olat = {1: [2.77770149, 41.62137725, 68.549302, 71.92618313,
+                         75.36450117, 71.9639519],
+                     -1: [-75.200917, -77.43241521, -64.26664886, -66.49974046,
+                          -50.923274]}
+        self.rcorr = 0.0
+        return
+
+    def tearDown(self):
+        """Clean up the test environment."""
+        del self.test_dir, self.set_default, self.dual, self.mlt, self.lat
+        return
+
+    def update_default_kwargs(self, hemisphere=1):
+        """Update the default kwargs to include filenames.
+
+        Parameters
+        ----------
+        hemisphere : int
+            Flag indicating hemisphere, 1 is North and -1 is South
+
+        Notes
+        -----
+        only updates filenames if the instrument is DMSP-SSJ
+
+        """
+
+        hemi_name = {"north": 1, "south": -1}
+
+        # Set the hemisphere
+        self.set_default['hemisphere'] = hemisphere
+
+        if hemisphere in hemi_name.values():
+            # Set the filenames
+            for bname in ['eab', 'ocb']:
+                ikey = '_'.join([bname, 'instrument'])
+                fkey = '_'.join([bname, 'filename'])
+                if self.set_default[ikey] == 'dmsp-ssj':
+                    self.set_default[fkey] = 'dmsp-ssj_{:s}_out.{:s}'.format(
+                        hemi_name[hemisphere], bname)
+
+        return
+
+    def test_first_good(self):
+        """Test to see that the first good point returns the expected index."""
+
+        for hemi in [-1, 1]:
+            with self.subTest(hemi=hemi):
+                # Initalize the object
+                self.update_default_kwargs(hemisphere=hemi)
+                self.dual = ocbpy.DualBoundary(**self.set_default)
+
+                # Evaluate the record index
+                self.assertEqual(self.dual.rec_ind, 0)
+        return
+
+    def test_normal_coord_float(self):
+        """Test the normalisation calculation with float input."""
+
+        for hemi in [-1, 1]:
+            # Initalize the object
+            self.update_default_kwargs(hemisphere=hemi)
+            self.dual = ocbpy.DualBoundary(**self.set_default)
+
+            for i, in_lat in self.lat[hemi]:
+                in_mlt = self.mlt[hemi][i]
+
+                # Evaluate the calculation
+                with self.subTest(hemi=hemi, in_lat=in_lat, in_mlt=in_mlt):
+                    out = self.dual.normal_coord(in_lat, in_mlt)
+
+                    self.assertAlmostEqual(out[0], self.nlat[i],
+                                           msg="unequal normalized latitude")
+                    self.assertAlmostEqual(out[1], self.nmlt[i],
+                                           msg="unequal normalized MLT")
+                    self.assertAlmostEqual(out[2], self.olat[i],
+                                           msg="unequal OCB latitude")
+                    self.assertAlmostEqual(out[3], self.rcorr,
+                                           msg="unequal radial correction")
+        return
+
+    def test_normal_coord_array(self):
+        """Test the normalisation calculation with array input."""
+
+        for hemi in [-1, 1]:
+            # Initalize the object
+            self.update_default_kwargs(hemisphere=hemi)
+            self.dual = ocbpy.DualBoundary(**self.set_default)
+
+            # Evaluate the calculation
+            with self.subTest(hemi=hemi):
+                out = self.dual.normal_coord(self.lat[hemi], self.mlt[hemi])
+
+                self.assertTrue(numpy.less(abs(out[0] - self.nlat), 1.0e-7),
+                                msg="unequal normalized latitude")
+                self.assertTrue(numpy.less(abs(out[1] - self.nmlt), 1.0e-7),
+                                msg="unequal normalized MLT")
+                self.assertTrue(numpy.less(abs(out[2] - self.olat), 1.0e-7),
+                                msg="unequal OCB latitude")
+                self.assertTrue(numpy.less(abs(out[3] - self.rcorr), 1.0e-7),
+                                msg="unequal radial correction")
+        return
+
+    def test_normal_coord_mag_label(self):
+        """Test the normalisation calculation with good mag labels."""
+
+        # Initalize the object
+        self.update_default_kwargs()
+        self.dual = ocbpy.DualBoundary(**self.set_default)
+
+        for coords in ["magnetic", "Mag"]:
+            # Evaluate the calculation
+            with self.subTest(coords=coords):
+                out = self.dual.normal_coord(self.lat[hemi], self.mlt[hemi],
+                                             coords=coords)
+
+                self.assertTrue(numpy.less(abs(out[0] - self.nlat), 1.0e-7),
+                                msg="unequal normalized latitude")
+                self.assertTrue(numpy.less(abs(out[1] - self.nmlt), 1.0e-7),
+                                msg="unequal normalized MLT")
+                self.assertTrue(numpy.less(abs(out[2] - self.olat), 1.0e-7),
+                                msg="unequal OCB latitude")
+                self.assertTrue(numpy.less(abs(out[3] - self.rcorr), 1.0e-7),
+                                msg="unequal radial correction")
+        return
