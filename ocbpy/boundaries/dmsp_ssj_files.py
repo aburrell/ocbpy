@@ -375,7 +375,7 @@ def format_ssj_boundary_files(csv_files, ref_alt=830.0,
 
                         # Get the X-Y coordinates of each pass where X is
                         # positive towards dawn and Y is positive towards noon
-                        theta = np.radians(mloc[2] * 15.0 - 90.0)
+                        theta = ocbpy.ocb_time.hr2rad(mloc[2] - 6.0)
                         x = (90.0 - abs(mloc[0])) * np.cos(theta)
                         y = (90.0 - abs(mloc[0])) * np.sin(theta)
 
@@ -527,7 +527,7 @@ def satellite_track(lat, mlt, x1, y1, x2, y2, hemisphere, del_x=1.0, del_y=1.0,
     low_int = y1 - del_y - slope * (x1 - del_x)
 
     # Determine the Cartesian coordinates of the input point
-    rad_in = ocbpy.ocb_time.hr2rad(mlt) - (np.pi / 2.0)
+    rad_in = ocbpy.ocb_time.hr2rad(mlt - 6.0)
     x_in = (90.0 - hemisphere * lat) * np.cos(rad_in)
     y_in = (90.0 - hemisphere * lat) * np.sin(rad_in)
 
