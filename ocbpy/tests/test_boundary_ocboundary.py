@@ -338,7 +338,7 @@ class TestOCBoundaryMethodsNorth(unittest.TestCase):
         """Test the default attributes in the north."""
         for self.out in ["filename", "instrument", "hemisphere", "records",
                          "rec_ind", "dtime", "phi_cent", "r_cent", "r",
-                         "boundary_lat"]:
+                         "boundary_lat", 'fom']:
             self.assertTrue(hasattr(self.ocb, self.out),
                             msg="missing attr: {:}".format(self.out))
 
