@@ -176,16 +176,15 @@ class TestDualBoundaryMethodsGeneral(test_ocb.TestOCBoundaryMethodsGeneral):
                 i = 0 if val.find("eab") == 0 else 1
 
                 # Construct the expected string
-                if i == 0 or val.find("ocb") == 0:
+                if(val.find("filename") >= 0
+                   and platform.system().lower().find("windows") >= 0):
+                    # Windows has trouble recognizing the filename in Regex
+                    test_str = "filename="
+                elif i == 0 or val.find("ocb") == 0:
                     test_str = "=".join([val.split("_")[-1],
                                          repr(self.set_default[val])])
                 else:
                     test_str = "=".join([val, repr(self.set_default[val])])
-
-                # Windows has trouble recognizing the filename in Regex
-                if(test_str.find("filename")
-                   and platform.system().lower() == "windows"):
-                    test_str = "filename="
 
                 # Test the correct part of the repr output.
                 self.assertRegex(rocb[i], test_str)
