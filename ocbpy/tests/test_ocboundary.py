@@ -15,7 +15,7 @@ import warnings
 
 import ocbpy
 from .test_cycle_boundary import TestCycleMatchData, TestCycleGoodIndices
-from . import test_boundary_ocboundary as test_ocb
+from . import test_boundary_ocb as test_ocb
 
 
 class TestOCBoundaryDeprecation(unittest.TestCase):

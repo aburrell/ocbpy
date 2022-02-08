@@ -14,7 +14,7 @@ import platform
 import unittest
 
 import ocbpy
-from . import test_boundary_ocboundary as test_ocb
+from . import test_boundary_ocb as test_ocb
 
 
 class TestDualBoundaryLogFailure(unittest.TestCase):
