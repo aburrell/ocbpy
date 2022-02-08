@@ -248,10 +248,10 @@ class TestDualBoundaryMethodsGeneral(test_ocb.TestOCBoundaryMethodsGeneral):
         self.ocb = self.test_class(**self.set_default)
 
         # Ensure standard attributes are present
-        for attr in ['eab', 'ocb', 'max_delta', 'records', 'rec_ind', 
+        for attr in ['eab', 'ocb', 'max_delta', 'records', 'rec_ind',
                      'dtime', 'ocb_ind', 'eab_ind']:
-            assertTrue(hasattr(self.ocb, attr),
-                       msg="missing attr: {:}".format(attr))
+            self.assertTrue(hasattr(self.ocb, attr),
+                            msg="missing attr: {:}".format(attr))
 
         return
 
@@ -272,29 +272,30 @@ class TestDualBoundaryMethodsLocation(unittest.TestCase):
         self.lat = {1: [50.0, 65.0, 66.0, 66.0, 75.0, 75.0, 75.0, 75.0],
                     -1: [-75.0, -75.0, -65.0, -65.0, -50.0]}
         self.mlt = {1: [17.49152542, 16.6779661, 8.94915254, 16.6779661,
-                        10.57627119, 10.98305085, 14.6440678 , 15.05084746],
+                        10.57627119, 10.98305085, 14.6440678, 15.05084746],
                     -1: [8.54237288, 17.08474576, 7.72881356, 17.89830508,
                          18.30508475]}
 
-        # CHECK THESE HERE
-        self.nlat = {1: [42.2702821, 57.52102977, 68.549302, 71.92618313,
-                         75.36450117, 71.9639519],
+        self.nlat = {1: [42.2702821, 57.52102977, 63.45670812, 58.40596869,
+                         68.549302, 71.92618313, 75.36450117, 71.9639519],
                      -1: [-74.19279356, -71.76459607, -64.26664886,
-                          -66.49974046,  -50.923274]}
-        self.nmlt = {1: [18.80644991, 18.85841629, 6.39130306, 6.7183392,
-                         18.93115591, 19.3161857],
-                     -1: [6.94756463, 18.65574753,  6.79635684, 18.83239647,
+                          -66.49974046, -50.923274]}
+        self.nmlt = {1: [18.80644991, 18.85841629, 6.67391185, 18.96355496,
+                         6.39130306, 6.7183392, 18.93115591, 19.3161857],
+                     -1: [6.94756463, 18.65574753, 6.79635684, 18.83239647,
                           18.88673298]}
-        self.olat = {1: [2.77770149, 41.62137725, 68.549302, 71.92618313,
-                         75.36450117, 71.9639519],
+        self.olat = {1: [2.77770149, 41.62137725, 40.15557199, 43.59274117,
+                         68.549302, 71.92618313, 75.36450117, 71.9639519],
                      -1: [-75.200917, -77.43241521, -64.26664886, -66.49974046,
                           -50.923274]}
         self.rcorr = 0.0
+        self.out = []
         return
 
     def tearDown(self):
         """Clean up the test environment."""
         del self.test_dir, self.set_default, self.dual, self.mlt, self.lat
+        del self.out
         return
 
     def update_default_kwargs(self, hemisphere=1):
@@ -303,7 +304,7 @@ class TestDualBoundaryMethodsLocation(unittest.TestCase):
         Parameters
         ----------
         hemisphere : int
-            Flag indicating hemisphere, 1 is North and -1 is South
+            Flag indicating hemisphere, 1 is North and -1 is South (default=1)
 
         Notes
         -----
@@ -311,19 +312,74 @@ class TestDualBoundaryMethodsLocation(unittest.TestCase):
 
         """
 
-        hemi_name = {"north": 1, "south": -1}
+        hemi_name = {1: "north", -1: "south"}
 
         # Set the hemisphere
         self.set_default['hemisphere'] = hemisphere
 
-        if hemisphere in hemi_name.values():
+        if hemisphere in hemi_name.keys():
             # Set the filenames
             for bname in ['eab', 'ocb']:
                 ikey = '_'.join([bname, 'instrument'])
                 fkey = '_'.join([bname, 'filename'])
                 if self.set_default[ikey] == 'dmsp-ssj':
-                    self.set_default[fkey] = 'dmsp-ssj_{:s}_out.{:s}'.format(
-                        hemi_name[hemisphere], bname)
+                    self.set_default[fkey] = path.join(
+                        self.test_dir, 'dmsp-ssj_{:s}_out.{:s}'.format(
+                            hemi_name[hemisphere], bname))
+
+        return
+
+    def eval_normal_coords(self, hemisphere=1, tol=1.0e-7, ind=None):
+        """Evaluate the results of the `normal_coord` method.
+
+        Parameters
+        ----------
+        hemisphere : int
+            Flag indicating hemisphere, 1 is North and -1 is South (default=1)
+        tol : float
+            Tolerance for error in floating point results (default=1.0e-7)
+        ind : int or NoneType
+            Evaluate a single value instead of an array
+
+        """
+
+        self.assertEqual(len(self.out), 4,
+                         msg="unexpected number of output values")
+
+        if ind is None:
+            self.assertTrue(
+                numpy.less(abs(self.out[0] - self.nlat[hemisphere]), tol).all(),
+                msg="unequal normalized latitude: {:} != {:}".format(
+                    self.out[0], self.nlat[hemisphere]))
+            self.assertTrue(
+                numpy.less(abs(self.out[1] - self.nmlt[hemisphere]), tol).all(),
+                msg="unequal normalized MLT: {:} != {:}".format(
+                    self.out[1], self.nmlt[hemisphere]))
+            self.assertTrue(
+                numpy.less(abs(self.out[2] - self.olat[hemisphere]), tol).all(),
+                msg="unequal OCB latitude: {:} != {:}".format(
+                    self.out[2], self.olat[hemisphere]))
+            self.assertTrue(
+                numpy.less(abs(self.out[3] - self.rcorr), tol).all(),
+                msg="unequal radial correction: {:} != {:}".format(
+                    self.out[3], self.rcorr))
+        else:
+            self.assertAlmostEqual(
+                self.out[0], self.nlat[hemisphere][ind],
+                msg="unequal normalized latitude: {:} != {:}".format(
+                    self.out[0], self.nlat[hemisphere]))
+            self.assertAlmostEqual(
+                self.out[1], self.nmlt[hemisphere][ind],
+                msg="unequal normalized MLT: {:} != {:}".format(
+                    self.out[1], self.nmlt[hemisphere]))
+            self.assertAlmostEqual(
+                self.out[2], self.olat[hemisphere][ind],
+                msg="unequal OCB latitude: {:} != {:}".format(
+                    self.out[2], self.olat[hemisphere]))
+            self.assertAlmostEqual(
+                self.out[3], self.rcorr,
+                msg="unequal radial correction: {:} != {:}".format(
+                    self.out[3], self.rcorr))
 
         return
 
@@ -348,21 +404,13 @@ class TestDualBoundaryMethodsLocation(unittest.TestCase):
             self.update_default_kwargs(hemisphere=hemi)
             self.dual = ocbpy.DualBoundary(**self.set_default)
 
-            for i, in_lat in self.lat[hemi]:
+            for i, in_lat in enumerate(self.lat[hemi]):
                 in_mlt = self.mlt[hemi][i]
 
                 # Evaluate the calculation
                 with self.subTest(hemi=hemi, in_lat=in_lat, in_mlt=in_mlt):
-                    out = self.dual.normal_coord(in_lat, in_mlt)
-
-                    self.assertAlmostEqual(out[0], self.nlat[i],
-                                           msg="unequal normalized latitude")
-                    self.assertAlmostEqual(out[1], self.nmlt[i],
-                                           msg="unequal normalized MLT")
-                    self.assertAlmostEqual(out[2], self.olat[i],
-                                           msg="unequal OCB latitude")
-                    self.assertAlmostEqual(out[3], self.rcorr,
-                                           msg="unequal radial correction")
+                    self.out = self.dual.normal_coord(in_lat, in_mlt)
+                    self.eval_normal_coords(hemisphere=hemi, ind=i)
         return
 
     def test_normal_coord_array(self):
@@ -375,37 +423,24 @@ class TestDualBoundaryMethodsLocation(unittest.TestCase):
 
             # Evaluate the calculation
             with self.subTest(hemi=hemi):
-                out = self.dual.normal_coord(self.lat[hemi], self.mlt[hemi])
-
-                self.assertTrue(numpy.less(abs(out[0] - self.nlat), 1.0e-7),
-                                msg="unequal normalized latitude")
-                self.assertTrue(numpy.less(abs(out[1] - self.nmlt), 1.0e-7),
-                                msg="unequal normalized MLT")
-                self.assertTrue(numpy.less(abs(out[2] - self.olat), 1.0e-7),
-                                msg="unequal OCB latitude")
-                self.assertTrue(numpy.less(abs(out[3] - self.rcorr), 1.0e-7),
-                                msg="unequal radial correction")
+                self.out = self.dual.normal_coord(self.lat[hemi],
+                                                  self.mlt[hemi])
+                self.eval_normal_coords(hemisphere=hemi)
         return
 
     def test_normal_coord_mag_label(self):
         """Test the normalisation calculation with good mag labels."""
 
         # Initalize the object
-        self.update_default_kwargs()
+        hemi = 1
+        self.update_default_kwargs(hemisphere=hemi)
         self.dual = ocbpy.DualBoundary(**self.set_default)
 
         for coords in ["magnetic", "Mag"]:
             # Evaluate the calculation
             with self.subTest(coords=coords):
-                out = self.dual.normal_coord(self.lat[hemi], self.mlt[hemi],
-                                             coords=coords)
+                self.out = self.dual.normal_coord(
+                    self.lat[hemi], self.mlt[hemi], coords=coords)
+                self.eval_normal_coords(hemisphere=hemi)
 
-                self.assertTrue(numpy.less(abs(out[0] - self.nlat), 1.0e-7),
-                                msg="unequal normalized latitude")
-                self.assertTrue(numpy.less(abs(out[1] - self.nmlt), 1.0e-7),
-                                msg="unequal normalized MLT")
-                self.assertTrue(numpy.less(abs(out[2] - self.olat), 1.0e-7),
-                                msg="unequal OCB latitude")
-                self.assertTrue(numpy.less(abs(out[3] - self.rcorr), 1.0e-7),
-                                msg="unequal radial correction")
         return
