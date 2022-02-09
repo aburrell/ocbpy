@@ -302,7 +302,7 @@ class TestDualBoundaryMethodsLocation(unittest.TestCase):
                           -50.923274]}
         self.rcorr = 0.0
         self.scaled_r = {1: [64.0, 64.0, 64.0, 64.0, 10.0, 10.0, 16.0, 10.0],
-                         -1: [64.0, 64.0, 64.0, 64.0,  16.0]}
+                         -1: [64.0, 64.0, 64.0, 64.0, 16.0]}
         self.unscaled_r = {1: [75.70330362, 72.32137562, 66.56506657,
                                72.32137562, numpy.nan, numpy.nan, 6.769,
                                numpy.nan],
@@ -647,7 +647,7 @@ class TestDualBoundaryMethodsLocation(unittest.TestCase):
 
         # Set the EAB and OCB AACGM boundaries
         self.dual.get_aacgm_boundary_lats(self.mlt[hemi])
-        
+
         # Get the current boundaries
         self.out = self.dual._get_current_aacgm_boundary()
 
@@ -696,5 +696,46 @@ class TestDualBoundaryMethodsLocation(unittest.TestCase):
                 with self.subTest(hemi=hemi, amlt=amlt, bmlt=bmlt, blat=blat):
                     self.out = self.dual.calc_r(blat, bmlt, amlt, self.rcorr)
                     self.eval_coords(hemisphere=hemi, ind=i, radius=True)
+        return
 
-            
+
+class TestDualBoundaryFailure(unittest.TestCase):
+    """Test that DualBoundary class failures raise appropriate errors."""
+
+    def setUp(self):
+        """Set up the test environment."""
+        test_dir = path.join(path.dirname(ocbpy.__file__),
+                             "tests", "test_data")
+        self.set_default = {"ocb_instrument": "dmsp-ssj",
+                            "eab_instrument": "dmsp-ssj",
+                            "hemisphere": 1,
+                            "ocb_filename": path.join(
+                                test_dir, 'dmsp-ssj_north_out.ocb'),
+                            "eab_filename": path.join(
+                                test_dir, 'dmsp-ssj_north_out.eab')}
+        self.dual = None
+
+    def tearDown(self):
+        """Clean up the test environment."""
+        del self.set_default, self.dual
+        return
+
+    def test_bad_boundaries(self):
+        """Test ValueError raised with bad OCB/EAB boundary combo."""
+
+        self.set_default["eab_lat"] = 80.0
+
+        with self.assertRaisesRegex(ValueError, "OCB must be poleward of the"):
+            self.dual = ocbpy.DualBoundary(**self.set_default)
+
+        return
+
+    def test_bad_max_delta(self):
+        """Test ValueError raised with bad `max_delta` kwarg value."""
+
+        self.set_default["max_delta"] = -1.0
+
+        with self.assertRaisesRegex(ValueError, "must be positive or zero"):
+            self.dual = ocbpy.DualBoundary(**self.set_default)
+
+        return
