@@ -1120,7 +1120,7 @@ class DualBoundary(object):
         if max_delta <= 0:
             raise ValueError(''.join(['Maximum time difference between ',
                                       'boundary measurements must be positive',
-                                      'or zero']))
+                                      ' or zero']))
 
         # Initalize the subclass attributes
         if eab is None:
