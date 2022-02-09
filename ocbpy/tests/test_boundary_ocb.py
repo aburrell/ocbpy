@@ -361,6 +361,7 @@ class TestOCBoundaryMethodsNorth(unittest.TestCase):
             self.assertFalse(hasattr(self.ocb, self.out),
                              msg="unexpected attr present: {:s}".format(
                              self.out))
+        return
 
     def test_dmspssj_attrs(self):
         """Test DMSP-SSJ attributes don't exist when IMAGE is loaded."""
@@ -473,6 +474,7 @@ class TestOCBoundaryMethodsNorth(unittest.TestCase):
 
         self.assertEqual(len(self.out), 3)
         self.assertTrue(numpy.all(numpy.isnan(self.out)))
+        return
 
     def test_normal_coord_high_rec_ind(self):
         """Test normalization calculation failure with high record index."""
@@ -588,7 +590,6 @@ class TestOCBoundaryMethodsNorth(unittest.TestCase):
         """Test the calculation of the OCB in AACGM coordinates in the north."""
         # Add new attributes
         self.ocb.get_aacgm_boundary_lat(self.mlt)
-        return
 
         # Ensure new attriutes were added
         self.assertTrue(hasattr(self.ocb, "aacgm_boundary_lon"),
@@ -1083,6 +1084,7 @@ class TestOCBoundaryFailure(unittest.TestCase):
         """Test failure when incorrect hemisphere value is input."""
         with self.assertRaisesRegex(ValueError, "hemisphere must be 1"):
             self.test_class(hemisphere=0)
+        return
 
     def test_bad_shape_rfunc_input(self):
         """Test failure when badly shaped radial correction function."""
@@ -1090,21 +1092,25 @@ class TestOCBoundaryFailure(unittest.TestCase):
                                     "Misshaped correction function array"):
             self.test_class(
                 rfunc=numpy.array([ocbpy.ocb_correction.circular]))
+        return
 
     def test_bad_shape_rfunc_kwarg_input(self):
         """Test failure when badly shaped radial correction function kwargs."""
         with self.assertRaisesRegex(ValueError,
                                     "Misshaped correction function keyword"):
             self.test_class(rfunc_kwargs=numpy.array([{}]))
+        return
 
     def test_bad_rfunc_input(self):
         """Test failure with bad radial correction function input."""
         with self.assertRaisesRegex(
                 ValueError, "Unknown input type for correction function"):
             self.test_class(rfunc="rfunc")
+        return
 
     def test_bad_rfunc_kwarg_input(self):
         """Test failure with bad radial correction function kwarg input."""
         with self.assertRaisesRegex(
                 ValueError, "Unknown input type for correction keywords"):
             self.test_class(rfunc_kwargs="rfunc")
+        return
