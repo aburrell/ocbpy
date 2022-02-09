@@ -1113,6 +1113,15 @@ class DualBoundary(object):
                  eab_rfunc=None, eab_rfunc_kwargs=None, ocb_rfunc=None,
                  ocb_rfunc_kwargs=None, eab=None, ocb=None, max_delta=60):
 
+        # Ensure the boundary latitudes are realistic
+        if abs(eab_lat) >= abs(ocb_lat):
+            raise ValueError('OCB must be poleward of the EAB')
+
+        if max_delta <= 0:
+            raise ValueError(''.join(['Maximum time difference between ',
+                                      'boundary measurements must be positive',
+                                      'or zero']))
+
         # Initalize the subclass attributes
         if eab is None:
             self.eab = EABoundary(filename=eab_filename,
