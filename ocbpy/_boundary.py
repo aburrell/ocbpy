@@ -1132,6 +1132,9 @@ class DualBoundary(object):
         else:
             self.ocb = ocb
 
+        # Set the reversion short-cut
+        self.revert_coord = self.ocb.revert_coord
+
         # Create a time index, saving indices where both boundaries are good
         self.max_delta = max_delta
         self.set_good_ind()
@@ -1445,142 +1448,6 @@ class DualBoundary(object):
             return bound_lat[0], bound_mlt[0], ocb_lat[0], r_corr[0]
         else:
             return bound_lat, bound_mlt, ocb_lat, r_corr
-
-    def revert_coord(self, bound_lat, bound_mlt, ocb_lat, r_corr=0.0,
-                     coords='magnetic', height=350.0, method='ALLOWTRACE',
-                     overwrite=False):
-        """Convert the position of a measurement in OCB into AACGM co-ordinates.
-
-        Parameters
-        ----------
-        bound_lat : float or array-like
-            Input Dual-boundary latitude in degrees
-        bound_mlt : float or array-like
-            Input Dual-boundary (OCB) local time in hours
-        ocb_lat : float or array-like
-            Input OCB latitude in degrees
-        r_corr : float or array-like
-            Input OCB radial correction in degrees, may be a function of
-            AACGM MLT (default=0.0)
-        coords : str
-            Output coordiate system.  Accepts 'magnetic', 'geocentric', or
-            'geodetic' (default='magnetic')
-        height : float or array-like
-            Geocentric height above sea level (km) at which AACGMV2 coordinates
-            will be calculated, if geographic coordinates are desired
-            (default=350.0)
-        method : str
-            String denoting which type(s) of conversion to perform, if
-            geographic coordinates are provided.  Expects either 'TRACE' or
-            'ALLOWTRACE'.  See AACGMV2 for details [2]_.  (default='ALLOWTRACE')
-        overwrite : bool
-            Allow the OCB and EAB AACGM boundary locations to be overwritten
-            (default=False)
-
-        Returns
-        -------
-        lat : float or array-like
-            latitude (degrees)
-        lt : float or array-like
-            local time (hours)
-
-        Notes
-        -----
-        Approximation - Conversion assumes a planar surface
-
-        See Also
-        --------
-        aacgmv2
-
-        """
-
-        # Cast input as arrays
-        bound_lat = np.asarray(bound_lat)
-        bound_mlt = np.asarray(bound_mlt)
-        ocb_lat = np.asarray(ocb_lat)
-        r_corr = np.asarray(r_corr)
-        height = np.asarray(height)
-
-        isfloat = False
-        if bound_lat.shape == ():
-            isfloat = True
-            bound_lat = np.array([bound_lat])
-            bound_mlt = np.array([bound_mlt])
-            ocb_lat = np.array([ocb_lat])
-            r_corr = np.array([r_corr])
-            height = np.array([height])
-
-        # Revert the standard OCB coordinates to AACGM coordinates
-        aacgm_lat, aacgm_mlt = self.ocb.revert_coord(ocb_lat, bound_mlt,
-                                                     r_corr=r_corr,
-                                                     coords="magnetic",
-                                                     height=height,
-                                                     method=method)
-
-        # Get the boundary locations in AACGM coordinates
-        # Get the boundary locations in AACGM coordinates
-        if not overwrite:
-            orig_bound = self._get_current_aacgm_boundary()
-            num_none = sum([obound is None for obound in orig_bound])
-
-            if len(orig_bound) == num_none:
-                overwrite = True
-
-        self.get_aacgm_boundary_lats(aacgm_mlt, rec_ind=self.rec_ind,
-                                     overwrite=True, set_lon=False)
-        ocb_aacgm_boundary = self.ocb.aacgm_boundary_lat[self.ocb.rec_ind]
-        eab_aacgm_boundary = self.eab.aacgm_boundary_lat[self.eab.rec_ind]
-
-        # Revert the Dual-boundary coordinates outside of the OCB
-        imid = np.where((bound_lat < self.ocb.boundary_lat)
-                        & (bound_lat >= self.eab.boundary_lat))[0]
-        iout = np.where(bound_lat < self.eab.boundary_lat)[0]
-
-        if len(imid) > 0:
-            aacgm_lat[imid] = ocb_aacgm_boundary[imid] - (
-                self.ocb.boundary_lat - ocb_lat[imid]) * (
-                    ocb_aacgm_boundary[imid] - eab_aacgm_boundary[imid]) / (
-                        self.ocb.boundary_lat - self.eab.boundary_lat)
-
-        if len(iout) > 0:
-            aacgm_lat[iout] = eab_aacgm_boundary[iout] - (
-                self.eab.boundary_lat - ocb_lat[iout]) * (
-                    eab_aacgm_boundary[iout] / self.eab.boundary_lat)
-
-        # If desired, replace the boundaries
-        if not overwrite:
-            if orig_bound[2] is not None:
-                self.ocb.aacgm_boundary_lat[self.ocb.rec_ind] = orig_bound[2]
-                self.ocb.aacgm_boundary_mlt[self.ocb.rec_ind] = orig_bound[3]
-            if orig_bound[0] is not None:
-                self.eab.aacgm_boundary_lat[self.eab.rec_ind] = orig_bound[0]
-                self.eab.aacgm_boundary_mlt[self.eab.rec_ind] = orig_bound[1]
-
-        # If desired, convert from magnetic to geographic coordinates
-        if coords.lower().find('mag') < 0:
-            # Convert from mlt to longitude
-            lon = aacgmv2.convert_mlt(aacgm_mlt, self.dtime[self.rec_ind],
-                                      m2a=True)
-
-            # If geocentric coordinates are specified, add this info to the
-            # method flag
-            if coords.lower() == 'geocentric':
-                method = "|".join([method, coords.upper()])
-            method = "|".join([method, "A2G"])
-            lat, lon, _ = aacgmv2.convert_latlon_arr(aacgm_lat, lon, height,
-                                                     self.dtime[self.rec_ind],
-                                                     method)
-
-            # Convert from longitude to solar local time
-            lt = ocb_time.glon2slt(lon, self.dtime[self.rec_ind])
-        else:
-            lat = aacgm_lat
-            lt = aacgm_mlt
-
-        if isfloat:
-            return lat[0], lt[0]
-        else:
-            return lat, lt
 
     def get_aacgm_boundary_lats(self, aacgm_mlt, rec_ind=None,
                                 overwrite=False, set_lon=True):
