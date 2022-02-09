@@ -1406,7 +1406,6 @@ class DualBoundary(object):
         # Get the boundary locations in AACGM coordinates
         if not overwrite:
             orig_bound = self._get_current_aacgm_boundary()
-
             num_none = sum([obound is None for obound in orig_bound])
 
             if len(orig_bound) == num_none:
@@ -1502,6 +1501,15 @@ class DualBoundary(object):
         r_corr = np.asarray(r_corr)
         height = np.asarray(height)
 
+        isfloat = False
+        if bound_lat.shape == ():
+            isfloat = True
+            bound_lat = np.array([bound_lat])
+            bound_mlt = np.array([bound_mlt])
+            ocb_lat = np.array([ocb_lat])
+            r_corr = np.array([r_corr])
+            height = np.array([height])
+
         # Revert the standard OCB coordinates to AACGM coordinates
         aacgm_lat, aacgm_mlt = self.ocb.revert_coord(ocb_lat, bound_mlt,
                                                      r_corr=r_corr,
@@ -1513,8 +1521,9 @@ class DualBoundary(object):
         # Get the boundary locations in AACGM coordinates
         if not overwrite:
             orig_bound = self._get_current_aacgm_boundary()
+            num_none = sum([obound is None for obound in orig_bound])
 
-            if len(set(orig_bound)) == 1 and orig_bound[0] is None:
+            if len(orig_bound) == num_none:
                 overwrite = True
 
         self.get_aacgm_boundary_lats(aacgm_mlt, rec_ind=self.rec_ind,
@@ -1568,7 +1577,10 @@ class DualBoundary(object):
             lat = aacgm_lat
             lt = aacgm_mlt
 
-        return lat, lt
+        if isfloat:
+            return lat[0], lt[0]
+        else:
+            return lat, lt
 
     def get_aacgm_boundary_lats(self, aacgm_mlt, rec_ind=None,
                                 overwrite=False, set_lon=True):
@@ -1666,8 +1678,9 @@ class DualBoundary(object):
         # Get the boundary locations in AACGM coordinates
         if not overwrite:
             orig_bound = self._get_current_aacgm_boundary()
+            num_none = sum([obound is None for obound in orig_bound])
 
-            if len(set(orig_bound)) == 1 and orig_bound[0] is None:
+            if len(orig_bound) == num_none:
                 overwrite = True
 
         self.get_aacgm_boundary_lats(aacgm_mlt, rec_ind=self.rec_ind,
