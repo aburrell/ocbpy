@@ -1520,7 +1520,16 @@ class DualBoundary(object):
         # Ensure all data is array-like
         bound_lat = np.asarray(bound_lat)
         bound_mlt = np.asarray(bound_mlt)
+        aacgm_mlt = np.asarray(aacgm_mlt)
         r_corr = np.asarray(r_corr)
+
+        isfloat = False
+        if bound_lat.shape == ():
+            bound_lat = np.array([bound_lat])
+            bound_mlt = np.array([bound_mlt])
+            aacgm_mlt = np.array([aacgm_mlt])
+            r_corr = np.array([r_corr])
+            isfloat = True
 
         # Initialize the output, start by assuming the data is inside the OCB
         out_shape = max([bound_lat.shape, bound_mlt.shape, r_corr.shape])
@@ -1532,10 +1541,10 @@ class DualBoundary(object):
             return scaled_r, unscaled_r
 
         if out_shape == r_corr.shape:
-            unscaled_r = self.ocb.r[self.ocb_ind[self.rec_ind]] + self.r_corr
+            unscaled_r = self.ocb.r[self.ocb_ind[self.rec_ind]] + r_corr
         else:
             unscaled_r = np.full(shape=out_shape, fill_value=self.ocb.r[
-                self.ocb_ind[self.rec_ind]] + self.r_corr)
+                self.ocb_ind[self.rec_ind]] + r_corr)
 
         # Identify points in the other regions
         imid = np.where((bound_lat < self.ocb.boundary_lat)
@@ -1562,8 +1571,8 @@ class DualBoundary(object):
                 - eab_aacgm_boundary[imid]
 
         if len(iout) > 0:
-            scaled_r[iout] = self.eab.boundary_lat
-            unscaled_r[iout] = eab_aacgm_boundary[iout]
+            scaled_r[iout] = abs(self.eab.boundary_lat)
+            unscaled_r[iout] = abs(eab_aacgm_boundary[iout])
 
         # If desired, replace the boundaries
         if not overwrite:
@@ -1574,4 +1583,7 @@ class DualBoundary(object):
                 self.eab.aacgm_boundary_lat[self.eab.rec_ind] = orig_bound[0]
                 self.eab.aacgm_boundary_mlt[self.eab.rec_ind] = orig_bound[1]
 
-        return scaled_r, unscaled_r
+        if isfloat:
+            return scaled_r[0], unscaled_r[0]
+        else:
+            return scaled_r, unscaled_r
