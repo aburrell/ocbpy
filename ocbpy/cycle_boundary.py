@@ -90,7 +90,7 @@ def match_data_ocb(ocb, dat_dtime, idat=0, max_tol=600, min_merit=None,
         Minimum number of MLT sectors required for good OCB. Deprecated, will
         be removed in version 0.3.1+ (default=7)
     rcent_dev : float
-        Maximum number of degrees between the new centre and the AACGM pole
+        Maximum number of degrees between the new centre and the AACGM pole.
         Deprecated, will be removed in version 0.3.1+ (default=8.0)
     max_r : float
         Maximum radius for open-closed field line boundary in degrees
@@ -123,16 +123,12 @@ def match_data_ocb(ocb, dat_dtime, idat=0, max_tol=600, min_merit=None,
             warnings.warn("".join(["Deprecated kwarg will be removed in ",
                                    "version 0.3.1+. To replecate behaviour",
                                    ", use {", dep_comp[ckey][0], ": ",
-                                   repr(dep_comp[ckey][1]), "}"]))
+                                   repr(dep_comp[ckey][1]), "}"]),
+                          DeprecationWarning, stacklevel=2)
             del kwargs[ckey]
 
             if hasattr(ocb, dep_comp[ckey][0]):
                 kwargs[dep_comp[ckey][0]] = dep_comp[ckey][1]
-        else:
-            if not hasattr(ocb, ckey):
-                logger.warning(
-                    "Removing unknown selection attribute {:}".format(ckey))
-                del kwargs[ckey]
 
     # Initalise the data record limit
     dat_records = len(dat_dtime)

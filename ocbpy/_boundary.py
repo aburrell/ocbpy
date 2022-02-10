@@ -505,7 +505,8 @@ class OCBoundary(object):
                 warnings.warn("".join(["Deprecated kwarg will be removed in ",
                                        "version 0.3.1+. To replecate behaviour",
                                        ", use {", dep_comp[ckey][0], ": ",
-                                       repr(dep_comp[ckey][1]), "}"]))
+                                       repr(dep_comp[ckey][1]), "}"]),
+                              DeprecationWarning, stacklevel=2)
                 del kwargs[ckey]
 
                 if hasattr(self, dep_comp[ckey][0]):
