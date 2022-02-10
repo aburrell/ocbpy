@@ -12,6 +12,7 @@ SuperMAG data available at: http://supermag.jhuapl.edu/
 
 import datetime as dt
 import numpy as np
+import warnings
 
 import ocbpy
 import ocbpy.ocb_scaling as ocbscal
@@ -19,7 +20,7 @@ import ocbpy.ocb_scaling as ocbscal
 
 def supermag2ascii_ocb(smagfile, outfile, hemisphere=0, ocb=None,
                        ocbfile='default', instrument='', max_sdiff=600,
-                       min_sectors=7, rcent_dev=8.0, max_r=23.0, min_r=10.0):
+                       min_merit=None, max_merit=None, **kwargs):
     """ Coverts and scales the SuperMAG data into OCB coordinates
 
     Parameters
@@ -43,18 +44,30 @@ def supermag2ascii_ocb(smagfile, outfile, hemisphere=0, ocb=None,
         if a file is provided.  If using filename='default', also accepts
         'amp', 'si12', 'si13', 'wic', and ''.  (default='')
     max_sdiff : int
-        maximum seconds between OCB and data record in sec (default=600)
+        Maximum seconds between OCB and data record in sec (default=600)
+    min_merit : float or NoneType
+        Minimum value for the default figure of merit or None to not apply a
+        custom minimum (default=None)
+    max_merit : float or NoneTye
+        Maximum value for the default figure of merit or None to not apply a
+        custom maximum (default=None)
+    kwargs : dict
+        Dict with optional selection criteria.  The key should correspond to a
+        data attribute and the value must be a tuple with the first value
+        specifying 'max', 'min', 'maxeq', 'mineq', or 'equal' and the second
+        value specifying the value to use in the comparison.
     min_sectors : int
-        Minimum number of MLT sectors required for good OCB (default=7).
+        Minimum number of MLT sectors required for good OCB. Deprecated, will
+        be removed in version 0.3.1+ (default=7).
     rcent_dev : float
-        Maximum number of degrees between the new centre and the AACGM pole
-        (default=8.0)
+        Maximum number of degrees between the new centre and the AACGM pole.
+        Deprecated, will be removed in version 0.3.1+ (default=8.0)
     max_r : float
-        Maximum radius for open-closed field line boundary in degrees
-        default=23.0)
+        Maximum radius for open-closed field line boundary in degrees/
+        Deprecated, will be removed in version 0.3.1+ (default=23.0)
     min_r : float
-        Minimum radius for open-closed field line boundary in degrees
-        (default=10.0)
+        Minimum radius for open-closed field line boundary in degrees.
+        Deprecated, will be removed in version 0.3.1+ (default=10.0)
 
     Raises
     ------
@@ -72,6 +85,26 @@ def supermag2ascii_ocb(smagfile, outfile, hemisphere=0, ocb=None,
 
     """
 
+    # Add check for deprecated and custom kwargs
+    dep_comp = {'min_sectors': ['num_sectors', ('mineq', 7)],
+                'rcent_dev': ['r_cent', ('maxeq', 8.0)],
+                'max_r': ['r', ('maxeq', 23.0)],
+                'min_r': ['r', ('mineq', 10.0)]}
+    cust_keys = list(kwargs.keys())
+
+    for ckey in cust_keys:
+        if ckey in dep_comp.keys():
+            warnings.warn("".join(["Deprecated kwarg will be removed in ",
+                                   "version 0.3.1+. To replecate behaviour",
+                                   ", use {", dep_comp[ckey][0], ": ",
+                                   repr(dep_comp[ckey][1]), "}"]),
+                          DeprecationWarning, stacklevel=2)
+            del kwargs[ckey]
+
+            if hasattr(ocb, dep_comp[ckey][0]):
+                kwargs[dep_comp[ckey][0]] = dep_comp[ckey][1]
+
+    # Test inputs
     if not ocbpy.instruments.test_file(smagfile):
         raise IOError("SuperMAG file cannot be opened [{:s}]".format(smagfile))
 
@@ -147,10 +180,8 @@ def supermag2ascii_ocb(smagfile, outfile, hemisphere=0, ocb=None,
         # Cycle through the data, matching SuperMAG and OCB records
         while imag < nmag and ocb.rec_ind < ocb.records:
             imag = ocbpy.match_data_ocb(ocb, mdata['DATETIME'], idat=imag,
-                                        max_tol=max_sdiff,
-                                        min_sectors=min_sectors,
-                                        rcent_dev=rcent_dev, max_r=max_r,
-                                        min_r=min_r)
+                                        max_tol=max_sdiff, min_merit=min_merit,
+                                        max_merit=max_merit, kwargs=kwargs)
 
             if imag < nmag and ocb.rec_ind < ocb.records:
                 # Set this value's AACGM vector values

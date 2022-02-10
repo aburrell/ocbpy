@@ -12,6 +12,7 @@ pysat is available at: http://github.com/pysat/pysat or pypi
 
 import datetime as dt
 import numpy as np
+import warnings
 
 try:
     import pysat
@@ -27,7 +28,7 @@ import ocbpy.ocb_scaling as ocbscal
 def add_ocb_to_data(pysat_inst, mlat_name='', mlt_name='', evar_names=None,
                     curl_evar_names=None, vector_names=None, hemisphere=0,
                     ocb=None, ocbfile='default', instrument='', max_sdiff=600,
-                    min_sectors=7, rcent_dev=8.0, max_r=23.0, min_r=10.0):
+                    min_merit=None, max_merit=None, **kwargs):
     """Covert the location of pysat data into OCB coordinates.
 
     Parameters
@@ -68,17 +69,29 @@ def add_ocb_to_data(pysat_inst, mlat_name='', mlt_name='', evar_names=None,
         'amp', 'si12', 'si13', 'wic', and '' (default='')
     max_sdiff : int
         maximum seconds between OCB and data record in sec (default=600)
+    min_merit : float or NoneType
+        Minimum value for the default figure of merit or None to not apply a
+        custom minimum (default=None)
+    max_merit : float or NoneTye
+        Maximum value for the default figure of merit or None to not apply a
+        custom maximum (default=None)
+    kwargs : dict
+        Dict with optional selection criteria.  The key should correspond to a
+        data attribute and the value must be a tuple with the first value
+        specifying 'max', 'min', 'maxeq', 'mineq', or 'equal' and the second
+        value specifying the value to use in the comparison.
     min_sectors : int
-        Minimum number of MLT sectors required for good OCB (default=7)
+        Minimum number of MLT sectors required for good OCB. Deprecated, will
+        be removed in version 0.3.1+  (default=7)
     rcent_dev : float
-        Maximum number of degrees between the new centre and the AACGM pole
-        (default=8.0)
+        Maximum number of degrees between the new centre and the AACGM pole.
+        Deprecated, will be removed in version 0.3.1+ (default=8.0)
     max_r : float
-        Maximum radius for open-closed field line boundary in degrees
-        (default=23.0)
+        Maximum radius for open-closed field line boundary in degrees.
+        Deprecated, will be removed in version 0.3.1+ (default=23.0)
     min_r : float
-        Minimum radius for open-closed field line boundary in degrees
-        (default=10.0)
+        Minimum radius for open-closed field line boundary in degrees.
+        Deprecated, will be removed in version 0.3.1+ (default=10.0)
 
     Raises
     ------
@@ -102,6 +115,25 @@ def add_ocb_to_data(pysat_inst, mlat_name='', mlt_name='', evar_names=None,
                               'scale_func': local_scale_func}}
 
     """
+
+    # Add check for deprecated and custom kwargs
+    dep_comp = {'min_sectors': ['num_sectors', ('mineq', 7)],
+                'rcent_dev': ['r_cent', ('maxeq', 8.0)],
+                'max_r': ['r', ('maxeq', 23.0)],
+                'min_r': ['r', ('mineq', 10.0)]}
+    cust_keys = list(kwargs.keys())
+
+    for ckey in cust_keys:
+        if ckey in dep_comp.keys():
+            warnings.warn("".join(["Deprecated kwarg will be removed in ",
+                                   "version 0.3.1+. To replecate behaviour",
+                                   ", use {", dep_comp[ckey][0], ": ",
+                                   repr(dep_comp[ckey][1]), "}"]),
+                          DeprecationWarning, stacklevel=2)
+            del kwargs[ckey]
+
+            if hasattr(ocb, dep_comp[ckey][0]):
+                kwargs[dep_comp[ckey][0]] = dep_comp[ckey][1]
 
     # Test the input
     if evar_names is None:
@@ -258,9 +290,8 @@ def add_ocb_to_data(pysat_inst, mlat_name='', mlt_name='', evar_names=None,
     ref_r = 90.0 - abs(ocb.boundary_lat)
     while idat < ndat and ocb.rec_ind < ocb.records:
         idat = ocbpy.match_data_ocb(ocb, pysat_inst.index[dat_ind], idat=idat,
-                                    max_tol=max_sdiff, min_sectors=min_sectors,
-                                    rcent_dev=rcent_dev, max_r=max_r,
-                                    min_r=min_r)
+                                    min_merit=min_merit, max_merit=max_merit,
+                                    kwargs=kwargs)
 
         if idat < ndat and ocb.rec_ind < ocb.records:
             iout = dat_ind[idat]
