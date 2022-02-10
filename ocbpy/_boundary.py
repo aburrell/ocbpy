@@ -1429,9 +1429,9 @@ class DualBoundary(object):
         eab_aacgm_boundary = self.eab.aacgm_boundary_lat[self.eab.rec_ind]
 
         # Normalize each of the points using the correct scaling factor
-        imid = np.where((aacgm_lat < ocb_aacgm_boundary)
-                        & (aacgm_lat >= eab_aacgm_boundary))[0]
-        iout = np.where(aacgm_lat < eab_aacgm_boundary)[0]
+        imid = np.where((abs(aacgm_lat) < abs(ocb_aacgm_boundary))
+                        & (abs(aacgm_lat) >= abs(eab_aacgm_boundary)))[0]
+        iout = np.where(abs(aacgm_lat) < abs(eab_aacgm_boundary))[0]
 
         if len(imid) > 0:
             bound_lat[imid] = self.ocb.boundary_lat - (
@@ -1556,9 +1556,9 @@ class DualBoundary(object):
                 self.ocb_ind[self.rec_ind]] + r_corr)
 
         # Identify points in the other regions
-        imid = np.where((bound_lat < self.ocb.boundary_lat)
-                        & (bound_lat >= self.eab.boundary_lat))[0]
-        iout = np.where(bound_lat < self.eab.boundary_lat)[0]
+        imid = np.where((abs(bound_lat) < abs(self.ocb.boundary_lat))
+                        & (abs(bound_lat) >= abs(self.eab.boundary_lat)))[0]
+        iout = np.where(abs(bound_lat) < abs(self.eab.boundary_lat))[0]
 
         # Get the boundary locations in AACGM coordinates
         if not overwrite:
