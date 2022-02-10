@@ -1575,9 +1575,9 @@ class DualBoundary(object):
 
         # Calculate the radii in the auroral region
         if len(imid) > 0:
-            scaled_r[imid] = self.ocb.boundary_lat - self.eab.boundary_lat
-            unscaled_r[imid] = ocb_aacgm_boundary[imid] \
-                - eab_aacgm_boundary[imid]
+            scaled_r[imid] = abs(self.ocb.boundary_lat - self.eab.boundary_lat)
+            unscaled_r[imid] = abs(ocb_aacgm_boundary[imid]
+                                   - eab_aacgm_boundary[imid])
 
         if len(iout) > 0:
             scaled_r[iout] = abs(self.eab.boundary_lat)
