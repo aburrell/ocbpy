@@ -255,6 +255,46 @@ class TestDualBoundaryMethodsGeneral(test_ocb.TestOCBoundaryMethodsGeneral):
 
         return
 
+    def test_first_good(self):
+        """Test to see that the first good point returns the expected index."""
+
+        # Initalize the object
+        self.ocb = self.test_class(**self.set_default)
+
+        # Evaluate the record index
+        self.assertEqual(self.ocb.rec_ind, 0)
+        return
+
+    def test_custom_ind_selection(self):
+        """Test use of custom boundary selection criteria."""
+        # Initialize the boundary object and the comparison value
+        self.ocb = self.test_class(**self.set_default)
+        ocb_val = self.ocb.ocb.phi_cent[self.ocb.ocb.rec_ind]
+        eab_val = self.ocb.eab.phi_cent[self.ocb.eab.rec_ind]
+        ocb_ind = self.ocb.ocb_ind[self.ocb.rec_ind]
+        eab_ind = self.ocb.eab_ind[self.ocb.rec_ind]
+
+        # Cycle over each comparison method
+        for method in ['max', 'min', 'maxeq', 'mineq', 'equal']:
+            # Set the selection input and re-set the boundary index
+            kwargs = {"ocb_kwargs": {'phi_cent': (method, ocb_val)},
+                      "eab_kwargs": {'phi_cent': (method, eab_val)}}
+
+            # Test the custom selection
+            with self.subTest(kwargs=kwargs):
+                # Reset the good indices and the first good index
+                self.ocb.set_good_ind(**kwargs)
+                self.ocb.rec_ind = -1
+                self.ocb.get_next_good_ind()
+
+                # Evaluate the current first good index
+                if method.find('eq') >= 0:
+                    self.assertEqual(self.ocb.ocb.rec_ind, ocb_ind)
+                    self.assertEqual(self.ocb.eab.rec_ind, eab_ind)
+                else:
+                    self.assertGreater(self.ocb.eab.rec_ind, eab_ind)
+                    self.assertGreater(self.ocb.ocb.rec_ind, ocb_ind)
+        return
 
 class TestDualBoundaryMethodsLocation(unittest.TestCase):
     """Test the DualBoundary location methods."""
@@ -282,32 +322,33 @@ class TestDualBoundaryMethodsLocation(unittest.TestCase):
                                     16.6779661, 10.57627119, 10.98305085,
                                     14.6440678, 15.05084746])]
         self.lat = {1: [50.0, 65.0, 66.0, 66.0, 75.0, 75.0, 75.0, 75.0],
-                    -1: [-75.0, -75.0, -65.0, -65.0, -50.0]}
+                    -1: [-75.0, -75.0, -73.1, -73.5, -65.0, -65.0, -50.0]}
         self.mlt = {1: [17.49152542, 16.6779661, 8.94915254, 16.6779661,
                         10.57627119, 10.98305085, 14.6440678, 15.05084746],
-                    -1: [8.54237288, 17.08474576, 7.72881356, 17.89830508,
-                         18.30508475]}
+                    -1: [8.54237288, 17.08474576, 20.8, 20.9, 7.72881356,
+                         17.89830508, 18.30508475]}
 
         self.nlat = {1: [42.2702821, 57.52102977, 63.45670812, 58.40596869,
                          68.549302, 71.92618313, 75.36450117, 71.9639519],
-                     -1: [-74.19279356, -71.76459607, -64.26664886,
-                          -66.49974046, -50.923274]}
+                     -1: [-75.20091699603744, -77.43241520800147, -65.63470973,
+                          -66.20944239, -63.02562069687926, -60.95171308470224,
+                          -46.4345919807581]}
         self.nmlt = {1: [18.80644991, 18.85841629, 6.67391185, 18.96355496,
                          6.39130306, 6.7183392, 18.93115591, 19.3161857],
-                     -1: [6.94756463, 18.65574753, 6.79635684, 18.83239647,
-                          18.88673298]}
+                     -1: [6.94756463, 18.65574753, 21.93370602, 22.03753856,
+                          6.79635684, 18.83239647, 18.88673298]}
         self.olat = {1: [2.77770149, 41.62137725, 40.15557199, 43.59274117,
                          68.549302, 71.92618313, 75.36450117, 71.9639519],
-                     -1: [-75.200917, -77.43241521, -64.26664886, -66.49974046,
-                          -50.923274]}
+                     -1: [-75.200917, -77.43241521, -69.91446894, -70.17230283,
+                          -64.26664886, -66.49974046, -50.923274]}
         self.rcorr = 0.0
         self.scaled_r = {1: [64.0, 64.0, 64.0, 64.0, 10.0, 10.0, 16.0, 10.0],
-                         -1: [64.0, 64.0, 64.0, 64.0, 16.0]}
+                         -1: [16.0, 16.0, 10.0, 10.0, 64.0, 64.0, 64.0]}
         self.unscaled_r = {1: [75.70330362, 72.32137562, 66.56506657,
                                72.32137562, numpy.nan, numpy.nan, 6.769,
                                numpy.nan],
-                           -1: [64.69631038, 66.88534825, 66.00490331,
-                                68.25074784, 15.785]}
+                           -1: [15.785, 15.785, 5.10033853, 5.12896403,
+                                66.00490331, 68.25074784, 68.91414059]}
         self.out = []
         return
 
@@ -394,31 +435,42 @@ class TestDualBoundaryMethodsLocation(unittest.TestCase):
 
         # Evaluate based on array or float output
         if ind is None:
-            self.assertTrue(
-                numpy.less(abs(self.out[0] - rlat), tol,
-                           where=~numpy.isnan(rlat)).all(),
-                msg="unequal {:s}: {:} != {:}".format(lat_str, self.out[0],
-                                                      rlat))
             self.assertEqual(len(numpy.isnan(self.out[0])),
                              len(numpy.isnan(rlat)))
-            self.assertTrue(
-                numpy.less(abs(self.out[1] - rmlt), tol,
-                           where=~numpy.isnan(rmlt)).all(),
-                msg="unequal {:s}: {:} != {:}".format(mlt_str, self.out[1],
-                                                      rmlt))
+            if not numpy.isnan(rlat).all():
+                self.assertTrue(
+                    numpy.less(abs(self.out[0] - rlat), tol,
+                               where=~numpy.isnan(rlat)).all(),
+                    msg="unequal {:s}: {:} != {:}".format(lat_str, self.out[0],
+                                                          rlat))
             self.assertEqual(len(numpy.isnan(self.out[1])),
                              len(numpy.isnan(rmlt)))
+            if not numpy.isnan(rmlt).all():
+                self.assertTrue(
+                    numpy.less(abs(self.out[1] - rmlt), tol,
+                               where=~numpy.isnan(rmlt)).all(),
+                    msg="unequal {:s}: {:} != {:}".format(mlt_str, self.out[1],
+                                                          rmlt))
 
             if rshape > 2:
-                self.assertTrue(
-                    numpy.less(abs(self.out[2] - self.olat[hemisphere]),
-                               tol).all(),
-                    msg="unequal OCB latitude: {:} != {:}".format(
-                        self.out[2], self.olat[hemisphere]))
-                self.assertTrue(
-                    numpy.less(abs(self.out[3] - self.rcorr), tol).all(),
-                    msg="unequal radial correction: {:} != {:}".format(
-                        self.out[3], self.rcorr))
+                self.assertEqual(len(numpy.isnan(self.out[2])),
+                                 len(numpy.isnan(self.olat[hemisphere])))
+                if not numpy.isnan(self.out[2]).all():
+                    self.assertTrue(
+                        numpy.less(abs(self.out[2] - self.olat[hemisphere]),
+                                   tol, where=~numpy.isnan(self.out[2])).all(),
+                        msg="unequal OCB latitude: {:} != {:}".format(
+                            self.out[2], self.olat[hemisphere]))
+
+                if numpy.isnan(self.rcorr):
+                    self.assertTrue(numpy.isnan(self.out[3]).all(),
+                                    msg="{:} is not NaN".format(self.out[3]))
+                else:
+                    self.assertTrue(
+                        numpy.less(abs(self.out[3] - self.rcorr), tol,
+                                   where=~numpy.isnan(self.out[3])).all(),
+                        msg="unequal radial correction: {:} != {:}".format(
+                            self.out[3], self.rcorr))
         else:
             if numpy.isnan(self.out[0]):
                 self.assertTrue(numpy.isnan(rlat[ind]))
@@ -436,28 +488,70 @@ class TestDualBoundaryMethodsLocation(unittest.TestCase):
                                                           rmlt[ind]))
 
             if rshape > 2:
-                self.assertAlmostEqual(
-                    self.out[2], self.olat[hemisphere][ind],
-                    msg="unequal OCB latitude: {:} != {:}".format(
-                        self.out[2], self.olat[hemisphere][ind]))
-                self.assertAlmostEqual(
-                    self.out[3], self.rcorr,
-                    msg="unequal radial correction: {:} != {:}".format(
-                        self.out[3], self.rcorr))
+                if numpy.isnan(self.out[2]):
+                    self.assertTrue(numpy.isnan(self.olat[hemisphere][ind]))
+                else:
+                    self.assertAlmostEqual(
+                        self.out[2], self.olat[hemisphere][ind],
+                        msg="unequal OCB latitude: {:} != {:}".format(
+                            self.out[2], self.olat[hemisphere][ind]))
 
+                if numpy.isnan(self.out[3]):
+                    self.assertTrue(numpy.isnan(self.rcorr))
+                else:
+                    self.assertAlmostEqual(
+                        self.out[3], self.rcorr,
+                        msg="unequal radial correction: {:} != {:}".format(
+                            self.out[3], self.rcorr))
         return
 
-    def test_first_good(self):
-        """Test to see that the first good point returns the expected index."""
+    def test_normal_coord_float_nan(self):
+        """Test the normalisation calculation with NaN float input."""
+
+        ind = 0
+        self.rcorr = numpy.nan
 
         for hemi in [-1, 1]:
-            with self.subTest(hemi=hemi):
-                # Initalize the object
-                self.update_default_kwargs(hemisphere=hemi)
-                self.dual = ocbpy.DualBoundary(**self.set_default)
+            # Initalize the object
+            self.update_default_kwargs(hemisphere=hemi)
+            self.dual = ocbpy.DualBoundary(**self.set_default)
 
-                # Evaluate the record index
-                self.assertEqual(self.dual.rec_ind, 0)
+            # Update the expected output
+            self.nlat[hemi][ind] = numpy.nan
+            self.nmlt[hemi][ind] = numpy.nan
+            self.olat[hemi][ind] = numpy.nan
+
+            # Evaluate the calculation
+            with self.subTest(hemi=hemi):
+                self.out = self.dual.normal_coord(numpy.nan, 0.0)
+                self.eval_coords(hemisphere=hemi, ind=ind, revert=False)
+        return
+
+    def test_normal_coord_array_nan(self):
+        """Test the normalisation calculation with all NaN array input."""
+
+        for hemi in [-1, 1]:
+            # Initalize the object
+            self.update_default_kwargs(hemisphere=hemi)
+            self.dual = ocbpy.DualBoundary(**self.set_default)
+
+            # Update the input
+            self.mlt[hemi] = numpy.full(shape=len(self.lat[hemi]),
+                                        fill_value=numpy.nan)
+
+            # Update the expected output
+            self.nlat[hemi] = numpy.full(shape=len(self.lat[hemi]),
+                                         fill_value=numpy.nan)
+            self.nmlt[hemi] = numpy.full(shape=len(self.lat[hemi]),
+                                         fill_value=numpy.nan)
+            self.olat[hemi] = numpy.full(shape=len(self.lat[hemi]),
+                                         fill_value=numpy.nan)
+
+            # Evaluate the calculation
+            with self.subTest(hemi=hemi):
+                self.out = self.dual.normal_coord(self.lat[hemi],
+                                                  self.mlt[hemi])
+                self.eval_coords(hemisphere=hemi, revert=False)
         return
 
     def test_normal_coord_float(self):
@@ -666,6 +760,29 @@ class TestDualBoundaryMethodsLocation(unittest.TestCase):
                         abound, self.bounds[i]))
                 self.assertEqual(len(numpy.isnan(abound)),
                                  len(numpy.isnan(self.bounds[i])))
+        return
+
+    def test_calc_r_bad_ind(self):
+        """Test the scaled/unscaled radius calculation with a bad index."""
+        # Initialize the data
+        hemi = 1
+        self.update_default_kwargs(hemisphere=hemi)
+        self.dual = ocbpy.DualBoundary(**self.set_default)
+
+        # Set the expected output
+        self.scaled_r[hemi] = numpy.full(shape=len(self.lat[hemi]),
+                                         fill_value=numpy.nan)
+        self.unscaled_r[hemi] = numpy.full(shape=len(self.lat[hemi]),
+                                           fill_value=numpy.nan)
+
+        # Cycle through indices above and below the desired range
+        for ind in [-1, self.dual.records]:
+            with self.subTest(ind=ind):
+                self.dual.rec_ind = ind
+                self.out = self.dual.calc_r(self.nlat[hemi], self.nmlt[hemi],
+                                            self.mlt[hemi], self.rcorr)
+                self.eval_coords(hemisphere=hemi, radius=True)
+
         return
 
     def test_calc_r(self):
