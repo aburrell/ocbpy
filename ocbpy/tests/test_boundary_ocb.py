@@ -11,8 +11,44 @@ import logging
 import numpy
 from os import path
 import unittest
+import warnings
 
 import ocbpy
+
+
+class TestOCBoundaryDeprecations(unittest.TestCase):
+    """Test the deprecation warnings within the OCBoundary class."""
+
+    def setUp(self):
+        """Initialize the test environment."""
+        self.test_class = ocbpy.OCBoundary
+        test_dir = path.join(path.dirname(ocbpy.__file__), "tests",
+                             "test_data")
+        self.inst_init = {"instrument": "image", "hemisphere": 1,
+                          "filename": path.join(test_dir,
+                                                "test_north_circle")}
+
+    def tearDown(self):
+        """Clean up the test environment."""
+        del self.test_class, self.inst_init
+
+    def test_get_next_good_ocb_ind_kwargs(self):
+        """Test warnings for deprecated kwargs in `get_next_good_ocb_ind`."""
+        # Set the deprecated keyword arguments with standard values
+        dep_inputs = {"min_sectors": 7, "rcent_dev": 8.0, "max_r": 23.0,
+                      "min_r": 10.0}
+
+        # Initialize the boundary object
+        bound = self.test_class(**self.inst_init)
+
+        # Cycle through the keyword arguments that should raise a warning
+        for dkey in dep_inputs.keys():
+            kwargs = {dkey: dep_inputs[dkey]}
+            with self.subTest(kwargs=kwargs):
+                with self.assertWarnsRegex(DeprecationWarning,
+                                           "Deprecated kwarg will be removed"):
+                    bound.get_next_good_ocb_ind(**kwargs)
+        return
 
 
 class TestOCBoundaryLogFailure(unittest.TestCase):
@@ -21,6 +57,12 @@ class TestOCBoundaryLogFailure(unittest.TestCase):
     def setUp(self):
         """Initialize the test class."""
         self.test_class = ocbpy.OCBoundary
+        test_dir = path.join(path.dirname(ocbpy.__file__), "tests",
+                             "test_data")
+        self.inst_init = {"instrument": "image", "hemisphere": 1,
+                          "filename": path.join(test_dir,
+                                                "test_north_circle")}
+
         self.lwarn = ""
         self.lout = ""
         self.log_capture = StringIO()
@@ -31,6 +73,23 @@ class TestOCBoundaryLogFailure(unittest.TestCase):
     def tearDown(self):
         """Tear down the test case."""
         del self.lwarn, self.lout, self.log_capture, self.test_class
+        del self.inst_init
+        return
+
+    def test_bad_get_next_good_ocb_ind_kwargs(self):
+        """Test bad custom kwarg input in `get_next_good_ocb_ind`."""
+        # Initialize the boundary object
+        bound = self.test_class(**self.inst_init)
+
+        # Set the expected warning
+        self.lwarn = "Removing unknown selection attribute"
+
+        # Raise the log warning
+        bound.get_next_good_ocb_ind(**{"NotAnAttr": ("max", 5.0)})
+        
+        # Get and test the log message
+        self.lout = self.log_capture.getvalue()
+        self.assertRegex(self.lout, self.lwarn)
         return
 
     def test_bad_instrument_name(self):
@@ -301,6 +360,40 @@ class TestOCBoundaryMethodsGeneral(unittest.TestCase):
         self.assertEqual(self.ocb.records, 0)
         return
 
+    def test_first_good(self):
+        """Test to see that we can find the first good boundary point."""
+        self.ocb = self.test_class(**self.set_default)
+        self.ocb.get_next_good_ocb_ind()
+
+        self.assertGreater(self.ocb.rec_ind, -1)
+        self.assertLess(self.ocb.rec_ind, self.ocb.records)
+        return
+
+    def test_custom_ind_selection(self):
+        """Test use of custom boundary selection criteria."""
+        # Initialize the boundary object and the comparison value
+        self.ocb = self.test_class(**self.set_default)
+        self.ocb.get_next_good_ocb_ind()
+        test_val = self.ocb.phi_cent[self.ocb.rec_ind]
+        comp_ind = self.ocb.rec_ind
+
+        # Cycle over each comparison method
+        for method in ['max', 'min', 'maxeq', 'mineq', 'equal']:
+
+            # Set the selection input and re-set the boundary index
+            kwargs = {'phi_cent': (method, test_val)}
+            self.ocb.rec_ind = -1
+
+            # Test the custom selection
+            with self.subTest(kwargs=kwargs):
+                self.ocb.get_next_good_ocb_ind(**kwargs)
+
+                if method.find('eq') >= 0:
+                    self.assertEqual(self.ocb.rec_ind, comp_ind)
+                else:
+                    self.assertGreater(self.ocb.rec_ind, comp_ind)
+        return
+
 
 class TestOCBoundaryMethodsNorth(unittest.TestCase):
     """Unit tests for the OCBoundary class in the northern hemisphere."""
@@ -393,16 +486,6 @@ class TestOCBoundaryMethodsNorth(unittest.TestCase):
 
         self.assertEqual(self.ocb.records, self.out.records + 2)
         self.assertEqual(self.out.boundary_lat, 75.0)
-        return
-
-    def test_first_good(self):
-        """Test to see that we can find the first good point in the north."""
-        self.ocb.rec_ind = -1
-
-        self.ocb.get_next_good_ocb_ind()
-
-        self.assertGreater(self.ocb.rec_ind, -1)
-        self.assertLess(self.ocb.rec_ind, self.ocb.records)
         return
 
     def test_normal_coord_north_float(self):
@@ -783,15 +866,6 @@ class TestOCBoundaryMethodsSouth(unittest.TestCase):
         """Ensure that the default options were correctly set in the south."""
         self.assertGreater(self.ocb.records, 0)
         self.assertEqual(self.ocb.boundary_lat, self.ref_boundary)
-        return
-
-    def test_first_good(self):
-        """Test to see that we can find the first good point in the south."""
-        self.ocb.rec_ind = -1
-        self.ocb.get_next_good_ocb_ind()
-
-        self.assertGreater(self.ocb.rec_ind, -1)
-        self.assertLess(self.ocb.rec_ind, self.ocb.records)
         return
 
     def test_normal_coord_south(self):
