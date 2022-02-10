@@ -3,12 +3,12 @@
 # Copyright (C) 2017, AGB & GC
 # Full license can be found in License.md
 # -----------------------------------------------------------------------------
-""" Tests the ocb_scaling class and functions
-"""
+"""Tests the general instrument sub-module."""
 
 import datetime as dt
 import logging
 from io import StringIO
+import numpy as np
 import os
 import unittest
 
@@ -16,10 +16,11 @@ import ocbpy
 import ocbpy.instruments.general as ocb_igen
 
 
-class TestGeneralFileTestMethods(unittest.TestCase):
+class TestGeneralFileTestFunctions(unittest.TestCase):
+    """Unit tests for the general file functions."""
+
     def setUp(self):
-        """ Initialize the logging and output variables
-        """
+        """Set up the test environment."""
         self.test_file = os.path.join(os.path.dirname(ocbpy.__file__), "tests",
                                       "test_data", "test_north_circle")
         self.temp_output = os.path.join(os.path.dirname(ocbpy.__file__),
@@ -31,21 +32,25 @@ class TestGeneralFileTestMethods(unittest.TestCase):
         self.log_capture = StringIO()
         ocbpy.logger.addHandler(logging.StreamHandler(self.log_capture))
         ocbpy.logger.setLevel(logging.WARNING)
+        return
 
     def tearDown(self):
+        """Clean up the test environment."""
         if os.path.isfile(self.temp_output):
             os.remove(self.temp_output)
 
         del self.test_file, self.lwarn, self.lout, self.log_capture, self.rstat
         del self.temp_output
+        return
 
     def test_file_test_success(self):
-        """ Test the success condition for one of the test_data files"""
+        """Test the success condition for one of the test_data files."""
         self.rstat = ocb_igen.test_file(self.test_file)
         self.assertTrue(self.rstat)
+        return
 
     def test_file_test_not_file(self):
-        """ Test the general file testing routine with a bad filename """
+        """Test the general file testing routine with a bad filename."""
         self.lwarn = u"name provided is not a file"
 
         self.rstat = ocb_igen.test_file("/")
@@ -53,9 +58,10 @@ class TestGeneralFileTestMethods(unittest.TestCase):
 
         self.assertTrue(self.lout.find(self.lwarn) >= 0)
         self.assertFalse(self.rstat)
+        return
 
     def test_file_test_empty_file(self):
-        """ Test the general file testing routine with a bad filename """
+        """Test the general file testing routine with a bad filename."""
         self.lwarn = u'empty file'
 
         # Create an empty file and read it in
@@ -65,9 +71,10 @@ class TestGeneralFileTestMethods(unittest.TestCase):
 
         self.assertTrue(self.lout.find(self.lwarn) >= 0)
         self.assertFalse(self.rstat)
+        return
 
     def test_large_file(self):
-        """ Test the file size limit for loading data """
+        """Test the file size limit for loading data."""
         self.lwarn = u'File size'
 
         # Create a 2.12 GB file
@@ -79,12 +86,15 @@ class TestGeneralFileTestMethods(unittest.TestCase):
 
         self.assertTrue(self.lout.find(self.lwarn) >= 0)
         self.assertFalse(self.rstat)
+        return
 
 
-class TestGeneralLoadMethods(unittest.TestCase):
+class TestGeneralLoadFunctions(unittest.TestCase):
+    """Unit tests for the general loading functions."""
+
     def setUp(self):
-        """ Initialize the parameters needed to test the general loading method
-        """
+        """Set up a clean test environment."""
+
         ocb_dir = os.path.dirname(ocbpy.__file__)
         self.test_file_soy = os.path.join(ocb_dir, "tests", "test_data",
                                           "test_north_circle")
@@ -124,15 +134,17 @@ class TestGeneralLoadMethods(unittest.TestCase):
         self.log_capture = StringIO()
         ocbpy.logger.addHandler(logging.StreamHandler(self.log_capture))
         ocbpy.logger.setLevel(logging.WARNING)
+        return
 
     def tearDown(self):
+        """Clean up the test environment."""
         del self.test_file_soy, self.lwarn, self.lout, self.log_capture
         del self.test_file_dt, self.headers, self.out, self.test_out
         del self.load_kwargs
+        return
 
     def test_load_ascii_data_badfile(self):
-        """ Test the general loading routine for ASCII data with bad input
-        """
+        """Test the general loading routine for ASCII data with bad input."""
         self.lwarn = u'name provided is not a file'
 
         self.out = ocb_igen.load_ascii_data("/", 0)
@@ -141,6 +153,7 @@ class TestGeneralLoadMethods(unittest.TestCase):
         self.assertDictEqual(self.out[1], {})
 
         self.assertTrue(self.lout.find(self.lwarn) >= 0)
+        return
 
     def test_load_ascii_data_bad_header(self):
         """ Test the general loading routine for ASCII data with bad header
@@ -154,10 +167,10 @@ class TestGeneralLoadMethods(unittest.TestCase):
         self.assertDictEqual(self.out[1], {})
 
         self.assertTrue(self.lout.find(self.lwarn) >= 0)
+        return
 
     def test_load_ascii_data_w_header(self):
-        """ Test the general routine to load ASCII data that has a header
-        """
+        """Test the general routine to load ASCII data that has a header."""
         self.load_kwargs['datetime_cols'] = [1, 2]
         self.load_kwargs['datetime_fmt'] = "%Y-%m-%d %H:%M:%S"
         self.load_kwargs['max_str_length'] = 0
@@ -180,10 +193,10 @@ class TestGeneralLoadMethods(unittest.TestCase):
         for kk in self.test_out[self.test_file_dt].keys():
             self.assertEqual(self.out[1][kk][-1],
                              self.test_out[self.test_file_dt][kk])
+        return
 
     def test_load_ascii_data_w_comments(self):
-        """ Test the general routine to load ASCII data that has inline comments
-        """
+        """Test the general routine to load ASCII data with inline comments."""
         self.load_kwargs['gft_kwargs'] = {'comments': '2010-12-31'}
         self.load_kwargs['header'] = ['sc']
 
@@ -204,10 +217,10 @@ class TestGeneralLoadMethods(unittest.TestCase):
         # Test the values of the last data line
         self.assertEqual(self.out[1]['sc'][-1],
                          self.test_out[self.test_file_dt]['sc'])
+        return
 
     def test_load_ascii_data_wo_header(self):
-        """ Test the general routine to load ASCII data by providing a header
-        """
+        """Test the general routine to load ASCII data with a header."""
         self.load_kwargs['header'] = self.headers[self.test_file_soy]
         self.out = ocb_igen.load_ascii_data(self.test_file_soy, 0,
                                             **self.load_kwargs)
@@ -227,10 +240,10 @@ class TestGeneralLoadMethods(unittest.TestCase):
         for kk in self.test_out[self.test_file_soy].keys():
             self.assertEqual(self.out[1][kk][-1],
                              self.test_out[self.test_file_soy][kk])
+        return
 
     def test_load_ascii_data_w_sod(self):
-        """ Test the general routine to load ASCII data that uses seconds of day
-        """
+        """Test the general routine to load ASCII data that uses SOD."""
         self.load_kwargs['datetime_cols'] = [0, 1, 2]
         self.load_kwargs['datetime_fmt'] = "%Y %j SOD"
         self.load_kwargs['header'] = self.headers[self.test_file_sod]
@@ -255,11 +268,10 @@ class TestGeneralLoadMethods(unittest.TestCase):
         for kk in self.test_out[self.test_file_sod].keys():
             self.assertEqual(self.out[1][kk][-1],
                              self.test_out[self.test_file_sod][kk])
+        return
 
     def test_load_ascii_data_int_cols(self):
-        """ Test the general routine to load ASCII data assigning some
-        columns as integers
-        """
+        """Test the general routine to load ASCII data with some integers."""
 
         int_keys = ["YEAR", "SOY", "NB"]
         self.load_kwargs['header'] = self.headers[self.test_file_soy]
@@ -286,13 +298,10 @@ class TestGeneralLoadMethods(unittest.TestCase):
             else:
                 self.assertEqual(self.out[1][kk][-1],
                                  self.test_out[self.test_file_soy][kk])
-
-        del int_keys
+        return
 
     def test_load_ascii_data_str_cols(self):
-        """ Test the general routine to load ASCII data assigning some
-        columns as strings
-        """
+        """Test the general routine to load ASCII data with some strings."""
 
         str_keys = ["YEAR", "SOY"]
         self.load_kwargs['header'] = self.headers[self.test_file_soy]
@@ -319,12 +328,10 @@ class TestGeneralLoadMethods(unittest.TestCase):
             else:
                 self.assertEqual(self.out[1][kk][-1],
                                  self.test_out[self.test_file_soy][kk])
-
-        del str_keys
+        return
 
     def test_load_ascii_data_w_year_soy(self):
-        """ Test the general routine to load ASCII data with year and SOY
-        """
+        """Test the general routine to load ASCII data with year and SOY."""
 
         self.load_kwargs['header'] = self.headers[self.test_file_soy]
         self.load_kwargs['datetime_cols'] = [0, 1]
@@ -354,3 +361,102 @@ class TestGeneralLoadMethods(unittest.TestCase):
                          dt.datetime(2000, 5, 9, 11, 33, 22))
 
         del ktest
+        return
+
+
+class TestGeneralSatelliteFunctions(unittest.TestCase):
+    """Unit tests for the general satellite functions."""
+
+    def setUp(self):
+        """Set up the test environment."""
+        self.test_dir = os.path.join(os.path.dirname(ocbpy.__file__), "tests",
+                                     "test_data")
+        self.ocb = ocbpy.OCBoundary(instrument="dmsp-ssj", hemisphere=1,
+                                    filename=os.path.join(
+                                        self.test_dir,
+                                        "dmsp-ssj_north_out.ocb"))
+
+        self.mlt = np.arange(0, 24, 0.5)
+        self.lat = np.full(shape=self.mlt.shape, fill_value=75.0)
+        self.good = [False, False, False, False, False, False, False, False,
+                     False, False, False, False, False, False, False, False,
+                     False, False, False, True, False, False, False, False,
+                     False, False, False, False, False, False, False, True,
+                     False, False, False, False, False, False, False, False,
+                     False, False, False, False, False, False, False, False]
+        return
+
+    def tearDown(self):
+        """Clean up the test environment."""
+        del self.test_dir, self.ocb, self.mlt, self.lat, self.good
+        return
+
+    def test_satellite_track_defaults(self):
+        """Test the satellite track ID with default boundaries."""
+
+        sat_good = ocb_igen.satellite_track(self.lat, self.mlt, self.ocb.x_1[0],
+                                            self.ocb.y_1[0], self.ocb.x_2[0],
+                                            self.ocb.y_2[0], 1)
+        self.assertListEqual(self.good, list(sat_good))
+        return
+
+    def test_satellite_track_delta_xy(self):
+        """Test the satellite track ID with wider X/Y limits."""
+
+        # Set the expected output
+        self.good = [gval if i < 17 or i > 33 else True
+                     for i, gval in enumerate(self.good)]
+
+        # Run and evaluate the output
+        sat_good = ocb_igen.satellite_track(self.lat, self.mlt, self.ocb.x_1[0],
+                                            self.ocb.y_1[0], self.ocb.x_2[0],
+                                            self.ocb.y_2[0], 1, del_x=5.0,
+                                            del_y=5.0)
+        self.assertListEqual(self.good, list(sat_good))
+        return
+
+    def test_satellite_track_eq_bound(self):
+        """Test the satellite track ID with a wide equatorward boundary."""
+
+        # Update the input and output
+        self.lat -= 15.0
+        self.good = [False, False, False, False, False, False, False, False,
+                     False, False, False, False, False, False, False, False,
+                     False, False, False, False, False, False, False, False,
+                     False, False, False, False, False, False, False, False,
+                     False, False, True, False, False, False, False, False,
+                     False, False, False, False, False, False, False, False]
+
+        # Ensure this produces no good results initially
+        sat_good = ocb_igen.satellite_track(self.lat, self.mlt, self.ocb.x_1[0],
+                                            self.ocb.y_1[0], self.ocb.x_2[0],
+                                            self.ocb.y_2[0], 1)
+        self.assertFalse(sat_good.any())
+
+        # Test with expanded equatorward boundaries
+        sat_good = ocb_igen.satellite_track(self.lat, self.mlt, self.ocb.x_1[0],
+                                            self.ocb.y_1[0], self.ocb.x_2[0],
+                                            self.ocb.y_2[0], 1, past_bound=20)
+        self.assertListEqual(self.good, list(sat_good))
+        return
+
+    def test_satellite_track_errors(self):
+        """Test that bad input raises appropriate ValueErrors."""
+
+        bad_val = -10.0
+        msg_dict = {"del_x": "x- and y-axis allowable difference must be ",
+                    "del_y": "x- and y-axis allowable difference must be ",
+                    "past_bound": "equatorward buffer for track must be ",
+                    "hemisphere": "hemisphere expecting"}
+
+        for key in msg_dict.keys():
+            msg = msg_dict[key]
+            hemi = 1 if key != "hemisphere" else bad_val
+            kwargs = {key: bad_val} if key != "hemisphere" else {}
+
+            with self.subTest(kwargs=kwargs, msg=msg):
+                with self.assertRaisesRegex(ValueError, msg):
+                    ocb_igen.satellite_track(
+                        self.lat, self.mlt, self.ocb.x_1[0], self.ocb.y_1[0],
+                        self.ocb.x_2[0], self.ocb.y_2[0], hemi, **kwargs)
+        return
