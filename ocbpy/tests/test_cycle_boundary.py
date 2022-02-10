@@ -44,6 +44,25 @@ class TestCycleMatchData(unittest.TestCase):
         del self.test_func
         return
 
+    def test_deprecated_kwargs(self):
+        """Test warnings for deprecated kwargs in `get_next_good_ocb_ind`."""
+        # Set the deprecated keyword arguments with standard values
+        dep_inputs = {"min_sectors": 7, "rcent_dev": 8.0, "max_r": 23.0,
+                      "min_r": 10.0}
+        test_times = np.arange(self.ocb.dtime[self.ocb.rec_ind],
+                               self.ocb.dtime[self.ocb.rec_ind + 5],
+                               dt.timedelta(seconds=600)).astype(dt.datetime)
+
+        # Cycle through the keyword arguments that should raise a warning
+        for dkey in dep_inputs.keys():
+            kwargs = {dkey: dep_inputs[dkey]}
+            with self.subTest(kwargs=kwargs):
+                with self.assertWarnsRegex(DeprecationWarning,
+                                           "Deprecated kwarg will be removed"):
+                    ocbpy.cycle_boundary.match_data_ocb(self.ocb, test_times,
+                                                        idat=1, **kwargs)
+        return
+
     def test_match(self):
         """Test to see that the data matching works properly."""
         # Build a array of times for a test dataset
