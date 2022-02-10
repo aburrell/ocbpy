@@ -18,6 +18,23 @@ from .test_cycle_boundary import TestCycleMatchData, TestCycleGoodIndices
 from . import test_boundary_ocb as test_ocb
 
 
+class TestInternalOCBoundaryDeprecations(test_ocb.TestOCBoundaryDeprecations):
+    """Test the deprecation warnings within the OCBoundary class."""
+
+    def setUp(self):
+        """Initialize the test environment."""
+        self.test_class = ocbpy.ocboundary.OCBoundary
+        test_dir = path.join(path.dirname(ocbpy.__file__), "tests",
+                             "test_data")
+        self.inst_init = {"instrument": "image", "hemisphere": 1,
+                          "filename": path.join(test_dir,
+                                                "test_north_circle")}
+
+    def tearDown(self):
+        """Clean up the test environment."""
+        del self.test_class, self.inst_init
+
+
 class TestOCBoundaryDeprecation(unittest.TestCase):
     """Unit tests for the deprecation of the ocboundary sub-module."""
 
