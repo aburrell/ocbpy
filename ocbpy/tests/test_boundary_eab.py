@@ -39,6 +39,12 @@ class TestEABoundaryLogFailure(test_ocb.TestOCBoundaryLogFailure):
     def setUp(self):
         """Initialize the test class."""
         self.test_class = ocbpy.EABoundary
+        test_dir = path.join(path.dirname(ocbpy.__file__), "tests",
+                             "test_data")
+        self.inst_init = {"instrument": "image", "hemisphere": 1,
+                          "filename": path.join(test_dir,
+                                                "test_north_circle")}
+
         self.lwarn = ""
         self.lout = ""
         self.log_capture = StringIO()

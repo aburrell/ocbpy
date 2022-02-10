@@ -152,6 +152,12 @@ class TestOldOCBoundaryLogFailure(test_ocb.TestOCBoundaryLogFailure):
         """Initialize the test class."""
         warnings.simplefilter("ignore", DeprecationWarning)
         self.test_class = ocbpy.ocboundary.OCBoundary
+        test_dir = path.join(path.dirname(ocbpy.__file__), "tests",
+                             "test_data")
+        self.inst_init = {"instrument": "image", "hemisphere": 1,
+                          "filename": path.join(test_dir,
+                                                "test_north_circle")}
+
         self.lwarn = ""
         self.lout = ""
         self.log_capture = StringIO()
