@@ -252,3 +252,100 @@ class TestCycleGoodIndices(unittest.TestCase):
 
         self.assertEqual(len(self.out), 0)
         return
+
+
+class TestGeneralSatelliteFunctions(unittest.TestCase):
+    """Unit tests for the general satellite functions."""
+
+    def setUp(self):
+        """Set up the test environment."""
+        self.test_dir = path.join(path.dirname(ocbpy.__file__), "tests",
+                                  "test_data")
+        self.ocb = ocbpy.OCBoundary(instrument="dmsp-ssj", hemisphere=1,
+                                    filename=path.join(
+                                        self.test_dir,
+                                        "dmsp-ssj_north_out.ocb"))
+
+        self.mlt = np.arange(0, 24, 0.5)
+        self.lat = np.full(shape=self.mlt.shape, fill_value=75.0)
+        self.good = [False, False, False, False, False, False, False, False,
+                     False, False, False, False, False, False, False, False,
+                     False, False, False, True, False, False, False, False,
+                     False, False, False, False, False, False, False, True,
+                     False, False, False, False, False, False, False, False,
+                     False, False, False, False, False, False, False, False]
+        return
+
+    def tearDown(self):
+        """Clean up the test environment."""
+        del self.test_dir, self.ocb, self.mlt, self.lat, self.good
+        return
+
+    def test_satellite_track_defaults(self):
+        """Test the satellite track ID with default boundaries."""
+
+        sat_good = ocbpy.cycle_boundary.satellite_track(
+            self.lat, self.mlt, self.ocb.x_1[0], self.ocb.y_1[0],
+            self.ocb.x_2[0], self.ocb.y_2[0], 1)
+        self.assertListEqual(self.good, list(sat_good))
+        return
+
+    def test_satellite_track_delta_xy(self):
+        """Test the satellite track ID with wider X/Y limits."""
+
+        # Set the expected output
+        self.good = [gval if i < 17 or i > 33 else True
+                     for i, gval in enumerate(self.good)]
+
+        # Run and evaluate the output
+        sat_good = ocbpy.cycle_boundary.satellite_track(
+            self.lat, self.mlt, self.ocb.x_1[0], self.ocb.y_1[0],
+            self.ocb.x_2[0], self.ocb.y_2[0], 1, del_x=5.0, del_y=5.0)
+        self.assertListEqual(self.good, list(sat_good))
+        return
+
+    def test_satellite_track_eq_bound(self):
+        """Test the satellite track ID with a wide equatorward boundary."""
+
+        # Update the input and output
+        self.lat -= 15.0
+        self.good = [False, False, False, False, False, False, False, False,
+                     False, False, False, False, False, False, False, False,
+                     False, False, False, False, False, False, False, False,
+                     False, False, False, False, False, False, False, False,
+                     False, False, True, False, False, False, False, False,
+                     False, False, False, False, False, False, False, False]
+
+        # Ensure this produces no good results initially
+        sat_good = ocbpy.cycle_boundary.satellite_track(
+            self.lat, self.mlt, self.ocb.x_1[0], self.ocb.y_1[0],
+            self.ocb.x_2[0], self.ocb.y_2[0], 1)
+        self.assertFalse(sat_good.any())
+
+        # Test with expanded equatorward boundaries
+        sat_good = ocbpy.cycle_boundary.satellite_track(
+            self.lat, self.mlt, self.ocb.x_1[0], self.ocb.y_1[0],
+            self.ocb.x_2[0], self.ocb.y_2[0], 1, past_bound=20)
+        self.assertListEqual(self.good, list(sat_good))
+        return
+
+    def test_satellite_track_errors(self):
+        """Test that bad input raises appropriate ValueErrors."""
+
+        bad_val = -10.0
+        msg_dict = {"del_x": "x- and y-axis allowable difference must be ",
+                    "del_y": "x- and y-axis allowable difference must be ",
+                    "past_bound": "equatorward buffer for track must be ",
+                    "hemisphere": "hemisphere expecting"}
+
+        for key in msg_dict.keys():
+            msg = msg_dict[key]
+            hemi = 1 if key != "hemisphere" else bad_val
+            kwargs = {key: bad_val} if key != "hemisphere" else {}
+
+            with self.subTest(kwargs=kwargs, msg=msg):
+                with self.assertRaisesRegex(ValueError, msg):
+                    ocbpy.cycle_boundary.satellite_track(
+                        self.lat, self.mlt, self.ocb.x_1[0], self.ocb.y_1[0],
+                        self.ocb.x_2[0], self.ocb.y_2[0], hemi, **kwargs)
+        return
