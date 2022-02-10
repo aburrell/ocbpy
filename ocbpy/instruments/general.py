@@ -355,4 +355,3 @@ def satellite_track(lat, mlt, x1, y1, x2, y2, hemisphere, del_x=1.0, del_y=1.0,
 
     # Return the boolean mask
     return good
-

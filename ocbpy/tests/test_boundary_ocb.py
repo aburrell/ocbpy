@@ -86,7 +86,7 @@ class TestOCBoundaryLogFailure(unittest.TestCase):
 
         # Raise the log warning
         bound.get_next_good_ocb_ind(**{"NotAnAttr": ("max", 5.0)})
-        
+
         # Get and test the log message
         self.lout = self.log_capture.getvalue()
         self.assertRegex(self.lout, self.lwarn)

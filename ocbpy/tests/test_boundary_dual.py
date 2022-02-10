@@ -296,6 +296,7 @@ class TestDualBoundaryMethodsGeneral(test_ocb.TestOCBoundaryMethodsGeneral):
                     self.assertGreater(self.ocb.ocb.rec_ind, ocb_ind)
         return
 
+
 class TestDualBoundaryMethodsLocation(unittest.TestCase):
     """Test the DualBoundary location methods."""
 
