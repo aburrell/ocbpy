@@ -220,7 +220,7 @@ class TestGeneralLoadFunctions(unittest.TestCase):
         return
 
     def test_load_ascii_data_wo_header(self):
-        """Test the general routine to load ASCII data with a header."""
+        """Test the general load ASCII routine with a header provided."""
         self.load_kwargs['header'] = self.headers[self.test_file_soy]
         self.out = ocb_igen.load_ascii_data(self.test_file_soy, 0,
                                             **self.load_kwargs)
@@ -240,6 +240,41 @@ class TestGeneralLoadFunctions(unittest.TestCase):
         for kk in self.test_out[self.test_file_soy].keys():
             self.assertEqual(self.out[1][kk][-1],
                              self.test_out[self.test_file_soy][kk])
+        return
+
+    def test_load_ascii_data_datetime_header(self):
+        """Test the load ASCII routine with a header with a datetime column."""
+        # Adjust the data
+        hline = self.headers[self.test_file_sod][0].replace('RERR', 'datetime')
+        self.load_kwargs['header'] = [hline]
+        self.test_out[self.test_file_sod]['DATETIME'] = self.test_out[
+            self.test_file_sod]['datetime']
+        self.test_out[self.test_file_sod]['datetime'] = self.test_out[
+            self.test_file_sod]['RERR']
+        del self.test_out[self.test_file_sod]['RERR']
+        self.load_kwargs['datetime_cols'] = [0, 1, 2]
+        self.load_kwargs['datetime_fmt'] = "%Y %j SOD"
+
+        # Get the output
+        self.out = ocb_igen.load_ascii_data(self.test_file_sod, 0,
+                                            **self.load_kwargs)
+
+        # Test to ensure the output header equals the input header
+        self.assertRegex(self.out[0][0], hline, msg="unexpected header line")
+
+        # Test to see that the data keys are all in the header
+        self.assertListEqual(
+            sorted([kk for kk in self.test_out[self.test_file_sod].keys()]),
+            sorted([kk for kk in self.out[1].keys()]),
+            msg="unexpected output data keys")
+
+        # Test the length of the data file
+        self.assertTupleEqual(self.out[1]['A'].shape, (9,))
+
+        # Test the values of the last data line
+        for kk in self.test_out[self.test_file_sod].keys():
+            self.assertEqual(self.out[1][kk][-1],
+                             self.test_out[self.test_file_sod][kk])
         return
 
     def test_load_ascii_data_w_sod(self):
