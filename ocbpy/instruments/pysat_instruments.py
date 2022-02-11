@@ -116,25 +116,6 @@ def add_ocb_to_data(pysat_inst, mlat_name='', mlt_name='', evar_names=None,
 
     """
 
-    # Add check for deprecated and custom kwargs
-    dep_comp = {'min_sectors': ['num_sectors', ('mineq', 7)],
-                'rcent_dev': ['r_cent', ('maxeq', 8.0)],
-                'max_r': ['r', ('maxeq', 23.0)],
-                'min_r': ['r', ('mineq', 10.0)]}
-    cust_keys = list(kwargs.keys())
-
-    for ckey in cust_keys:
-        if ckey in dep_comp.keys():
-            warnings.warn("".join(["Deprecated kwarg will be removed in ",
-                                   "version 0.3.1+. To replecate behaviour",
-                                   ", use {", dep_comp[ckey][0], ": ",
-                                   repr(dep_comp[ckey][1]), "}"]),
-                          DeprecationWarning, stacklevel=2)
-            del kwargs[ckey]
-
-            if hasattr(ocb, dep_comp[ckey][0]):
-                kwargs[dep_comp[ckey][0]] = dep_comp[ckey][1]
-
     # Test the input
     if evar_names is None:
         evar_names = []
@@ -273,6 +254,25 @@ def add_ocb_to_data(pysat_inst, mlat_name='', mlt_name='', evar_names=None,
     if ocb.filename is None or ocb.records == 0:
         ocbpy.logger.error("no data in OCB file {:}".format(ocb.filename))
         return
+
+    # Add check for deprecated and custom kwargs
+    dep_comp = {'min_sectors': ['num_sectors', ('mineq', 7)],
+                'rcent_dev': ['r_cent', ('maxeq', 8.0)],
+                'max_r': ['r', ('maxeq', 23.0)],
+                'min_r': ['r', ('mineq', 10.0)]}
+    cust_keys = list(kwargs.keys())
+
+    for ckey in cust_keys:
+        if ckey in dep_comp.keys():
+            warnings.warn("".join(["Deprecated kwarg will be removed in ",
+                                   "version 0.3.1+. To replecate behaviour",
+                                   ", use {", dep_comp[ckey][0], ": ",
+                                   repr(dep_comp[ckey][1]), "}"]),
+                          DeprecationWarning, stacklevel=2)
+            del kwargs[ckey]
+
+            if hasattr(ocb, dep_comp[ckey][0]):
+                kwargs[dep_comp[ckey][0]] = dep_comp[ckey][1]
 
     # Initialise the OCB output
     ocb_output = dict()
