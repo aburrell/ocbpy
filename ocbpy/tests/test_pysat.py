@@ -352,6 +352,23 @@ class TestPysatMethods(unittest.TestCase):
         self.utils.test_ocb_added()
         return
 
+    def test_add_ocb_to_data_south_hemisphere_selfset(self):
+        """Test successful identification of southern hemisphere only."""
+
+        # Don't set the hemisphere
+        del self.ocb_kw['hemisphere']
+
+        # Ensure all data is in the southern hemisphere and the greatest
+        # value is identically zero
+        self.test_inst['latitude'][self.test_inst['latitude'] > 0] *= -1
+        self.test_inst['latitude'][self.test_inst['latitude'].argmax()] = 0.0
+
+        # Add the OCB data to the Instrument and evaluate the output
+        ocb_pysat.add_ocb_to_data(self.test_inst, "latitude", "mlt",
+                                  **self.ocb_kw)
+        self.utils.test_ocb_added()
+        return
+
     def test_add_ocb_to_data_evar(self):
         """Test adding ocb to pysat with E-field related variables."""
         ocb_pysat.add_ocb_to_data(self.test_inst, "latitude", "mlt",
@@ -518,6 +535,32 @@ class TestPysatMethods(unittest.TestCase):
         self.lwarn = u"no data in OCB file"
         self.lout = self.log_capture.getvalue()
         self.assertTrue(self.lout.find(self.lwarn) >= 0)
+        return
+
+    def test_add_ocb_to_data_bad_hemisphere_selfset(self):
+        """Test failure of a pysat.Instrument to specify a hemisphere."""
+        del self.ocb_kw['hemisphere']
+
+        with self.assertRaisesRegex(
+                ValueError, 'cannot process observations from both '):
+            ocb_pysat.add_ocb_to_data(self.test_inst, "latitude", "mlt",
+                                      **self.ocb_kw)
+        return
+
+    def test_bad_pysat_inst(self):
+        """Test failure of a bad pysat.Instrument in pysat functions."""
+
+        # Set the function and input data
+        func_dict = {ocb_pysat.add_ocb_to_data: [None, "latitude", "mlt"],
+                     ocb_pysat.add_ocb_to_metadata: [None, "ocb_mlt", "mlt"]}
+
+        # Test the error for each function
+        for func in func_dict.keys():
+            with self.subTest(func=func):
+                with self.assertRaisesRegex(
+                        ValueError,
+                        'unknown class, expected pysat.Instrument'):
+                    func(*func_dict[func])
         return
 
     def test_add_ocb_to_data_bad_mlat(self):
