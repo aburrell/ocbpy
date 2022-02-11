@@ -25,7 +25,8 @@ class VectorData(object):
     dat_ind : int or array-like
         Data index (zero offset)
     ocb_ind : int or array-like
-        OCBoundary record index matched to this data index (zero offset)
+        OCBoundary or DualBoundary record index matched to this data index
+        (zero offset)
     aacgm_lat : float or array-like
         Vector AACGM latitude (degrees)
     aacgm_mlt : float or array-like
@@ -207,20 +208,16 @@ class VectorData(object):
                                   self.scale_func.__name__])
 
         # Format the base output
-        out = "".join(["ocbpy.ocb_scaling.VectorData(", self.dat_ind.__repr__(),
-                       ", ", self.ocb_ind.__repr__(), ", ",
-                       self.aacgm_lat.__repr__(), ", ",
-                       self.aacgm_mlt.__repr__(), ", ocb_lat=",
-                       self.ocb_lat.__repr__(), ", ocb_mlt=",
-                       self.ocb_mlt.__repr__(), ", r_corr=",
-                       self.r_corr.__repr__(), ", aacgm_n=",
-                       self.aacgm_n.__repr__(), ", aacgm_e=",
-                       self.aacgm_e.__repr__(), ", aacgm_z=",
-                       self.aacgm_z.__repr__(), ", aacgm_mag=",
-                       self.aacgm_mag.__repr__(), ", dat_name=",
-                       self.dat_name.__repr__(), ", dat_units=",
-                       self.dat_units.__repr__(), ", scale_func=",
-                       repr_func, ")"])
+        out = "".join(["ocbpy.ocb_scaling.VectorData(", repr(self.dat_ind),
+                       ", ", repr(self.ocb_ind), ", ", repr(self.aacgm_lat),
+                       ", ", repr(self.aacgm_mlt), ", ocb_lat=",
+                       repr(self.ocb_lat), ", ocb_mlt=", repr(self.ocb_mlt),
+                       ", r_corr=", repr(self.r_corr), ", aacgm_n=",
+                       repr(self.aacgm_n), ", aacgm_e=", repr(self.aacgm_e),
+                       ", aacgm_z=", repr(self.aacgm_z), ", aacgm_mag=",
+                       repr(self.aacgm_mag), ", dat_name=",
+                       repr(self.dat_name), ", dat_units=",
+                       repr(self.dat_units), ", scale_func=", repr_func, ")"])
 
         # Reformat the numpy representations
         out = out.replace('array', 'numpy.array')
@@ -361,13 +358,16 @@ class VectorData(object):
            or np.all(np.isnan(self.r_corr))):
             return
 
-        # Set the AACGM coordinates of the OCB pole HERE
+        # Set the AACGM coordinates of the OCB pole
         if hasattr(ocb, "ocb"):
-            self.scaled_r, self.unscaled_r = ocb.calc_r(
-                self.ocb_lat, self.ocb_mlt, self.aacgm_mlt, self.r_corr)
+            iocb = ocb.ocb_ind[self.ocb_ind]
+            self.unscaled_r = ocb.ocb.r[iocb] + self.r_corr
+            self.scaled_r = np.full(
+                shape=self.unscaled_r.shape,
+                fill_value=(90.0 - abs(ocb.ocb.boundary_lat)))
             self.ocb_aacgm_mlt = ocbpy.ocb_time.deg2hr(
-                ocb.ocb.phi_cent[self.ocb_ind])
-            self.ocb_aacgm_lat = 90.0 - ocb.ocb.r_cent[self.ocb_ind]
+                ocb.ocb.phi_cent[iocb])
+            self.ocb_aacgm_lat = 90.0 - ocb.ocb.r_cent[iocb]
         else:
             self.unscaled_r = ocb.r[self.ocb_ind] + self.r_corr
             self.scaled_r = np.full(shape=self.unscaled_r.shape,
