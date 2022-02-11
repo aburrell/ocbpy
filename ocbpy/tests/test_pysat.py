@@ -42,12 +42,14 @@ class TestPysatUtils(unittest.TestCase):
         self.pysat_keys = list()
         self.arevectors = list()
         self.nkeys = 0
+        return
 
     def tearDown(self):
         """Tear down the testing environment."""
         del self.meta, self.ocb_key, self.pysat_key, self.notes, self.isvector
         del self.test_inst, self.ocb, self.added_keys, self.pysat_keys
         del self.arevectors, self.nkeys
+        return
 
     def eval_ocb_metadata(self):
         """Evaluate new OCB metadata."""
@@ -180,11 +182,11 @@ class TestPysatStructure(unittest.TestCase):
 
     def setUp(self):
         """Initialize setup, none needed."""
-        pass
+        return
 
     def tearDown(self):
         """Clean up test environment, no teardown needed."""
-        pass
+        return
 
     def test_add_ocb_to_data_defaults(self):
         """Test the add_ocb_to_data function defaults."""
@@ -193,14 +195,13 @@ class TestPysatStructure(unittest.TestCase):
         for i in [0, 1, 8]:
             self.assertEqual(len(defaults[i]), 0)
 
-        for i in [2, 3, 4, 6]:
+        for i in [2, 3, 4, 6, 10, 11]:
             self.assertIsNone(defaults[i])
-
-        for i, val in enumerate([600, 7, 8.0, 23.0, 10.0]):
-            self.assertEqual(defaults[i + 9], val)
 
         self.assertEqual(defaults[5], 0)
         self.assertRegex(defaults[7], 'default')
+        self.assertEqual(defaults[9], 600)
+        return
 
     def test_add_ocb_to_metadata_defaults(self):
         """Test the add_ocb_to_metadata function defaults."""
@@ -210,6 +211,7 @@ class TestPysatStructure(unittest.TestCase):
             self.assertFalse(defaults[i])
 
         self.assertEqual(defaults[1], '')
+        return
 
 
 @unittest.skipIf(no_pysat, "pysat not installed")
@@ -245,6 +247,7 @@ class TestPysatMethods(unittest.TestCase):
 
         self.utils = TestPysatUtils("eval_ocb_metadata")
         self.utils.setUp()
+        return
 
     def tearDown(self):
         """Tear down after each test."""
@@ -252,6 +255,7 @@ class TestPysatMethods(unittest.TestCase):
         self.utils.tearDown()
         del self.test_file, self.log_capture, self.ocb, self.test_inst
         del self.utils, self.lout, self.lwarn, self.ocb_kw, self.pysat_var2
+        return
 
     def test_add_ocb_to_metadata(self):
         """Test the metadata adding routine."""
@@ -284,6 +288,7 @@ class TestPysatMethods(unittest.TestCase):
         self.lwarn = u"OCB data already has metadata"
         self.lout = self.log_capture.getvalue()
         self.assertTrue(self.lout.find(self.lwarn) >= 0)
+        return
 
     def test_overwrite_metadata(self):
         """Test the overwrite permission on metadata adding routine."""
@@ -295,8 +300,7 @@ class TestPysatMethods(unittest.TestCase):
 
         meta = self.test_inst.meta
         self.assertRegex(meta['ocb_test'][meta.labels.notes], "test notes two")
-
-        del meta
+        return
 
     def test_add_ocb_to_data_ocb_obj(self):
         """Test adding ocb to pysat data using the loaded OCB object."""
@@ -315,6 +319,7 @@ class TestPysatMethods(unittest.TestCase):
         self.utils.ocb = self.ocb
         self.utils.arevectors = [False for i in range(self.utils.nkeys)]
         self.utils.test_ocb_added()
+        return
 
     def test_deprecated_kwargs(self):
         """Test DeprecationWarning raised for deprecation kwargs."""
@@ -345,6 +350,7 @@ class TestPysatMethods(unittest.TestCase):
         self.utils.pysat_keys[self.utils.pysat_keys.index("r_corr")] = None
         self.arevectors = [False for i in range(self.utils.nkeys)]
         self.utils.test_ocb_added()
+        return
 
     def test_add_ocb_to_data_evar(self):
         """Test adding ocb to pysat with E-field related variables."""
@@ -362,6 +368,7 @@ class TestPysatMethods(unittest.TestCase):
         self.arevectors = [False for i in range(self.utils.nkeys)]
 
         self.utils.test_ocb_added()
+        return
 
     def test_add_ocb_to_data_curl_evar(self):
         """Test adding ocb to pysat with Curl E-field related variables."""
@@ -378,6 +385,7 @@ class TestPysatMethods(unittest.TestCase):
         self.utils.pysat_keys[self.utils.pysat_keys.index("r_corr")] = None
 
         self.utils.test_ocb_added()
+        return
 
     def test_add_ocb_to_data_evar_vect(self):
         """Test adding ocb to pysat with Curl E-field related vectors."""
@@ -407,6 +415,7 @@ class TestPysatMethods(unittest.TestCase):
             self.utils.pysat_keys.append(pp)
 
         self.utils.test_ocb_added()
+        return
 
     def test_add_ocb_to_data_curl_evar_vect(self):
         """Test adding ocb to pysat with Curl E-field related vectors."""
@@ -436,6 +445,7 @@ class TestPysatMethods(unittest.TestCase):
             self.utils.pysat_keys.append(pp)
 
         self.utils.test_ocb_added()
+        return
 
     def test_add_ocb_to_data_custom_vect(self):
         """Test adding ocb to pysat with custom scaled variables."""
@@ -465,6 +475,7 @@ class TestPysatMethods(unittest.TestCase):
                 self.utils.arevectors[-1] = True
             self.utils.pysat_keys.append(pp)
         self.utils.test_ocb_added()
+        return
 
     def test_add_ocb_to_data_all_types(self):
         """Test adding ocb to pysat with E-field, Curl, and Vector data."""
@@ -496,6 +507,7 @@ class TestPysatMethods(unittest.TestCase):
             self.utils.pysat_keys.append(pp)
 
         self.utils.test_ocb_added()
+        return
 
     def test_add_ocb_to_data_no_file(self):
         """Test adding ocb to pydat when no OCB file or data is provided."""
@@ -506,6 +518,7 @@ class TestPysatMethods(unittest.TestCase):
         self.lwarn = u"no data in OCB file"
         self.lout = self.log_capture.getvalue()
         self.assertTrue(self.lout.find(self.lwarn) >= 0)
+        return
 
     def test_add_ocb_to_data_bad_mlat(self):
         """Test failure of unknown mlat key in add_ocb_to_data."""
@@ -521,6 +534,7 @@ class TestPysatMethods(unittest.TestCase):
                                     'unknown magnetic local time name bad'):
             ocb_pysat.add_ocb_to_data(self.test_inst, "latitude", "bad",
                                       ocb=self.ocb)
+        return
 
     def test_add_ocb_to_data_bad_evar(self):
         """Test failure of unknown E field key in add_ocb_to_data."""
@@ -528,6 +542,7 @@ class TestPysatMethods(unittest.TestCase):
                                     'at least one unknown E field name'):
             ocb_pysat.add_ocb_to_data(self.test_inst, "latitude", "mlt",
                                       evar_names=["bad"], ocb=self.ocb)
+        return
 
     def test_add_ocb_to_data_bad_curl(self):
         """Test failure of unknown E field key in add_ocb_to_data."""
@@ -535,6 +550,7 @@ class TestPysatMethods(unittest.TestCase):
                                     'at least one unknown E field name'):
             ocb_pysat.add_ocb_to_data(self.test_inst, "latitude", "mlt",
                                       curl_evar_names=["bad"], ocb=self.ocb)
+        return
 
     def test_add_ocb_to_data_bad_vector_scale(self):
         """Test failure of missing scaling function in add_ocb_to_data."""
@@ -546,6 +562,7 @@ class TestPysatMethods(unittest.TestCase):
                                                             'dat_name': 'bad',
                                                             'dat_units': ''}},
                                       ocb=self.ocb)
+        return
 
     def test_add_ocb_to_data_bad_vector_name(self):
         """Test failure of missing scaling function in add_ocb_to_data."""
@@ -560,6 +577,7 @@ class TestPysatMethods(unittest.TestCase):
                                            'dat_name': 'bad',
                                            'dat_units': ''}},
                                       ocb=self.ocb)
+        return
 
 
 @unittest.skipIf(no_pysat, "pysat not installed")
@@ -596,6 +614,7 @@ class TestPysatMethods2DXarray(TestPysatMethods):
 
         self.utils = TestPysatUtils("eval_ocb_metadata")
         self.utils.setUp()
+        return
 
     def tearDown(self):
         """Tear down after each test."""
@@ -603,6 +622,7 @@ class TestPysatMethods2DXarray(TestPysatMethods):
         self.utils.tearDown()
         del self.test_file, self.log_capture, self.ocb, self.test_inst
         del self.utils, self.lout, self.lwarn, self.ocb_kw, self.pysat_var2
+        return
 
 
 @unittest.skipIf(no_pysat, "pysat not installed")
@@ -638,6 +658,7 @@ class TestPysatMethodsXarray(TestPysatMethods):
 
         self.utils = TestPysatUtils("eval_ocb_metadata")
         self.utils.setUp()
+        return
 
     def tearDown(self):
         """Clean the test environment."""
@@ -645,6 +666,7 @@ class TestPysatMethodsXarray(TestPysatMethods):
         self.utils.tearDown()
         del self.test_file, self.log_capture, self.ocb, self.test_inst
         del self.utils, self.lout, self.lwarn, self.ocb_kw, self.pysat_var2
+        return
 
 
 @unittest.skipIf(no_pysat, "pysat not installed")
@@ -680,13 +702,16 @@ class TestPysatCustMethods(unittest.TestCase):
 
         self.utils = TestPysatUtils("eval_ocb_metadata")
         self.utils.setUp()
+        return
 
     def tearDown(self):
         """Clean the test environment."""
 
         self.utils.tearDown()
         del self.test_file, self.log_capture, self.test_inst, self.ocb
-        del self.utils, self.lwarn, self.lout, self.cust_kwargs, self.pysat_var2
+        del self.utils, self.lwarn, self.lout, self.cust_kwargs
+        del self.pysat_var2
+        return
 
     def test_load(self):
         """Test the pysat file loading."""
@@ -694,6 +719,7 @@ class TestPysatCustMethods(unittest.TestCase):
         self.assertFalse(self.test_inst.empty)
         self.assertIn('latitude', self.test_inst.variables)
         self.assertIn('mlt', self.test_inst.variables)
+        return
 
     def test_cust_add_ocb_to_data_ocb_obj(self):
         """Test adding ocb to pysat data using the loaded OCB object."""
@@ -714,6 +740,7 @@ class TestPysatCustMethods(unittest.TestCase):
         self.utils.ocb = self.ocb
         self.utils.arevectors = [False for i in range(self.utils.nkeys)]
         self.utils.test_ocb_added()
+        return
 
     def test_cust_add_ocb_to_data_ocb_file(self):
         """Test adding ocb to pysat data with load using the OCB file name."""
@@ -735,6 +762,7 @@ class TestPysatCustMethods(unittest.TestCase):
         self.utils.pysat_keys[self.utils.pysat_keys.index("r_corr")] = None
         self.arevectors = [False for i in range(self.utils.nkeys)]
         self.utils.test_ocb_added()
+        return
 
     def test_cust_add_ocb_to_data_evar(self):
         """Test adding ocb to pysat with load including E-field variables."""
@@ -754,6 +782,7 @@ class TestPysatCustMethods(unittest.TestCase):
         self.arevectors = [False for i in range(self.utils.nkeys)]
 
         self.utils.test_ocb_added()
+        return
 
     def test_cust_add_ocb_to_data_curl_evar(self):
         """Test adding ocb to pysat including Curl E-field variables."""
@@ -773,6 +802,7 @@ class TestPysatCustMethods(unittest.TestCase):
         self.utils.pysat_keys[self.utils.pysat_keys.index("r_corr")] = None
 
         self.utils.test_ocb_added()
+        return
 
     def test_cust_add_ocb_to_data_evar_vect(self):
         """Test adding ocb to pysat with load including Curl E-field vectors."""
@@ -803,6 +833,7 @@ class TestPysatCustMethods(unittest.TestCase):
                 self.utils.arevectors[-1] = True
             self.utils.pysat_keys.append(pp)
         self.utils.test_ocb_added()
+        return
 
     def test_cust_add_ocb_to_data_curl_evar_vect(self):
         """Test adding ocb to pysat including Curl E-field vectors."""
@@ -832,6 +863,7 @@ class TestPysatCustMethods(unittest.TestCase):
                 self.utils.arevectors[-1] = True
             self.utils.pysat_keys.append(pp)
         self.utils.test_ocb_added()
+        return
 
     def test_cust_add_ocb_to_data_custom_vect(self):
         """Test adding ocb to pysat including custom scaled variables."""
@@ -861,6 +893,7 @@ class TestPysatCustMethods(unittest.TestCase):
             self.utils.pysat_keys.append(pp)
 
         self.utils.test_ocb_added()
+        return
 
     def test_cust_add_ocb_to_data_all_types(self):
         """Test adding ocb to pysat including E-field, Curl, & vects."""
@@ -893,6 +926,7 @@ class TestPysatCustMethods(unittest.TestCase):
             self.utils.pysat_keys.append(pp)
 
         self.utils.test_ocb_added()
+        return
 
     def test_cust_add_ocb_to_data_no_file(self):
         """Test adding ocb to pysat with load using no OCB file or data."""
@@ -908,6 +942,7 @@ class TestPysatCustMethods(unittest.TestCase):
         self.lwarn = u'no data in OCB file'
         self.lout = self.log_capture.getvalue()
         self.assertTrue(self.lout.find(self.lwarn) >= 0)
+        return
 
     def test_cust_add_ocb_to_data_bad_mlat(self):
         """Test failure of unknown mlat key in add_ocb_to_data custom func."""
@@ -926,6 +961,7 @@ class TestPysatCustMethods(unittest.TestCase):
         with self.assertRaisesRegex(ValueError,
                                     'unknown magnetic local time name bad'):
             self.test_load()
+        return
 
     def test_cust_add_ocb_to_data_bad_evar(self):
         """Test failure of unknown E field key in custom func."""
@@ -936,6 +972,7 @@ class TestPysatCustMethods(unittest.TestCase):
         with self.assertRaisesRegex(ValueError,
                                     'at least one unknown E field name'):
             self.test_load()
+        return
 
     def test_cust_add_ocb_to_data_bad_curl(self):
         """Test failure of unknown E field key in custom func."""
@@ -946,6 +983,7 @@ class TestPysatCustMethods(unittest.TestCase):
         with self.assertRaisesRegex(ValueError,
                                     'at least one unknown E field name'):
             self.test_load()
+        return
 
     def test_cust_add_ocb_to_data_bad_vector_scale(self):
         """Test failure of missing scaling function in custom func."""
@@ -959,6 +997,7 @@ class TestPysatCustMethods(unittest.TestCase):
         with self.assertRaisesRegex(ValueError,
                                     'missing scaling function for bad'):
             self.test_load()
+        return
 
     def test_cust_add_ocb_to_data_bad_vector_name(self):
         """Test failure of missing scaling function in custom func."""
@@ -973,6 +1012,7 @@ class TestPysatCustMethods(unittest.TestCase):
 
         with self.assertRaisesRegex(ValueError, 'unknown vector name bad_n'):
             self.test_load()
+        return
 
 
 @unittest.skipIf(no_pysat, "pysat not installed")
@@ -1009,13 +1049,16 @@ class TestPysatCustMethodsXarray(TestPysatCustMethods):
 
         self.utils = TestPysatUtils("eval_ocb_metadata")
         self.utils.setUp()
+        return
 
     def tearDown(self):
         """Clean the test environment."""
 
         self.utils.tearDown()
         del self.test_file, self.log_capture, self.test_inst, self.ocb
-        del self.utils, self.lwarn, self.lout, self.cust_kwargs, self.pysat_var2
+        del self.utils, self.lwarn, self.lout, self.cust_kwargs
+        del self.pysat_var2
+        return
 
 
 @unittest.skipIf(no_pysat, "pysat not installed")
@@ -1050,9 +1093,12 @@ class TestPysatCustMethods2DXarray(TestPysatCustMethods):
 
         self.utils = TestPysatUtils("eval_ocb_metadata")
         self.utils.setUp()
+        return
 
     def tearDown(self):
         """Clean the test environment."""
         self.utils.tearDown()
         del self.test_file, self.log_capture, self.test_inst, self.ocb
-        del self.utils, self.lwarn, self.lout, self.cust_kwargs, self.pysat_var2
+        del self.utils, self.lwarn, self.lout, self.cust_kwargs
+        del self.pysat_var2
+        return
