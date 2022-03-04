@@ -19,7 +19,7 @@ import ocbpy.ocb_scaling as ocbscal
 
 
 def supermag2ascii_ocb(smagfile, outfile, hemisphere=0, ocb=None,
-                       ocbfile='default', instrument='', max_sdiff=60,
+                       ocbfile='default', instrument='', max_sdiff=600,
                        min_merit=None, max_merit=None, **kwargs):
     """Covert and scales the SuperMAG data into OCB coordinates.
 
@@ -182,7 +182,7 @@ def supermag2ascii_ocb(smagfile, outfile, hemisphere=0, ocb=None,
         while imag < nmag and ocb.rec_ind < ocb.records:
             imag = ocbpy.match_data_ocb(ocb, mdata['DATETIME'], idat=imag,
                                         max_tol=max_sdiff, min_merit=min_merit,
-                                        max_merit=max_merit, kwargs=kwargs)
+                                        max_merit=max_merit, **kwargs)
 
             if imag < nmag and ocb.rec_ind < ocb.records:
                 # Set this value's AACGM vector values

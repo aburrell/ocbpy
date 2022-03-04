@@ -296,7 +296,7 @@ def add_ocb_to_data(pysat_inst, mlat_name='', mlt_name='', evar_names=None,
     while idat < ndat and ocb.rec_ind < ocb.records:
         idat = ocbpy.match_data_ocb(ocb, pysat_inst.index[dat_ind], idat=idat,
                                     min_merit=min_merit, max_merit=max_merit,
-                                    kwargs=kwargs)
+                                    **kwargs)
 
         if idat < ndat and ocb.rec_ind < ocb.records:
             iout = dat_ind[idat]
