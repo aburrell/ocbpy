@@ -27,7 +27,7 @@ import ocbpy.ocb_scaling as ocbscal
 
 def add_ocb_to_data(pysat_inst, mlat_name='', mlt_name='', evar_names=None,
                     curl_evar_names=None, vector_names=None, hemisphere=0,
-                    ocb=None, ocbfile='default', instrument='', max_sdiff=600,
+                    ocb=None, ocbfile='default', instrument='', max_sdiff=60,
                     min_merit=None, max_merit=None, **kwargs):
     """Covert the location of pysat data into OCB coordinates.
 
@@ -57,9 +57,9 @@ def add_ocb_to_data(pysat_inst, mlat_name='', mlt_name='', evar_names=None,
     hemisphere : int
         Hemisphere to process (can only do one at a time).  1=Northern,
         -1=Southern, 0=Determine from data (default=0)
-    ocb : OCBoundary or NoneType)
-        OCBoundary object with data loaded from an OC boundary data file.
-        If None, looks to ocbfile
+    ocb : ocbpy.OCBoundary, ocbpy.DualBoundary, or NoneType
+        OCBoundary or DualBoundary object with data loaded already. If None,
+        looks to `ocbfile` and creates an OCBoundary object. (default=None)
     ocbfile : str
         file containing the required OC boundary data sorted by time, ignorned
         if OCBoundary object supplied (default='default')
@@ -68,7 +68,7 @@ def add_ocb_to_data(pysat_inst, mlat_name='', mlt_name='', evar_names=None,
         if a file is provided.  If using filename='default', also accepts
         'amp', 'si12', 'si13', 'wic', and '' (default='')
     max_sdiff : int
-        maximum seconds between OCB and data record in sec (default=600)
+        maximum seconds between OCB and data record in sec (default=60)
     min_merit : float or NoneType
         Minimum value for the default figure of merit or None to not apply a
         custom minimum (default=None)
@@ -218,7 +218,8 @@ def add_ocb_to_data(pysat_inst, mlat_name='', mlt_name='', evar_names=None,
     ndat = len(aacgm_lat)
 
     # Load the OCB data for the data period, if desired
-    if ocb is None or not isinstance(ocb, ocbpy.OCBoundary):
+    if(ocb is None or not isinstance(ocb, ocbpy.OCBoundary)
+       or not isinstance(ocb, ocbpy.DualBoundary)):
         dstart = pysat_inst.index[0] - dt.timedelta(seconds=max_sdiff + 1)
         dend = pysat_inst.index[-1] + dt.timedelta(seconds=max_sdiff + 1)
 
@@ -251,8 +252,8 @@ def add_ocb_to_data(pysat_inst, mlat_name='', mlt_name='', evar_names=None,
     dat_ind = np.where((np.sign(aacgm_lat) == hemisphere) & finite_mask)[0]
 
     # Test the OCB data
-    if ocb.filename is None or ocb.records == 0:
-        ocbpy.logger.error("no data in OCB file {:}".format(ocb.filename))
+    if ocb.records == 0:
+        ocbpy.logger.error("no data in Boundary file(s)")
         return
 
     # Add check for deprecated and custom kwargs
@@ -297,9 +298,16 @@ def add_ocb_to_data(pysat_inst, mlat_name='', mlt_name='', evar_names=None,
             iout = dat_ind[idat]
 
             # Get the OCB coordinates
-            (ocb_output[olat_name][iout], ocb_output[omlt_name][iout],
-             ocb_output[ocor_name][iout]) = ocb.normal_coord(aacgm_lat[iout],
-                                                             aacgm_mlt[iout])
+            nout = ocb.normal_coord(aacgm_lat[iout], aacgm_mlt[iout])
+
+            if len(nout) == 3:
+                ocb_output[olat_name][iout] = nout[0]
+                ocb_output[omlt_name][iout] = nout[1]
+                ocb_output[ocor_name][iout] = nout[2]
+            else:
+                ocb_output[olat_name][iout] = nout[0]
+                ocb_output[omlt_name][iout] = nout[1]
+                ocb_output[ocor_name][iout] = nout[3]
 
             # Scale and orient the vector values
             if nvect > 0:
@@ -360,9 +368,18 @@ def add_ocb_to_data(pysat_inst, mlat_name='', mlt_name='', evar_names=None,
 
         # Update the pysat Metadata
         eattr = oattr[:-4]
-        notes = "OCB obtained from {:} data in file ".format(ocb.instrument)
-        notes += "{:} using a boundary latitude of ".format(ocb.filename)
-        notes += "{:.2f}".format(ocb.boundary_lat)
+        if hasattr(ocb, "instrument"):
+            notes = "".join(["OCB obtained from ", ocb.instrument,
+                             " data in file ", ocb.filename,
+                             "using a boundary latitude of ",
+                             "{:.2f}".format(ocb.boundary_lat)])
+        else:
+            notes = "".join(["OCB obtained from ", ocb.ocb_instrument, " data",
+                             " in file ", ocb.ocb_filename, " using a boundary",
+                             " latitude of {:.2f}".format(ocb.ocb_lat),
+                             " and EAB obtained from ", ocb.eab_instrument,
+                             " data in file ", ocb.eab_filename, "using a ",
+                             "boundary latitude of {:.2f}".format(ocb.eab_lat)])
 
         if eattr in vector_names.keys():
             if vector_names[eattr]['scale_func'] is None:

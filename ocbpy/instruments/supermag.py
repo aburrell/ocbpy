@@ -2,7 +2,7 @@
 # Copyright (C) 2017 AGB
 # Full license can be found in LICENSE.txt
 # ---------------------------------------------------------------------------
-""" Perform OCB gridding for SuperMAG data
+"""Perform OCB gridding for SuperMAG data.
 
 Notes
 -----
@@ -19,24 +19,24 @@ import ocbpy.ocb_scaling as ocbscal
 
 
 def supermag2ascii_ocb(smagfile, outfile, hemisphere=0, ocb=None,
-                       ocbfile='default', instrument='', max_sdiff=600,
+                       ocbfile='default', instrument='', max_sdiff=60,
                        min_merit=None, max_merit=None, **kwargs):
-    """ Coverts and scales the SuperMAG data into OCB coordinates
+    """Covert and scales the SuperMAG data into OCB coordinates.
 
     Parameters
     ----------
     smagfile : str
-        file containing the required SuperMAG file sorted by time
+        File containing the required SuperMAG file sorted by time
     outfile : str
-        filename for the output data
+        Filename for the output data
     hemisphere : int
         Hemisphere to process (can only do one at a time).  1=Northern,
         -1=Southern, 0=Determine from data (default=0)
-    ocb : ocbpy.OCBoundary or NoneType
-        OCBoundary object with data loaded from an OC boundary data file.
-        If None, looks to ocbfile
+    ocb : ocbpy.OCBoundary, ocbpy.DualBoundary, or NoneType
+        OCBoundary or DualBoundary object with data loaded already. If None,
+        looks to `ocbfile` and creates an OCBoundary object. (default=None)
     ocbfile : str
-        file containing the required OC boundary data sorted by time, or
+        File containing the required OC Boundary data sorted by time, or
         'default' to load default file for time and hemisphere.  Only used if
         no OCBoundary object is supplied (default='default')
     instrument : str
@@ -44,7 +44,7 @@ def supermag2ascii_ocb(smagfile, outfile, hemisphere=0, ocb=None,
         if a file is provided.  If using filename='default', also accepts
         'amp', 'si12', 'si13', 'wic', and ''.  (default='')
     max_sdiff : int
-        Maximum seconds between OCB and data record in sec (default=600)
+        Maximum seconds between OCB and data record in sec (default=60)
     min_merit : float or NoneType
         Minimum value for the default figure of merit or None to not apply a
         custom minimum (default=None)
@@ -96,7 +96,8 @@ def supermag2ascii_ocb(smagfile, outfile, hemisphere=0, ocb=None,
     header, mdata = load_supermag_ascii_data(smagfile)
 
     # Load the OCB data for the SuperMAG data period
-    if ocb is None or not isinstance(ocb, ocbpy.ocboundary.OCBoundary):
+    if(ocb is None or not isinstance(ocb, ocbpy.OCBoundary)
+       or not isinstance(ocb, ocbpy.DualBoundary)):
         mstart = mdata['DATETIME'][0] - dt.timedelta(seconds=max_sdiff + 1)
         mend = mdata['DATETIME'][-1] + dt.timedelta(seconds=max_sdiff + 1)
 
@@ -122,8 +123,8 @@ def supermag2ascii_ocb(smagfile, outfile, hemisphere=0, ocb=None,
         hemisphere = ocb.hemisphere
 
     # Test the OCB data
-    if ocb.filename is None or ocb.records == 0:
-        ocbpy.logger.error("no data in OCB file {:}".format(ocb.filename))
+    if ocb.records == 0:
+        ocbpy.logger.error("no data in the Boundary file(s)")
         return
 
     # Add check for deprecated and custom kwargs
@@ -229,7 +230,7 @@ def supermag2ascii_ocb(smagfile, outfile, hemisphere=0, ocb=None,
 
 
 def load_supermag_ascii_data(filename):
-    """Load a SuperMAG ASCII data file
+    """Load a SuperMAG ASCII data file.
 
     Parameters
     ----------
