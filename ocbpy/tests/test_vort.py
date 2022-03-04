@@ -101,6 +101,8 @@ class TestVort2AsciiMethods(unittest.TestCase):
         self.ocb_dir = os.path.dirname(ocbpy.__file__)
         self.test_ocb = os.path.join(self.ocb_dir, "tests", "test_data",
                                      "test_north_circle")
+        self.test_eab = os.path.join(self.ocb_dir, "tests", "test_data",
+                                     "test_north_eab")
         self.test_file = os.path.join(self.ocb_dir, "tests", "test_data",
                                       "test_hemi_vort")
         self.test_eq_file = os.path.join(self.ocb_dir, "tests", "test_data",
@@ -109,6 +111,8 @@ class TestVort2AsciiMethods(unittest.TestCase):
                                        "test_empty")
         self.test_output_north = os.path.join(self.ocb_dir, "tests",
                                               "test_data", "out_vort")
+        self.test_output_dual = os.path.join(self.ocb_dir, "tests",
+                                             "test_data", "out_dual_vort")
         self.test_output_south = os.path.join(self.ocb_dir, "tests",
                                               "test_data", "out_south_vort")
         self.temp_output = os.path.join(self.ocb_dir, "tests", "test_data",
@@ -158,8 +162,17 @@ class TestVort2AsciiMethods(unittest.TestCase):
                     (self.test_eq_file, self.test_output_south,
                      {"ocbfile": self.test_ocb, "instrument": "image"}),
                     (self.test_file, self.test_output_north,
-                     {"ocb": ocbpy.ocboundary.OCBoundary(
+                     {"ocb": ocbpy.OCBoundary(
                          filename=self.test_ocb, instrument='image',
+                         hemisphere=1)}),
+                    (self.test_file, self.test_output_north,
+                     {"ocb": ocbpy.EABoundary(
+                         filename=self.test_ocb, instrument='image',
+                         hemisphere=1, boundary_lat=74.0)}),
+                    (self.test_file, self.test_output_dual,
+                     {"ocb": ocbpy.DualBoundary(
+                         ocb_filename=self.test_ocb, ocb_instrument='image',
+                         eab_filename=self.test_eab, eab_instrument='image',
                          hemisphere=1)})]
 
         # Initalize the vorticity run with different test files
