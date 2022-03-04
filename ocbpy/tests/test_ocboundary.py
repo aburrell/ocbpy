@@ -105,6 +105,11 @@ class TestOCBMatchData(TestCycleMatchData):
         self.ocb.rec_ind = -1
         self.idat = 0
         self.test_func = ocbpy.ocboundary.match_data_ocb
+        self.rec_ind = 27
+        self.rec_ind2 = 31
+        self.del_time = 60
+        self.bad_time = self.ocb.dtime[37] - dt.timedelta(
+            seconds=self.del_time + 1)
 
         # Initialize logging
         self.lwarn = u""
@@ -118,7 +123,8 @@ class TestOCBMatchData(TestCycleMatchData):
     def tearDown(self):
         """Clean up the test environment."""
         del self.ocb, self.lwarn, self.lout, self.log_capture, self.idat
-        del self.test_func
+        del self.test_func, self.rec_ind, self.rec_ind2, self.del_time
+        del self.bad_time
         return
 
 

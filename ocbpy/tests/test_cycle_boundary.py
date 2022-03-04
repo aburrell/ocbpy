@@ -28,6 +28,11 @@ class TestCycleMatchData(unittest.TestCase):
         self.ocb.rec_ind = -1
         self.idat = 0
         self.test_func = ocbpy.cycle_boundary.match_data_ocb
+        self.rec_ind = 27
+        self.rec_ind2 = 31
+        self.del_time = 60
+        self.bad_time = self.ocb.dtime[37] - dt.timedelta(
+            seconds=self.del_time + 1)
 
         # Initialize logging
         self.lwarn = u""
@@ -41,7 +46,8 @@ class TestCycleMatchData(unittest.TestCase):
     def tearDown(self):
         """Clean up the test environment."""
         del self.ocb, self.lwarn, self.lout, self.log_capture, self.idat
-        del self.test_func
+        del self.test_func, self.rec_ind, self.rec_ind2, self.del_time
+        del self.bad_time
         return
 
     def test_deprecated_kwargs(self):
@@ -49,9 +55,11 @@ class TestCycleMatchData(unittest.TestCase):
         # Set the deprecated keyword arguments with standard values
         dep_inputs = {"min_sectors": 7, "rcent_dev": 8.0, "max_r": 23.0,
                       "min_r": 10.0}
-        test_times = np.arange(self.ocb.dtime[self.ocb.rec_ind],
-                               self.ocb.dtime[self.ocb.rec_ind + 5],
-                               dt.timedelta(seconds=600)).astype(dt.datetime)
+        del_ind = self.rec_ind2 - self.rec_ind
+        test_times = np.arange(
+            self.ocb.dtime[self.ocb.rec_ind],
+            self.ocb.dtime[self.ocb.rec_ind + del_ind],
+            dt.timedelta(seconds=self.del_time)).astype(dt.datetime)
 
         # Cycle through the keyword arguments that should raise a warning
         for dkey in dep_inputs.keys():
@@ -59,31 +67,34 @@ class TestCycleMatchData(unittest.TestCase):
             with self.subTest(kwargs=kwargs):
                 with self.assertWarnsRegex(DeprecationWarning,
                                            "Deprecated kwarg will be removed"):
-                    ocbpy.cycle_boundary.match_data_ocb(self.ocb, test_times,
-                                                        idat=1, **kwargs)
+                    self.test_func(self.ocb, test_times, idat=1, **kwargs)
         return
 
     def test_match(self):
         """Test to see that the data matching works properly."""
         # Build a array of times for a test dataset
-        self.ocb.rec_ind = 27
-        test_times = np.arange(self.ocb.dtime[self.ocb.rec_ind],
-                               self.ocb.dtime[self.ocb.rec_ind + 5],
-                               dt.timedelta(seconds=600)).astype(dt.datetime)
+        self.ocb.rec_ind = self.rec_ind
+        del_ind = self.rec_ind2 - self.rec_ind
+        test_times = np.arange(
+            self.ocb.dtime[self.ocb.rec_ind],
+            self.ocb.dtime[self.ocb.rec_ind + del_ind],
+            dt.timedelta(seconds=self.del_time)).astype(dt.datetime)
 
         # Because the array starts at the first good OCB, will return zero
         self.idat = self.test_func(self.ocb, test_times, idat=self.idat)
         self.assertEqual(self.idat, 0)
-        self.assertEqual(self.ocb.rec_ind, 27)
+        self.assertEqual(self.ocb.rec_ind, self.rec_ind)
 
         # The next test time will cause the OCB to cycle forward to a new
         # record
-        idat = ocbpy.ocboundary.match_data_ocb(self.ocb, test_times, idat=1)
-        self.assertEqual(idat, 1)
-        self.assertEqual(self.ocb.rec_ind, 31)
+        self.ocb.rec_ind = self.rec_ind2
+        idat = self.test_func(self.ocb, test_times, idat=1)
+        self.assertEqual(idat, len(test_times) - 1)
+        self.assertEqual(self.ocb.rec_ind, self.rec_ind2)
         self.assertLess(
             abs((test_times[idat]
-                 - self.ocb.dtime[self.ocb.rec_ind]).total_seconds()), 600.0)
+                 - self.ocb.dtime[self.ocb.rec_ind]).total_seconds()),
+            self.del_time)
         del test_times
         return
 
@@ -93,10 +104,10 @@ class TestCycleMatchData(unittest.TestCase):
         ocbpy.logger.setLevel(logging.INFO)
 
         # Because the array starts at the first good OCB, will return zero
-        self.idat = self.test_func(self.ocb, [self.ocb.dtime[27]],
+        self.idat = self.test_func(self.ocb, [self.ocb.dtime[self.rec_ind]],
                                    idat=self.idat)
         self.assertEqual(self.idat, 0)
-        self.assertEqual(self.ocb.rec_ind, 27)
+        self.assertEqual(self.ocb.rec_ind, self.rec_ind)
 
         # The first match will be announced in the log
         self.lwarn = "found first good OCB record at"
@@ -106,8 +117,9 @@ class TestCycleMatchData(unittest.TestCase):
 
     def test_bad_first_match(self):
         """Test ability to not find a good OCB."""
+
         # Set requirements for good OCB so high that none will pass
-        self.idat = self.test_func(self.ocb, [self.ocb.dtime[27]],
+        self.idat = self.test_func(self.ocb, [self.ocb.dtime[self.rec_ind]],
                                    idat=self.idat, max_merit=0.0)
         self.assertEqual(self.idat, 0)
         self.assertGreaterEqual(self.ocb.rec_ind, self.ocb.records)
@@ -120,9 +132,11 @@ class TestCycleMatchData(unittest.TestCase):
 
     def test_bad_ocb_ind(self):
         """Test ability to exit if ocb record counter is too high."""
+
         # Set the OCB record index to the end
         self.ocb.rec_ind = self.ocb.records
-        self.idat = self.test_func(self.ocb, [self.ocb.dtime[27]], idat=-1)
+        self.idat = self.test_func(self.ocb, [self.ocb.dtime[self.rec_ind]],
+                                   idat=-1)
         self.assertEqual(self.idat, -1)
         self.assertGreaterEqual(self.ocb.rec_ind, self.ocb.records)
         return
@@ -130,7 +144,8 @@ class TestCycleMatchData(unittest.TestCase):
     def test_bad_dat_ind(self):
         """Test ability to exit if data record counter is too high."""
         # Set the OCB record index to the end
-        self.idat = self.test_func(self.ocb, [self.ocb.dtime[27]], idat=2)
+        self.idat = self.test_func(self.ocb, [self.ocb.dtime[self.rec_ind]],
+                                   idat=2)
         self.assertEqual(self.idat, 2)
         self.assertGreaterEqual(self.ocb.rec_ind, -1)
         return
@@ -138,11 +153,11 @@ class TestCycleMatchData(unittest.TestCase):
     def test_bad_first_data_time(self):
         """Test ability to cycle past data times not close enough to match."""
         # Set the OCB record index to the beginning and match
-        self.idat = self.test_func(self.ocb,
-                                   [self.ocb.dtime[27] - dt.timedelta(days=1),
-                                    self.ocb.dtime[27]], idat=self.idat)
+        self.idat = self.test_func(
+            self.ocb, [self.ocb.dtime[self.rec_ind] - dt.timedelta(days=1),
+                       self.ocb.dtime[self.rec_ind]], idat=self.idat)
         self.assertEqual(self.idat, 1)
-        self.assertEqual(self.ocb.rec_ind, 27)
+        self.assertEqual(self.ocb.rec_ind, self.rec_ind)
         return
 
     def test_data_all_before_first_ocb_record(self):
@@ -151,11 +166,11 @@ class TestCycleMatchData(unittest.TestCase):
         ocbpy.logger.setLevel(logging.ERROR)
 
         # Set the OCB record index to the beginning and match
-        self.idat = self.test_func(self.ocb,
-                                   [self.ocb.dtime[27] - dt.timedelta(days=1)],
-                                   idat=self.idat)
+        self.idat = self.test_func(
+            self.ocb, [self.ocb.dtime[self.rec_ind]
+                       - dt.timedelta(days=self.del_time)], idat=self.idat)
         self.assertIsNone(self.idat)
-        self.assertGreaterEqual(self.ocb.rec_ind, 27)
+        self.assertGreaterEqual(self.ocb.rec_ind, self.rec_ind)
 
         # Check the log output
         self.lwarn = "no input data close enough to the first record"
@@ -189,11 +204,10 @@ class TestCycleMatchData(unittest.TestCase):
         ocbpy.logger.setLevel(logging.INFO)
 
         # Match OCBs with misaligned input data
-        self.idat = self.test_func(
-            self.ocb, [self.ocb.dtime[37] - dt.timedelta(seconds=601)],
-            idat=self.idat)
+        self.idat = self.test_func(self.ocb, [self.bad_time], idat=self.idat)
         self.assertEqual(self.idat, 1)
-        self.assertGreaterEqual(self.ocb.rec_ind, 37)
+        self.assertGreaterEqual(self.ocb.rec_ind, 0)
+        self.assertLessEqual(self.ocb.rec_ind, self.ocb.records)
 
         # Check the log output
         self.lwarn = "no OCB data available within"
@@ -201,6 +215,46 @@ class TestCycleMatchData(unittest.TestCase):
         self.assertRegex(self.lout, self.lwarn)
         self.lwarn = "of input measurement"
         self.assertRegex(self.lout, self.lwarn)
+        return
+
+
+class TestCycleMatchDualData(TestCycleMatchData):
+    """Unit tests for the `match_data_ocb` function."""
+
+    def setUp(self):
+        """Initialize the test environment."""
+        set_dual = {"ocb_filename": path.join(path.dirname(ocbpy.__file__),
+                                              "tests", "test_data",
+                                              "test_north_circle"),
+                    "ocb_instrument": "image", 'eab_instrument': 'image',
+                    'eab_filename': path.join(path.dirname(ocbpy.__file__),
+                                              "tests", "test_data",
+                                              "test_north_eab")}
+        self.ocb = ocbpy.DualBoundary(**set_dual)
+        self.ocb.rec_ind = -1
+        self.idat = 0
+        self.test_func = ocbpy.cycle_boundary.match_data_ocb
+        self.rec_ind = 0
+        self.rec_ind2 = 1
+        self.del_time = 60
+        self.bad_time = self.ocb.ocb.dtime[37] - dt.timedelta(
+            seconds=self.del_time + 1)
+
+        # Initialize logging
+        self.lwarn = u""
+        self.lout = u""
+        self.log_capture = StringIO()
+        ocbpy.logger.addHandler(logging.StreamHandler(self.log_capture))
+        ocbpy.logger.setLevel(logging.WARNING)
+        del set_dual
+
+        return
+
+    def tearDown(self):
+        """Clean up the test environment."""
+        del self.ocb, self.lwarn, self.lout, self.log_capture, self.idat
+        del self.test_func, self.rec_ind, self.rec_ind2, self.del_time
+        del self.bad_time
         return
 
 
@@ -228,21 +282,21 @@ class TestCycleGoodIndices(unittest.TestCase):
     def test_retrieve_all_good_ind(self):
         """Test all good indices are retrieved with different rec_ind values."""
 
-        for rec_ind in [-1, 0, 65, self.ocb.records - 1]:
-            with self.subTest(rec_ind=rec_ind):
+        for rind in [-1, 0, 65, self.ocb.records - 1]:
+            with self.subTest(rind=rind):
                 # Initalize the OCBoundary record index
-                self.ocb.rec_ind = rec_ind
+                self.ocb.rec_ind = rind
 
                 # Retrive all good record indices
                 self.out = self.test_func(self.ocb)
 
                 # Test that all records were retrieved
-                self.assertEqual(self.out[0], 27)
-                self.assertEqual(self.out[1], 31)
+                self.assertEqual(self.out[0], self.rec_ind)
+                self.assertEqual(self.out[1], self.rec_ind2)
                 self.assertEqual(len(self.out), 36)
 
                 # Test that the OCBoundary record index has not changed
-                self.assertEqual(self.ocb.rec_ind, rec_ind)
+                self.assertEqual(self.ocb.rec_ind, rind)
         return
 
     def test_retrieve_all_good_ind_empty(self):
