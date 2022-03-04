@@ -198,6 +198,21 @@ class TestDualBoundaryMethodsGeneral(test_ocb.TestOCBoundaryMethodsGeneral):
         self.assertRegex(self.ocb.__str__(), "1 good boundary pairs from")
         return
 
+    def test_bad_hemisphere(self):
+        """Test raises ValueError with conflicting boundary hemispheres."""
+
+        # Add Boundary objects with conflicting hemispheres to input
+        self.set_default['ocb'] = ocbpy.OCBoundary(
+            filename=self.set_default["ocb_filename"],
+            instrument=self.set_default["ocb_instrument"], hemisphere=1)
+        self.set_default['eab'] = ocbpy.EABoundary(
+            filename=self.set_default["eab_filename"].replace('north', 'south'),
+            instrument=self.set_default["eab_instrument"], hemisphere=-1)
+
+        with self.assertRaisesRegex(ValueError, "mismatched hemisphere"):
+            self.test_class(**self.set_default)
+        return
+
     def test_bad_rfunc_inst(self):
         """Test failure setting default rfunc for unknown instrument."""
 
