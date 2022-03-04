@@ -28,12 +28,16 @@ class TestSuperMAG2AsciiMethods(unittest.TestCase):
         self.ocb_dir = os.path.dirname(ocbpy.__file__)
         self.test_ocb = os.path.join(self.ocb_dir, "tests", "test_data",
                                      "test_north_circle")
+        self.test_eab = os.path.join(self.ocb_dir, "tests", "test_data",
+                                     "test_north_eab")
         self.test_file = os.path.join(self.ocb_dir, "tests", "test_data",
                                       "test_hemi_smag")
         self.test_eq_file = os.path.join(self.ocb_dir, "tests", "test_data",
                                          "test_eq_smag")
         self.test_output_north = os.path.join(self.ocb_dir, "tests",
                                               "test_data", "out_smag")
+        self.test_output_dual = os.path.join(self.ocb_dir, "tests",
+                                              "test_data", "out_dual_smag")
         self.test_output_south = os.path.join(self.ocb_dir, "tests",
                                               "test_data", "out_south_smag")
         self.temp_output = os.path.join(self.ocb_dir, "tests", "test_data",
@@ -47,6 +51,7 @@ class TestSuperMAG2AsciiMethods(unittest.TestCase):
 
         del self.test_file, self.test_output_north, self.test_ocb
         del self.test_output_south, self.temp_output, self.test_eq_file
+        del self.test_eab, self.test_output_dual
         return
 
     def test_deprecation_kwargs(self):
@@ -192,12 +197,21 @@ class TestSuperMAG2AsciiMethods(unittest.TestCase):
                      {'ocbfile': self.test_ocb, 'instrument': 'image',
                       'hemisphere': -1}),
                     (self.test_file, self.test_output_north,
-                     {'ocb': ocbpy.ocboundary.OCBoundary(
+                     {'ocb': ocbpy.OCBoundary(
                          filename=self.test_ocb, instrument='image',
                          hemisphere=1)}),
                     (self.test_file, self.test_output_north,
                     {'ocbfile': self.test_ocb, 'instrument': 'image',
-                     'hemisphere': 1})]
+                     'hemisphere': 1}),
+                    (self.test_file, self.test_output_north,
+                     {'ocb': ocbpy.EABoundary(
+                         filename=self.test_ocb, instrument='image',
+                         hemisphere=1, boundary_lat=74.0)}),
+                    (self.test_file, self.test_output_dual,
+                     {"ocb": ocbpy.DualBoundary(
+                         ocb_filename=self.test_ocb, ocb_instrument='image',
+                         eab_filename=self.test_eab, eab_instrument='image',
+                         hemisphere=1)})]
 
         for val in subtests:
             with self.subTest(val=val):
