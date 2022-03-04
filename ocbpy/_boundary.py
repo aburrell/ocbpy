@@ -1075,6 +1075,7 @@ class DualBoundary(object):
     eab
     ocb
     max_delta
+    hemisphere
     dtime : numpy.ndarray
         Numpy array of paired boundary datetimes
     eab_ind : numpy.ndarray
@@ -1104,7 +1105,7 @@ class DualBoundary(object):
     Raises
     ------
     ValueError
-        Incorrect or incompatible input
+        Incorrect or incompatible input, mismatched hemisphere assignment
 
     """
 
@@ -1141,6 +1142,12 @@ class DualBoundary(object):
                                   rfunc_kwargs=ocb_rfunc_kwargs)
         else:
             self.ocb = ocb
+
+        # Set the hemisphere
+        self.hemisphere = self.ocb.hemisphere
+
+        if self.hemisphere != self.eab.hemisphere:
+            raise ValueError('mismatched hemisphere assignment')
 
         # Set the reversion short-cut
         self.revert_coord = self.ocb.revert_coord
