@@ -96,8 +96,8 @@ def supermag2ascii_ocb(smagfile, outfile, hemisphere=0, ocb=None,
     header, mdata = load_supermag_ascii_data(smagfile)
 
     # Load the OCB data for the SuperMAG data period
-    if(ocb is None or not isinstance(ocb, ocbpy.OCBoundary)
-       or not isinstance(ocb, ocbpy.DualBoundary)):
+    if ocb is None or (not isinstance(ocb, ocbpy.OCBoundary)
+                       and not isinstance(ocb, ocbpy.DualBoundary)):
         mstart = mdata['DATETIME'][0] - dt.timedelta(seconds=max_sdiff + 1)
         mend = mdata['DATETIME'][-1] + dt.timedelta(seconds=max_sdiff + 1)
 

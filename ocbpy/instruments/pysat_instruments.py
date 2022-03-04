@@ -218,8 +218,8 @@ def add_ocb_to_data(pysat_inst, mlat_name='', mlt_name='', evar_names=None,
     ndat = len(aacgm_lat)
 
     # Load the OCB data for the data period, if desired
-    if(ocb is None or not isinstance(ocb, ocbpy.OCBoundary)
-       or not isinstance(ocb, ocbpy.DualBoundary)):
+    if ocb is None or (not isinstance(ocb, ocbpy.OCBoundary)
+                       and not isinstance(ocb, ocbpy.DualBoundary)):
         dstart = pysat_inst.index[0] - dt.timedelta(seconds=max_sdiff + 1)
         dend = pysat_inst.index[-1] + dt.timedelta(seconds=max_sdiff + 1)
 
@@ -288,7 +288,11 @@ def add_ocb_to_data(pysat_inst, mlat_name='', mlt_name='', evar_names=None,
     # Cycle through the data, matching data and OCB records
     idat = 0
     ndat = len(dat_ind)
-    ref_r = 90.0 - abs(ocb.boundary_lat)
+    if hasattr(ocb, "boundary_lat"):
+        ref_r = 90.0 - abs(ocb.boundary_lat)
+    else:
+        ref_r = 90.0 - abs(ocb.ocb.boundary_lat)
+
     while idat < ndat and ocb.rec_ind < ocb.records:
         idat = ocbpy.match_data_ocb(ocb, pysat_inst.index[dat_ind], idat=idat,
                                     min_merit=min_merit, max_merit=max_merit,
@@ -336,7 +340,11 @@ def add_ocb_to_data(pysat_inst, mlat_name='', mlt_name='', evar_names=None,
                         **vector_init)
                     ocb_output[oattr][iout].set_ocb(ocb)
 
-            unscaled_r = ocb.r[ocb.rec_ind] + ocb_output[ocor_name][iout]
+            if hasattr(ocb, "ocb"):
+                unscaled_r = ocb.ocb.r[ocb.ocb.rec_ind] + ocb_output[
+                    ocor_name][iout]
+            else:
+                unscaled_r = ocb.r[ocb.rec_ind] + ocb_output[ocor_name][iout]
 
             # Scale the E-field proportional variables
             for eattr in evar_names:
