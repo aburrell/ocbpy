@@ -17,7 +17,7 @@ def retrieve_all_good_indices(ocb, min_merit=None, max_merit=None, **kwargs):
 
     Parameters
     ----------
-    ocb : ocbpy.OCBoundary
+    ocb : ocbpy.OCBoundary or ocbpy.EABoundary
         Class containing the open-close field line or equatorward auroral
         boundary data
     min_merit : float or NoneType
@@ -62,21 +62,21 @@ def retrieve_all_good_indices(ocb, min_merit=None, max_merit=None, **kwargs):
     return good_ind
 
 
-def match_data_ocb(ocb, dat_dtime, idat=0, max_tol=600, min_merit=None,
+def match_data_ocb(ocb, dat_dtime, idat=0, max_tol=60, min_merit=None,
                    max_merit=None, **kwargs):
     """Match data records with OCB records.
 
     Parameters
     ----------
-    ocb : ocbpy.OCBoundary
-        Class containing the open-close field line or equatorial auroral
-        boundary data
+    ocb : ocbpy.OCBoundary, ocbpy.EABoundary, or ocbpy.DualBoundary
+        Class containing the open-close field line, equatorial auroral
+        boundary, or dual-boundary data
     dat_dtime : list-like
         List or array of datetime objects where data exists
     idat : int
         Current data index (default=0)
     max_tol : int
-        maximum seconds between OCB and data record in sec (default=600)
+        maximum seconds between OCB and data record in sec (default=60)
     min_merit : float or NoneType
         Minimum value for the default figure of merit or None to not apply a
         custom minimum (default=None)
@@ -141,13 +141,32 @@ def match_data_ocb(ocb, dat_dtime, idat=0, max_tol=600, min_merit=None,
     if ocb.rec_ind >= ocb.records:
         return idat
 
+    # Get the boundary class cycle method
+    if hasattr(ocb, "get_next_good_ocb_ind"):
+        cycle_method = getattr(ocb, "get_next_good_ocb_ind")
+        cycle_kwargs = dict(kwargs)
+        cycle_kwargs["min_merit"] = min_merit
+        cycle_kwargs["max_merit"] = max_merit
+    elif hasattr(ocb, "get_next_good_ind"):
+        cycle_method = getattr(ocb, "get_next_good_ind")
+        cycle_kwargs = {}
+
+        # If the selection method differs from the default, re-select the
+        # good indices
+        if(min_merit is not None or max_merit is not None
+           or len(kwargs.keys()) > 0):
+            logger.info("updating DualBoundary good index pairs")
+            ocb.set_good_ind(ocb_min_merit=min_merit, ocb_max_merit=max_merit,
+                             ocb_kwargs=kwargs, eab_min_merit=min_merit,
+                             eab_max_merit=max_merit, eab_kwargs=kwargs)
+    else:
+        raise ValueError("boundary class missing index cycling method")
+
     # Get the first reliable boundary estimate if none was provided
     if ocb.rec_ind < 0:
-        ocb.get_next_good_ocb_ind(min_merit=min_merit, max_merit=max_merit,
-                                  **kwargs)
+        cycle_method(**cycle_kwargs)
         if ocb.rec_ind >= ocb.records:
-            logger.error("".join(["unable to find a good OCB record in ",
-                                  ocb.filename]))
+            logger.error("unable to find a good OCB record")
             return idat
         else:
             logger.info("".join(["found first good OCB record at ",
@@ -175,8 +194,7 @@ def match_data_ocb(ocb, dat_dtime, idat=0, max_tol=600, min_merit=None,
         if sdiff < -max_tol:
             # Cycle to the next OCB value since the lowest vorticity value
             # is in the future
-            ocb.get_next_good_ocb_ind(min_merit=min_merit, max_merit=max_merit,
-                                      **kwargs)
+            cycle_method(**cycle_kwargs)
         elif sdiff > max_tol:
             # Cycle to the next value if no OCB values were close enough
             logger.info("".join(["no OCB data available within [",
@@ -187,8 +205,7 @@ def match_data_ocb(ocb, dat_dtime, idat=0, max_tol=600, min_merit=None,
             # Make sure this is the OCB value closest to the input record
             last_sdiff = sdiff
             last_iocb = ocb.rec_ind
-            ocb.get_next_good_ocb_ind(min_merit=min_merit, max_merit=max_merit,
-                                      **kwargs)
+            cycle_method(**cycle_kwargs)
 
             if ocb.rec_ind < ocb.records:
                 sdiff = (ocb.dtime[ocb.rec_ind]
@@ -197,8 +214,7 @@ def match_data_ocb(ocb, dat_dtime, idat=0, max_tol=600, min_merit=None,
                 while abs(sdiff) < abs(last_sdiff):
                     last_sdiff = sdiff
                     last_iocb = ocb.rec_ind
-                    ocb.get_next_good_ocb_ind(min_merit=min_merit,
-                                              max_merit=max_merit, **kwargs)
+                    cycle_method(**cycle_kwargs)
                     if ocb.rec_ind < ocb.records:
                         sdiff = (ocb.dtime[ocb.rec_ind]
                                  - dat_dtime[idat]).total_seconds()
