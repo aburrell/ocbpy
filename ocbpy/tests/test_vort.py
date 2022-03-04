@@ -131,7 +131,7 @@ class TestVort2AsciiMethods(unittest.TestCase):
 
         del self.test_file, self.temp_output, self.test_ocb, self.ocb_dir
         del self.test_output_north, self.test_output_south, self.test_eq_file
-        del self.test_empty
+        del self.test_empty, self.test_eab, self.test_output_dual
         return
 
     def test_deprecated_kwargs(self):
