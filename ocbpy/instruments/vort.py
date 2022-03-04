@@ -18,7 +18,7 @@ import ocbpy.ocb_scaling as ocbscal
 
 
 def vort2ascii_ocb(vortfile, outfile, hemisphere=0, ocb=None,
-                   ocbfile='default', instrument='', max_sdiff=60,
+                   ocbfile='default', instrument='', max_sdiff=600,
                    save_all=False, min_merit=None, max_merit=None, **kwargs):
     """Covert the location of vorticity data from AACGM to OCB coordinates.
 
@@ -43,7 +43,7 @@ def vort2ascii_ocb(vortfile, outfile, hemisphere=0, ocb=None,
         if a file is provided.  If using filename='default', also accepts
         'amp', 'si12', 'si13', 'wic', and ''.  (default='')
     max_sdiff : int
-        maximum seconds between OCB and data record in sec (default=60)
+        maximum seconds between OCB and data record in sec (default=600)
     save_all : bool
         Save all data (True), or only that needed to calcuate OCB and vorticity
         (False). (default=False)
@@ -101,8 +101,8 @@ def vort2ascii_ocb(vortfile, outfile, hemisphere=0, ocb=None,
         raise ValueError(estr)
 
     # Load the OCB data
-    if(ocb is None or not isinstance(ocb, ocbpy.OCBoundary)
-       or not isinstance(ocb, ocbpy.DualBoundary)):
+    if ocb is None or (not isinstance(ocb, ocbpy.OCBoundary)
+                       and not isinstance(ocb, ocbpy.DualBoundary)):
         vstart = vdata['DATETIME'][0] - dt.timedelta(seconds=max_sdiff + 1)
         vend = vdata['DATETIME'][-1] + dt.timedelta(seconds=max_sdiff + 1)
 
@@ -167,7 +167,10 @@ def vort2ascii_ocb(vortfile, outfile, hemisphere=0, ocb=None,
             vdata[k] = vdata[k][igood]
 
     # Set the reference radius
-    ref_r = 90.0 - abs(ocb.boundary_lat)
+    if hasattr(ocb, "boundary_lat"):
+        ref_r = 90.0 - abs(ocb.boundary_lat)
+    else:
+        ref_r = 90.0 - abs(ocb.ocb.boundary_lat)
 
     # Open the output file for writting
     with open(outfile, 'w') as fout:
@@ -189,7 +192,7 @@ def vort2ascii_ocb(vortfile, outfile, hemisphere=0, ocb=None,
         while ivort < num_vort and ocb.rec_ind < ocb.records:
             ivort = ocbpy.match_data_ocb(ocb, vdata['DATETIME'], idat=ivort,
                                          max_tol=max_sdiff, min_merit=min_merit,
-                                         max_merit=max_merit, kwargs=kwargs)
+                                         max_merit=max_merit, **kwargs)
 
             if ivort < num_vort and ocb.rec_ind < ocb.records:
                 # Use the indexed OCB to convert the AACGM grid coordinate to
@@ -198,13 +201,14 @@ def vort2ascii_ocb(vortfile, outfile, hemisphere=0, ocb=None,
                                         vdata['MLT'][ivort])
 
                 if len(nout) == 3:
-                    nlat, nmlt, ncor = out
+                    nlat, nmlt, ncor = nout
+                    rad = ocb.r[ocb.rec_ind] + ncor
                 else:
-                    nlat, nmlt, _, ncor = out
+                    nlat, nmlt, _, ncor = nout
+                    rad = ocb.ocb.r[ocb.rec_ind] + ncor
 
                 nvort = ocbscal.normal_curl_evar(vdata['VORTICITY'][ivort],
-                                                 ocb.r[ocb.rec_ind] + ncor,
-                                                 ref_r)
+                                                 rad, ref_r)
 
                 # Format the output line
                 #    DATE TIME (SAVE_ALL) OCB_LAT OCB_MLT NORM_VORT
