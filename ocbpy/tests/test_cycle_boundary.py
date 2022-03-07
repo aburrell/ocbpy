@@ -270,13 +270,15 @@ class TestCycleGoodIndices(unittest.TestCase):
         self.ocb = ocbpy.OCBoundary(**set_north)
         self.ocb.rec_ind = -1
         self.test_func = ocbpy.cycle_boundary.retrieve_all_good_indices
+        self.rec_ind = 27
+        self.rec_ind2 = 31
 
         del set_north
         return
 
     def tearDown(self):
         """Clean up the test environment."""
-        del self.ocb, self.test_func
+        del self.ocb, self.test_func, self.rec_ind, self.rec_ind2
         return
 
     def test_retrieve_all_good_ind(self):
