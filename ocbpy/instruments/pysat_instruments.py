@@ -249,7 +249,7 @@ def add_ocb_to_data(pysat_inst, mlat_name='', mlt_name='', evar_names=None,
     else:
         finite_mask = np.isfinite(
             pysat_inst[:, pysat_names].to_array().max('variable'))
-    dat_ind = np.where((np.sign(aacgm_lat) == hemisphere) & finite_mask)[0]
+    dat_ind = np.where((np.sign(aacgm_lat) == hemisphere) & finite_mask)
 
     # Test the OCB data
     if ocb.records == 0:
@@ -287,19 +287,23 @@ def add_ocb_to_data(pysat_inst, mlat_name='', mlt_name='', evar_names=None,
 
     # Cycle through the data, matching data and OCB records
     idat = 0
-    ndat = len(dat_ind)
+    ndat = len(dat_ind[0])
     if hasattr(ocb, "boundary_lat"):
         ref_r = 90.0 - abs(ocb.boundary_lat)
     else:
         ref_r = 90.0 - abs(ocb.ocb.boundary_lat)
 
     while idat < ndat and ocb.rec_ind < ocb.records:
-        idat = ocbpy.match_data_ocb(ocb, pysat_inst.index[dat_ind], idat=idat,
+        idat = ocbpy.match_data_ocb(ocb, pysat_inst.index[dat_ind[0]],
+                                    idat=idat, max_tol=max_sdiff,
                                     min_merit=min_merit, max_merit=max_merit,
                                     **kwargs)
 
         if idat < ndat and ocb.rec_ind < ocb.records:
-            iout = dat_ind[idat]
+            if len(dat_ind) > 1:
+                iout = tuple(dind[idat] for dind in dat_ind)
+            else:
+                iout = dat_ind[0][idat]
 
             # Get the OCB coordinates
             nout = ocb.normal_coord(aacgm_lat[iout], aacgm_mlt[iout])
@@ -382,12 +386,14 @@ def add_ocb_to_data(pysat_inst, mlat_name='', mlt_name='', evar_names=None,
                              "using a boundary latitude of ",
                              "{:.2f}".format(ocb.boundary_lat)])
         else:
-            notes = "".join(["OCB obtained from ", ocb.ocb_instrument, " data",
-                             " in file ", ocb.ocb_filename, " using a boundary",
-                             " latitude of {:.2f}".format(ocb.ocb_lat),
-                             " and EAB obtained from ", ocb.eab_instrument,
-                             " data in file ", ocb.eab_filename, "using a ",
-                             "boundary latitude of {:.2f}".format(ocb.eab_lat)])
+            notes = "".join(["OCB obtained from ", ocb.ocb.instrument, " data",
+                             " in file ", ocb.ocb.filename, " using a ",
+                             "boundary latitude of ",
+                             "{:.2f}".format(ocb.ocb.boundary_lat), " and EAB",
+                             "EAB obtained from ", ocb.eab.instrument,
+                             " data in file ", ocb.eab.filename, "using a ",
+                             "boundary latitude of ",
+                             "{:.2f}".format(ocb.eab.boundary_lat)])
 
         if eattr in vector_names.keys():
             if vector_names[eattr]['scale_func'] is None:
