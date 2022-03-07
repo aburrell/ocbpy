@@ -74,10 +74,13 @@ class TestCycleMatchData(unittest.TestCase):
         """Test to see that the data matching works properly."""
         # Build a array of times for a test dataset
         self.ocb.rec_ind = self.rec_ind
-        del_ind = self.rec_ind2 - self.rec_ind
+        del_t = (self.ocb.dtime[self.rec_ind2]
+                 - self.ocb.dtime[self.rec_ind]).total_seconds()
+        if del_t < self.del_time:
+            self.del_time = del_t
         test_times = np.arange(
-            self.ocb.dtime[self.ocb.rec_ind],
-            self.ocb.dtime[self.ocb.rec_ind + del_ind],
+            self.ocb.dtime[self.rec_ind], self.ocb.dtime[self.rec_ind2]
+            + dt.timedelta(seconds=1),
             dt.timedelta(seconds=self.del_time)).astype(dt.datetime)
 
         # Because the array starts at the first good OCB, will return zero

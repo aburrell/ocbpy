@@ -107,7 +107,7 @@ class TestOCBMatchData(TestCycleMatchData):
         self.test_func = ocbpy.ocboundary.match_data_ocb
         self.rec_ind = 27
         self.rec_ind2 = 31
-        self.del_time = 60
+        self.del_time = 600
         self.bad_time = self.ocb.dtime[37] - dt.timedelta(
             seconds=self.del_time + 1)
 
