@@ -369,8 +369,10 @@ class TestPysatMethods(unittest.TestCase):
 
         # Ensure all data is in the southern hemisphere and the greatest
         # value is identically zero
-        self.test_inst['latitude'][self.test_inst['latitude'] > 0] *= -1
-        self.test_inst['latitude'][self.test_inst['latitude'].argmax()] = 0.0
+        new_lat = self.test_inst['latitude'].values
+        new_lat[new_lat > 0] *= -1.0
+        new_lat[new_lat.argmax()] = 0.0
+        self.test_inst['latitude'] = new_lat
 
         # Add the OCB data to the Instrument and evaluate the output
         ocb_pysat.add_ocb_to_data(self.test_inst, "latitude", "mlt",
