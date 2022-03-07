@@ -1321,7 +1321,7 @@ class DualBoundary(object):
         if self.records > 0:
             # Cycle to next boundary
             self.rec_ind += 1
-    
+
             # Set the EAB and OCB record indices
             if self.rec_ind < self.records and self.rec_ind >= 0:
                 self.ocb.rec_ind = self.ocb_ind[self.rec_ind]
