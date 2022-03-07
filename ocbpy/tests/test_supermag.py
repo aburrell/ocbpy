@@ -37,7 +37,7 @@ class TestSuperMAG2AsciiMethods(unittest.TestCase):
         self.test_output_north = os.path.join(self.ocb_dir, "tests",
                                               "test_data", "out_smag")
         self.test_output_dual = os.path.join(self.ocb_dir, "tests",
-                                              "test_data", "out_dual_smag")
+                                             "test_data", "out_dual_smag")
         self.test_output_south = os.path.join(self.ocb_dir, "tests",
                                               "test_data", "out_south_smag")
         self.temp_output = os.path.join(self.ocb_dir, "tests", "test_data",
