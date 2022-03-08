@@ -3,11 +3,11 @@
 Selecting Boundaries
 ====================
 
-Each Boundary [data set]:ref:`bound-data` has a figure of merit that can be used
+Each of the :ref:`bound-data` has a figure of merit that can be used
 to select quality records. The various Boundary classes also contain methods
 to cycle to the next good record.  Unlike standard Python indices, the Boundary
-:py:attr:`rec_ind` must be positive.  This allows the user to know that no
-quality Boundaries have been identified.
+:py:attr:`rec_ind` must be positive.  This allows the user to know whether or
+not quality Boundaries have been identified.
 
 Retrieve a good OCB record
 --------------------------
