@@ -280,6 +280,50 @@ class TestDualBoundaryMethodsGeneral(test_ocb.TestOCBoundaryMethodsGeneral):
         self.assertEqual(self.ocb.rec_ind, 0)
         return
 
+    def test_assign_rec_ind_valid(self):
+        """Test to see that the record indices are all updated together."""
+
+        # Initalize the object
+        self.ocb = self.test_class(**self.set_default)
+
+        # Cycle through all valid indices
+        for i in range(self.ocb.records):
+            with self.subTest(i=i):
+                self.ocb.rec_ind = i
+
+                # Ensure the sub-class indices are correct
+                self.assertEqual(self.ocb.ocb.rec_ind, self.ocb.ocb_ind[i])
+                self.assertEqual(self.ocb.eab.rec_ind, self.ocb.eab_ind[i])
+        return
+
+    def test_assign_rec_ind_max(self):
+        """Test to see that setting `rec_ind` above the max is consistent."""
+
+        # Initialize the object
+        self.ocb = self.test_class(**self.set_default)
+
+        # Set the index to above the allowed range
+        self.ocb.rec_ind = self.ocb.records
+
+        # Ensure the sub-class indices are also above the allowed range
+        self.assertEqual(self.ocb.ocb.rec_ind, self.ocb.ocb.records)
+        self.assertEqual(self.ocb.eab.rec_ind, self.ocb.eab.records)
+        return
+
+    def test_assign_rec_ind_unset(self):
+        """Test to see that unsetting `rec_ind` above is consistent."""
+
+        # Initialize the object
+        self.ocb = self.test_class(**self.set_default)
+
+        # Set the index to below the allowed range
+        self.ocb.rec_ind = -1
+
+        # Ensure the sub-class indices are also above the allowed range
+        self.assertLessEqual(self.ocb.ocb.rec_ind, -1)
+        self.assertLessEqual(self.ocb.eab.rec_ind, -1)
+        return
+
     def test_custom_ind_selection(self):
         """Test use of custom boundary selection criteria."""
         # Initialize the boundary object and the comparison value
