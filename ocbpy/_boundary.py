@@ -1156,10 +1156,6 @@ class DualBoundary(object):
         self.max_delta = max_delta
         self.set_good_ind()
 
-        # Cycle record indices to the first good record pair
-        self.rec_ind = -1
-        self.get_next_good_ind()
-
         return
 
     def __repr__(self):
@@ -1336,12 +1332,16 @@ class DualBoundary(object):
 
         # Set the number of good paired records
         self.records = len(self.dtime)
+
+        # Set the data to the first good record
+        self.rec_ind = 0
+
         return
 
     def get_next_good_ind(self):
         """Cycle the boundary attributes to the next good paired index."""
 
-        if self.records > 0:
+        if self.records > 0 and self.rec_ind < self.records:
             # Cycle to next boundary
             self.rec_ind += 1
 
