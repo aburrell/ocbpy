@@ -224,10 +224,6 @@ def match_data_ocb(ocb, dat_dtime, idat=0, max_tol=60, min_merit=None,
             # Set the output boundary index
             ocb.rec_ind = last_iocb
 
-            if hasattr(ocb, "ocb_ind"):
-                ocb.ocb.rec_ind = ocb.ocb_ind[ocb.rec_ind]
-                ocb.eab.rec_ind = ocb.eab_ind[ocb.rec_ind]
-
             # Return the requested indices
             return idat
 

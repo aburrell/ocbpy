@@ -1220,6 +1220,29 @@ class DualBoundary(object):
 
         return eab_blat, eab_bmlt, ocb_blat, ocb_bmlt
 
+    @property
+    def rec_ind(self):
+        """Record index that identifies the current good EAB/OCB pair."""
+        return self._rec_ind
+
+    @rec_ind.setter
+    def rec_ind(self, rec_ind):
+        # Set the record index, and cycle the sub-class boundary indices
+        self._rec_ind = rec_ind
+
+        if rec_ind < 0:
+            self.ocb.rec_ind = rec_ind
+            self.eab.rec_ind = rec_ind
+        elif rec_ind >= self.records:
+            del_ind = self.records - rec_ind
+            self.ocb.rec_ind = self.ocb.records + del_ind
+            self.eab.rec_ind = self.eab.records + del_ind
+        else:
+            self.ocb.rec_ind = self.ocb_ind[rec_ind]
+            self.eab.rec_ind = self.eab_ind[rec_ind]
+
+        return
+
     def set_good_ind(self, ocb_min_merit=None, ocb_max_merit=None,
                      ocb_kwargs=None, eab_min_merit=None, eab_max_merit=None,
                      eab_kwargs=None):
@@ -1321,18 +1344,6 @@ class DualBoundary(object):
         if self.records > 0:
             # Cycle to next boundary
             self.rec_ind += 1
-
-            # Set the EAB and OCB record indices
-            if self.rec_ind < self.records and self.rec_ind >= 0:
-                self.ocb.rec_ind = self.ocb_ind[self.rec_ind]
-                self.eab.rec_ind = self.eab_ind[self.rec_ind]
-            else:
-                self.ocb.rec_ind = self.ocb.records
-                self.eab.rec_ind = self.eab.records
-        else:
-            self.rec_ind = self.records
-            self.ocb.rec_ind = self.ocb.records
-            self.eab.rec_ind = self.eab.records
 
         return
 
