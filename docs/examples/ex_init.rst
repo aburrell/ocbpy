@@ -31,18 +31,18 @@ will take a few minutes to load.
    ocb = ocbpy.OCBoundary()
    print(ocb)
   
-   OCBoundary file: ~/ocbpy/ocbpy/boundaries/si13_north_circle
+   OCBoundary file: ~/ocbpy/ocbpy/boundaries/image_north_circle.ocb
    Source instrument: IMAGE
    Boundary reference latitude: 74.0 degrees
   
-   219927 records from 2000-05-05 11:35:27 to 2002-08-22 00:01:28
-  
+   305805 records from 2000-05-04 03:03:20 to 2002-10-31 20:05:16
+
    YYYY-MM-DD HH:MM:SS Phi_Centre R_Centre R
-   -----------------------------------------
-   2000-05-05 11:35:27 356.93 8.74 9.69
-   2000-05-05 11:37:23 202.97 13.23 22.23
-   2002-08-21 23:55:20 322.60 5.49 15.36
-   2002-08-22 00:01:28 179.02 2.32 19.52
+   -----------------------------------------------------------------------------
+   2000-05-04 03:03:20 4.64 2.70 21.00
+   2000-05-04 03:07:15 147.24 2.63 7.09
+   2002-10-31 20:03:16 207.11 5.94 22.86
+   2002-10-31 20:05:16 335.47 6.76 11.97
 
    Uses scaling function(s):
    ocbpy.ocb_correction.circular(**{})

@@ -14,34 +14,37 @@ Retrieve a good OCB record
 Continuing from the previous example, our next step is to get the first good
 OCB record.  The :py:class:`ocbpy.OCBoundary` and :py:class:`ocbpy.EABoundary`
 objects start without any good indices chosen to allow you to specify your
-desired selection criteria.  Using the default selection criteria for ``ocb``
-from the previous example should yeild ``ocb.rec_ind == 27``.
+desired selection criteria.  This section uses the ``ocb`` from the previous
+section (with default keyword arguements).
 
 ::
 
    
    ocb.get_next_good_ocb_ind()
    print(ocb.rec_ind)
+   0
 
 To get the OCB record closest to a specified time, use
-:py:func:`~ocbpy.cycle_boundary.match_data_ocb`
+:py:func:`~ocbpy.cycle_boundary.match_data_ocb`.  In this example the maximum
+time tolerance is changed from the default of 60 seconds to 30 seconds to ensure
+only one of the test times (that have a 60 second resolution) is returned.
 
 ::
 
    
-   first_good_time = ocb.dtime[ocb.rec_ind]
-   test_times = [first_good_time + dt.timedelta(minutes=5 * (i + 1))
+   test_times = [ocb.dtime[ocb.rec_ind] + dt.timedelta(minutes=(i - 2))
                  for i in range(5)]
-   itest = ocbpy.match_data_ocb(ocb, test_times, idat=0)
+   itest = ocbpy.match_data_ocb(ocb, test_times, idat=0, max_tol=30)
    print(itest, ocb.rec_ind, test_times[itest], ocb.dtime[ocb.rec_ind])
-  
-   0 31 2000-05-05 13:45:30 2000-05-05 13:50:29
+
+   2 0 2000-05-04 03:03:20 2000-05-04 03:03:20
 
 Retrive a good DualBoundary record
 ----------------------------------
 The :py:class:`ocbpy.DualBoundary` class starts with good Boundaries selected
 using the default criteria for the given instrument.  You can change that at
-any time, as shown below.
+any time, as shown below.  This example uses the ``dual`` variable set in the
+first example.
 
 ::
 
