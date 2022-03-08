@@ -1,3 +1,6 @@
+.. _bound-data:
+
+
 Boundary Data Sets
 ==================
 
@@ -9,6 +12,9 @@ Currently, three different boundary data set types are available.  Not all data
 sets include the locations of the EAB. Routines to retrieve boundary filenames
 from specific instruments, time periods, hemispheres, and boundary types are
 provided in the :py:mod:`ocbpy.boundaries.files` sub-module.
+
+
+.. _bound-data-image:
 
 IMAGE
 -----
@@ -22,7 +28,10 @@ files that combine the information from all instruments to obtain the OCB and
 EAB. You can read more about the OCB determination, EAB determination, this
 selection criteria, and the three auroral instruments (IMAGE Wideband Imaging
 Camera (WIC) and FUV Spectrographic Imagers SI12 and SI13) in the articles
-listed in :ref:`cite-image`.  
+listed in :ref:`cite-image`.
+
+
+.. _bound-data-ampere:
 
 AMPERE
 ------
@@ -35,7 +44,10 @@ OCB, a correction is required.  This correction can be implemented using the
 routines in :py:mod:`ocbpy.ocb_correction`.  More information about the method
 behind the identification of these boundaries and their offset can be found in
 the articles listed in :ref:`cite-ampere`. Recommended selection criteria are
-included as defaults in the :py:class:`~ocbpy.OCBoundary` class. 
+included as defaults in the :py:class:`~ocbpy.OCBoundary` class.
+
+
+.. _bound-data-dmsp-ssj:
 
 DMSP SSJ
 --------
@@ -46,14 +58,27 @@ orbit.  Details about this identification process can be found in the references
 listed in :ref:`cite-dmsp`.  Routines to download and proceess the DMSP boundary
 files are provided in the :py:mod:`ocbpy.boundaries.dmsp_ssj_files` sub-module.
 
-Boundary File Module
---------------------
+
+.. _bound-data-module:
+
+Boundaries Module
+-----------------
+.. automodule:: ocbpy.boundaries
+
+
+.. _bound-data-module-files:
+
+Boundary Files
+^^^^^^^^^^^^^^
 
 .. automodule:: ocbpy.boundaries.files
     :members:
 
-DMSP SSJ File Module
---------------------
+
+.. _bound-data-module-dsfiles:
+
+DMSP SSJ Files
+^^^^^^^^^^^^^^
 
 .. automodule:: ocbpy.boundaries.dmsp_ssj_files
     :members:
