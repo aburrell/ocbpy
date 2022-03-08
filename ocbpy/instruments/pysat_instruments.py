@@ -38,7 +38,7 @@ def add_ocb_to_data(pysat_inst, mlat_name='', mlt_name='', evar_names=None,
     mlat_name : str
         Instrument data key or column for magnetic latitudes (default='')
     mlt_name : str
-        Instrument data key or column formagnetic longitudes (default='')
+        Instrument data key or column for magnetic local times (default='')
     evar_names : list or NoneType
         List of Instrument data keys or columns pointing to measurements that
         are proportional to the electric field (E); e.g. ion drift
