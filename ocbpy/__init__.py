@@ -3,32 +3,7 @@
 # Copyright (C) 2019, AGB & GC
 # Full license can be found in License.md
 # ----------------------------------------------------------------------------
-"""Open-Closed field line Boundary (OCB) magnetic gridding
-
-Functions
----------
-match_data_ocb      Matches data and OCB records
-normal_evar         Normalise a variable proportional to the electric field
-normal_curl_evar    Normalise a variable proportional to the curl of the
-                    electric field
-
-Classes
--------
-DualBoundary  EAB and OCB data for different times
-EABoundary    EAB data for different times
-OCBoundary    OCB data for different times
-VectorData    Vector data point
-
-Modules
--------
-boundaries     Boundary file utilities
-instruments    Instrument-specific OCB gridding functions
-cycle_boundary Boundary class cycling functions
-ocb_time       Time manipulation routines
-ocb_scaling    Scaling functions for OCB gridded data
-ocb_correction Boundary correction utilities
-
-"""
+"""Auroral oval and polar cap normalised location calculation tools."""
 
 # Define a logger object to allow easier log handling
 import logging

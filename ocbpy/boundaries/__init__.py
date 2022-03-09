@@ -2,14 +2,8 @@
 # Copyright (C) 2019, AGB * GC
 # Full license can be found in LICENSE.txt
 # ----------------------------------------------------------------------------
-"""Boundary file utilities
+"""Boundary file utilities."""
 
-Contains
---------
-files          Boundary file utilities
-dmsp_ssj_files DMSP SSJ boundary file utilities
-
-"""
 from ocbpy import logger
 from ocbpy.boundaries import files
 
