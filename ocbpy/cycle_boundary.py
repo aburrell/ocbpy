@@ -159,6 +159,13 @@ def match_data_ocb(ocb, dat_dtime, idat=0, max_tol=60, min_merit=None,
             ocb.set_good_ind(ocb_min_merit=min_merit, ocb_max_merit=max_merit,
                              ocb_kwargs=kwargs, eab_min_merit=min_merit,
                              eab_max_merit=max_merit, eab_kwargs=kwargs)
+
+            # Re-evaluate record index
+            if ocb.rec_ind >= ocb.records:
+                logger.error("".join(["after updating selection criteria, ",
+                                      "unable to find a good OCB record"]))
+                return idat
+
     else:
         raise ValueError("boundary class missing index cycling method")
 
