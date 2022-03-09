@@ -621,6 +621,7 @@ class OCBoundary(object):
         if coords.lower().find('mag') < 0:
             # Convert from lt to longitude
             lon = ocb_time.slt2glon(lt, self.dtime[self.rec_ind])
+
             # If geocentric coordinates are specified, add this info to the
             # method flag
             if coords.lower() == 'geocentric':
@@ -1424,11 +1425,14 @@ class DualBoundary(object):
 
         # Test the dual-boundary record index
         if self.rec_ind < 0 or self.rec_ind >= self.records:
-            bound_lat = np.full(shape=out_shape, fill_value=np.nan)
-            bound_mlt = np.full(shape=out_shape, fill_value=np.nan)
-            ocb_lat = np.full(shape=out_shape, fill_value=np.nan)
-            r_corr = np.full(shape=out_shape, fill_value=np.nan)
-            return bound_lat, bound_mlt, ocb_lat, r_corr
+            if out_shape == ():
+                return np.nan, np.nan, np.nan, np.nan
+            else:
+                bound_lat = np.full(shape=out_shape, fill_value=np.nan)
+                bound_mlt = np.full(shape=out_shape, fill_value=np.nan)
+                ocb_lat = np.full(shape=out_shape, fill_value=np.nan)
+                r_corr = np.full(shape=out_shape, fill_value=np.nan)
+                return bound_lat, bound_mlt, ocb_lat, r_corr
 
         # If needed, convert from geographic to magnetic coordinates
         if coords.lower().find('mag') < 0:
@@ -1474,6 +1478,19 @@ class DualBoundary(object):
         imid = np.where((abs(aacgm_lat) < abs(ocb_aacgm_boundary))
                         & (abs(aacgm_lat) >= abs(eab_aacgm_boundary)))[0]
         iout = np.where(abs(aacgm_lat) < abs(eab_aacgm_boundary))[0]
+
+        # Test to ensure that all points fall into a region
+        iocb = np.where(abs(ocb_lat) >= abs(self.ocb.boundary_lat))[0]
+        if len(iocb) + len(imid) + len(iout) < len(aacgm_lat):
+            msg = "not all points fall into a boundary region"
+            if np.isnan(ocb_aacgm_boundary).any() or np.isnan(
+                    eab_aacgm_boundary).any():
+                msg += ", boundaries are poorly defined"
+            logger.warning(msg)
+
+            ibad = [i for i in range(len(aacgm_lat)) if i not in iocb
+                    and i not in imid and i not in iout]
+            bound_lat[ibad] = np.nan
 
         if len(imid) > 0:
             bound_lat[imid] = self.ocb.boundary_lat - (
@@ -1598,7 +1615,7 @@ class DualBoundary(object):
 
         # If not already flagged, see if all OCB by location
         if not is_ocb:
-            iocb = np.where(ocb_lat >= self.ocb.boundary_lat)[0]
+            iocb = np.where(abs(ocb_lat) >= abs(self.ocb.boundary_lat))[0]
 
             if len(ocb_lat) == len(iocb):
                 is_ocb = True
@@ -1632,6 +1649,13 @@ class DualBoundary(object):
                                          overwrite=True, set_lon=False)
             ocb_aacgm_boundary = self.ocb.aacgm_boundary_lat[self.ocb.rec_ind]
             eab_aacgm_boundary = self.eab.aacgm_boundary_lat[self.eab.rec_ind]
+
+            # Raise warning for poorly defined boundaries, may cause NaN output
+            if np.isnan(ocb_aacgm_boundary).any() or np.isnan(
+                    eab_aacgm_boundary).any():
+                msg = "".join(["not all points fall into a boundary region",
+                               ", boundaries are poorly defined"])
+                logger.warning(msg)
 
             # Revert each of the points using the correct scaling factor
             imid = np.where((abs(ocb_lat) < abs(self.ocb.boundary_lat))
