@@ -30,7 +30,7 @@ from ocbpy import ocb_time
 from ocbpy.boundaries.files import get_default_file
 
 
-class OCBoundary(ocbpy.OCBoundary):
+class OCBoundary(ocbpy._boundary.OCBoundary):
     """Object containing open-closed field-line boundary (OCB) data.
 
     Parameters

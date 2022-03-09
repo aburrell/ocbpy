@@ -2,7 +2,7 @@ DMSP SSJ Boundaries
 ===================
 
 For more information about these boundaries, see Section
-:ref:`_bound-data-dmsp-ssj`.
+:ref:`bound-data-dmsp-ssj`.
 
 
 Loading DMSP SSJ Boundaries
