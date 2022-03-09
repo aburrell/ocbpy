@@ -23,7 +23,7 @@ Data from three auroral instruments provide northern hemisphere OCB and EAB
 locations for 3 May 2000 02:41:43 UT - 31 Oct 2002 20:05:16, though not all of
 the times included in these files contain high-quality estimations of the
 boundary locations. Recommended selection criteria are included as defaults in
-the :py:class:`~ocbpy.ocboundary.OCBoundary` class. There are also boundary
+the :py:class:`~ocbpy.OCBoundary` class. There are also boundary
 files that combine the information from all instruments to obtain the OCB and
 EAB. You can read more about the OCB determination, EAB determination, this
 selection criteria, and the three auroral instruments (IMAGE Wideband Imaging
