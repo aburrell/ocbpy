@@ -106,6 +106,11 @@ def match_data_ocb(ocb, dat_dtime, idat=0, max_tol=60, min_merit=None,
     idat : int or NoneType
         Data index for match value, None if all of the data have been searched
 
+    Raises
+    ------
+    ValueError
+        If the input boundary class has an unknown cycling method name
+
     Notes
     -----
     Updates `ocb.rec_ind` for matched value. This attribute is set to None if
