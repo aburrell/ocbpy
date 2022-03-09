@@ -111,7 +111,7 @@ class TestSuperMAG2AsciiMethods(unittest.TestCase):
         ocb_ismag.supermag2ascii_ocb(self.test_file, self.temp_output, ocb=ocb,
                                      hemisphere=0)
 
-        if platform.system().lower() == "windows":
+        if platform.system().lower() in win_list:
             # filecmp doesn't work on windows
 
             ldtype = ['|U50' if i < 2 or i == 3 else float for i in range(19)]
@@ -139,7 +139,7 @@ class TestSuperMAG2AsciiMethods(unittest.TestCase):
                                      ocbfile=self.test_ocb, instrument='image',
                                      hemisphere=-1)
 
-        if platform.system().lower() == "windows":
+        if platform.system().lower() in win_list:
             # filecmp doesn't work on windows
 
             ldtype = ['|U50' if i < 2 or i == 3 else float for i in range(19)]
