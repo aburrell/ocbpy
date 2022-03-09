@@ -31,13 +31,13 @@ the :py:mod:`ocbpy.ocb_scaling` module.
 
 Boundary Classes
 ----------------
-.. automodule:: ocbpy.OCboundary
+.. automodule:: ocbpy.OCBoundary
     :members:
 
-.. automodule:: ocbpy.EAboundary
+.. automodule:: ocbpy.EABoundary
     :members:
 
-.. automodule:: ocbpy.Dualboundary
+.. automodule:: ocbpy.DualBoundary
     :members:
 
 
