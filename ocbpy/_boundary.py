@@ -1149,9 +1149,6 @@ class DualBoundary(object):
         if self.hemisphere != self.eab.hemisphere:
             raise ValueError('mismatched hemisphere assignment')
 
-        # Set the reversion short-cut
-        self.revert_coord = self.ocb.revert_coord
-
         # Create a time index, saving indices where both boundaries are good
         self.max_delta = max_delta
         self.set_good_ind()
@@ -1399,17 +1396,34 @@ class DualBoundary(object):
         lat = np.asarray(lat)
         lt = np.asarray(lt)
         height = np.asarray(height)
+        out_shape = max([lat.shape, lt.shape, height.shape])
 
-        isfloat = False
-        if lat.shape == ():
-            isfloat = True
+        if out_shape == ():
             lat = np.array([lat])
             lt = np.array([lt])
             height = np.array([height])
+        else:
+            # Ensure the input allows simple broadcasting
+            if lat.shape != out_shape:
+                if lat.shape == ():
+                    lat = np.full(shape=out_shape, fill_value=float(lat))
+                else:
+                    raise ValueError('mismatched input shape for latitude')
+
+            if lt.shape != out_shape:
+                if lt.shape == ():
+                    lt = np.full(shape=out_shape, fill_value=float(lt))
+                else:
+                    raise ValueError('mismatched input shape for local time')
+
+            if height.shape != out_shape:
+                if height.shape == ():
+                    height = np.full(shape=out_shape, fill_value=float(height))
+                else:
+                    raise ValueError('mismatched input shape for height')
 
         # Test the dual-boundary record index
         if self.rec_ind < 0 or self.rec_ind >= self.records:
-            out_shape = max([lat.shape, lt.shape, height.shape])
             bound_lat = np.full(shape=out_shape, fill_value=np.nan)
             bound_mlt = np.full(shape=out_shape, fill_value=np.nan)
             ocb_lat = np.full(shape=out_shape, fill_value=np.nan)
@@ -1438,7 +1452,7 @@ class DualBoundary(object):
         bound_lat = np.array(ocb_lat)
 
         if np.isnan(ocb_lat).all():
-            if isfloat:
+            if out_shape == ():
                 return bound_lat[0], bound_mlt[0], ocb_lat[0], r_corr[0]
             else:
                 return bound_lat, bound_mlt, ocb_lat, r_corr
@@ -1481,10 +1495,199 @@ class DualBoundary(object):
                 self.eab.aacgm_boundary_lat[self.eab.rec_ind] = orig_bound[0]
                 self.eab.aacgm_boundary_mlt[self.eab.rec_ind] = orig_bound[1]
 
-        if isfloat:
+        if out_shape == ():
             return bound_lat[0], bound_mlt[0], ocb_lat[0], r_corr[0]
         else:
             return bound_lat, bound_mlt, ocb_lat, r_corr
+
+    def revert_coord(self, ocb_lat, ocb_mlt, r_corr=0.0, is_ocb=True,
+                     aacgm_mlt=None, coords='magnetic', height=350.0,
+                     method='ALLOWTRACE', overwrite=False):
+        """Convert from OCB or dual-boundary into AACGM co-ordinates.
+
+        Parameters
+        ----------
+        ocb_lat : float or array-like
+            Input OCB or dual-boundary latitude in degrees
+        ocb_mlt : float or array-like
+            Input OCB/dual-boundary local time in hours
+        r_corr : float or array-like
+            Input OCB radial correction in degrees, may be a function of
+            AACGM MLT (default=0.0)
+        is_ocb : bool
+            Specifies that the input of `ocb_lat` is in OCB coordinates if True
+            or in dual-boundary coordinates if False.  If False, `aacgm_mlt`
+            must be provided (default=True)
+        aacgm_mlt : float, array-like, or NoneType
+            Output AACGM MLT of the dual-boundary data, only used if `is_ocb`
+            is False (default=None)
+        coords : str
+            Output coordiate system.  Accepts 'magnetic', 'geocentric', or
+            'geodetic' (default='magnetic')
+        height : float or array-like
+            Geocentric height above sea level (km) at which AACGMV2 coordinates
+            will be calculated, if geographic coordinates are desired
+            (default=350.0)
+        method : str
+            String denoting which type(s) of conversion to perform, if
+            geographic coordinates are provided.  Expects either 'TRACE' or
+            'ALLOWTRACE'.  See AACGMV2 for details [2]_.  (default='ALLOWTRACE')
+        overwrite : bool
+            Allow the OCB and EAB AACGM boundary locations to be overwritten
+            (default=False)
+
+        Returns
+        -------
+        lat : float or array-like
+            latitude (degrees)
+        lt : float or array-like
+            local time (hours)
+
+        Raises
+        ------
+        ValueError
+            When necessary inputs are not fully supplied
+
+        Notes
+        -----
+        Approximation - Conversion assumes a planar surface
+
+        See Also
+        --------
+        aacgmv2
+        ocbpy.OCBoundary.revert_coord
+
+        """
+
+        # Cast input as arrays and prepare the output
+        ocb_lat = np.asarray(ocb_lat)
+        ocb_mlt = np.asarray(ocb_mlt)
+        height = np.asarray(height)
+        out_shape = max([ocb_lat.shape, ocb_mlt.shape, height.shape])
+
+        if out_shape == ():
+            ocb_lat = np.array([ocb_lat])
+            ocb_mlt = np.array([ocb_mlt])
+            height = np.array([height])
+        else:
+            # Ensure the input allows simple broadcasting
+            if ocb_lat.shape != out_shape:
+                if ocb_lat.shape == ():
+                    ocb_lat = np.full(shape=out_shape,
+                                      fill_value=float(ocb_lat))
+                else:
+                    raise ValueError('mismatched input shape for OCB latitude')
+
+            if ocb_mlt.shape != out_shape:
+                if ocb_mlt.shape == ():
+                    ocb_mlt = np.full(shape=out_shape,
+                                      fill_value=float(ocb_mlt))
+                else:
+                    raise ValueError('mismatched input shape for OCB MLT')
+
+            if height.shape != out_shape:
+                if height.shape == ():
+                    height = np.full(shape=out_shape, fill_value=float(height))
+                else:
+                    raise ValueError('mismatched input shape for height')
+
+        # Get the OCB reversion
+        lat, lt = self.ocb.revert_coord(ocb_lat, ocb_mlt, r_corr=r_corr,
+                                        coords=coords, height=height,
+                                        method=method)
+
+        # If not already flagged, see if all OCB by location
+        if not is_ocb:
+            iocb = np.where(ocb_lat >= self.ocb.boundary_lat)[0]
+
+            if len(ocb_lat) == len(iocb):
+                is_ocb = True
+
+        # Continue calculating the output for the other regions, if needed
+        if not is_ocb:
+            # Ensure the AACGM MLT was provided on input
+            if aacgm_mlt is None:
+                raise ValueError(
+                    ''.join(['cannot revert dual-boundary coordinates without',
+                             ' the AACGM MLT']))
+
+            aacgm_mlt = np.asarray(aacgm_mlt)
+
+            if aacgm_mlt.shape == ():
+                if out_shape == ():
+                    aacgm_mlt = np.array([aacgm_mlt])
+                else:
+                    aacgm_mlt = np.full(shape=out_shape,
+                                        fill_value=float(aacgm_mlt))
+
+            # Get the boundary locations in AACGM coordinates
+            if not overwrite:
+                orig_bound = self._get_current_aacgm_boundary()
+                num_none = sum([obound is None for obound in orig_bound])
+
+                if len(orig_bound) == num_none:
+                    overwrite = True
+
+            self.get_aacgm_boundary_lats(aacgm_mlt, rec_ind=self.rec_ind,
+                                         overwrite=True, set_lon=False)
+            ocb_aacgm_boundary = self.ocb.aacgm_boundary_lat[self.ocb.rec_ind]
+            eab_aacgm_boundary = self.eab.aacgm_boundary_lat[self.eab.rec_ind]
+
+            # Revert each of the points using the correct scaling factor
+            imid = np.where((abs(ocb_lat) < abs(self.ocb.boundary_lat))
+                            & (abs(ocb_lat) >= abs(self.eab.boundary_lat)))[0]
+            iout = np.where(abs(ocb_lat) < abs(self.eab.boundary_lat))[0]
+
+            if len(imid) > 0:
+                lat[imid] = ocb_aacgm_boundary[imid] - (
+                    self.ocb.boundary_lat - ocb_lat[imid]) * (
+                        ocb_aacgm_boundary[imid] - eab_aacgm_boundary[imid]) / (
+                            self.ocb.boundary_lat - self.eab.boundary_lat)
+                lt[imid] = aacgm_mlt[imid]
+
+            if len(iout) > 0:
+                lat[iout] = eab_aacgm_boundary[iout] - (
+                    self.eab.boundary_lat - ocb_lat[iout]) * (
+                    eab_aacgm_boundary[iout] / self.eab.boundary_lat)
+                lt[iout] = aacgm_mlt[iout]
+
+            # If desired, replace the boundaries
+            if not overwrite:
+                if orig_bound[2] is not None:
+                    self.ocb.aacgm_boundary_lat[
+                        self.ocb.rec_ind] = orig_bound[2]
+                    self.ocb.aacgm_boundary_mlt[
+                        self.ocb.rec_ind] = orig_bound[3]
+                if orig_bound[0] is not None:
+                    self.eab.aacgm_boundary_lat[
+                        self.eab.rec_ind] = orig_bound[0]
+                    self.eab.aacgm_boundary_mlt[
+                        self.eab.rec_ind] = orig_bound[1]
+
+            # If needed, convert from magnetic to geographic coordinates
+            if coords.lower().find('mag') < 0:
+                imag = list(imid) + list(iout)
+                # Convert from mlt to longitude
+                lon = aacgmv2.convert_mlt(aacgm_mlt[imag],
+                                          self.dtime[self.rec_ind], m2a=True)
+
+                # If geocentric coordinates are specified, add this info to the
+                # method flag
+                if coords.lower() == 'geocentric':
+                    method = "|".join([method, coords.upper()])
+                    method = "|".join([method, "A2G"])
+
+                # Convert from magnetic coordinates to geo coordinates
+                lat[imag], lon, _ = aacgmv2.convert_latlon_arr(
+                    lat[imag], lon, height, self.dtime[self.rec_ind], method)
+
+                # Convert from longitude to solar local time
+                lt[imag] = ocb_time.glon2slt(lon, self.dtime[self.rec_ind])
+
+        if out_shape == ():
+            return lat[0], lt[0]
+        else:
+            return lat, lt
 
     def get_aacgm_boundary_lats(self, aacgm_mlt, rec_ind=None,
                                 overwrite=False, set_lon=True):
