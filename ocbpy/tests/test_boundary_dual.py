@@ -372,7 +372,7 @@ class TestDualBoundaryMethodsLocation(unittest.TestCase):
 
         self.bad_mag = (75.0, 15.05084746)
         self.bad_norm = (71.9639519, 19.3161857)
-        
+
         # Set data test values
         self.bounds = [numpy.array([75.70330362, 72.32137562, 66.56506657,
                                     72.32137562, 61.31754838, 60.49909062,
@@ -415,7 +415,7 @@ class TestDualBoundaryMethodsLocation(unittest.TestCase):
                                 66.00490331, 68.25074784, 68.91414059]}
         self.out = []
 
-        # Set the logging parameters        
+        # Set the logging parameters
         self.lwarn = ""
         self.lout = ""
         self.log_capture = StringIO()
@@ -750,7 +750,7 @@ class TestDualBoundaryMethodsLocation(unittest.TestCase):
         return
 
     def test_coord_method_float(self):
-        """Test the coordinate calculation methods with float input.""" 
+        """Test the coordinate calculation methods with float input."""
 
         for hemi in [-1, 1]:
             # Initalize the object
@@ -770,7 +770,7 @@ class TestDualBoundaryMethodsLocation(unittest.TestCase):
                         else:
                             in_args = (self.nlat[hemi][i], self.nmlt[hemi][i])
                             in_kwargs['aacgm_mlt'] = amlt
-                    else:   
+                    else:
                         method = self.dual.normal_coord
                         in_args = (alat, amlt)
                         in_kwargs = {}
@@ -801,7 +801,7 @@ class TestDualBoundaryMethodsLocation(unittest.TestCase):
                     else:
                         in_args = (self.nlat[hemi], self.nmlt[hemi])
                         in_kwargs['aacgm_mlt'] = self.mlt[hemi]
-                else:   
+                else:
                     method = self.dual.normal_coord
                     in_args = (self.lat[hemi], self.mlt[hemi])
                     in_kwargs = {}
@@ -911,7 +911,7 @@ class TestDualBoundaryMethodsLocation(unittest.TestCase):
         # Set the method inputs
         in_args = {True: (self.olat[hemi], self.nmlt[hemi]),
                    False: (self.lat[hemi], self.mlt[hemi])}
-        
+
         # Update the output
         self.lat[hemi] = numpy.full(shape=len(self.lat[hemi]),
                                     fill_value=numpy.nan)
