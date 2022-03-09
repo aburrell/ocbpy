@@ -70,6 +70,23 @@ class TestCycleMatchData(unittest.TestCase):
                     self.test_func(self.ocb, test_times, idat=1, **kwargs)
         return
 
+    def test_bad_class_cycling_method(self):
+        """Test raises ValueError when Boundary class missing cycling method."""
+
+        # Define and set a bad boundary class object
+        class test_ocb(object):
+            def __init__(self):
+                self.rec_ind = 0
+                self.records = 10
+                return
+
+        data_times = self.ocb.dtime
+        self.ocb = test_ocb()
+
+        with self.assertRaisesRegex(ValueError, "missing index cycling method"):
+            self.test_func(self.ocb, data_times, idat=self.idat)
+        return
+
     def test_match(self):
         """Test to see that the data matching works properly."""
         # Build a array of times for a test dataset
@@ -99,6 +116,23 @@ class TestCycleMatchData(unittest.TestCase):
                  - self.ocb.dtime[self.ocb.rec_ind]).total_seconds()),
             self.del_time)
         del test_times
+        return
+
+    def test_match_two_boundaries(self):
+        """Test to see that the data chooses the closest good boundary."""
+        # Set the input times and time tolerance so that the first and second
+        # good boundaries will match, but the second one is a better match
+        self.ocb.rec_ind = self.rec_ind
+        max_tol = (self.ocb.dtime[self.rec_ind2]
+                   - self.ocb.dtime[self.rec_ind]).total_seconds()
+        test_times = [self.ocb.dtime[self.rec_ind2] - dt.timedelta(seconds=1)]
+
+        # Match the data and boundaries
+        self.idat = self.test_func(self.ocb, test_times, idat=self.idat,
+                                   max_tol=max_tol)
+        self.assertEqual(self.idat, 0)
+        self.assertEqual(self.ocb.rec_ind, self.rec_ind2)
+
         return
 
     def test_good_first_match(self):
