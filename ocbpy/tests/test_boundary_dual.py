@@ -16,6 +16,8 @@ import unittest
 import ocbpy
 from . import test_boundary_ocb as test_ocb
 
+win_list = ["win32", "cygwin", "windows"]
+
 
 class TestDualBoundaryLogFailure(unittest.TestCase):
     """Test the logging messages raised by the DualBoundary class."""
@@ -177,7 +179,7 @@ class TestDualBoundaryMethodsGeneral(test_ocb.TestOCBoundaryMethodsGeneral):
 
                 # Construct the expected string
                 if(val.find("filename") >= 0
-                   and platform.system().lower().find("windows") >= 0):
+                   and platform.system().lower() in win_list):
                     # Windows has trouble recognizing the filename in Regex
                     test_str = "filename="
                 elif i == 0 or val.find("ocb") == 0:
@@ -368,6 +370,9 @@ class TestDualBoundaryMethodsLocation(unittest.TestCase):
                             "max_delta": 60}
         self.dual = None
 
+        self.bad_mag = (75.0, 15.05084746)
+        self.bad_norm = (71.9639519, 19.3161857)
+        
         # Set data test values
         self.bounds = [numpy.array([75.70330362, 72.32137562, 66.56506657,
                                     72.32137562, 61.31754838, 60.49909062,
@@ -381,41 +386,49 @@ class TestDualBoundaryMethodsLocation(unittest.TestCase):
                        numpy.array([17.49152542, 16.6779661, 8.94915254,
                                     16.6779661, 10.57627119, 10.98305085,
                                     14.6440678, 15.05084746])]
-        self.lat = {1: [50.0, 65.0, 66.0, 66.0, 75.0, 75.0, 75.0, 75.0],
+        self.lat = {1: [50.0, 65.0, 66.0, 66.0, 75.0],
                     -1: [-75.0, -75.0, -73.1, -73.5, -65.0, -65.0, -50.0]}
         self.mlt = {1: [17.49152542, 16.6779661, 8.94915254, 16.6779661,
-                        10.57627119, 10.98305085, 14.6440678, 15.05084746],
+                        14.6440678],
                     -1: [8.54237288, 17.08474576, 20.8, 20.9, 7.72881356,
                          17.89830508, 18.30508475]}
 
         self.nlat = {1: [42.2702821, 57.52102977, 63.45670812, 58.40596869,
-                         68.549302, 71.92618313, 75.36450117, 71.9639519],
+                         75.36450117],
                      -1: [-75.20091699603744, -77.43241520800147, -65.63470973,
                           -66.20944239, -63.02562069687926, -60.95171308470224,
                           -46.4345919807581]}
         self.nmlt = {1: [18.80644991, 18.85841629, 6.67391185, 18.96355496,
-                         6.39130306, 6.7183392, 18.93115591, 19.3161857],
+                         18.93115591],
                      -1: [6.94756463, 18.65574753, 21.93370602, 22.03753856,
                           6.79635684, 18.83239647, 18.88673298]}
         self.olat = {1: [2.77770149, 41.62137725, 40.15557199, 43.59274117,
-                         68.549302, 71.92618313, 75.36450117, 71.9639519],
+                         75.36450117],
                      -1: [-75.200917, -77.43241521, -69.91446894, -70.17230283,
                           -64.26664886, -66.49974046, -50.923274]}
         self.rcorr = 0.0
-        self.scaled_r = {1: [64.0, 64.0, 64.0, 64.0, 10.0, 10.0, 16.0, 10.0],
+        self.scaled_r = {1: [64.0, 64.0, 64.0, 64.0, 16.0],
                          -1: [16.0, 16.0, 10.0, 10.0, 64.0, 64.0, 64.0]}
         self.unscaled_r = {1: [75.70330362, 72.32137562, 66.56506657,
-                               72.32137562, numpy.nan, numpy.nan, 6.769,
-                               numpy.nan],
+                               72.32137562, 6.769],
                            -1: [15.785, 15.785, 5.10033853, 5.12896403,
                                 66.00490331, 68.25074784, 68.91414059]}
         self.out = []
+
+        # Set the logging parameters        
+        self.lwarn = ""
+        self.lout = ""
+        self.log_capture = StringIO()
+        ocbpy.logger.addHandler(logging.StreamHandler(self.log_capture))
+        ocbpy.logger.setLevel(logging.WARNING)
+
         return
 
     def tearDown(self):
         """Clean up the test environment."""
         del self.test_dir, self.set_default, self.dual, self.mlt, self.lat
-        del self.out, self.bounds
+        del self.out, self.bounds, self.lwarn, self.lout, self.log_capture
+        del self.bad_mag, self.bad_norm
         return
 
     def update_default_kwargs(self, hemisphere=1):
@@ -469,6 +482,8 @@ class TestDualBoundaryMethodsLocation(unittest.TestCase):
             (default=False)
 
         """
+        # Get the number of places for evaluation
+        places = -1 * int(numpy.log10(tol))
 
         # Get the expected lat/lt output
         lat_str = "normalized latitude"
@@ -533,17 +548,18 @@ class TestDualBoundaryMethodsLocation(unittest.TestCase):
                             self.out[3], self.rcorr))
         else:
             if numpy.isnan(self.out[0]):
-                self.assertTrue(numpy.isnan(rlat[ind]))
+                self.assertTrue(numpy.isnan(rlat[ind]),
+                                msg='{:} is not NaN'.format(rlat[ind]))
             else:
                 self.assertAlmostEqual(
-                    self.out[0], rlat[ind],
+                    self.out[0], rlat[ind], places=places,
                     msg="unequal {:s}: {:} != {:}".format(lat_str, self.out[0],
                                                           rlat[ind]))
             if numpy.isnan(self.out[1]):
                 self.assertTrue(numpy.isnan(rmlt[ind]))
             else:
                 self.assertAlmostEqual(
-                    self.out[1], rmlt[ind],
+                    self.out[1], rmlt[ind], places=places,
                     msg="unequal {:s}: {:} != {:}".format(mlt_str, self.out[1],
                                                           rmlt[ind]))
 
@@ -552,7 +568,7 @@ class TestDualBoundaryMethodsLocation(unittest.TestCase):
                     self.assertTrue(numpy.isnan(self.olat[hemisphere][ind]))
                 else:
                     self.assertAlmostEqual(
-                        self.out[2], self.olat[hemisphere][ind],
+                        self.out[2], self.olat[hemisphere][ind], places=places,
                         msg="unequal OCB latitude: {:} != {:}".format(
                             self.out[2], self.olat[hemisphere][ind]))
 
@@ -560,13 +576,120 @@ class TestDualBoundaryMethodsLocation(unittest.TestCase):
                     self.assertTrue(numpy.isnan(self.rcorr))
                 else:
                     self.assertAlmostEqual(
-                        self.out[3], self.rcorr,
+                        self.out[3], self.rcorr, places=places,
                         msg="unequal radial correction: {:} != {:}".format(
                             self.out[3], self.rcorr))
         return
 
-    def test_normal_coord_float_nan(self):
-        """Test the normalisation calculation with NaN float input."""
+    def test_bad_mlt_inputs_revert_coord(self):
+        """Test ValueError raised with MLT inputs in `revert_coords`."""
+
+        # Initalize the object
+        hemi = 1
+        self.update_default_kwargs(hemisphere=hemi)
+        self.dual = ocbpy.DualBoundary(**self.set_default)
+
+        with self.assertRaisesRegex(ValueError, "cannot revert dual-boundary"):
+            self.dual.revert_coord(self.nlat[hemi], self.nmlt[hemi],
+                                   is_ocb=False)
+
+        return
+
+    def test_bad_lat_shape(self):
+        """Test ValueError raised with bad latitude shape."""
+
+        # Initalize the object
+        hemi = 1
+        self.update_default_kwargs(hemisphere=hemi)
+        self.dual = ocbpy.DualBoundary(**self.set_default)
+
+        for method in [self.dual.normal_coord, self.dual.revert_coord]:
+            with self.subTest(method=method):
+                with self.assertRaisesRegex(
+                        ValueError, "mismatched input shape for "):
+                    method(self.lat[hemi][1:], self.mlt[hemi])
+
+        return
+
+    def test_bad_mlt_shape(self):
+        """Test ValueError raised with bad magnetic local time shape."""
+
+        # Initalize the object
+        hemi = 1
+        self.update_default_kwargs(hemisphere=hemi)
+        self.dual = ocbpy.DualBoundary(**self.set_default)
+
+        for method in [self.dual.normal_coord, self.dual.revert_coord]:
+            with self.subTest(method=method):
+                with self.assertRaisesRegex(
+                        ValueError, "mismatched input shape for "):
+                    method(self.lat[hemi], self.mlt[hemi][1:])
+
+        return
+
+    def test_bad_height_shape(self):
+        """Test ValueError raised with bad magnetic local time shape."""
+
+        # Initalize the object
+        hemi = 1
+        self.update_default_kwargs(hemisphere=hemi)
+        self.dual = ocbpy.DualBoundary(**self.set_default)
+
+        for method in [self.dual.normal_coord, self.dual.revert_coord]:
+            with self.subTest(method=method):
+                with self.assertRaisesRegex(
+                        ValueError, "mismatched input shape for height"):
+                    method(self.lat[hemi], self.mlt[hemi],
+                           height=numpy.full(shape=len(self.lat[hemi]) - 1,
+                                             fill_value=350.0))
+
+        return
+
+    def test_poorly_defined_boundary_normal_coord(self):
+        """Test normal_coord raises warning with a poorly defined boundary."""
+        self.lwarn = "".join(["not all points fall into a boundary region",
+                              ", boundaries are poorly defined"])
+
+        # Initalize the object
+        hemi = 1
+        self.update_default_kwargs(hemisphere=hemi)
+        self.dual = ocbpy.DualBoundary(**self.set_default)
+
+        # Get the output
+        self.out = self.dual.normal_coord(*self.bad_mag)
+        self.lout = self.log_capture.getvalue()
+
+        # Evaluate the output
+        self.assertTrue(numpy.isnan(self.out[0]))
+        self.assertAlmostEqual(self.out[1], self.bad_norm[1])
+        self.assertRegex(self.lout, self.lwarn)
+
+        return
+
+    def test_poorly_defined_boundary_revert_coord(self):
+        """Test revert_coord raises warning with a poorly defined boundary."""
+        self.lwarn = "".join(["not all points fall into a boundary region",
+                              ", boundaries are poorly defined"])
+
+        # Initalize the object
+        hemi = 1
+        self.update_default_kwargs(hemisphere=hemi)
+        self.dual = ocbpy.DualBoundary(**self.set_default)
+
+        # Get the output
+        self.out = self.dual.revert_coord(*self.bad_norm, is_ocb=False,
+                                          aacgm_mlt=self.bad_mag[1])
+        self.lout = self.log_capture.getvalue()
+
+        # Evaluate the output
+        self.assertTrue(numpy.isnan(self.out[0]))
+        self.assertAlmostEqual(self.out[1], self.bad_mag[1])
+        self.assertRegex(self.lout, self.lwarn)
+
+        return
+
+    def test_coord_method_float_nan(self):
+        """Test the coord method calculations with NaN float input."""
 
         ind = 0
         self.rcorr = numpy.nan
@@ -577,18 +700,23 @@ class TestDualBoundaryMethodsLocation(unittest.TestCase):
             self.dual = ocbpy.DualBoundary(**self.set_default)
 
             # Update the expected output
+            self.lat[hemi][ind] = numpy.nan
+            self.mlt[hemi][ind] = numpy.nan
             self.nlat[hemi][ind] = numpy.nan
             self.nmlt[hemi][ind] = numpy.nan
             self.olat[hemi][ind] = numpy.nan
 
-            # Evaluate the calculation
-            with self.subTest(hemi=hemi):
-                self.out = self.dual.normal_coord(numpy.nan, 0.0)
-                self.eval_coords(hemisphere=hemi, ind=ind, revert=False)
+            for revert in [True, False]:
+                method = self.dual.revert_coord \
+                    if revert else self.dual.normal_coord
+                # Evaluate the calculation
+                with self.subTest(hemi=hemi, revert=revert):
+                    self.out = method(numpy.nan, numpy.nan)
+                    self.eval_coords(hemisphere=hemi, ind=ind, revert=revert)
         return
 
-    def test_normal_coord_array_nan(self):
-        """Test the normalisation calculation with all NaN array input."""
+    def test_coord_method_array_nan(self):
+        """Test the coord method calculation with all NaN array input."""
 
         for hemi in [-1, 1]:
             # Initalize the object
@@ -600,54 +728,93 @@ class TestDualBoundaryMethodsLocation(unittest.TestCase):
                                         fill_value=numpy.nan)
 
             # Update the expected output
+            self.lat[hemi] = numpy.full(shape=len(self.lat[hemi]),
+                                        fill_value=numpy.nan)
+            self.mlt[hemi] = numpy.full(shape=len(self.lat[hemi]),
+                                        fill_value=numpy.nan)
             self.nlat[hemi] = numpy.full(shape=len(self.lat[hemi]),
                                          fill_value=numpy.nan)
             self.nmlt[hemi] = numpy.full(shape=len(self.lat[hemi]),
                                          fill_value=numpy.nan)
             self.olat[hemi] = numpy.full(shape=len(self.lat[hemi]),
                                          fill_value=numpy.nan)
+            self.rcorr = numpy.nan
 
-            # Evaluate the calculation
-            with self.subTest(hemi=hemi):
-                self.out = self.dual.normal_coord(self.lat[hemi],
-                                                  self.mlt[hemi])
-                self.eval_coords(hemisphere=hemi, revert=False)
+            for revert in [True, False]:
+                method = self.dual.revert_coord \
+                    if revert else self.dual.normal_coord
+                # Evaluate the calculation
+                with self.subTest(hemi=hemi):
+                    self.out = method(self.lat[hemi], self.mlt[hemi])
+                    self.eval_coords(hemisphere=hemi, revert=revert)
         return
 
-    def test_normal_coord_float(self):
-        """Test the normalisation calculation with float input."""
+    def test_coord_method_float(self):
+        """Test the coordinate calculation methods with float input.""" 
 
         for hemi in [-1, 1]:
             # Initalize the object
             self.update_default_kwargs(hemisphere=hemi)
             self.dual = ocbpy.DualBoundary(**self.set_default)
 
-            for i, in_lat in enumerate(self.lat[hemi]):
-                in_mlt = self.mlt[hemi][i]
+            for i, alat in enumerate(self.lat[hemi]):
+                amlt = self.mlt[hemi][i]
+
+                for revert in [[False], [True, True], [True, False]]:
+                    # Set up the test function and inputs
+                    if revert[0]:
+                        method = self.dual.revert_coord
+                        in_kwargs = {"is_ocb": revert[1]}
+                        if revert[1]:
+                            in_args = (self.olat[hemi][i], self.nmlt[hemi][i])
+                        else:
+                            in_args = (self.nlat[hemi][i], self.nmlt[hemi][i])
+                            in_kwargs['aacgm_mlt'] = amlt
+                    else:   
+                        method = self.dual.normal_coord
+                        in_args = (alat, amlt)
+                        in_kwargs = {}
+
+                    # Evaluate the calculation
+                    with self.subTest(hemi=hemi, method=method,
+                                      in_args=in_args, in_kwargs=in_kwargs):
+                        self.out = method(*in_args, **in_kwargs)
+                        self.eval_coords(hemisphere=hemi, ind=i,
+                                         revert=revert[0])
+        return
+
+    def test_coord_method_array(self):
+        """Test the coordinate calculation methods with array input."""
+
+        for hemi in [-1, 1]:
+            # Initalize the object
+            self.update_default_kwargs(hemisphere=hemi)
+            self.dual = ocbpy.DualBoundary(**self.set_default)
+
+            for revert in [[False], [True, True], [True, False]]:
+                # Set up the test function and inputs
+                if revert[0]:
+                    method = self.dual.revert_coord
+                    in_kwargs = {"is_ocb": revert[1]}
+                    if revert[1]:
+                        in_args = (self.olat[hemi], self.nmlt[hemi])
+                    else:
+                        in_args = (self.nlat[hemi], self.nmlt[hemi])
+                        in_kwargs['aacgm_mlt'] = self.mlt[hemi]
+                else:   
+                    method = self.dual.normal_coord
+                    in_args = (self.lat[hemi], self.mlt[hemi])
+                    in_kwargs = {}
 
                 # Evaluate the calculation
-                with self.subTest(hemi=hemi, in_lat=in_lat, in_mlt=in_mlt):
-                    self.out = self.dual.normal_coord(in_lat, in_mlt)
-                    self.eval_coords(hemisphere=hemi, ind=i, revert=False)
+                with self.subTest(hemi=hemi, method=method, in_args=in_args,
+                                  in_kwargs=in_kwargs):
+                    self.out = method(*in_args, **in_kwargs)
+                    self.eval_coords(hemisphere=hemi, revert=revert[0])
         return
 
-    def test_normal_coord_array(self):
-        """Test the normalisation calculation with array input."""
-
-        for hemi in [-1, 1]:
-            # Initalize the object
-            self.update_default_kwargs(hemisphere=hemi)
-            self.dual = ocbpy.DualBoundary(**self.set_default)
-
-            # Evaluate the calculation
-            with self.subTest(hemi=hemi):
-                self.out = self.dual.normal_coord(self.lat[hemi],
-                                                  self.mlt[hemi])
-                self.eval_coords(hemisphere=hemi, revert=False)
-        return
-
-    def test_normal_coord_mag_label(self):
-        """Test the normalisation calculation with good mag labels."""
+    def test_coord_method_mag_label(self):
+        """Test the coordinate calculations with good mag labels."""
 
         # Initalize the object
         hemi = 1
@@ -655,125 +822,134 @@ class TestDualBoundaryMethodsLocation(unittest.TestCase):
         self.dual = ocbpy.DualBoundary(**self.set_default)
 
         for coords in ["magnetic", "Mag"]:
-            # Evaluate the calculation
-            with self.subTest(coords=coords):
-                self.out = self.dual.normal_coord(
-                    self.lat[hemi], self.mlt[hemi], coords=coords)
-                self.eval_coords(hemisphere=hemi, revert=False)
-
-        return
-
-    def test_normal_coord_geodetic_label(self):
-        """Test the normalisation calculation with geodetic data."""
-
-        # Initalize the object
-        hemi = 1
-        self.update_default_kwargs(hemisphere=hemi)
-        self.dual = ocbpy.DualBoundary(**self.set_default)
-
-        # Set the expected output
-        self.nlat[hemi][0] = 38.50196955983855
-        self.nmlt[hemi][0] = 18.541058394108877
-        self.olat[hemi][0] = -6.87103469312359
-
-        # Evaluate the calculation
-        self.out = self.dual.normal_coord(self.lat[hemi][0], self.mlt[hemi][0],
-                                          coords="geodetic")
-        self.eval_coords(hemisphere=hemi, ind=0, revert=False)
-
-        return
-
-    def test_normal_coord_geocentric_label(self):
-        """Test the normalisation calculation with geocentric data."""
-
-        # Initalize the object
-        hemi = 1
-        self.update_default_kwargs(hemisphere=hemi)
-        self.dual = ocbpy.DualBoundary(**self.set_default)
-
-        # Set the expected output
-        self.nlat[hemi][0] = 38.67674104478799
-        self.nmlt[hemi][0] = 18.544698246714468
-        self.olat[hemi][0] = -6.402309989057102
-
-        # Evaluate the calculation
-        self.out = self.dual.normal_coord(self.lat[hemi][0], self.mlt[hemi][0],
-                                          coords="geocentric")
-        self.eval_coords(hemisphere=hemi, ind=0, revert=False)
-
-        return
-
-    def test_normal_coord_low_rec_ind(self):
-        """Test the normalized location failure with a low record index."""
-        # Initalize the object
-        hemi = 1
-        self.update_default_kwargs(hemisphere=hemi)
-        self.dual = ocbpy.DualBoundary(**self.set_default)
-
-        # Unset the indices
-        self.dual.ocb.rec_ind = -1
-        self.dual.eab.rec_ind = -1
-        self.dual.rec_ind = -1
-
-        # Run the calculation
-        self.out = self.dual.normal_coord(self.lat[hemi][0], self.mlt[hemi][0])
-
-        # Evaluate the output
-        self.assertEqual(len(self.out), 4)
-        self.assertTrue(numpy.all(numpy.isnan(self.out)))
-        return
-
-    def test_normal_coord_high_rec_ind(self):
-        """Test the normalized location failure with a high record index."""
-        # Initalize the object
-        hemi = 1
-        self.update_default_kwargs(hemisphere=hemi)
-        self.dual = ocbpy.DualBoundary(**self.set_default)
-
-        # Unset the indices
-        self.dual.ocb.rec_ind = self.dual.ocb.records + 1
-        self.dual.eab.rec_ind = self.dual.eab.records + 1
-        self.dual.rec_ind = self.dual.records + 1
-
-        # Run the calculation
-        self.out = self.dual.normal_coord(self.lat[hemi][0], self.mlt[hemi][0])
-
-        # Evaluate the output
-        self.assertEqual(len(self.out), 4)
-        self.assertTrue(numpy.all(numpy.isnan(self.out)))
-        return
-
-    def test_revert_coord_float(self):
-        """Test the reversion calculation with float input."""
-
-        for hemi in [-1, 1]:
-            # Initalize the object
-            self.update_default_kwargs(hemisphere=hemi)
-            self.dual = ocbpy.DualBoundary(**self.set_default)
-
-            for i, in_lat in enumerate(self.olat[hemi]):
-                in_mlt = self.nmlt[hemi][i]
+            for revert in [True, False]:
+                # Set up the method and inputs
+                if revert:
+                    method = self.dual.revert_coord
+                    in_args = (self.olat[hemi], self.nmlt[hemi])
+                else:
+                    method = self.dual.normal_coord
+                    in_args = (self.lat[hemi], self.mlt[hemi])
 
                 # Evaluate the calculation
-                with self.subTest(hemi=hemi, in_lat=in_lat, in_mlt=in_mlt):
-                    self.out = self.dual.revert_coord(in_lat, in_mlt,
-                                                      self.rcorr)
-                    self.eval_coords(hemisphere=hemi, ind=i, revert=True)
+                with self.subTest(method=method, coords=coords):
+                    self.out = method(*in_args, coords=coords)
+                    self.eval_coords(hemisphere=hemi, revert=revert)
         return
 
-    def test_revert_coord_array(self):
-        """Test the reversion calculation with array input."""
+    def test_coord_method_geodetic_label(self):
+        """Test the coordinate calculations with geodetic data."""
 
-        for hemi in [-1, 1]:
-            # Initalize the object
-            self.update_default_kwargs(hemisphere=hemi)
-            self.dual = ocbpy.DualBoundary(**self.set_default)
+        # Initalize the object
+        hemi = 1
+        ind = -1
+        self.update_default_kwargs(hemisphere=hemi)
+        self.dual = ocbpy.DualBoundary(**self.set_default)
 
-            # Evaluate the calculation
-            with self.subTest(hemi=hemi):
-                self.out = self.dual.revert_coord(self.olat[hemi],
-                                                  self.nmlt[hemi], self.rcorr)
-                self.eval_coords(hemisphere=hemi, revert=True)
+        # Update the expected boundary coordinates
+        self.nlat[hemi][ind] = 70.42002976982965
+        self.nmlt[hemi][ind] = 16.971370126094197
+        self.olat[hemi][ind] = 68.08240040646042
+
+        # Cycle through the coordinate methods
+        for revert in [False, True]:
+            # Set up the method and inputs
+            if revert:
+                method = self.dual.revert_coord
+                in_args = (self.olat[hemi][ind], self.nmlt[hemi][ind])
+            else:
+                method = self.dual.normal_coord
+                in_args = (self.lat[hemi][ind], self.mlt[hemi][ind])
+
+            with self.subTest(method=method, in_args=in_args):
+                # Evaluate the calculation
+                self.out = method(*in_args, coords="geodetic")
+                self.eval_coords(hemisphere=hemi, ind=ind, revert=revert,
+                                 tol=1.0e-1)
+
+        return
+
+    def test_coord_method_geocentric_label(self):
+        """Test the coordinate calculations with geocentric data."""
+
+        # Initalize the object
+        hemi = 1
+        ind = -1
+        self.update_default_kwargs(hemisphere=hemi)
+        self.dual = ocbpy.DualBoundary(**self.set_default)
+
+        # Set the expected output
+        self.nlat[hemi][-1] = 70.53656496005829
+        self.nmlt[hemi][-1] = 16.98855238517387
+        self.olat[hemi][-1] = 68.29079728255405
+
+        # Cycle through the coordinate methods
+        for revert in [False, True]:
+            # Set up the method and inputs
+            if revert:
+                method = self.dual.revert_coord
+                in_args = (self.olat[hemi][ind], self.nmlt[hemi][ind])
+            else:
+                method = self.dual.normal_coord
+                in_args = (self.lat[hemi][ind], self.mlt[hemi][ind])
+
+            with self.subTest(method=method, in_args=in_args):
+                # Evaluate the calculation
+                self.out = method(*in_args, coords="geocentric")
+                self.eval_coords(hemisphere=hemi, ind=ind, revert=revert,
+                                 tol=1.0e-2)
+
+        return
+
+    def test_coord_method_bad_rec_ind(self):
+        """Test the coordinate calucations failure with a bad record index."""
+        # Initalize the object
+        hemi = 1
+        self.update_default_kwargs(hemisphere=hemi)
+        self.dual = ocbpy.DualBoundary(**self.set_default)
+
+        # Set the method inputs
+        in_args = {True: (self.olat[hemi], self.nmlt[hemi]),
+                   False: (self.lat[hemi], self.mlt[hemi])}
+        
+        # Update the output
+        self.lat[hemi] = numpy.full(shape=len(self.lat[hemi]),
+                                    fill_value=numpy.nan)
+        self.mlt[hemi] = numpy.full(shape=len(self.lat[hemi]),
+                                    fill_value=numpy.nan)
+        self.nlat[hemi] = numpy.full(shape=len(self.lat[hemi]),
+                                     fill_value=numpy.nan)
+        self.nmlt[hemi] = numpy.full(shape=len(self.lat[hemi]),
+                                     fill_value=numpy.nan)
+        self.olat[hemi] = numpy.full(shape=len(self.lat[hemi]),
+                                     fill_value=numpy.nan)
+        self.rcorr = numpy.nan
+
+        # Cycle through the coordinate methods
+        for revert in [False, True]:
+            # Set up the method and inputs
+            if revert:
+                method = self.dual.revert_coord
+            else:
+                method = self.dual.normal_coord
+
+            # Cycle through the different bad index values
+            for bind in [-1, self.dual.records]:
+                # Update the record index
+                self.dual.rec_ind = bind
+
+                # Cycle through the float/array input
+                for ind in [0, None]:
+                    if ind is not None:
+                        in_arg = [aa[ind] for aa in in_args[revert]]
+                    else:
+                        in_arg = in_args[revert]
+
+                    with self.subTest(method=method, in_arg=in_arg, bind=bind):
+                        # Run the calculation and evaluate the output
+                        self.out = method(*in_arg)
+                        self.eval_coords(hemisphere=hemi, ind=ind,
+                                         revert=revert)
         return
 
     def test_get_current_aacgm_boundary_unset(self):
