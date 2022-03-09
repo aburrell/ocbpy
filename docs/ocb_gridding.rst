@@ -12,8 +12,9 @@ OCB, this defaults to 74 degrees, while for the EAB, this defaults to 64
 degrees.  Data matching is performed by
 :py:func:`ocbpy.cycle_boundary.match_data_ocb`.  Coordinate normalisation, as
 well as boundary loading and data cycling is done within the appropriate
-boundary classes: :py:class:`ocbpy.OCBoundary`, :py:class:`ocbpy.EABoundary`,
-and :py:class:`ocbpy.DualBoundary`.
+boundary classes: :py:class:`~ocbpy._boundary.OCBoundary`,
+:py:class:`~ocbpy._boundary.EABoundary`, and
+:py:class:`~ocbpy._boundary.DualBoundary`.
 
 For observations that depend on the cross polar cap potential, it is also
 important to scale the magnitude.  This ensures that the magnitudes from
