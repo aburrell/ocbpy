@@ -1,6 +1,7 @@
+.. _ex-general:
 
 Load a general data file (DMSP SSIES)
--------------------------------------
+=====================================
 DMSP SSIES provides commonly used polar data, which can be accessed from
 `Madrigal <http://cedar.openmadrigal.org/>`_, which also has a Python API called
 `madrigalWeb <https://pypi.org/project/madrigalWeb/>`_.  To run this example,

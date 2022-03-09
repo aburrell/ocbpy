@@ -1,5 +1,12 @@
-Loading DMSP SSJ boundary files
--------------------------------
+DMSP SSJ Boundaries
+===================
+
+For more information about these boundaries, see Section
+:ref:`_bound-data-dmsp-ssj`.
+
+
+Loading DMSP SSJ Boundaries
+---------------------------
 Unlike the IMAGE and AMPERE boundaries, the DMSP SSJ boundaries are not included
 with the package.  However, routines to obtain them are.  To use them, you need
 to install the
@@ -43,13 +50,13 @@ instrument, and hemisphere or merely the instrument and hemisphere.
    # Load with filename, instrument, and hemisphere
    south_file = os.path.join(out_dir,
                              "dmsp-ssj_south_20101231_20101231_v1.1.2.ocb")
-   ocb_south = ocbpy.ocboundary.OCBoundary(filename=south_file,
-                                           instrument='dmsp-ssj', hemisphere=-1)
+   ocb_south = ocbpy.OCBoundary(filename=south_file, instrument='dmsp-ssj',
+                                hemisphere=-1)
    print(ocb_south)
 
-   Open-Closed Boundary file: ~/ocbpy/ocbpy/boundaries/dmsp-ssj_south_20101231_20101231_v1.1.2.ocb
+   OCBoundary file: ~/ocbpy/ocbpy/boundaries/dmsp-ssj_south_20101231_20101231_v1.1.2.ocb
    Source instrument: DMSP-SSJ
-   Open-Closed Boundary reference latitude: -74.0 degrees
+   Boundary reference latitude: -74.0 degrees
 
    21 records from 2010-12-31 00:27:23 to 2010-12-31 22:11:38
 
@@ -64,13 +71,13 @@ instrument, and hemisphere or merely the instrument and hemisphere.
    circular(**{})
 
    # Load with date, instrument, and hemisphere
-   ocb_north = ocbpy.ocboundary.OCBoundary(stime=stime, instrument='dmsp-ssj',
-                                           hemisphere=1)
+   ocb_north = ocbpy.OCBoundary(stime=stime, instrument='dmsp-ssj',
+                                hemisphere=1)
    print(ocb_north)
 
-   Open-Closed Boundary file: ~/ocbpy/ocbpy/boundaries/dmsp-ssj_north_20101231_20101231_v1.1.2.ocb
+   OCBoundary file: ~/ocbpy/ocbpy/boundaries/dmsp-ssj_north_20101231_20101231_v1.1.2.ocb
    Source instrument: DMSP-SSJ
-   Open-Closed Boundary reference latitude: 74.0 degrees
+   Boundary reference latitude: 74.0 degrees
 
    27 records from 2010-12-31 01:19:13 to 2010-12-31 23:02:48
 
@@ -85,6 +92,18 @@ instrument, and hemisphere or merely the instrument and hemisphere.
    circular(**{})
 
 The circular scaling function with no input adds zero the the boundaries, and
-so performs no scaling.  At this point in time, the EAO boundaries are not
-used, but future versions of this package will grid data relative to both the
-OCB and EAO boundary.
+so performs no scaling.
+
+Using DMSP SSJ Boundaries
+-------------------------
+
+Because DMSP SSJ Boundaries are only measured along a satellite track, you
+cannot use these boundaries to convert between magnetic and OCB or Dual-boundary
+coordinates at just any location or local time.  To address this issue, the
+:py:func:`ocbpy.cycle_boundary.satellite_track` function can be used to
+determine whether or not a location is close enough to the satellite track.
+
+ADD EXAMPLE HERE
+
+
+ADD WARNING ABOUT CIRCLE ASSUMPTION THROUGH TWO POINTS MAKING OCB-MLT BASICALLY USELESS.

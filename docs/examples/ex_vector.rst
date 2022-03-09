@@ -1,6 +1,7 @@
+.. _ex-vector:
 
 Grid and scale vector data
---------------------------
+==========================
 
 Many space science observations, such as ion drifts, are vectors.  The
 :py:class:`ocbpy.ocb_scaling.VectorData` class ensures that the vector location,
@@ -34,9 +35,16 @@ other grid file), use the following commands.
     13
 
 
-If you used the same file, there will be 13 grid records.  Next, load the OCBs
-for the northern hemisphere (PGR is a Canadian radar) and the period of time
-available within this file.
+If you used the same file, there will be 13 grid records. Next, load the
+appropriate northern hemisphere boundaries (PGR is a Canadian radar).
+
+Single Boundary Transformation
+------------------------------
+
+If using only a single boundary with vector data, it is highly recommended that
+you use an OCB or OCB proxy rather than an EAB or EAB proxy.  This example shows
+how the data period and hemisphere automatically select the most trusted OCB
+data set available.  UPDATE HERE WITH NEW IMAGE DATA.
 
 ::
 
@@ -48,12 +56,12 @@ available within this file.
                         grd_data[-1]['start.day'], grd_data[-1]['start.hour'],
 			grd_data[-1]['start.minute'],
 			int(np.floor(grd_data[-1]['start.second'])))
-    ocb = ocbpy.ocboundary.OCBoundary(stime=stime, etime=etime)
+    ocb = ocbpy.OCBoundary(stime=stime, etime=etime)
     print(ocb)
 
-    Open-Closed Boundary file: ~/ocbpy/ocbpy/boundaries/si13_north_circle.ocb
+    OCBoundary file: ~/ocbpy/ocbpy/boundaries/si13_north_circle.ocb
     Source instrument: IMAGE
-    Open-Closed Boundary reference latitude: 74.0 degrees
+    Boundary reference latitude: 74.0 degrees
 
     12 records from 2001-02-14 01:33:24 to 2001-02-14 01:55:54
 
@@ -81,8 +89,8 @@ each case is appropriate.
 
 
 If you are using a different file, you can use
-:py:func:`~ocbpy.ocboundary.match_data_ocb` to find an appropriate pairing, as
-illustrated in previous examples.
+:py:func:`~ocbpy.cycle_boundary.match_data_ocb` to find an appropriate pairing,
+as illustrated in previous examples.
 
 Now that the data are paired, we can initialize an
 :py:class:`ocbpy.ocb_scaling.VectorData` object.  To do this, however, we need

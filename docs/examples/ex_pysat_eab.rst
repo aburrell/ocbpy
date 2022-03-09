@@ -1,7 +1,7 @@
 .. _ex_pysat_eab:
 
-A pysat and EAB Example
-=======================
+Using data from pysat (with EAB)
+================================
 
 This example showcases Equatorward Auroral Boundaries (EABs), while
 demonstrating how to use :py:mod:`pysat` with :py:mod:`ocbpy`.
