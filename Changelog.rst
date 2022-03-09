@@ -12,6 +12,8 @@ Summary of all changes made since the first stable release
 * DOC: Improved the PEP8 compliance in the documentation examples
 * DOC: Improved the docstring numpydoc compliance
 * DOC: Updated cross-referencing and added missing API sections
+* DOC: Added examples for DMSP SSJ boundaries, pysat Instruments, and the
+       DualBoundary class
 * ENH: Added a setup configuration file
 * ENH: Changed class `__repr__` to produce a string `eval` can use as input
 * ENH: Updated the IMAGE OCB files and added EAB files
