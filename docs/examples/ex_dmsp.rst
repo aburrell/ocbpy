@@ -105,7 +105,7 @@ coordinates at just any location or local time.  To address this issue, the
 determine whether or not a location is close enough to the satellite track.
 This example shows the width along the linear approximation of the satellite
 track allowed along the Boundary latitude.  The axis formatting is performed
-using the :ref:`set_up_polar_plot <format-polar-axes>` method defined in the
+using the :ref:`set_up_polar_plot <format-polar-axes>` function defined in the
 :ref:`exconvert` example.
 
 ::
