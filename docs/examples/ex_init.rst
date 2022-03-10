@@ -5,7 +5,7 @@ Getting Started
 
 :py:mod:`ocbpy` is centred around Boundary class objects.  The default class
 for most functions and examples, is the Open-Closed field line Boundary class,
-:py:class:`ocbpy.OCBoundary`.
+:py:class:`~ocbpy._boundary.OCBoundary`.
 
 
 Initialise an OCBoundary object
@@ -22,8 +22,8 @@ matplotlib, and datetime.
    import matplotlib.pyplot as plt
    import ocbpy
   
-Next, initialise an OCB class object.  This uses the default IMAGE FUV file and
-will take a few minutes to load.
+Next, initialise an :py:class:`~ocbpy._boundary.OCBoundary` object.  This uses
+the default IMAGE FUV file and will take a few minutes to load.
 
 ::
 
@@ -51,8 +51,9 @@ will take a few minutes to load.
 Other Boundary classes
 ----------------------
 
-The other Boundary classes, :py:class:`ocbpy.EABoundary` and
-:py:class:`ocbpy.DualBoundary`, build upon the `ocbpy.OCBoundary` class.
+The other Boundary classes, :py:class:`~ocbpy._boundary.EABoundary` and
+:py:class:`~ocbpy._boundary.DualBoundary`, build upon the
+:py:class:`~ocbpy._boundary.OCBoundary` class.
 Initialising these classes is done bascially the same way.  To make this example
 run more quickly, we will limit the period of time over which boundaries are
 loaded.  The same temporal selection procedure works with the other Boundary

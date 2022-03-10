@@ -12,10 +12,10 @@ not quality Boundaries have been identified.
 Retrieve a good OCB record
 --------------------------
 Continuing from the previous example, our next step is to get the first good
-OCB record.  The :py:class:`ocbpy.OCBoundary` and :py:class:`ocbpy.EABoundary`
-objects start without any good indices chosen to allow you to specify your
-desired selection criteria.  This section uses the ``ocb`` from the previous
-section (with default keyword arguements).
+OCB record.  The :py:class:`~ocbpy._boundary.OCBoundary` and
+:py:class:`~ocbpy._boundary.EABoundary` objects start without any good indices
+chosen to allow you to specify your desired selection criteria.  This section
+uses the ``ocb`` from the previous section (with default keyword arguements).
 
 ::
 
@@ -41,10 +41,10 @@ only one of the test times (that have a 60 second resolution) is returned.
 
 Retrive a good DualBoundary record
 ----------------------------------
-The :py:class:`ocbpy.DualBoundary` class starts with good Boundaries selected
-using the default criteria for the given instrument.  You can change that at
-any time, as shown below.  This example uses the ``dual`` variable set in the
-first example.
+The :py:class:`~ocbpy._boundary.DualBoundary` class starts with good Boundaries
+selected using the default criteria for the given instrument.  You can change
+that at any time, as shown below.  This example uses the ``dual`` variable set
+in the first example.
 
 ::
 
@@ -59,9 +59,9 @@ first example.
    0 9 14 14
 
 
-Cycling to the next record will increment :py:attr:`~ocbpy.DualBoundary.rec_ind`
-by one and updates the sub-class record indices to their next good paired
-values.
+Cycling to the next record will increment
+:py:attr:`~ocbpy._boundary.DualBoundary.rec_ind` by one and updates the
+sub-class record indices to their next good paired values.
 
 ::
 

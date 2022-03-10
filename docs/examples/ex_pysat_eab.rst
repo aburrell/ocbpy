@@ -10,9 +10,9 @@ demonstrating how to use :py:mod:`pysat` with :py:mod:`ocbpy`.
 Using Equatorward Auroral Boundaries
 ------------------------------------
  may be loaded on their own using the
-:py:class:`ocbpy.EABoundary` class.  This is a wrapper for the
-:py:class:`ocbpy.OCBoundary` class with different defaults more appropriate for
-EABs.  Currently, :ref:`bound-data-image` and
+:py:class:`~ocbpy._boundary.EABoundary` class.  This is a wrapper for the
+:py:class:`~ocbpy._boundary.OCBoundary` class with different defaults more
+appropriate for EABs.  Currently, :ref:`bound-data-image` and
 :ref:`bound-data-dmsp-ssj` both have EAB data.  This example uses
 the default file for IMAGE from the Northern hemisphere.  It is very similar
 to :ref:`exinit`, the first example in this section.

@@ -19,22 +19,25 @@ in the default IMAGE FUV file.
 ::
 
    
-   def set_up_polar_plot(ax):
+   def set_up_polar_plot(ax, hemi=1):
        """Set the formatting for a polar plot.
 
        Parameters
        ----------
        ax : Axes object
            Subplot Axes object to be formatted
+       hemi : int
+           Hemisphere, 1 is North and -1 is South (default=1)
 
        """
+       ss = "" if hemi == 1 else "-"
        ax.set_theta_zero_location("S")
        ax.xaxis.set_ticks([0, 0.5 * np.pi, np.pi, 1.5 * np.pi])
        ax.xaxis.set_ticklabels(["00:00", "06:00", "12:00 MLT", "18:00"])
        ax.set_rlim(0, 25)
        ax.set_rticks([5, 10, 15, 20])
-       ax.yaxis.set_ticklabels(["85$^\circ$", "80$^\circ$", "75$^\circ$",
-                                "70$^\circ$"])
+       ax.yaxis.set_ticklabels([ss + "85$^\circ$", ss + "80$^\circ$",
+                                ss + "75$^\circ$", ss + "70$^\circ$"])
        return
 
    fig = plt.figure()
@@ -66,7 +69,7 @@ Calculate and plot the location of the OCB in AACGM coordinates
 
 Add more reference labels for OCB coordinates.  Since we know the location that
 we want to place these labels in OCB coordinates, the
-:py:meth:`~ocbpy.OCBoundary.revert_coord` method can be used to get
+:py:meth:`~ocbpy._boundary.OCBoundary.revert_coord` method can be used to get
 the location in AACGM coordinates.
 
 ::
@@ -158,11 +161,12 @@ the radial boundaries of the figure as needed.
 Add more reference labels for the dual-boundary coordinates.  This is harder to
 do, because there is no direct conversion beween the dual-boundary coordinates
 and AACGM coordinates without already knowing the AACGM MLT.  To allow forward
-and backward transformations, :py:meth:`~ocbpy.DualBoundary.normal_coord` also
-returns the OCB coordinates, which can be reverted using
-:py:meth:`~ocbpy.DualBoundary.revert_coord`.  Without this knowledge, you must
-provide the AACGM MLT.  This is only a barrier for locations equatorward of the
-OCB.
+and backward transformations,
+:py:meth:`~ocbpy._boundary.DualBoundary.normal_coord` also returns the OCB
+coordinates, which can be reverted using
+:py:meth:`~ocbpy._boundary.DualBoundary.revert_coord`.  Without this knowledge,
+you must provide the AACGM MLT.  This is only a barrier for locations
+equatorward of the OCB.
 
 ::
 
