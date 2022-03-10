@@ -809,6 +809,52 @@ class TestDualBoundaryMethodsLocation(unittest.TestCase):
                     self.eval_coords(hemisphere=hemi, revert=revert[0])
         return
 
+    def test_coord_method_mix(self):
+        """Test the coordinate calculation methods with mixed input."""
+        ind = 0
+        
+        for hemi in [-1, 1]:
+            # Initalize the object
+            self.update_default_kwargs(hemisphere=hemi)
+            self.dual = ocbpy.DualBoundary(**self.set_default)
+
+            for revert in [[False], [True, True], [True, False]]:
+                # Set up the test function and inputs
+                if revert[0]:
+                    method = self.dual.revert_coord
+                    in_kwargs = {"is_ocb": revert[1]}
+                    if revert[1]:
+                        in_args = [self.olat[hemi], self.nmlt[hemi]]
+                    else:
+                        in_args = [self.nlat[hemi], self.nmlt[hemi]]
+                        in_kwargs['aacgm_mlt'] = self.mlt[hemi]
+                else:
+                    method = self.dual.normal_coord
+                    in_args = [self.lat[hemi], self.mlt[hemi]]
+                    in_kwargs = {}
+
+                for iarg_float in [0, 1]:
+                    in_arg = list(in_args)
+                    in_arg[iarg_float] = in_arg[iarg_float][ind]
+
+                    if iarg_float == 1 and revert[0] and not revert[1]:
+                        in_kwargs['aacgm_mlt'] = self.mlt[hemi][ind]
+
+                    # Perform the calculation
+                    with self.subTest(hemi=hemi, method=method, in_arg=in_arg,
+                                      in_kwargs=in_kwargs):
+                        self.out = method(*in_arg, **in_kwargs)
+
+                        # Evaluate the shape of the output and then
+                        # the values for the first index
+                        self.out = list(self.out)
+                        for i, val in enumerate(self.out):
+                            self.assertEqual(len(val), len(self.lat[hemi]))
+                            self.out[i] = self.out[i][ind]
+                        self.eval_coords(hemisphere=hemi, ind=ind,
+                                         revert=revert[0])
+        return
+
     def test_coord_method_mag_label(self):
         """Test the coordinate calculations with good mag labels."""
 
@@ -848,20 +894,27 @@ class TestDualBoundaryMethodsLocation(unittest.TestCase):
         self.olat[hemi][ind] = 68.08240040646042
 
         # Cycle through the coordinate methods
-        for revert in [False, True]:
+        for revert in [[False], [True, True], [True, False]]:
             # Set up the method and inputs
-            if revert:
+            if revert[0]:
                 method = self.dual.revert_coord
-                in_args = (self.olat[hemi][ind], self.nmlt[hemi][ind])
+                in_kwargs = {"is_ocb": revert[1]}
+                if revert[1]:
+                    in_args = [self.olat[hemi][ind], self.nmlt[hemi][ind]]
+                else:
+                    in_args = [self.nlat[hemi][ind], self.nmlt[hemi][ind]]
+                    in_kwargs['aacgm_mlt'] = self.mlt[hemi][ind]
             else:
                 method = self.dual.normal_coord
-                in_args = (self.lat[hemi][ind], self.mlt[hemi][ind])
+                in_args = [self.lat[hemi][ind], self.mlt[hemi][ind]]
+                in_kwargs = {}
 
-            with self.subTest(method=method, in_args=in_args):
+            with self.subTest(method=method, in_args=in_args,
+                              in_kwargs=in_kwargs):
                 # Evaluate the calculation
-                self.out = method(*in_args, coords="geodetic")
-                self.eval_coords(hemisphere=hemi, ind=ind, revert=revert,
-                                 tol=1.0e-1)
+                self.out = method(*in_args, coords="geodetic", **in_kwargs)
+                self.eval_coords(hemisphere=hemi, ind=ind, revert=revert[0],
+                                 tol=1.0)
 
         return
 
@@ -875,25 +928,32 @@ class TestDualBoundaryMethodsLocation(unittest.TestCase):
         self.dual = ocbpy.DualBoundary(**self.set_default)
 
         # Set the expected output
-        self.nlat[hemi][-1] = 70.53656496005829
-        self.nmlt[hemi][-1] = 16.98855238517387
-        self.olat[hemi][-1] = 68.29079728255405
+        self.nlat[hemi][ind] = 70.53656496005829
+        self.nmlt[hemi][ind] = 16.98855238517387
+        self.olat[hemi][ind] = 68.29079728255405
 
         # Cycle through the coordinate methods
-        for revert in [False, True]:
+        for revert in [[False], [True, True], [True, False]]:
             # Set up the method and inputs
-            if revert:
+            if revert[0]:
                 method = self.dual.revert_coord
-                in_args = (self.olat[hemi][ind], self.nmlt[hemi][ind])
+                in_kwargs = {"is_ocb": revert[1]}
+                if revert[1]:
+                    in_args = [self.olat[hemi][ind], self.nmlt[hemi][ind]]
+                else:
+                    in_args = [self.nlat[hemi][ind], self.nmlt[hemi][ind]]
+                    in_kwargs['aacgm_mlt'] = self.mlt[hemi][ind]
             else:
                 method = self.dual.normal_coord
-                in_args = (self.lat[hemi][ind], self.mlt[hemi][ind])
+                in_args = [self.lat[hemi][ind], self.mlt[hemi][ind]]
+                in_kwargs = {}
 
-            with self.subTest(method=method, in_args=in_args):
+            with self.subTest(method=method, in_args=in_args,
+                              in_kwargs=in_kwargs):
                 # Evaluate the calculation
-                self.out = method(*in_args, coords="geocentric")
-                self.eval_coords(hemisphere=hemi, ind=ind, revert=revert,
-                                 tol=1.0e-2)
+                self.out = method(*in_args, coords="geocentric", **in_kwargs)
+                self.eval_coords(hemisphere=hemi, ind=ind, revert=revert[0],
+                                 tol=1.0)
 
         return
 
