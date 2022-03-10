@@ -1438,6 +1438,7 @@ class DualBoundary(object):
         if coords.lower().find('mag') < 0:
             # Convert from lt to longitude
             lon = ocb_time.slt2glon(lt, self.dtime[self.rec_ind])
+
             # If geocentric coordinates are specified, add this info to the
             # method flag
             if coords.lower() == 'geocentric':
@@ -1691,6 +1692,7 @@ class DualBoundary(object):
             # If needed, convert from magnetic to geographic coordinates
             if coords.lower().find('mag') < 0:
                 imag = list(imid) + list(iout)
+
                 # Convert from mlt to longitude
                 lon = aacgmv2.convert_mlt(aacgm_mlt[imag],
                                           self.dtime[self.rec_ind], m2a=True)
@@ -1699,7 +1701,7 @@ class DualBoundary(object):
                 # method flag
                 if coords.lower() == 'geocentric':
                     method = "|".join([method, coords.upper()])
-                    method = "|".join([method, "A2G"])
+                method = "|".join([method, "A2G"])
 
                 # Convert from magnetic coordinates to geo coordinates
                 lat[imag], lon, _ = aacgmv2.convert_latlon_arr(
