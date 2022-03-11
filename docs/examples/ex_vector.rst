@@ -328,4 +328,4 @@ After displaying or saving this file, the results shoud look like the figure
 shown below.  The biggest difference between the dual and single boundary
 results are the locations in the auroral oval.
 
-.. image:: ../figures/example_superdarn_grid_vel.png
+.. image:: ../figures/example_superdarn_grid_vel_dual.png
