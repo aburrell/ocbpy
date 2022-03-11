@@ -3,7 +3,7 @@
 # Copyright (C) 2017, AGB & GC
 # Full license can be found in License.md
 # -----------------------------------------------------------------------------
-"""Tests the boundary EABoundary class."""
+"""Tests the boundary DualBoundary class."""
 
 import datetime
 from io import StringIO
@@ -812,7 +812,7 @@ class TestDualBoundaryMethodsLocation(unittest.TestCase):
     def test_coord_method_mix(self):
         """Test the coordinate calculation methods with mixed input."""
         ind = 0
-        
+
         for hemi in [-1, 1]:
             # Initalize the object
             self.update_default_kwargs(hemisphere=hemi)
