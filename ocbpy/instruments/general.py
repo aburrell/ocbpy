@@ -2,8 +2,7 @@
 # Copyright (C) 2017 AGB
 # Full license can be found in LICENSE.txt
 # ---------------------------------------------------------------------------
-""" General loading routines for data files
-"""
+"""General loading routines for data files."""
 
 import numpy as np
 from os import path
@@ -13,7 +12,7 @@ import ocbpy.ocb_time as ocbt
 
 
 def test_file(filename):
-    """Test to ensure the file is small enough to read in
+    """Test to ensure the file is small enough to load.
 
     Parameters
     ----------
@@ -51,7 +50,7 @@ def test_file(filename):
 def load_ascii_data(filename, hlines, gft_kwargs=dict(), hsplit=None,
                     datetime_cols=None, datetime_fmt=None, int_cols=None,
                     str_cols=None, max_str_length=50, header=None):
-    """ Load an ascii data file into a dict of numpy array
+    """Load an ASCII data file into a dict of numpy arrays.
 
     Parameters
     ----------

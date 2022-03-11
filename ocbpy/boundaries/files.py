@@ -3,8 +3,7 @@
 # Copyright (C) 2019, AGB & GC
 # Full license can be found in License.md
 # ----------------------------------------------------------------------------
-""" Provide desired boundary file names
-"""
+"""Functions that support boundary file selection."""
 
 import datetime as dt
 import itertools
@@ -14,7 +13,7 @@ import ocbpy
 
 
 def get_boundary_directory():
-    """Get the OCBpy boundary directory
+    """Get the OCBpy boundary directory.
 
     Returns
     -------
@@ -32,7 +31,7 @@ def get_boundary_directory():
 
 
 def get_boundary_files(bound='ocb'):
-    """Get boundary filenames and their spatiotemporal ranges
+    """Get boundary filenames and their spatiotemporal ranges.
 
     Parameters
     ----------
@@ -103,7 +102,7 @@ def get_boundary_files(bound='ocb'):
 
 
 def get_default_file(stime, etime, hemisphere, instrument='', bound='ocb'):
-    """ Get the default file for a specified time and hemisphere
+    """Get the default file for a specified time and hemisphere.
 
     Parameters
     ----------

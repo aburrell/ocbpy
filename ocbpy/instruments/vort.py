@@ -2,7 +2,7 @@
 # Copyright (C) 2017 AGB
 # Full license can be found in LICENSE.txt
 # ---------------------------------------------------------------------------
-""" Perform OCB gridding for SuperDARN vorticity data
+"""Perform OCB gridding for SuperDARN vorticity data.
 
 Notes
 -----
@@ -11,6 +11,7 @@ Specialised SuperDARN data product, available from: gchi@bas.ac.uk
 """
 import datetime as dt
 import numpy as np
+import warnings
 
 import ocbpy
 import ocbpy.ocb_scaling as ocbscal
@@ -18,9 +19,8 @@ import ocbpy.ocb_scaling as ocbscal
 
 def vort2ascii_ocb(vortfile, outfile, hemisphere=0, ocb=None,
                    ocbfile='default', instrument='', max_sdiff=600,
-                   save_all=False, min_sectors=7, rcent_dev=8.0, max_r=23.0,
-                   min_r=10.0):
-    """ Coverts the location of vorticity data from AACGM to OCB coordinates
+                   save_all=False, min_merit=None, max_merit=None, **kwargs):
+    """Covert the location of vorticity data from AACGM to OCB coordinates.
 
     Parameters
     ----------
@@ -31,11 +31,13 @@ def vort2ascii_ocb(vortfile, outfile, hemisphere=0, ocb=None,
     hemisphere : int
         Hemisphere to process (can only do one at a time).  1=Northern,
         -1=Southern, 0=Determine from data (default=0)
-    ocb : ocbpy.ocboundary.OCBoundary or NoneType)
-        Object containing open closed boundary data or None to load from file
+    ocb : ocbpy.ocboundary.OCBoundary, ocbpy.DualBoundary, or NoneType
+        OCBoundary or DualBoundary object with data loaded already. If None,
+        looks to `ocbfile` and creates an OCBoundary object. (default=None)
     ocbfile : str
-        file containing the required OC boundary data sorted by time, ignorned
-        if OCBoundary object supplied. (default='default')
+        File containing the required OC boundary data sorted by time, or
+        'default' to load default file for time and hemisphere.  Only used if
+        no OCBoundary object is supplied (default='default')
     instrument : str
         Instrument providing the OCBoundaries.  Requires 'image' or 'ampere'
         if a file is provided.  If using filename='default', also accepts
@@ -45,17 +47,29 @@ def vort2ascii_ocb(vortfile, outfile, hemisphere=0, ocb=None,
     save_all : bool
         Save all data (True), or only that needed to calcuate OCB and vorticity
         (False). (default=False)
+    min_merit : float or NoneType
+        Minimum value for the default figure of merit or None to not apply a
+        custom minimum (default=None)
+    max_merit : float or NoneTye
+        Maximum value for the default figure of merit or None to not apply a
+        custom maximum (default=None)
+    kwargs : dict
+        Dict with optional selection criteria.  The key should correspond to a
+        data attribute and the value must be a tuple with the first value
+        specifying 'max', 'min', 'maxeq', 'mineq', or 'equal' and the second
+        value specifying the value to use in the comparison.
     min_sectors : int
-        Minimum number of MLT sectors required for good OCB. (default=7)
+        Minimum number of MLT sectors required for good OCB. Deprecated, will
+        be removed in version 0.3.1+ (default=7)
     rcent_dev : float
-        Maximum number of degrees between the new centre and the AACGM pole
-        (default=8.0).
+        Maximum number of degrees between the new centre and the AACGM pole.
+        Deprecated, will be removed in version 0.3.1+ (default=8.0)
     max_r : float
         Maximum radius for open-closed field line boundary in degrees.
-        (default=23.0)
+        Deprecated, will be removed in version 0.3.1+ (default=23.0)
     min_r : float
-        Minimum radius for open-closed field line boundary in degrees
-        (default=10.0)
+        Minimum radius for open-closed field line boundary in degrees.
+        Deprecated, will be removed in version 0.3.1+ (default=10.0)
 
     Raises
     ------
@@ -70,6 +84,7 @@ def vort2ascii_ocb(vortfile, outfile, hemisphere=0, ocb=None,
 
     """
 
+    # Test the function inputs
     if not ocbpy.instruments.test_file(vortfile):
         raise IOError("vorticity file cannot be opened [{:s}]".format(
             vortfile))
@@ -86,7 +101,8 @@ def vort2ascii_ocb(vortfile, outfile, hemisphere=0, ocb=None,
         raise ValueError(estr)
 
     # Load the OCB data
-    if ocb is None or not isinstance(ocb, ocbpy.ocboundary.OCBoundary):
+    if ocb is None or (not isinstance(ocb, ocbpy.OCBoundary)
+                       and not isinstance(ocb, ocbpy.DualBoundary)):
         vstart = vdata['DATETIME'][0] - dt.timedelta(seconds=max_sdiff + 1)
         vend = vdata['DATETIME'][-1] + dt.timedelta(seconds=max_sdiff + 1)
 
@@ -103,18 +119,36 @@ def vort2ascii_ocb(vortfile, outfile, hemisphere=0, ocb=None,
                                           " set hemisphere=+/-1 to choose."]))
 
         # Initialize the OCBoundary object
-        ocb = ocbpy.ocboundary.OCBoundary(ocbfile, stime=vstart, etime=vend,
-                                          instrument=instrument,
-                                          hemisphere=hemisphere)
+        ocb = ocbpy.OCBoundary(ocbfile, stime=vstart, etime=vend,
+                               instrument=instrument, hemisphere=hemisphere)
     elif hemisphere == 0:
         # If the OCBoundary object is specified and hemisphere isn't use
         # the OCBoundary object to specify the hemisphere
         hemisphere = ocb.hemisphere
 
     # Test the OCB data
-    if ocb.filename is None or ocb.records == 0:
-        ocbpy.logger.error("no data in OCB file [{:}]".format(ocb.filename))
+    if ocb.records == 0:
+        ocbpy.logger.error("no data in Boundary file(s)")
         return
+
+    # Add check for deprecated and custom kwargs
+    dep_comp = {'min_sectors': ['num_sectors', ('mineq', 7)],
+                'rcent_dev': ['r_cent', ('maxeq', 8.0)],
+                'max_r': ['r', ('maxeq', 23.0)],
+                'min_r': ['r', ('mineq', 10.0)]}
+    cust_keys = list(kwargs.keys())
+
+    for ckey in cust_keys:
+        if ckey in dep_comp.keys():
+            warnings.warn("".join(["Deprecated kwarg will be removed in ",
+                                   "version 0.3.1+. To replecate behaviour",
+                                   ", use {", dep_comp[ckey][0], ": ",
+                                   repr(dep_comp[ckey][1]), "}"]),
+                          DeprecationWarning, stacklevel=2)
+            del kwargs[ckey]
+
+            if hasattr(ocb, dep_comp[ckey][0]):
+                kwargs[dep_comp[ckey][0]] = dep_comp[ckey][1]
 
     # Remove the data from the opposite hemisphere
     igood = np.where(np.sign(vdata['CENTRE_MLAT']) == hemisphere)[0]
@@ -133,7 +167,10 @@ def vort2ascii_ocb(vortfile, outfile, hemisphere=0, ocb=None,
             vdata[k] = vdata[k][igood]
 
     # Set the reference radius
-    ref_r = 90.0 - abs(ocb.boundary_lat)
+    if hasattr(ocb, "boundary_lat"):
+        ref_r = 90.0 - abs(ocb.boundary_lat)
+    else:
+        ref_r = 90.0 - abs(ocb.ocb.boundary_lat)
 
     # Open the output file for writting
     with open(outfile, 'w') as fout:
@@ -154,19 +191,24 @@ def vort2ascii_ocb(vortfile, outfile, hemisphere=0, ocb=None,
         # Cycle through the data, matching vorticity and OCB records
         while ivort < num_vort and ocb.rec_ind < ocb.records:
             ivort = ocbpy.match_data_ocb(ocb, vdata['DATETIME'], idat=ivort,
-                                         max_tol=max_sdiff,
-                                         min_sectors=min_sectors,
-                                         rcent_dev=rcent_dev, max_r=max_r,
-                                         min_r=min_r)
+                                         max_tol=max_sdiff, min_merit=min_merit,
+                                         max_merit=max_merit, **kwargs)
 
             if ivort < num_vort and ocb.rec_ind < ocb.records:
                 # Use the indexed OCB to convert the AACGM grid coordinate to
                 # one related to the OCB
-                nlat, nmlt, ncor = ocb.normal_coord(
-                    vdata['CENTRE_MLAT'][ivort], vdata['MLT'][ivort])
+                nout = ocb.normal_coord(vdata['CENTRE_MLAT'][ivort],
+                                        vdata['MLT'][ivort])
+
+                if len(nout) == 3:
+                    nlat, nmlt, ncor = nout
+                    rad = ocb.r[ocb.rec_ind] + ncor
+                else:
+                    nlat, nmlt, _, ncor = nout
+                    rad = ocb.ocb.r[ocb.rec_ind] + ncor
+
                 nvort = ocbscal.normal_curl_evar(vdata['VORTICITY'][ivort],
-                                                 ocb.r[ocb.rec_ind] + ncor,
-                                                 ref_r)
+                                                 rad, ref_r)
 
                 # Format the output line
                 #    DATE TIME (SAVE_ALL) OCB_LAT OCB_MLT NORM_VORT

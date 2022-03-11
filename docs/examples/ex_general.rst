@@ -1,6 +1,7 @@
+.. _ex-general:
 
 Load a general data file (DMSP SSIES)
--------------------------------------
+=====================================
 DMSP SSIES provides commonly used polar data, which can be accessed from
 `Madrigal <http://cedar.openmadrigal.org/>`_, which also has a Python API called
 `madrigalWeb <https://pypi.org/project/madrigalWeb/>`_.  To run this example,
@@ -62,12 +63,12 @@ with a good OCB established within the last 5 minutes will be used.
    
    idmsp = 0
    ndmsp = len(igood[0])
-   ocb = ocbpy.ocboundary.OCBoundary()
+   ocb = ocbpy.OCBoundary()
    ocb.get_next_good_ocb_ind()
 
    print(idmsp, ndmsp, ocb.rec_ind, ocb.records)
 
-   0 7623 27 219927
+   0 7623 0 305805
 
 
 This is the starting point for cycling through the records.
@@ -89,7 +90,7 @@ This is the starting point for cycling through the records.
    igood = np.where(~np.isnan(dmsp_data['OCB_LAT']))
    print(len(igood[0]), dmsp_data['OCB_LAT'][igood].max())
 
-   840 86.77820739248244
+   2218 89.5098551674689
 
 Now, let's plot the satellite track over the pole, relative to the OCB, with
 the location accouting for changes in the OCB at a 5 minute resolution.  Note
@@ -106,10 +107,10 @@ coordinates rather than magnetic coordinates, adding an additional
        dmsp_data['datetime'][igood][0].strftime('%d %B %Y')))
    ax = fig.add_subplot(111, projection="polar")
    ax.set_theta_zero_location("S")
-   ax.xaxis.set_ticks([0, 0.5*np.pi, np.pi, 1.5*np.pi])
+   ax.xaxis.set_ticks([0, 0.5 * np.pi, np.pi, 1.5 * np.pi])
    ax.xaxis.set_ticklabels(["00:00", "06:00", "12:00 MLT", "18:00"])
-   ax.set_rlim(0,40)
-   ax.set_rticks([10,20,30,40])
+   ax.set_rlim(0, 40)
+   ax.set_rticks([10, 20, 30, 40])
    ax.yaxis.set_ticklabels(["80$^\circ$", "70$^\circ$", "60$^\circ$",
                             "50$^\circ$"])
 

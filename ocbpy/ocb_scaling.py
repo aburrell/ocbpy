@@ -18,14 +18,15 @@ import ocbpy
 
 
 class VectorData(object):
-    """ Object containing a vector data point
+    """Object containing a vector data.
 
     Parameters
     ----------
     dat_ind : int or array-like
         Data index (zero offset)
     ocb_ind : int or array-like
-        OCBoundary record index matched to this data index (zero offset)
+        OCBoundary or DualBoundary record index matched to this data index
+        (zero offset)
     aacgm_lat : float or array-like
         Vector AACGM latitude (degrees)
     aacgm_mlt : float or array-like
@@ -197,8 +198,7 @@ class VectorData(object):
         return
 
     def __repr__(self):
-        """ Provide an evaluatable representation of the DataVector object
-        """
+        """Provide an evaluatable representation of the VectorData object."""
 
         # Format the function representations
         if self.scale_func is None:
@@ -208,20 +208,16 @@ class VectorData(object):
                                   self.scale_func.__name__])
 
         # Format the base output
-        out = "".join(["ocbpy.ocb_scaling.VectorData(", self.dat_ind.__repr__(),
-                       ", ", self.ocb_ind.__repr__(), ", ",
-                       self.aacgm_lat.__repr__(), ", ",
-                       self.aacgm_mlt.__repr__(), ", ocb_lat=",
-                       self.ocb_lat.__repr__(), ", ocb_mlt=",
-                       self.ocb_mlt.__repr__(), ", r_corr=",
-                       self.r_corr.__repr__(), ", aacgm_n=",
-                       self.aacgm_n.__repr__(), ", aacgm_e=",
-                       self.aacgm_e.__repr__(), ", aacgm_z=",
-                       self.aacgm_z.__repr__(), ", aacgm_mag=",
-                       self.aacgm_mag.__repr__(), ", dat_name=",
-                       self.dat_name.__repr__(), ", dat_units=",
-                       self.dat_units.__repr__(), ", scale_func=",
-                       repr_func, ")"])
+        out = "".join(["ocbpy.ocb_scaling.VectorData(", repr(self.dat_ind),
+                       ", ", repr(self.ocb_ind), ", ", repr(self.aacgm_lat),
+                       ", ", repr(self.aacgm_mlt), ", ocb_lat=",
+                       repr(self.ocb_lat), ", ocb_mlt=", repr(self.ocb_mlt),
+                       ", r_corr=", repr(self.r_corr), ", aacgm_n=",
+                       repr(self.aacgm_n), ", aacgm_e=", repr(self.aacgm_e),
+                       ", aacgm_z=", repr(self.aacgm_z), ", aacgm_mag=",
+                       repr(self.aacgm_mag), ", dat_name=",
+                       repr(self.dat_name), ", dat_units=",
+                       repr(self.dat_units), ", scale_func=", repr_func, ")"])
 
         # Reformat the numpy representations
         out = out.replace('array', 'numpy.array')
@@ -229,8 +225,7 @@ class VectorData(object):
         return out
 
     def __str__(self):
-        """ Provide readable representation of the DataVector object
-        """
+        """Provide user readable representation of the VectorData object."""
 
         out = "Vector data:"
         if self.dat_name is not None:
@@ -238,8 +233,8 @@ class VectorData(object):
         if self.dat_units is not None:
             out += " ({:s})".format(self.dat_units)
 
-        out += "\nData Index {:}\tOCB Index {:}\n".format(self.dat_ind,
-                                                          self.ocb_ind)
+        out += "\nData Index {:}\tBoundary Index {:}\n".format(self.dat_ind,
+                                                               self.ocb_ind)
         out += "-------------------------------------------\n"
 
         # Print AACGM vector location(s)
@@ -311,14 +306,14 @@ class VectorData(object):
         return out
 
     def set_ocb(self, ocb, scale_func=None):
-        """ Set the OCBoundary values for provided data (updates all attributes)
+        """Set the OCBoundary values for provided data (updates all attributes).
 
         Parameters
         ----------
-        ocb : ocbpy.OCBoundary
-            Open Closed Boundary class object
+        ocb : ocbpy.OCBoundary or ocbpy.DualBoundary
+            OCB, EAB, or Dual boundary object
         scale_func : function
-            Function for scaling AACGM magnitude with arguements:
+            Function for scaling AACGM magnitude with arguments:
             [measurement value, mesurement AACGM latitude (degrees),
             mesurement OCB latitude (degrees)]
             Not necessary if defined earlier or no scaling is needed.
@@ -336,19 +331,27 @@ class VectorData(object):
             # Because the OCB and AACGM magnetic field are both time dependent,
             # can't call this function with multiple OCBs
             if self.ocb_ind.shape == ():
-                (self.ocb_lat, self.ocb_mlt,
-                 self.r_corr) = ocb.normal_coord(self.aacgm_lat,
-                                                 self.aacgm_mlt)
+                out_coord = ocb.normal_coord(self.aacgm_lat, self.aacgm_mlt)
+
+                if len(out_coord) == 3:
+                    (self.ocb_lat, self.ocb_mlt, self.r_corr) = out_coord
+                else:
+                    (self.ocb_lat, self.ocb_mlt, _, self.r_corr) = out_coord
             else:
                 for i, ocb.rec_ind in enumerate(self.ocb_ind):
                     if self.ocb_ind.shape == self.dat_ind.shape:
-                        (self.ocb_lat[i], self.ocb_mlt[i],
-                         self.r_corr[i]) = ocb.normal_coord(self.aacgm_lat[i],
-                                                            self.aacgm_mlt[i])
+                        out_coord = ocb.normal_coord(self.aacgm_lat[i],
+                                                     self.aacgm_mlt[i])
                     else:
+                        out_coord = ocb.normal_coord(self.aacgm_lat,
+                                                     self.aacgm_mlt)
+
+                    if len(out_coord) == 3:
                         (self.ocb_lat[i], self.ocb_mlt[i],
-                         self.r_corr[i]) = ocb.normal_coord(self.aacgm_lat,
-                                                            self.aacgm_mlt)
+                         self.r_corr[i]) = out_coord
+                    else:
+                        (self.ocb_lat[i], self.ocb_mlt[i], _,
+                         self.r_corr[i]) = out_coord
 
         # Exit if the OCB coordinates can't be calculated at this location
         if(np.all(np.isnan(self.ocb_lat)) or np.all(np.isnan(self.ocb_mlt))
@@ -356,10 +359,22 @@ class VectorData(object):
             return
 
         # Set the AACGM coordinates of the OCB pole
-        self.unscaled_r = ocb.r[self.ocb_ind] + self.r_corr
-        self.scaled_r = 90.0 - abs(ocb.boundary_lat)
-        self.ocb_aacgm_mlt = ocbpy.ocb_time.deg2hr(ocb.phi_cent[self.ocb_ind])
-        self.ocb_aacgm_lat = 90.0 - ocb.r_cent[self.ocb_ind]
+        if hasattr(ocb, "ocb"):
+            iocb = ocb.ocb_ind[self.ocb_ind]
+            self.unscaled_r = ocb.ocb.r[iocb] + self.r_corr
+            self.scaled_r = np.full(
+                shape=self.unscaled_r.shape,
+                fill_value=(90.0 - abs(ocb.ocb.boundary_lat)))
+            self.ocb_aacgm_mlt = ocbpy.ocb_time.deg2hr(
+                ocb.ocb.phi_cent[iocb])
+            self.ocb_aacgm_lat = 90.0 - ocb.ocb.r_cent[iocb]
+        else:
+            self.unscaled_r = ocb.r[self.ocb_ind] + self.r_corr
+            self.scaled_r = np.full(shape=self.unscaled_r.shape,
+                                    fill_value=(90.0 - abs(ocb.boundary_lat)))
+            self.ocb_aacgm_mlt = ocbpy.ocb_time.deg2hr(
+                ocb.phi_cent[self.ocb_ind])
+            self.ocb_aacgm_lat = 90.0 - ocb.r_cent[self.ocb_ind]
 
         # Get the angle at the data vector appended by the AACGM and OCB poles
         self.calc_vec_pole_angle()
@@ -502,7 +517,7 @@ class VectorData(object):
         return
 
     def scale_vector(self):
-        """ Normalise a variable proportional to the curl of the electric field.
+        """Normalise a variable proportional to the curl of the electric field.
 
         Raises
         ------
@@ -584,13 +599,13 @@ class VectorData(object):
                 else:
                     self.ocb_n[ns_mask] = self.scale_func(
                         self.aacgm_n[ns_mask], self.unscaled_r[ns_mask],
-                        self.scaled_r)
+                        self.scaled_r[ns_mask])
                     self.ocb_e[ns_mask] = self.scale_func(
                         self.aacgm_e[ns_mask], self.unscaled_r[ns_mask],
-                        self.scaled_r)
+                        self.scaled_r[ns_mask])
                     self.ocb_z[ns_mask] = self.scale_func(
                         self.aacgm_z[ns_mask], self.unscaled_r[ns_mask],
-                        self.scaled_r)
+                        self.scaled_r[ns_mask])
 
             # Determine if the measurement is on or between the poles
             # This does not affect the vertical direction
@@ -636,16 +651,18 @@ class VectorData(object):
             if self.scale_func is not None:
                 if self.unscaled_r.shape == ():
                     un_r = self.unscaled_r
+                    sc_r = self.scaled_r
                 else:
                     un_r = self.unscaled_r[norm_mask]
+                    sc_r = self.scaled_r[norm_mask]
 
                 if self.aacgm_z.shape == ():
                     a_z = self.aacgm_z
                 else:
                     a_z = self.aacgm_z[norm_mask]
 
-                vmag = self.scale_func(vmag, un_r, self.scaled_r)
-                vz = self.scale_func(a_z, un_r, self.scaled_r)
+                vmag = self.scale_func(vmag, un_r, sc_r)
+                vz = self.scale_func(a_z, un_r, sc_r)
             else:
                 if self.aacgm_z.shape == ():
                     vz = self.aacgm_z
@@ -1018,7 +1035,7 @@ class VectorData(object):
 
 
 def normal_evar(evar, unscaled_r, scaled_r):
-    """ Normalise a variable proportional to the electric field
+    """Normalise a variable proportional to the electric field.
 
     Parameters
     ----------
@@ -1050,7 +1067,7 @@ def normal_evar(evar, unscaled_r, scaled_r):
 
 
 def normal_curl_evar(curl_evar, unscaled_r, scaled_r):
-    """ Normalise a variable proportional to the curl of the electric field
+    """Normalise a variable proportional to the curl of the electric field.
 
     Parameters
     ----------
@@ -1082,7 +1099,7 @@ def normal_curl_evar(curl_evar, unscaled_r, scaled_r):
 
 
 def hav(alpha):
-    """ Formula for haversine
+    """Calculate the haversine.
 
     Parameters
     ----------
@@ -1102,7 +1119,7 @@ def hav(alpha):
 
 
 def archav(hav):
-    """ Formula for the inverse haversine
+    """Calculate the inverse haversine.
 
     Parameters
     ----------

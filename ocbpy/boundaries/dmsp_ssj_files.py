@@ -129,7 +129,7 @@ def fetch_ssj_files(stime, etime, out_dir=None, sat_nums=None):
 def create_ssj_boundary_files(cdf_files, out_dir=None,
                               out_cols=['glat', 'glon'],
                               make_plots=False, plot_dir=None):
-    """ Create SSJ boundary files for a list of DMSP SSJ daily satellite files
+    """Create SSJ boundary files for a list of DMSP SSJ daily satellite files.
 
     Parameters
     ----------
@@ -206,7 +206,7 @@ def create_ssj_boundary_files(cdf_files, out_dir=None,
 
 def format_ssj_boundary_files(csv_files, ref_alt=830.0,
                               method='GEOCENTRIC|ALLOWTRACE'):
-    """ Create SSJ boundary files for a list of DMSP SSJ daily satellite files
+    """Create SSJ boundary files for a list of DMSP SSJ daily satellite files.
 
     Parameters
     ----------
@@ -373,14 +373,14 @@ def format_ssj_boundary_files(csv_files, ref_alt=830.0,
                             data_line[lat_ind[bb]], data_line[lon_ind[bb]],
                             ref_alt, mid_time, method=method)
 
-                        # Determine the circle radius in degrees
-                        rad = 0.5 * abs(mloc[0][0] - mloc[0][1])
-
                         # Get the X-Y coordinates of each pass where X is
                         # positive towards dawn and Y is positive towards noon
-                        theta = np.radians(mloc[2] * 15.0 - 90.0)
+                        theta = ocbpy.ocb_time.hr2rad(mloc[2] - 6.0)
                         x = (90.0 - abs(mloc[0])) * np.cos(theta)
                         y = (90.0 - abs(mloc[0])) * np.sin(theta)
+
+                        # Get the distance between the Cartesian points
+                        rad = np.sqrt((x[0] - x[1])**2 + (y[0] - y[1])**2) / 2.0
 
                         # The midpoint is the center of this circle
                         mid_x = 0.5 * sum(x)

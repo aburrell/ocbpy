@@ -3,15 +3,14 @@
 # Copyright (C) 2017, AGB & GC
 # Full license can be found in License.md
 # ----------------------------------------------------------------------------
-"""Routines to convert from different file timekeeping methods to datetime
-"""
+"""Routines to convert from different file timekeeping methods to datetime."""
 
 import datetime as dt
 import numpy as np
 
 
 def get_datetime_fmt_len(datetime_fmt):
-    """ Get the lenght of a string line needed for a specific datetime format
+    """Get the lenght of a string line needed for a specific datetime format.
 
     Parameters
     ----------
@@ -46,7 +45,7 @@ def get_datetime_fmt_len(datetime_fmt):
 
 
 def year_soy_to_datetime(yyyy, soy):
-    """Converts year and soy to datetime
+    """Converts year and soy to datetime.
 
     Parameters
     ----------
@@ -85,7 +84,7 @@ def year_soy_to_datetime(yyyy, soy):
 
 
 def yyddd_to_date(yyddd):
-    """ Convert from years since 1900 and day of year to datetime
+    """Convert from years since 1900 and day of year to datetime.
 
     Parameters
     ----------
@@ -116,7 +115,7 @@ def yyddd_to_date(yyddd):
 
 def convert_time(year=None, soy=None, yyddd=None, sod=None, date=None,
                  tod=None, datetime_fmt="%Y-%m-%d %H:%M:%S"):
-    """ Convert to datetime from multiple time formats
+    """Convert to datetime from multiple time formats.
 
     Parameters
     ----------
@@ -199,7 +198,7 @@ def convert_time(year=None, soy=None, yyddd=None, sod=None, date=None,
 
 
 def deg2hr(lon):
-    """ Convert from degrees to hours
+    """Convert from degrees to hours.
 
     Parameters
     ----------
@@ -220,7 +219,7 @@ def deg2hr(lon):
 
 
 def hr2deg(lt):
-    """ Convert from degrees to hours
+    """Convert from degrees to hours.
 
     Parameters
     ----------
@@ -241,7 +240,7 @@ def hr2deg(lt):
 
 
 def hr2rad(lt):
-    """ Convert from hours to radians
+    """Convert from hours to radians.
 
     Parameters
     ----------
@@ -262,7 +261,7 @@ def hr2rad(lt):
 
 
 def rad2hr(lon):
-    """ Convert from radians to hours
+    """Convert from radians to hours.
 
     Parameters
     ----------
@@ -283,7 +282,7 @@ def rad2hr(lon):
 
 
 def datetime2hr(dtime):
-    """ Calculate hours of day from datetime
+    """Calculate hours of day from datetime.
 
     Parameters
     ----------
@@ -304,7 +303,7 @@ def datetime2hr(dtime):
 
 
 def slt2glon(slt, dtime):
-    """ Convert from solar local time to geographic longitude
+    """Convert from solar local time to geographic longitude.
 
     Parameters
     ----------
@@ -334,7 +333,7 @@ def slt2glon(slt, dtime):
 
 
 def glon2slt(glon, dtime):
-    """ Convert from geographic longitude to solar local time
+    """Convert from geographic longitude to solar local time.
 
     Parameters
     ----------
@@ -360,7 +359,7 @@ def glon2slt(glon, dtime):
 
 
 def fix_range(values, min_val, max_val, val_range=None):
-    """ Ensure cyclic values lie below the maximum and at or above the mininum
+    """Ensure cyclic values lie below the maximum and at or above the mininum.
 
     Parameters
     ----------

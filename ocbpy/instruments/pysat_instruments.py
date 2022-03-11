@@ -12,6 +12,7 @@ pysat is available at: http://github.com/pysat/pysat or pypi
 
 import datetime as dt
 import numpy as np
+import warnings
 
 try:
     import pysat
@@ -26,8 +27,8 @@ import ocbpy.ocb_scaling as ocbscal
 
 def add_ocb_to_data(pysat_inst, mlat_name='', mlt_name='', evar_names=None,
                     curl_evar_names=None, vector_names=None, hemisphere=0,
-                    ocb=None, ocbfile='default', instrument='', max_sdiff=600,
-                    min_sectors=7, rcent_dev=8.0, max_r=23.0, min_r=10.0):
+                    ocb=None, ocbfile='default', instrument='', max_sdiff=60,
+                    min_merit=None, max_merit=None, **kwargs):
     """Covert the location of pysat data into OCB coordinates.
 
     Parameters
@@ -37,7 +38,7 @@ def add_ocb_to_data(pysat_inst, mlat_name='', mlt_name='', evar_names=None,
     mlat_name : str
         Instrument data key or column for magnetic latitudes (default='')
     mlt_name : str
-        Instrument data key or column formagnetic longitudes (default='')
+        Instrument data key or column for magnetic local times (default='')
     evar_names : list or NoneType
         List of Instrument data keys or columns pointing to measurements that
         are proportional to the electric field (E); e.g. ion drift
@@ -56,9 +57,9 @@ def add_ocb_to_data(pysat_inst, mlat_name='', mlt_name='', evar_names=None,
     hemisphere : int
         Hemisphere to process (can only do one at a time).  1=Northern,
         -1=Southern, 0=Determine from data (default=0)
-    ocb : OCBoundary or NoneType)
-        OCBoundary object with data loaded from an OC boundary data file.
-        If None, looks to ocbfile
+    ocb : ocbpy.OCBoundary, ocbpy.DualBoundary, or NoneType
+        OCBoundary or DualBoundary object with data loaded already. If None,
+        looks to `ocbfile` and creates an OCBoundary object. (default=None)
     ocbfile : str
         file containing the required OC boundary data sorted by time, ignorned
         if OCBoundary object supplied (default='default')
@@ -67,18 +68,30 @@ def add_ocb_to_data(pysat_inst, mlat_name='', mlt_name='', evar_names=None,
         if a file is provided.  If using filename='default', also accepts
         'amp', 'si12', 'si13', 'wic', and '' (default='')
     max_sdiff : int
-        maximum seconds between OCB and data record in sec (default=600)
+        maximum seconds between OCB and data record in sec (default=60)
+    min_merit : float or NoneType
+        Minimum value for the default figure of merit or None to not apply a
+        custom minimum (default=None)
+    max_merit : float or NoneTye
+        Maximum value for the default figure of merit or None to not apply a
+        custom maximum (default=None)
+    kwargs : dict
+        Dict with optional selection criteria.  The key should correspond to a
+        data attribute and the value must be a tuple with the first value
+        specifying 'max', 'min', 'maxeq', 'mineq', or 'equal' and the second
+        value specifying the value to use in the comparison.
     min_sectors : int
-        Minimum number of MLT sectors required for good OCB (default=7)
+        Minimum number of MLT sectors required for good OCB. Deprecated, will
+        be removed in version 0.3.1+  (default=7)
     rcent_dev : float
-        Maximum number of degrees between the new centre and the AACGM pole
-        (default=8.0)
+        Maximum number of degrees between the new centre and the AACGM pole.
+        Deprecated, will be removed in version 0.3.1+ (default=8.0)
     max_r : float
-        Maximum radius for open-closed field line boundary in degrees
-        (default=23.0)
+        Maximum radius for open-closed field line boundary in degrees.
+        Deprecated, will be removed in version 0.3.1+ (default=23.0)
     min_r : float
-        Minimum radius for open-closed field line boundary in degrees
-        (default=10.0)
+        Minimum radius for open-closed field line boundary in degrees.
+        Deprecated, will be removed in version 0.3.1+ (default=10.0)
 
     Raises
     ------
@@ -205,7 +218,8 @@ def add_ocb_to_data(pysat_inst, mlat_name='', mlt_name='', evar_names=None,
     ndat = len(aacgm_lat)
 
     # Load the OCB data for the data period, if desired
-    if ocb is None or not isinstance(ocb, ocbpy.ocboundary.OCBoundary):
+    if ocb is None or (not isinstance(ocb, ocbpy.OCBoundary)
+                       and not isinstance(ocb, ocbpy.DualBoundary)):
         dstart = pysat_inst.index[0] - dt.timedelta(seconds=max_sdiff + 1)
         dend = pysat_inst.index[-1] + dt.timedelta(seconds=max_sdiff + 1)
 
@@ -235,12 +249,31 @@ def add_ocb_to_data(pysat_inst, mlat_name='', mlt_name='', evar_names=None,
     else:
         finite_mask = np.isfinite(
             pysat_inst[:, pysat_names].to_array().max('variable'))
-    dat_ind = np.where((np.sign(aacgm_lat) == hemisphere) & finite_mask)[0]
+    dat_ind = np.where((np.sign(aacgm_lat) == hemisphere) & finite_mask)
 
     # Test the OCB data
-    if ocb.filename is None or ocb.records == 0:
-        ocbpy.logger.error("no data in OCB file {:}".format(ocb.filename))
+    if ocb.records == 0:
+        ocbpy.logger.error("no data in Boundary file(s)")
         return
+
+    # Add check for deprecated and custom kwargs
+    dep_comp = {'min_sectors': ['num_sectors', ('mineq', 7)],
+                'rcent_dev': ['r_cent', ('maxeq', 8.0)],
+                'max_r': ['r', ('maxeq', 23.0)],
+                'min_r': ['r', ('mineq', 10.0)]}
+    cust_keys = list(kwargs.keys())
+
+    for ckey in cust_keys:
+        if ckey in dep_comp.keys():
+            warnings.warn("".join(["Deprecated kwarg will be removed in ",
+                                   "version 0.3.1+. To replecate behaviour",
+                                   ", use {", dep_comp[ckey][0], ": ",
+                                   repr(dep_comp[ckey][1]), "}"]),
+                          DeprecationWarning, stacklevel=2)
+            del kwargs[ckey]
+
+            if hasattr(ocb, dep_comp[ckey][0]):
+                kwargs[dep_comp[ckey][0]] = dep_comp[ckey][1]
 
     # Initialise the OCB output
     ocb_output = dict()
@@ -254,21 +287,35 @@ def add_ocb_to_data(pysat_inst, mlat_name='', mlt_name='', evar_names=None,
 
     # Cycle through the data, matching data and OCB records
     idat = 0
-    ndat = len(dat_ind)
-    ref_r = 90.0 - abs(ocb.boundary_lat)
+    ndat = len(dat_ind[0])
+    if hasattr(ocb, "boundary_lat"):
+        ref_r = 90.0 - abs(ocb.boundary_lat)
+    else:
+        ref_r = 90.0 - abs(ocb.ocb.boundary_lat)
+
     while idat < ndat and ocb.rec_ind < ocb.records:
-        idat = ocbpy.match_data_ocb(ocb, pysat_inst.index[dat_ind], idat=idat,
-                                    max_tol=max_sdiff, min_sectors=min_sectors,
-                                    rcent_dev=rcent_dev, max_r=max_r,
-                                    min_r=min_r)
+        idat = ocbpy.match_data_ocb(ocb, pysat_inst.index[dat_ind[0]],
+                                    idat=idat, max_tol=max_sdiff,
+                                    min_merit=min_merit, max_merit=max_merit,
+                                    **kwargs)
 
         if idat < ndat and ocb.rec_ind < ocb.records:
-            iout = dat_ind[idat]
+            if len(dat_ind) > 1:
+                iout = tuple(dind[idat] for dind in dat_ind)
+            else:
+                iout = dat_ind[0][idat]
 
             # Get the OCB coordinates
-            (ocb_output[olat_name][iout], ocb_output[omlt_name][iout],
-             ocb_output[ocor_name][iout]) = ocb.normal_coord(aacgm_lat[iout],
-                                                             aacgm_mlt[iout])
+            nout = ocb.normal_coord(aacgm_lat[iout], aacgm_mlt[iout])
+
+            if len(nout) == 3:
+                ocb_output[olat_name][iout] = nout[0]
+                ocb_output[omlt_name][iout] = nout[1]
+                ocb_output[ocor_name][iout] = nout[2]
+            else:
+                ocb_output[olat_name][iout] = nout[0]
+                ocb_output[omlt_name][iout] = nout[1]
+                ocb_output[ocor_name][iout] = nout[3]
 
             # Scale and orient the vector values
             if nvect > 0:
@@ -297,7 +344,11 @@ def add_ocb_to_data(pysat_inst, mlat_name='', mlt_name='', evar_names=None,
                         **vector_init)
                     ocb_output[oattr][iout].set_ocb(ocb)
 
-            unscaled_r = ocb.r[ocb.rec_ind] + ocb_output[ocor_name][iout]
+            if hasattr(ocb, "ocb"):
+                unscaled_r = ocb.ocb.r[ocb.ocb.rec_ind] + ocb_output[
+                    ocor_name][iout]
+            else:
+                unscaled_r = ocb.r[ocb.rec_ind] + ocb_output[ocor_name][iout]
 
             # Scale the E-field proportional variables
             for eattr in evar_names:
@@ -329,9 +380,20 @@ def add_ocb_to_data(pysat_inst, mlat_name='', mlt_name='', evar_names=None,
 
         # Update the pysat Metadata
         eattr = oattr[:-4]
-        notes = "OCB obtained from {:} data in file ".format(ocb.instrument)
-        notes += "{:} using a boundary latitude of ".format(ocb.filename)
-        notes += "{:.2f}".format(ocb.boundary_lat)
+        if hasattr(ocb, "instrument"):
+            notes = "".join(["OCB obtained from ", ocb.instrument,
+                             " data in file ", ocb.filename,
+                             "using a boundary latitude of ",
+                             "{:.2f}".format(ocb.boundary_lat)])
+        else:
+            notes = "".join(["OCB obtained from ", ocb.ocb.instrument, " data",
+                             " in file ", ocb.ocb.filename, " using a ",
+                             "boundary latitude of ",
+                             "{:.2f}".format(ocb.ocb.boundary_lat), " and EAB",
+                             "EAB obtained from ", ocb.eab.instrument,
+                             " data in file ", ocb.eab.filename, "using a ",
+                             "boundary latitude of ",
+                             "{:.2f}".format(ocb.eab.boundary_lat)])
 
         if eattr in vector_names.keys():
             if vector_names[eattr]['scale_func'] is None:
