@@ -6,16 +6,13 @@
 """Tests the vorticity instrument sub-module."""
 
 import datetime as dt
+import filecmp
 from io import StringIO
 import logging
 import numpy as np
 import os
-import platform
 import unittest
 
-win_list = ["win32", "cygwin", "windows"]
-if platform.system().lower() not in win_list:
-    import filecmp
 
 import ocbpy
 import ocbpy.instruments.vort as ocb_ivort
@@ -180,27 +177,9 @@ class TestVort2AsciiMethods(unittest.TestCase):
             with self.subTest(val=val):
                 ocb_ivort.vort2ascii_ocb(val[0], self.temp_output, **val[2])
 
-                if platform.system().lower() in win_list:
-                    # filecmp doesn't work on windows
-
-                    ldtype = ['|U50' if i < 2 else float for i in range(5)]
-                    test_out = np.genfromtxt(val[1], skip_header=1,
-                                             dtype=ldtype)
-                    temp_out = np.genfromtxt(self.temp_output, skip_header=1,
-                                             dtype=ldtype)
-
-                    # Test the number of rows and columns
-                    self.assertTupleEqual(test_out.shape, temp_out.shape)
-
-                    # Test the data in each row
-                    for i, test_row in enumerate(test_out):
-                        self.assertListEqual(list(test_row), list(temp_out[i]))
-
-                    del ldtype, test_out, temp_out
-                else:
-                    # Compare created file to stored test file
-                    self.assertTrue(filecmp.cmp(val[1], self.temp_output,
-                                                shallow=False))
+                # Compare created file to stored test file
+                self.assertTrue(filecmp.cmp(val[1], self.temp_output,
+                                            shallow=False))
         return
 
     def test_vort2ascii_ocb_save_all(self):

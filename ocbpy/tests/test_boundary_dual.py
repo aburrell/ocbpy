@@ -10,13 +10,10 @@ from io import StringIO
 import logging
 import numpy
 from os import path
-import platform
 import unittest
 
 import ocbpy
 from . import test_boundary_ocb as test_ocb
-
-win_list = ["win32", "cygwin", "windows"]
 
 
 class TestDualBoundaryLogFailure(unittest.TestCase):
@@ -178,11 +175,7 @@ class TestDualBoundaryMethodsGeneral(test_ocb.TestOCBoundaryMethodsGeneral):
                 i = 0 if val.find("eab") == 0 else 1
 
                 # Construct the expected string
-                if(val.find("filename") >= 0
-                   and platform.system().lower() in win_list):
-                    # Windows has trouble recognizing the filename in Regex
-                    test_str = "filename="
-                elif i == 0 or val.find("ocb") == 0:
+                if i == 0 or val.find("ocb") == 0:
                     test_str = "=".join([val.split("_")[-1],
                                          repr(self.set_default[val])])
                 else:
