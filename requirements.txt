@@ -1,4 +1,6 @@
 aacgmv2
 coverage
+coveralls
+flake8
 numpy
 packaging

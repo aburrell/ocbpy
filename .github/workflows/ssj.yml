@@ -31,7 +31,7 @@ jobs:
       env:
         CDF_LIB: $HOME/lib
       run: |
-        pip install -r requirements.txt coveralls flake8
+        pip install -r requirements.txt
         bash requirements.extra 2
         python setup.py install
 
@@ -39,4 +39,6 @@ jobs:
       run: coverage run --rcfile=setup.cfg -m unittest discover
 
     - name: Publish results to coveralls
+      env:
+        GITHUB_TOKEN: ${{ secrets.GITHUB_TOKEN }}
       run: coveralls --rcfile=setup.cfg --service=github

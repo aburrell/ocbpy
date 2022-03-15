@@ -26,7 +26,7 @@ jobs:
 
     - name: Install standard and test dependencies, then ocbpy
       run: |
-        pip install -r requirements.txt coveralls flake8
+        pip install -r requirements.txt
         bash requirements.extra 1
         python setup.py install
 
