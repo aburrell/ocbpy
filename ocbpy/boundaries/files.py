@@ -187,7 +187,7 @@ def get_default_file(stime, etime, hemisphere, instrument='', bound='ocb'):
             instrument = boundary_files[good_files[0]]['instrument']
     else:
         # Rate files by instrument
-        default_inst = ['image', 'si13', 'si12', 'wic', 'amp', 'dmsp-ssj']
+        default_inst = ['image', 'amp', 'si13', 'si12', 'wic', 'dmsp-ssj']
         ordered_files = {default_inst.index(boundary_files[bb]['instrument']):
                          bb for bb in good_files}
         bfile = ordered_files[min(ordered_files.keys())]
