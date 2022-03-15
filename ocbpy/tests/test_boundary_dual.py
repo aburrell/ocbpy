@@ -178,10 +178,9 @@ class TestDualBoundaryMethodsGeneral(test_ocb.TestOCBoundaryMethodsGeneral):
                 i = 0 if val.find("eab") == 0 else 1
 
                 # Construct the expected string
-                if sys.platform in win_list:
-                    raise RuntimeError(val, val.find("filename"))
                 if val.find("filename") >= 0 and sys.platform in win_list:
                     test_str = "filename="
+                    raise RuntimeError(val, val.find("filename"), rocb[i], sys.platform, test_str)
                 elif i == 0 or val.find("ocb") == 0:
                     test_str = "=".join([val.split("_")[-1],
                                          repr(self.set_default[val])])
