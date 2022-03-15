@@ -5,14 +5,10 @@
 # -----------------------------------------------------------------------------
 """Tests the SuperMAG instrument functions."""
 import datetime as dt
+import filecmp
 import numpy as np
 import os
-import platform
 import unittest
-
-win_list = ["win32", "cygwin", "windows"]
-if platform.system().lower() not in win_list:
-    import filecmp
 
 import ocbpy
 import ocbpy.instruments.supermag as ocb_ismag
@@ -79,27 +75,9 @@ class TestSuperMAG2AsciiMethods(unittest.TestCase):
                                      ocbfile=self.test_ocb, instrument='image',
                                      hemisphere=1)
 
-        if platform.system().lower() in win_list:
-            # filecmp doesn't work on windows
-
-            ldtype = ['|U50' if i < 2 or i == 3 else float for i in range(19)]
-            test_out = np.genfromtxt(self.test_output_north, skip_header=1,
-                                     dtype=ldtype)
-            temp_out = np.genfromtxt(self.temp_output, skip_header=1,
-                                     dtype=ldtype)
-
-            # Test the number of rows and columns
-            self.assertTupleEqual(test_out.shape, temp_out.shape)
-
-            # Test the data in each row
-            for i, test_row in enumerate(test_out):
-                self.assertListEqual(list(test_row), list(temp_out[i]))
-
-            del ldtype, test_out, temp_out
-        else:
-            # Compare created file to stored test file
-            self.assertTrue(filecmp.cmp(self.test_output_north,
-                                        self.temp_output, shallow=False))
+        # Compare created file to stored test file
+        self.assertTrue(filecmp.cmp(self.test_output_north,
+                                    self.temp_output, shallow=False))
         return
 
     def test_supermag2ascii_north_from_ocb(self):
@@ -111,25 +89,9 @@ class TestSuperMAG2AsciiMethods(unittest.TestCase):
         ocb_ismag.supermag2ascii_ocb(self.test_file, self.temp_output, ocb=ocb,
                                      hemisphere=0)
 
-        if platform.system().lower() in win_list:
-            # filecmp doesn't work on windows
-
-            ldtype = ['|U50' if i < 2 or i == 3 else float for i in range(19)]
-            test_out = np.genfromtxt(self.test_output_north, skip_header=1,
-                                     dtype=ldtype)
-            temp_out = np.genfromtxt(self.temp_output, skip_header=1,
-                                     dtype=ldtype)
-
-            # Test the number of rows and columns
-            self.assertTupleEqual(test_out.shape, temp_out.shape)
-
-            # Test the data in each row
-            for i, test_row in enumerate(test_out):
-                self.assertListEqual(list(test_row), list(temp_out[i]))
-        else:
-            # Compare created file to stored test file
-            self.assertTrue(filecmp.cmp(self.test_output_north,
-                                        self.temp_output, shallow=False))
+        # Compare created file to stored test file
+        self.assertTrue(filecmp.cmp(self.test_output_north,
+                                    self.temp_output, shallow=False))
         return
 
     def test_supermag2ascii_ocb_choose_south(self):
@@ -139,25 +101,9 @@ class TestSuperMAG2AsciiMethods(unittest.TestCase):
                                      ocbfile=self.test_ocb, instrument='image',
                                      hemisphere=-1)
 
-        if platform.system().lower() in win_list:
-            # filecmp doesn't work on windows
-
-            ldtype = ['|U50' if i < 2 or i == 3 else float for i in range(19)]
-            test_out = np.genfromtxt(self.test_output_south, skip_header=1,
-                                     dtype=ldtype)
-            temp_out = np.genfromtxt(self.temp_output, skip_header=1,
-                                     dtype=ldtype)
-
-            # Test the number of rows and columns
-            self.assertTupleEqual(test_out.shape, temp_out.shape)
-
-            # Test the data in each row
-            for i, test_row in enumerate(test_out):
-                self.assertListEqual(list(test_row), list(temp_out[i]))
-        else:
-            # Compare created file to stored test file
-            self.assertTrue(filecmp.cmp(self.test_output_south,
-                                        self.temp_output, shallow=False))
+        # Compare created file to stored test file
+        self.assertTrue(filecmp.cmp(self.test_output_south,
+                                    self.temp_output, shallow=False))
         return
 
     def test_supermag2ascii_ocb_eq(self):
@@ -167,25 +113,9 @@ class TestSuperMAG2AsciiMethods(unittest.TestCase):
                                      ocbfile=self.test_ocb, instrument='image',
                                      hemisphere=0)
 
-        if platform.system().lower() in win_list:
-            # filecmp doesn't work on windows
-
-            ldtype = ['|U50' if i < 2 or i == 3 else float for i in range(19)]
-            test_out = np.genfromtxt(self.test_output_south, skip_header=1,
-                                     dtype=ldtype)
-            temp_out = np.genfromtxt(self.temp_output, skip_header=1,
-                                     dtype=ldtype)
-
-            # Test the number of rows and columns
-            self.assertTupleEqual(test_out.shape, temp_out.shape)
-
-            # Test the data in each row
-            for i, test_row in enumerate(test_out):
-                self.assertListEqual(list(test_row), list(temp_out[i]))
-        else:
-            # Compare created file to stored test file
-            self.assertTrue(filecmp.cmp(self.test_output_south,
-                                        self.temp_output, shallow=False))
+        # Compare created file to stored test file
+        self.assertTrue(filecmp.cmp(self.test_output_south,
+                                    self.temp_output, shallow=False))
         return
 
     def test_supermag2ascii_hemi_options(self):
@@ -218,28 +148,9 @@ class TestSuperMAG2AsciiMethods(unittest.TestCase):
                 ocb_ismag.supermag2ascii_ocb(val[0], self.temp_output,
                                              **val[2])
 
-                if platform.system().lower() in win_list:
-                    # filecmp doesn't work on windows
-
-                    ldtype = ['|U50' if i < 2 or i == 3 else float
-                              for i in range(19)]
-                    test_out = np.genfromtxt(val[1], skip_header=1,
-                                             dtype=ldtype)
-                    temp_out = np.genfromtxt(self.temp_output, skip_header=1,
-                                             dtype=ldtype)
-
-                    # Test the number of rows and columns
-                    self.assertTupleEqual(test_out.shape, temp_out.shape)
-
-                    # Test the data in each row
-                    for i, test_row in enumerate(test_out):
-                        self.assertListEqual(list(test_row), list(temp_out[i]))
-
-                    del ldtype, test_out, temp_out
-                else:
-                    # Compare created file to stored test file
-                    self.assertTrue(filecmp.cmp(val[1], self.temp_output,
-                                                shallow=False))
+                # Compare created file to stored test file
+                self.assertTrue(filecmp.cmp(val[1], self.temp_output,
+                                            shallow=False))
         return
 
     def test_supermag2ascii_ocb_bad_hemi(self):

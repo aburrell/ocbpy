@@ -18,10 +18,10 @@ elif [ $EXTRAS = 2 ]; then
     # Install code for ssj_auroral_boundary on linux
     #
     # Get CDF software and install it
-    wget https://spdf.sci.gsfc.nasa.gov/pub/software/cdf/dist/cdf37_1/linux/cdf37_1-dist-cdf.tar.gz
-    tar xzf cdf37_1-dist-cdf.tar.gz
-    make OS=linux ENV=gnu -C cdf37_1-dist/ all
-    make INSTALLDIR=$HOME -C cdf37_1-dist/ install
+    wget https://spdf.gsfc.nasa.gov/pub/software/cdf/dist/cdf38_0/linux/cdf38_0-dist-cdf.tar.gz
+    tar xzf cdf38_0-dist-cdf.tar.gz
+    make OS=linux ENV=gnu -C cdf38_0-dist/ all
+    make INSTALLDIR=$HOME -C cdf38_0-dist/ install
     # Running this command for definitions will break matplotlib
     # . $HOME/bin/definitions.B
     # Define environment variables in the .yml file

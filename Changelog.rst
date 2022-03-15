@@ -22,6 +22,8 @@ Summary of all changes made since the first stable release
 * MAINT: Removed support for Python 2.7, 3.5, and 3.6; added support for 3.10
 * MAINT: Improved PEP8 compliance
 * MAINT: Updated pysat routines to v3.0.0 standards
+* MAINT: Updated CDF installation
+* MAINT: Removed now-unnecessary logic in unit tests for Windows OS
 * REL: Added a .zenodo.json file
 * TST: Integrated and removed Requires.io; it requires a payed plan for GitHub
 * TST: Added flake8 and documentation tests to CI
