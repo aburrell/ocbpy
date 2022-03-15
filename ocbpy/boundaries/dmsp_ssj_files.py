@@ -3,7 +3,7 @@
 # Copyright (C) 2019, AGB & GC
 # Full license can be found in License.md
 # -----------------------------------------------------------------------------
-""" Download and format DMSP SSJ boundary files
+"""Download and format DMSP SSJ boundary files.
 
 References
 ----------
@@ -38,7 +38,7 @@ except (ImportError, TypeError) as ierr:
 
 
 def fetch_ssj_files(stime, etime, out_dir=None, sat_nums=None):
-    """ Download DMSP SSJ files and place them in a specified directory
+    """Download DMSP SSJ files and place them in a specified directory.
 
     Parameters
     ----------
@@ -334,7 +334,7 @@ def format_ssj_boundary_files(csv_files, ref_alt=830.0,
 
             # Load the file data
             data = np.loadtxt(infile, skiprows=skiprows, delimiter=',')
-            if data.shape[1] != len(header_list):
+            if len(data.shape) != 2 or data.shape[1] != len(header_list):
                 bad_files.append(infile)
             else:
                 # Establish the desired data indices
@@ -415,7 +415,7 @@ def format_ssj_boundary_files(csv_files, ref_alt=830.0,
 def fetch_format_ssj_boundary_files(stime, etime, out_dir=None, rm_temp=True,
                                     ref_alt=830.0,
                                     method='GEOCENTRIC|ALLOWTRACE'):
-    """ Download DMSP SSJ data and create boundary files for each hemisphere
+    """Download DMSP SSJ data and create boundary files for each hemisphere.
 
     Parameters
     ----------
