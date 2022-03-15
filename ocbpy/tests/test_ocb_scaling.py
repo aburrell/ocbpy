@@ -1081,7 +1081,7 @@ class TestOCBScalingArrayMethods(unittest.TestCase):
             self.out = getattr(self.vdata, vkey)
             if vkey.find('aacgm_') == 0:
                 for i, val in enumerate(self.vkwargs[vkey]):
-                    self.assertEqual(self.out[iout], value)
+                    self.assertEqual(self.out[i], val)
             else:
                 self.assertRegex(self.out, self.vkwargs[vkey])
         return
@@ -1106,7 +1106,7 @@ class TestOCBScalingArrayMethods(unittest.TestCase):
             self.out = getattr(self.vdata, vkey)
             if vkey.find('aacgm_') == 0:
                 for i, val in enumerate(self.vkwargs[vkey]):
-                    self.assertEqual(self.out[iout], value)
+                    self.assertEqual(self.out[i], val)
             else:
                 self.assertRegex(self.out, self.vkwargs[vkey])
 
