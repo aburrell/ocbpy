@@ -369,7 +369,7 @@ class TestSSJFormat(unittest.TestCase):
         for fout in self.out:
             # Get the comparison filename
             fname = os.path.split(fout)[-1]
-            self.assertTrue(fname in self.comp_files.keys())
+            self.assertIn(fname, self.comp_files.keys())
 
             # Load the data
             test_out = np.genfromtxt(fout, skip_header=1, dtype=self.ldtype)
@@ -521,7 +521,7 @@ class TestSSJFetchFormat(unittest.TestCase):
         for fout in self.out:
             # Get the comparison filename
             fname = os.path.split(fout)[-1]
-            self.assertTrue(fname in self.comp_files.keys())
+            self.assertIn(fname, self.comp_files.keys())
 
             # Load the data
             test_out = np.genfromtxt(fout, skip_header=1, dtype=self.ldtype)
@@ -534,7 +534,7 @@ class TestSSJFetchFormat(unittest.TestCase):
 
             # Test the data in each row
             for comp_row in temp_out:
-                self.assertTrue(comp_row in test_out)
+                self.assertIn(comp_row, test_out)
 
         return
 
@@ -551,7 +551,7 @@ class TestSSJFetchFormat(unittest.TestCase):
         for fout in self.out:
             # Get the comparison filename
             fname = os.path.split(fout)[-1]
-            self.assertTrue(fname in self.comp_files.keys())
+            self.assertIn(fname, self.comp_files.keys())
 
             # Load the data
             test_out = np.genfromtxt(fout, skip_header=1, dtype=self.ldtype)
@@ -564,7 +564,7 @@ class TestSSJFetchFormat(unittest.TestCase):
 
             # Test the data in each row
             for comp_row in temp_out:
-                self.assertTrue(comp_row in test_out)
+                self.assertIn(comp_row, test_out)
 
             # Get the number of spacecraft
             for comp_row in test_out:
