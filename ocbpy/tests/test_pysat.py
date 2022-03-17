@@ -12,6 +12,8 @@ from os import path
 from packaging import version
 import unittest
 
+import aacgmv2
+
 import ocbpy
 
 try:
@@ -34,6 +36,7 @@ class TestPysatUtils(unittest.TestCase):
         # Set the default function values
         self.ocb_key = 'ocb_test'
         self.pysat_key = 'dummy1'
+        self.pysat_lat = 'latitude'
         self.notes = None
         self.isvector = False
         self.test_inst = None
@@ -41,7 +44,6 @@ class TestPysatUtils(unittest.TestCase):
         self.added_keys = list()
         self.pysat_keys = list()
         self.arevectors = list()
-        self.nkeys = 0
         self.del_time = 600
         return
 
@@ -49,7 +51,7 @@ class TestPysatUtils(unittest.TestCase):
         """Tear down the testing environment."""
         del self.ocb_key, self.pysat_key, self.notes, self.isvector
         del self.test_inst, self.ocb, self.added_keys, self.pysat_keys
-        del self.arevectors, self.nkeys, self.del_time
+        del self.arevectors, self.del_time, self.pysat_lat
         return
 
     def eval_ocb_metadata(self):
@@ -120,8 +122,6 @@ class TestPysatUtils(unittest.TestCase):
         if len(self.arevectors) < len(self.added_keys):
             self.arevectors = [False for okey in self.added_keys]
 
-        self.assertEqual(len(self.added_keys), self.nkeys)
-
         for i, okey in enumerate(self.added_keys):
             # Test to see that data was added
             self.assertIn(okey, self.test_inst.variables)
@@ -139,14 +139,12 @@ class TestPysatUtils(unittest.TestCase):
                 mask_data = np.not_equal(match_data.values, None)
             else:
                 mask_data = np.isfinite(match_data.values)
-            match_data = match_data[mask_data]
 
-            self.assertGreater(len(match_data), 0)
+            self.assertTrue(mask_data.any())
 
-            if hasattr(match_data, "index"):
-                match_time = match_data.index
-            else:
-                match_time = pds.to_datetime(match_data['time'].values)
+            mind = np.where(mask_data)
+            match_data = match_data.values[mind]
+            match_time = self.test_inst.index[mind[0]]
 
             for ii in match_time:
                 check_time = abs(ii - self.ocb.dtime).min().total_seconds()
@@ -160,7 +158,7 @@ class TestPysatUtils(unittest.TestCase):
                                     repr(ocbpy.ocb_scaling.VectorData)))
 
             elif(self.pysat_keys[i] is not None
-                 and self.pysat_keys[i] not in ['latitude', 'mlt']):
+                 and self.pysat_keys[i] not in [self.pysat_lat, 'mlt']):
                 pysat_data = self.test_inst[self.pysat_keys[i]][mask_data]
 
                 # Get the scaling radius
@@ -238,12 +236,12 @@ class TestPysatMethods(TestPysatUtils):
         # Set the util default values
         self.ocb_key = 'ocb_test'
         self.pysat_key = 'dummy1'
+        self.pysat_lat = 'latitude'
         self.notes = None
         self.isvector = False
         self.added_keys = list()
         self.pysat_keys = list()
         self.arevectors = list()
-        self.nkeys = 0
         self.del_time = 600
 
         # Set the method default values
@@ -283,7 +281,7 @@ class TestPysatMethods(TestPysatUtils):
 
         del self.ocb_key, self.pysat_key, self.notes, self.isvector
         del self.test_inst, self.ocb, self.added_keys, self.pysat_keys
-        del self.arevectors, self.nkeys, self.test_file, self.log_capture
+        del self.arevectors, self.test_file, self.log_capture, self.pysat_lat
         del self.lout, self.lwarn, self.ocb_kw, self.pysat_var2, self.del_time
         return
 
@@ -330,19 +328,14 @@ class TestPysatMethods(TestPysatUtils):
 
     def test_add_ocb_to_data_ocb_obj(self):
         """Test adding ocb to pysat data using the loaded OCB object."""
-        ocb_pysat.add_ocb_to_data(self.test_inst, "latitude", "mlt",
+        ocb_pysat.add_ocb_to_data(self.test_inst, self.pysat_lat, "mlt",
                                   ocb=self.ocb, max_sdiff=self.del_time)
 
         self.added_keys = [kk for kk in self.test_inst.meta.keys()
                            if kk.find('_ocb') > 0]
-        self.nkeys = len(self.added_keys)
         self.pysat_keys = [aa.split("_ocb")[0] for aa in self.added_keys]
         self.assertIn('r_corr', self.pysat_keys)
         self.pysat_keys[self.pysat_keys.index("r_corr")] = None
-
-        self.test_inst = self.test_inst
-        self.ocb = self.ocb
-        self.arevectors = [False for i in range(self.nkeys)]
         self.test_ocb_added()
         return
 
@@ -357,26 +350,25 @@ class TestPysatMethods(TestPysatUtils):
                 self.ocb_kw[dkey] = dep_inputs[dkey]
                 with self.assertWarnsRegex(DeprecationWarning,
                                            "Deprecated kwarg will be removed"):
-                    ocb_pysat.add_ocb_to_data(self.test_inst, "latitude",
+                    ocb_pysat.add_ocb_to_data(self.test_inst, self.pysat_lat,
                                               "mlt", **self.ocb_kw)
         return
 
     def test_add_ocb_to_data_ocb_file(self):
         """Test adding ocb to pysat data using the OCB file name."""
-        ocb_pysat.add_ocb_to_data(self.test_inst, "latitude", "mlt",
+        ocb_pysat.add_ocb_to_data(self.test_inst, self.pysat_lat, "mlt",
                                   max_sdiff=self.del_time, **self.ocb_kw)
 
         self.added_keys = [kk for kk in self.test_inst.meta.keys()
                            if kk.find('_ocb') > 0]
-        self.nkeys = len(self.added_keys)
         self.pysat_keys = [aa.split("_ocb")[0] for aa in self.added_keys]
         self.assertIn('r_corr', self.pysat_keys)
         self.pysat_keys[self.pysat_keys.index("r_corr")] = None
-        self.arevectors = [False for i in range(self.nkeys)]
+        self.arevectors = [False for i in self.added_keys]
         self.test_ocb_added()
         return
 
-    def test_add_ocb_to_data_south_hemisphere_selfset(self):
+    def test_add_ocb_to_data_southern_hemisphere(self):
         """Test successful identification of southern hemisphere only."""
 
         # Don't set the hemisphere
@@ -384,43 +376,42 @@ class TestPysatMethods(TestPysatUtils):
 
         # Ensure all data is in the southern hemisphere and the greatest
         # value is identically zero
-        new_lat = self.test_inst['latitude'].values
+        new_lat = self.test_inst[self.pysat_lat].values
         new_lat[new_lat > 0] *= -1.0
-        new_lat[new_lat.argmax()] = 0.0
-        self.test_inst['latitude'] = new_lat
+        imax = np.where(np.nanmax(new_lat) == new_lat)  # Needed for model data
+        new_lat[imax] = 0.0
+        self.test_inst[self.pysat_lat].values = new_lat
 
         # Add the OCB data to the Instrument and evaluate the output
-        ocb_pysat.add_ocb_to_data(self.test_inst, "latitude", "mlt",
+        ocb_pysat.add_ocb_to_data(self.test_inst, self.pysat_lat, "mlt",
                                   max_sdiff=self.del_time, **self.ocb_kw)
         self.test_ocb_added()
         return
 
     def test_add_ocb_to_data_evar(self):
         """Test adding ocb to pysat with E-field related variables."""
-        ocb_pysat.add_ocb_to_data(self.test_inst, "latitude", "mlt",
+        ocb_pysat.add_ocb_to_data(self.test_inst, self.pysat_lat, "mlt",
                                   evar_names=[self.pysat_key],
                                   ocb=self.ocb, max_sdiff=self.del_time)
 
         self.added_keys = [kk for kk in self.test_inst.meta.keys()
                            if kk.find('_ocb') > 0]
-        self.nkeys = len(self.added_keys)
         self.pysat_keys = [aa.split("_ocb")[0] for aa in self.added_keys]
         self.assertIn('r_corr', self.pysat_keys)
         self.pysat_keys[self.pysat_keys.index("r_corr")] = None
-        self.arevectors = [False for i in range(self.nkeys)]
+        self.arevectors = [False for i in self.added_keys]
 
         self.test_ocb_added()
         return
 
     def test_add_ocb_to_data_curl_evar(self):
         """Test adding ocb to pysat with Curl E-field related variables."""
-        ocb_pysat.add_ocb_to_data(self.test_inst, "latitude", "mlt",
+        ocb_pysat.add_ocb_to_data(self.test_inst, self.pysat_lat, "mlt",
                                   curl_evar_names=[self.pysat_var2],
                                   ocb=self.ocb, max_sdiff=self.del_time)
 
         self.added_keys = [kk for kk in self.test_inst.meta.keys()
                            if kk.find('_ocb') > 0]
-        self.nkeys = len(self.added_keys)
         self.pysat_keys = [aa.split("_ocb")[0] for aa in self.added_keys]
         self.assertIn('r_corr', self.pysat_keys)
         self.pysat_keys[self.pysat_keys.index("r_corr")] = None
@@ -430,7 +421,7 @@ class TestPysatMethods(TestPysatUtils):
 
     def test_add_ocb_to_data_evar_vect(self):
         """Test adding ocb to pysat with Curl E-field related vectors."""
-        ocb_pysat.add_ocb_to_data(self.test_inst, "latitude", "mlt",
+        ocb_pysat.add_ocb_to_data(self.test_inst, self.pysat_lat, "mlt",
                                   evar_names=['vect_evar'],
                                   vector_names={
                                       'vect_evar':
@@ -442,7 +433,6 @@ class TestPysatMethods(TestPysatUtils):
 
         self.added_keys = [kk for kk in self.test_inst.meta.keys()
                            if kk.find('_ocb') > 0]
-        self.nkeys = len(self.added_keys)
         self.pysat_keys = list()
         self.arevectors = list()
         for aa in self.added_keys:
@@ -460,7 +450,7 @@ class TestPysatMethods(TestPysatUtils):
 
     def test_add_ocb_to_data_curl_evar_vect(self):
         """Test adding ocb to pysat with Curl E-field related vectors."""
-        ocb_pysat.add_ocb_to_data(self.test_inst, "latitude", "mlt",
+        ocb_pysat.add_ocb_to_data(self.test_inst, self.pysat_lat, "mlt",
                                   curl_evar_names=['vect_cevar'],
                                   vector_names={
                                       'vect_cevar':
@@ -472,7 +462,6 @@ class TestPysatMethods(TestPysatUtils):
 
         self.added_keys = [kk for kk in self.test_inst.meta.keys()
                            if kk.find('_ocb') > 0]
-        self.nkeys = len(self.added_keys)
         self.pysat_keys = list()
         self.arevectors = list()
         for aa in self.added_keys:
@@ -491,7 +480,7 @@ class TestPysatMethods(TestPysatUtils):
     def test_add_ocb_to_data_custom_vect(self):
         """Test adding ocb to pysat with custom scaled variables."""
 
-        ocb_pysat.add_ocb_to_data(self.test_inst, "latitude", "mlt",
+        ocb_pysat.add_ocb_to_data(self.test_inst, self.pysat_lat, "mlt",
                                   vector_names={
                                       'vect_cust':
                                       {'aacgm_n': self.pysat_key,
@@ -503,7 +492,6 @@ class TestPysatMethods(TestPysatUtils):
 
         self.added_keys = [kk for kk in self.test_inst.meta.keys()
                            if kk.find('_ocb') > 0]
-        self.nkeys = len(self.added_keys)
         self.pysat_keys = list()
         self.arevectors = list()
         for aa in self.added_keys:
@@ -520,7 +508,7 @@ class TestPysatMethods(TestPysatUtils):
 
     def test_add_ocb_to_data_all_types(self):
         """Test adding ocb to pysat with E-field, Curl, and Vector data."""
-        ocb_pysat.add_ocb_to_data(self.test_inst, "latitude", "mlt",
+        ocb_pysat.add_ocb_to_data(self.test_inst, self.pysat_lat, "mlt",
                                   evar_names=[self.pysat_key],
                                   curl_evar_names=[self.pysat_var2],
                                   vector_names={
@@ -534,7 +522,6 @@ class TestPysatMethods(TestPysatUtils):
 
         self.added_keys = [kk for kk in self.test_inst.meta.keys()
                            if kk.find('_ocb') > 0]
-        self.nkeys = len(self.added_keys)
         self.pysat_keys = list()
         self.arevectors = list()
         for aa in self.added_keys:
@@ -553,7 +540,7 @@ class TestPysatMethods(TestPysatUtils):
     def test_add_ocb_to_data_no_file(self):
         """Test adding ocb to pydat when no OCB file or data is provided."""
         self.ocb_kw['ocbfile'] = None
-        ocb_pysat.add_ocb_to_data(self.test_inst, "latitude", "mlt",
+        ocb_pysat.add_ocb_to_data(self.test_inst, self.pysat_lat, "mlt",
                                   **self.ocb_kw, max_sdiff=self.del_time)
 
         self.lwarn = u"no data in Boundary file(s)"
@@ -567,7 +554,7 @@ class TestPysatMethods(TestPysatUtils):
 
         with self.assertRaisesRegex(
                 ValueError, 'cannot process observations from both '):
-            ocb_pysat.add_ocb_to_data(self.test_inst, "latitude", "mlt",
+            ocb_pysat.add_ocb_to_data(self.test_inst, self.pysat_lat, "mlt",
                                       **self.ocb_kw)
         return
 
@@ -575,7 +562,7 @@ class TestPysatMethods(TestPysatUtils):
         """Test failure of a bad pysat.Instrument in pysat functions."""
 
         # Set the function and input data
-        func_dict = {ocb_pysat.add_ocb_to_data: [None, "latitude", "mlt"],
+        func_dict = {ocb_pysat.add_ocb_to_data: [None, self.pysat_lat, "mlt"],
                      ocb_pysat.add_ocb_to_metadata: [None, "ocb_mlt", "mlt"]}
 
         # Test the error for each function
@@ -591,15 +578,15 @@ class TestPysatMethods(TestPysatUtils):
         """Test failure of unknown mlat key in add_ocb_to_data."""
 
         with self.assertRaisesRegex(ValueError,
-                                    'unknown magnetic latitude name mlat'):
-            ocb_pysat.add_ocb_to_data(self.test_inst, "mlat", "mlt",
+                                    'unknown magnetic latitude name bad'):
+            ocb_pysat.add_ocb_to_data(self.test_inst, "bad", "mlt",
                                       ocb=self.ocb)
 
     def test_add_ocb_to_data_bad_mlt(self):
         """Test failure of unknown mlt key in add_ocb_to_data."""
         with self.assertRaisesRegex(ValueError,
                                     'unknown magnetic local time name bad'):
-            ocb_pysat.add_ocb_to_data(self.test_inst, "latitude", "bad",
+            ocb_pysat.add_ocb_to_data(self.test_inst, self.pysat_lat, "bad",
                                       ocb=self.ocb)
         return
 
@@ -607,7 +594,7 @@ class TestPysatMethods(TestPysatUtils):
         """Test failure of unknown E field key in add_ocb_to_data."""
         with self.assertRaisesRegex(ValueError,
                                     'at least one unknown E field name'):
-            ocb_pysat.add_ocb_to_data(self.test_inst, "latitude", "mlt",
+            ocb_pysat.add_ocb_to_data(self.test_inst, self.pysat_lat, "mlt",
                                       evar_names=["bad"], ocb=self.ocb)
         return
 
@@ -615,7 +602,7 @@ class TestPysatMethods(TestPysatUtils):
         """Test failure of unknown E field key in add_ocb_to_data."""
         with self.assertRaisesRegex(ValueError,
                                     'at least one unknown E field name'):
-            ocb_pysat.add_ocb_to_data(self.test_inst, "latitude", "mlt",
+            ocb_pysat.add_ocb_to_data(self.test_inst, self.pysat_lat, "mlt",
                                       curl_evar_names=["bad"], ocb=self.ocb)
         return
 
@@ -623,7 +610,7 @@ class TestPysatMethods(TestPysatUtils):
         """Test failure of missing scaling function in add_ocb_to_data."""
         with self.assertRaisesRegex(ValueError,
                                     'missing scaling function for bad'):
-            ocb_pysat.add_ocb_to_data(self.test_inst, "latitude", "mlt",
+            ocb_pysat.add_ocb_to_data(self.test_inst, self.pysat_lat, "mlt",
                                       vector_names={'bad': {'aacgm_n': 'bad_n',
                                                             'aacgm_e': 'bad_e',
                                                             'dat_name': 'bad',
@@ -635,7 +622,7 @@ class TestPysatMethods(TestPysatUtils):
         """Test failure of missing scaling function in add_ocb_to_data."""
         with self.assertRaisesRegex(ValueError,
                                     'unknown vector name bad_n'):
-            ocb_pysat.add_ocb_to_data(self.test_inst, "latitude", "mlt",
+            ocb_pysat.add_ocb_to_data(self.test_inst, self.pysat_lat, "mlt",
                                       evar_names=['bad'],
                                       vector_names={
                                           'bad':
@@ -656,12 +643,12 @@ class TestPysatMethodsEAB(TestPysatMethods):
         # Set the utility defaults
         self.ocb_key = 'ocb_test'
         self.pysat_key = 'dummy1'
+        self.pysat_lat = 'latitude'
         self.notes = None
         self.isvector = False
         self.added_keys = list()
         self.pysat_keys = list()
         self.arevectors = list()
-        self.nkeys = 0
         self.del_time = 600
 
         # Set the method defaults
@@ -700,7 +687,7 @@ class TestPysatMethodsEAB(TestPysatMethods):
 
         del self.test_file, self.log_capture, self.ocb, self.test_inst
         del self.lout, self.lwarn, self.ocb_kw, self.pysat_var2, self.ocb_key
-        del self.pysat_key, self.notes, self.isvector, self.nkeys
+        del self.pysat_key, self.notes, self.isvector, self.pysat_lat
         del self.added_keys, self.pysat_keys, self.arevectors, self.del_time
         return
 
@@ -714,12 +701,12 @@ class TestPysatMethodsDual(TestPysatMethods):
         # Set the utility defaults
         self.ocb_key = 'ocb_test'
         self.pysat_key = 'dummy1'
+        self.pysat_lat = 'latitude'
         self.notes = None
         self.isvector = False
         self.added_keys = list()
         self.pysat_keys = list()
         self.arevectors = list()
-        self.nkeys = 0
         self.del_time = 600
 
         # Set the method defaults
@@ -761,7 +748,7 @@ class TestPysatMethodsDual(TestPysatMethods):
         """Tear down after each test."""
 
         del self.test_file, self.log_capture, self.ocb, self.test_inst
-        del self.lout, self.lwarn, self.ocb_kw, self.pysat_var2, self.nkeys
+        del self.lout, self.lwarn, self.ocb_kw, self.pysat_var2, self.pysat_lat
         del self.ocb_key, self.pysat_key, self.notes, self.isvector
         del self.added_keys, self.pysat_keys, self.arevectors, self.del_time
         return
@@ -777,12 +764,12 @@ class TestPysatMethods2DXarray(TestPysatMethods):
         # Set the utility defaults
         self.ocb_key = 'ocb_test'
         self.pysat_key = 'dummy1'
+        self.pysat_lat = 'latitude'
         self.notes = None
         self.isvector = False
         self.added_keys = list()
         self.pysat_keys = list()
         self.arevectors = list()
-        self.nkeys = 0
         self.del_time = 600
 
         # Set the method defaults
@@ -822,7 +809,7 @@ class TestPysatMethods2DXarray(TestPysatMethods):
         """Tear down after each test."""
 
         del self.test_file, self.log_capture, self.ocb, self.test_inst
-        del self.lout, self.lwarn, self.ocb_kw, self.pysat_var2, self.nkeys
+        del self.lout, self.lwarn, self.ocb_kw, self.pysat_var2, self.pysat_lat
         del self.ocb_key, self.pysat_key, self.notes, self.isvector
         del self.added_keys, self.pysat_keys, self.arevectors, self.del_time
         return
@@ -837,12 +824,12 @@ class TestPysatMethodsXarray(TestPysatMethods):
         # Set the utility defaults
         self.ocb_key = 'ocb_test'
         self.pysat_key = 'dummy1'
+        self.pysat_lat = 'latitude'
         self.notes = None
         self.isvector = False
         self.added_keys = list()
         self.pysat_keys = list()
         self.arevectors = list()
-        self.nkeys = 0
         self.del_time = 600
 
         # Set the method defaults
@@ -882,10 +869,98 @@ class TestPysatMethodsXarray(TestPysatMethods):
         """Clean the test environment."""
 
         del self.test_file, self.log_capture, self.ocb, self.test_inst
-        del self.lout, self.lwarn, self.ocb_kw, self.pysat_var2, self.nkeys
+        del self.lout, self.lwarn, self.ocb_kw, self.pysat_var2, self.del_time
         del self.ocb_key, self.pysat_key, self.notes, self.isvector
-        del self.added_keys, self.pysat_keys, self.arevectors
-        del self.del_time
+        del self.added_keys, self.pysat_keys, self.arevectors, self.pysat_lat
+        return
+
+
+@unittest.skipIf(no_pysat, "pysat not installed")
+class TestPysatMethodsModel(TestPysatMethods):
+    """Integration tests for using ocbpy on pysat model data."""
+
+    def setUp(self):
+        """Initialize the test class."""
+        # Set the utility defaults
+        self.ocb_key = 'ocb_test'
+        self.pysat_key = 'dummy1'
+        self.pysat_lat = 'mlat'
+        self.notes = None
+        self.isvector = False
+        self.added_keys = list()
+        self.pysat_keys = list()
+        self.arevectors = list()
+        self.del_time = 600
+
+        # Set the method defaults
+        self.test_file = path.join(path.dirname(ocbpy.__file__), "tests",
+                                   "test_data", "test_north_circle")
+        self.assertTrue(path.isfile(self.test_file))
+        self.ocb_kw = {"ocbfile": self.test_file,
+                       "instrument": "image", "hemisphere": 1}
+        self.ocb = ocbpy.OCBoundary(self.test_file, instrument='image',
+                                    hemisphere=1)
+        self.ocb.rec_ind = 27
+
+        self.pysat_var2 = 'dummy2'
+        self.test_inst = pysat.Instrument('pysat', 'testmodel',
+                                          num_samples=50400,
+                                          clean_level='clean',
+                                          update_files=True,
+                                          file_date_range=pds.date_range(
+                                              self.ocb.dtime[0],
+                                              self.ocb.dtime[-1], freq='1D'))
+
+        # Reduce pysat warnings
+        load_kwargs = {'date': self.ocb.dtime[self.ocb.rec_ind]}
+        if version.Version(pysat.__version__) > version.Version('3.0.1'):
+            load_kwargs['use_header'] = True
+
+        # Add magnetic coordinates
+        def add_mag_coords(inst, dat='dummy2', lat="latitude", lon="longitude",
+                           alt="altitude"):
+            # Define the dimensions and make sure they behave as expected
+            self.assertTupleEqual(('time', lat, lon, alt), inst[dat].dims)
+            dims = [inst.data.dims[dd] for dd in inst[dat].dims]
+            mlat = np.full(shape=dims, fill_value=np.nan)
+            mlt = np.full(shape=dims, fill_value=np.nan)
+
+            # Get the magnetic coordinates
+            lat_in, lon_in = np.meshgrid(inst[lat].values, inst[lon].values)
+            for i, height in enumerate(inst[alt]):
+                for j, lin in enumerate(lat_in):
+                    out = aacgmv2.convert_latlon_arr(lin, lon_in[j], height,
+                                                     inst.date)
+                out_mlt = aacgmv2.convert_mlt(out[1], inst.date)
+                mlat[:, :, j, i] = np.full(shape=dims[:2], fill_value=out[0])
+                mlt[:, :, j, i] = np.full(shape=dims[:2], fill_value=out_mlt)
+
+            # Assign the magnetic data to the instrument
+            inst.data = inst.data.assign({"mlat": (inst[dat].dims, mlat),
+                                          "mlt": (inst[dat].dims, mlt)})
+            inst.meta['mlat'] = {inst.meta.labels.units: 'degrees'}
+            inst.meta['mlt'] = {inst.meta.labels.units: 'hours'}
+            return
+
+        self.test_inst.custom_attach(add_mag_coords,
+                                     kwargs={"dat": self.pysat_var2})
+        self.test_inst.load(**load_kwargs)
+
+        self.lwarn = u""
+        self.lout = u""
+        self.log_capture = StringIO()
+        ocbpy.logger.addHandler(logging.StreamHandler(self.log_capture))
+        ocbpy.logger.setLevel(logging.WARNING)
+
+        return
+
+    def tearDown(self):
+        """Clean the test environment."""
+
+        del self.test_file, self.log_capture, self.ocb, self.test_inst
+        del self.lout, self.lwarn, self.ocb_kw, self.pysat_var2, self.del_time
+        del self.ocb_key, self.pysat_key, self.notes, self.isvector
+        del self.added_keys, self.pysat_keys, self.arevectors, self.pysat_lat
         return
 
 
@@ -900,12 +975,12 @@ class TestPysatCustMethods(TestPysatUtils):
         # Set the utility defaults
         self.ocb_key = 'ocb_test'
         self.pysat_key = 'dummy1'
+        self.pysat_lat = 'latitude'
         self.notes = None
         self.isvector = False
         self.added_keys = list()
         self.pysat_keys = list()
         self.arevectors = list()
-        self.nkeys = 0
         self.del_time = 600
 
         # Set the method defaults
@@ -923,7 +998,7 @@ class TestPysatCustMethods(TestPysatUtils):
                                               self.ocb.dtime[0],
                                               self.ocb.dtime[-1], freq='1D'))
         self.pysat_var2 = 'dummy2'
-        self.cust_kwargs = {'mlat_name': 'latitude', 'mlt_name': 'mlt',
+        self.cust_kwargs = {'mlat_name': self.pysat_lat, 'mlt_name': 'mlt',
                             'ocb': self.ocb, 'max_sdiff': self.del_time}
 
         self.lwarn = u""
@@ -938,7 +1013,7 @@ class TestPysatCustMethods(TestPysatUtils):
         """Clean the test environment."""
 
         del self.ocb_key, self.pysat_key, self.notes, self.isvector
-        del self.added_keys, self.pysat_keys, self.arevectors, self.nkeys
+        del self.added_keys, self.pysat_keys, self.arevectors, self.pysat_lat
         del self.test_file, self.log_capture, self.test_inst, self.ocb
         del self.lwarn, self.lout, self.cust_kwargs, self.pysat_var2
         del self.del_time
@@ -953,7 +1028,7 @@ class TestPysatCustMethods(TestPysatUtils):
 
         self.test_inst.load(**load_kwargs)
         self.assertFalse(self.test_inst.empty)
-        self.assertIn('latitude', self.test_inst.variables)
+        self.assertIn(self.cust_kwargs['mlat_name'], self.test_inst.variables)
         self.assertIn('mlt', self.test_inst.variables)
         return
 
@@ -966,14 +1041,9 @@ class TestPysatCustMethods(TestPysatUtils):
 
         self.added_keys = [kk for kk in self.test_inst.meta.keys()
                            if kk.find('_ocb') > 0]
-        self.nkeys = len(self.added_keys)
         self.pysat_keys = [aa.split("_ocb")[0] for aa in self.added_keys]
         self.assertIn('r_corr', self.pysat_keys)
         self.pysat_keys[self.pysat_keys.index("r_corr")] = None
-
-        self.test_inst = self.test_inst
-        self.ocb = self.ocb
-        self.arevectors = [False for i in range(self.nkeys)]
         self.test_ocb_added()
         return
 
@@ -990,11 +1060,9 @@ class TestPysatCustMethods(TestPysatUtils):
 
         self.added_keys = [kk for kk in self.test_inst.meta.keys()
                            if kk.find('_ocb') > 0]
-        self.nkeys = len(self.added_keys)
         self.pysat_keys = [aa.split("_ocb")[0] for aa in self.added_keys]
         self.assertIn('r_corr', self.pysat_keys)
         self.pysat_keys[self.pysat_keys.index("r_corr")] = None
-        self.arevectors = [False for i in range(self.nkeys)]
         self.test_ocb_added()
         return
 
@@ -1008,12 +1076,9 @@ class TestPysatCustMethods(TestPysatUtils):
 
         self.added_keys = [kk for kk in self.test_inst.meta.keys()
                            if kk.find('_ocb') > 0]
-        self.nkeys = len(self.added_keys)
         self.pysat_keys = [aa.split("_ocb")[0] for aa in self.added_keys]
         self.assertIn('r_corr', self.pysat_keys)
         self.pysat_keys[self.pysat_keys.index("r_corr")] = None
-        self.arevectors = [False for i in range(self.nkeys)]
-
         self.test_ocb_added()
         return
 
@@ -1028,7 +1093,6 @@ class TestPysatCustMethods(TestPysatUtils):
 
         self.added_keys = [kk for kk in self.test_inst.meta.keys()
                            if kk.find('_ocb') > 0]
-        self.nkeys = len(self.added_keys)
         self.pysat_keys = [aa.split("_ocb")[0] for aa in self.added_keys]
         self.assertIn('r_corr', self.pysat_keys)
         self.pysat_keys[self.pysat_keys.index("r_corr")] = None
@@ -1053,7 +1117,6 @@ class TestPysatCustMethods(TestPysatUtils):
 
         self.added_keys = [kk for kk in self.test_inst.meta.keys()
                            if kk.find('_ocb') > 0]
-        self.nkeys = len(self.added_keys)
         self.pysat_keys = list()
         self.arevectors = list()
         for aa in self.added_keys:
@@ -1084,7 +1147,6 @@ class TestPysatCustMethods(TestPysatUtils):
 
         self.added_keys = [kk for kk in self.test_inst.meta.keys()
                            if kk.find('_ocb') > 0]
-        self.nkeys = len(self.added_keys)
         self.pysat_keys = list()
         self.arevectors = list()
         for aa in self.added_keys:
@@ -1113,7 +1175,6 @@ class TestPysatCustMethods(TestPysatUtils):
 
         self.added_keys = [kk for kk in self.test_inst.meta.keys()
                            if kk.find('_ocb') > 0]
-        self.nkeys = len(self.added_keys)
         self.pysat_keys = list()
         self.arevectors = list()
         for aa in self.added_keys:
@@ -1146,7 +1207,6 @@ class TestPysatCustMethods(TestPysatUtils):
 
         self.added_keys = [kk for kk in self.test_inst.meta.keys()
                            if kk.find('_ocb') > 0]
-        self.nkeys = len(self.added_keys)
         self.pysat_keys = list()
         self.arevectors = list()
         for aa in self.added_keys:
@@ -1262,7 +1322,6 @@ class TestPysatCustMethodsEAB(TestPysatCustMethods):
         self.added_keys = list()
         self.pysat_keys = list()
         self.arevectors = list()
-        self.nkeys = 0
         self.del_time = 600
 
         # Set the method defaults
@@ -1280,7 +1339,7 @@ class TestPysatCustMethodsEAB(TestPysatCustMethods):
                                               self.ocb.dtime[0],
                                               self.ocb.dtime[-1], freq='1D'))
         self.pysat_var2 = 'dummy2'
-        self.cust_kwargs = {'mlat_name': 'latitude', 'mlt_name': 'mlt',
+        self.cust_kwargs = {'mlat_name': self.pysat_lat, 'mlt_name': 'mlt',
                             'ocb': self.ocb, 'max_sdiff': self.del_time}
 
         self.lwarn = u""
@@ -1295,10 +1354,9 @@ class TestPysatCustMethodsEAB(TestPysatCustMethods):
         """Clean the test environment."""
 
         del self.ocb_key, self.pysat_key, self.notes, self.isvector
-        del self.added_keys, self.pysat_keys, self.arevectors, self.nkeys
+        del self.added_keys, self.pysat_keys, self.arevectors, self.del_time
         del self.test_file, self.log_capture, self.test_inst, self.ocb
         del self.lwarn, self.lout, self.cust_kwargs, self.pysat_var2
-        del self.del_time
         return
 
 
@@ -1312,12 +1370,12 @@ class TestPysatCustMethodsDual(TestPysatCustMethods):
         # Set the utility defaults
         self.ocb_key = 'ocb_test'
         self.pysat_key = 'dummy1'
+        self.pysat_lat = 'latitude'
         self.notes = None
         self.isvector = False
         self.added_keys = list()
         self.pysat_keys = list()
         self.arevectors = list()
-        self.nkeys = 0
         self.del_time = 600
 
         # Set the method defaults
@@ -1339,7 +1397,7 @@ class TestPysatCustMethodsDual(TestPysatCustMethods):
                                               self.ocb.dtime[0],
                                               self.ocb.dtime[-1], freq='1D'))
         self.pysat_var2 = 'dummy2'
-        self.cust_kwargs = {'mlat_name': 'latitude', 'mlt_name': 'mlt',
+        self.cust_kwargs = {'mlat_name': self.pysat_lat, 'mlt_name': 'mlt',
                             'ocb': self.ocb, 'max_sdiff': self.del_time}
 
         self.lwarn = u""
@@ -1354,7 +1412,7 @@ class TestPysatCustMethodsDual(TestPysatCustMethods):
         """Clean the test environment."""
 
         del self.ocb_key, self.pysat_key, self.notes, self.isvector
-        del self.added_keys, self.pysat_keys, self.arevectors, self.nkeys
+        del self.added_keys, self.pysat_keys, self.arevectors, self.pysat_lat
         del self.test_file, self.log_capture, self.test_inst, self.ocb
         del self.lwarn, self.lout, self.cust_kwargs, self.pysat_var2
         del self.del_time
@@ -1372,12 +1430,12 @@ class TestPysatCustMethodsXarray(TestPysatCustMethods):
         # Set the utility defaults
         self.ocb_key = 'ocb_test'
         self.pysat_key = 'dummy1'
+        self.pysat_lat = 'latitude'
         self.notes = None
         self.isvector = False
         self.added_keys = list()
         self.pysat_keys = list()
         self.arevectors = list()
-        self.nkeys = 0
         self.del_time = 600
 
         # Set the method defaults
@@ -1396,7 +1454,7 @@ class TestPysatCustMethodsXarray(TestPysatCustMethods):
                                               self.ocb.dtime[0],
                                               self.ocb.dtime[-1], freq='1D'))
         self.pysat_var2 = 'dummy2'
-        self.cust_kwargs = {'mlat_name': 'latitude', 'mlt_name': 'mlt',
+        self.cust_kwargs = {'mlat_name': self.pysat_lat, 'mlt_name': 'mlt',
                             'ocb': self.ocb, 'max_sdiff': self.del_time}
         # Reduce pysat warnings
         load_kwargs = {'date': self.ocb.dtime[self.ocb.rec_ind]}
@@ -1415,10 +1473,10 @@ class TestPysatCustMethodsXarray(TestPysatCustMethods):
         """Clean the test environment."""
 
         del self.ocb_key, self.pysat_key, self.notes, self.isvector
-        del self.added_keys, self.pysat_keys, self.arevectors, self.nkeys
+        del self.added_keys, self.pysat_keys, self.arevectors
         del self.test_file, self.log_capture, self.test_inst, self.ocb
         del self.lwarn, self.lout, self.cust_kwargs, self.pysat_var2
-        del self.del_time
+        del self.del_time, self.pysat_lat
         return
 
 
@@ -1431,12 +1489,12 @@ class TestPysatCustMethods2DXarray(TestPysatCustMethods):
         # Set the utility defaults
         self.ocb_key = 'ocb_test'
         self.pysat_key = 'dummy1'
+        self.pysat_lat = 'latitude'
         self.notes = None
         self.isvector = False
         self.added_keys = list()
         self.pysat_keys = list()
         self.arevectors = list()
-        self.nkeys = 0
         self.del_time = 600
 
         # Set the method defaults
@@ -1455,7 +1513,7 @@ class TestPysatCustMethods2DXarray(TestPysatCustMethods):
                                               self.ocb.dtime[0],
                                               self.ocb.dtime[-1], freq='1D'))
         self.pysat_var2 = 'dummy2'
-        self.cust_kwargs = {'mlat_name': 'latitude', 'mlt_name': 'mlt',
+        self.cust_kwargs = {'mlat_name': self.pysat_lat, 'mlt_name': 'mlt',
                             'ocb': self.ocb, 'max_sdiff': self.del_time}
 
         self.lwarn = u""
@@ -1470,8 +1528,8 @@ class TestPysatCustMethods2DXarray(TestPysatCustMethods):
         """Clean the test environment."""
 
         del self.ocb_key, self.pysat_key, self.notes, self.isvector
-        del self.added_keys, self.pysat_keys, self.arevectors, self.nkeys
+        del self.added_keys, self.pysat_keys, self.arevectors
         del self.test_file, self.log_capture, self.test_inst, self.ocb
         del self.lwarn, self.lout, self.cust_kwargs, self.pysat_var2
-        del self.del_time
+        del self.del_time, self.pysat_lat
         return
