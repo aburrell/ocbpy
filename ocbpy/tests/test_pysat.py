@@ -26,6 +26,47 @@ except ImportError:
     no_pysat = True
 
 
+def add_mag_coords(inst, dat='dummy2', lat='latitude', lon='longitude',
+                   alt='altitude'):
+    """Add magnetic coordinates to a pysat Instrument.
+
+    Parameters
+    ----------
+    inst : pysat.Instrument
+        pysat Instrument object with data to be modified
+    dat : str
+        pysat data variable with the desired output dimensions
+    lat : str
+        pysat data variable or coordinate for the latitude
+    lon : str
+        pysat data variable or coordinate for the longitude
+    alt : str
+        pysat data variable or coordinate for the altitude
+
+    """
+    # Define the dimensions and make sure they behave as expected
+    dims = [inst.data.dims[dd] for dd in inst[dat].dims]
+    mlat = np.full(shape=dims, fill_value=np.nan)
+    mlt = np.full(shape=dims, fill_value=np.nan)
+
+    # Get the magnetic coordinates
+    lat_in, lon_in = np.meshgrid(inst[lat].values, inst[lon].values)
+    for i, height in enumerate(inst[alt]):
+        for j, lin in enumerate(lat_in):
+            out = aacgmv2.convert_latlon_arr(lin, lon_in[j], height,
+                                             inst.date)
+            out_mlt = aacgmv2.convert_mlt(out[1], inst.date)
+            mlat[:, :, j, i] = np.full(shape=dims[:2], fill_value=out[0])
+            mlt[:, :, j, i] = np.full(shape=dims[:2], fill_value=out_mlt)
+
+    # Assign the magnetic data to the instrument
+    inst.data = inst.data.assign({"mlat": (inst[dat].dims, mlat),
+                                  "mlt": (inst[dat].dims, mlt)})
+    inst.meta['mlat'] = {inst.meta.labels.units: 'degrees'}
+    inst.meta['mlt'] = {inst.meta.labels.units: 'hours'}
+    return
+
+
 @unittest.skipIf(no_pysat, "pysat not installed, cannot test routines")
 class TestPysatUtils(unittest.TestCase):
     """Tests for using ocbpy with pysat data."""
@@ -122,28 +163,27 @@ class TestPysatUtils(unittest.TestCase):
         if len(self.arevectors) < len(self.added_keys):
             self.arevectors = [False for okey in self.added_keys]
 
-        for i, okey in enumerate(self.added_keys):
+        for i, self.ocb_key in enumerate(self.added_keys):
             # Test to see that data was added
-            self.assertIn(okey, self.test_inst.variables)
+            self.assertIn(self.ocb_key, self.test_inst.variables)
 
             # Test the metadata
             self.pysat_key = self.pysat_keys[i]
             self.isvector = self.arevectors[i]
-            self.ocb_key = okey
             self.eval_ocb_metadata()
 
             # Test to see that data within the time tolerance of the test OCBs
             # has OCB locations and other data is NaN
-            match_data = self.test_inst[okey]
+            match_data = np.array(self.test_inst[self.ocb_key])
             if self.isvector:
-                mask_data = np.not_equal(match_data.values, None)
+                mask_data = np.not_equal(match_data, None)
             else:
-                mask_data = np.isfinite(match_data.values)
+                mask_data = np.isfinite(match_data)
 
             self.assertTrue(mask_data.any())
 
             mind = np.where(mask_data)
-            match_data = match_data.values[mind]
+            match_data = match_data[mind]
             match_time = self.test_inst.index[mind[0]]
 
             for ii in match_time:
@@ -151,7 +191,7 @@ class TestPysatUtils(unittest.TestCase):
                 self.assertLessEqual(check_time, self.del_time)
 
             if self.isvector:
-                self.assertTrue(isinstance(match_data.values[0],
+                self.assertTrue(isinstance(match_data[0],
                                            ocbpy.ocb_scaling.VectorData),
                                 msg='Unexpected class {:} != {:}'.format(
                                     repr(type(match_data[0])),
@@ -159,7 +199,7 @@ class TestPysatUtils(unittest.TestCase):
 
             elif(self.pysat_keys[i] is not None
                  and self.pysat_keys[i] not in [self.pysat_lat, 'mlt']):
-                pysat_data = self.test_inst[self.pysat_keys[i]][mask_data]
+                pysat_data = self.test_inst[self.pysat_keys[i]].where(mask_data)
 
                 # Get the scaling radius
                 if hasattr(self.ocb, "r"):
@@ -173,13 +213,15 @@ class TestPysatUtils(unittest.TestCase):
                 self.assertGreaterEqual(match_data.min(),
                                         pysat_data.min() * rscale.min(),
                                         msg="".join([
-                                            "bad comparison between ", okey,
-                                            " and ", self.pysat_keys[i]]))
+                                            "bad comparison between ",
+                                            self.ocb_key, " and ",
+                                            self.pysat_keys[i]]))
                 self.assertGreaterEqual(pysat_data.max() * rscale.max(),
                                         match_data.max(),
                                         msg="".join([
-                                            "bad comparison between ", okey,
-                                            " and ", self.pysat_keys[i]]))
+                                            "bad comparison between ",
+                                            self.ocb_key, " and ",
+                                            self.pysat_keys[i]]))
 
         return
 
@@ -250,7 +292,7 @@ class TestPysatMethods(TestPysatUtils):
         self.assertTrue(path.isfile(self.test_file))
         self.ocb_kw = {"ocbfile": self.test_file,
                        "instrument": "image", "hemisphere": 1}
-        self.ocb = ocbpy.OCBoundary(self.test_file, instrument='image',
+        self.ocb = ocbpy.OCBoundary(self.test_file, instrument="image",
                                     hemisphere=1)
         self.ocb.rec_ind = 27
 
@@ -376,11 +418,14 @@ class TestPysatMethods(TestPysatUtils):
 
         # Ensure all data is in the southern hemisphere and the greatest
         # value is identically zero
-        new_lat = self.test_inst[self.pysat_lat].values
+        new_lat = np.array(self.test_inst[self.pysat_lat])
         new_lat[new_lat > 0] *= -1.0
         imax = np.where(np.nanmax(new_lat) == new_lat)  # Needed for model data
         new_lat[imax] = 0.0
-        self.test_inst[self.pysat_lat].values = new_lat
+        try:
+            self.test_inst[self.pysat_lat] = new_lat
+        except ValueError:
+            self.test_inst[self.pysat_lat].values = new_lat
 
         # Add the OCB data to the Instrument and evaluate the output
         ocb_pysat.add_ocb_to_data(self.test_inst, self.pysat_lat, "mlt",
@@ -399,7 +444,6 @@ class TestPysatMethods(TestPysatUtils):
         self.pysat_keys = [aa.split("_ocb")[0] for aa in self.added_keys]
         self.assertIn('r_corr', self.pysat_keys)
         self.pysat_keys[self.pysat_keys.index("r_corr")] = None
-        self.arevectors = [False for i in self.added_keys]
 
         self.test_ocb_added()
         return
@@ -883,7 +927,7 @@ class TestPysatMethodsModel(TestPysatMethods):
         """Initialize the test class."""
         # Set the utility defaults
         self.ocb_key = 'ocb_test'
-        self.pysat_key = 'dummy1'
+        self.pysat_key = 'dummy2'
         self.pysat_lat = 'mlat'
         self.notes = None
         self.isvector = False
@@ -915,32 +959,6 @@ class TestPysatMethodsModel(TestPysatMethods):
         load_kwargs = {'date': self.ocb.dtime[self.ocb.rec_ind]}
         if version.Version(pysat.__version__) > version.Version('3.0.1'):
             load_kwargs['use_header'] = True
-
-        # Add magnetic coordinates
-        def add_mag_coords(inst, dat='dummy2', lat="latitude", lon="longitude",
-                           alt="altitude"):
-            # Define the dimensions and make sure they behave as expected
-            self.assertTupleEqual(('time', lat, lon, alt), inst[dat].dims)
-            dims = [inst.data.dims[dd] for dd in inst[dat].dims]
-            mlat = np.full(shape=dims, fill_value=np.nan)
-            mlt = np.full(shape=dims, fill_value=np.nan)
-
-            # Get the magnetic coordinates
-            lat_in, lon_in = np.meshgrid(inst[lat].values, inst[lon].values)
-            for i, height in enumerate(inst[alt]):
-                for j, lin in enumerate(lat_in):
-                    out = aacgmv2.convert_latlon_arr(lin, lon_in[j], height,
-                                                     inst.date)
-                out_mlt = aacgmv2.convert_mlt(out[1], inst.date)
-                mlat[:, :, j, i] = np.full(shape=dims[:2], fill_value=out[0])
-                mlt[:, :, j, i] = np.full(shape=dims[:2], fill_value=out_mlt)
-
-            # Assign the magnetic data to the instrument
-            inst.data = inst.data.assign({"mlat": (inst[dat].dims, mlat),
-                                          "mlt": (inst[dat].dims, mlt)})
-            inst.meta['mlat'] = {inst.meta.labels.units: 'degrees'}
-            inst.meta['mlt'] = {inst.meta.labels.units: 'hours'}
-            return
 
         self.test_inst.custom_attach(add_mag_coords,
                                      kwargs={"dat": self.pysat_var2})
@@ -1242,8 +1260,8 @@ class TestPysatCustMethods(TestPysatUtils):
         """Test failure of unknown mlat key in add_ocb_to_data custom func."""
 
         with self.assertRaisesRegex(ValueError,
-                                    'unknown magnetic latitude name mlat'):
-            ocb_pysat.add_ocb_to_data(self.test_inst, "mlat", "mlt",
+                                    'unknown magnetic latitude name bad'):
+            ocb_pysat.add_ocb_to_data(self.test_inst, "bad", "mlt",
                                       ocb=self.ocb)
 
     def test_cust_add_ocb_to_data_bad_mlt(self):
@@ -1317,6 +1335,7 @@ class TestPysatCustMethodsEAB(TestPysatCustMethods):
         # Set the utility defaults
         self.ocb_key = 'ocb_test'
         self.pysat_key = 'dummy1'
+        self.pysat_lat = 'latitude'
         self.notes = None
         self.isvector = False
         self.added_keys = list()
@@ -1357,6 +1376,7 @@ class TestPysatCustMethodsEAB(TestPysatCustMethods):
         del self.added_keys, self.pysat_keys, self.arevectors, self.del_time
         del self.test_file, self.log_capture, self.test_inst, self.ocb
         del self.lwarn, self.lout, self.cust_kwargs, self.pysat_var2
+        del self.pysat_lat
         return
 
 
@@ -1513,6 +1533,63 @@ class TestPysatCustMethods2DXarray(TestPysatCustMethods):
                                               self.ocb.dtime[0],
                                               self.ocb.dtime[-1], freq='1D'))
         self.pysat_var2 = 'dummy2'
+        self.cust_kwargs = {'mlat_name': self.pysat_lat, 'mlt_name': 'mlt',
+                            'ocb': self.ocb, 'max_sdiff': self.del_time}
+
+        self.lwarn = u""
+        self.lout = u""
+        self.log_capture = StringIO()
+        ocbpy.logger.addHandler(logging.StreamHandler(self.log_capture))
+        ocbpy.logger.setLevel(logging.WARNING)
+
+        return
+
+    def tearDown(self):
+        """Clean the test environment."""
+
+        del self.ocb_key, self.pysat_key, self.notes, self.isvector
+        del self.added_keys, self.pysat_keys, self.arevectors
+        del self.test_file, self.log_capture, self.test_inst, self.ocb
+        del self.lwarn, self.lout, self.cust_kwargs, self.pysat_var2
+        del self.del_time, self.pysat_lat
+        return
+
+
+@unittest.skipIf(no_pysat, "pysat not installed")
+class TestPysatCustMethodsModel(TestPysatCustMethods):
+    """Integration tests for using ocbpy with pysat model data."""
+
+    def setUp(self):
+        """Initialize the tests for using the pysat.Custom methods."""
+        # Set the utility defaults
+        self.ocb_key = 'ocb_test'
+        self.pysat_key = 'dummy2'
+        self.pysat_lat = 'mlat'
+        self.notes = None
+        self.isvector = False
+        self.added_keys = list()
+        self.pysat_keys = list()
+        self.arevectors = list()
+        self.del_time = 600
+
+        # Set the method defaults
+        self.test_file = path.join(path.dirname(ocbpy.__file__), "tests",
+                                   "test_data", "test_north_circle")
+        self.assertTrue(path.isfile(self.test_file))
+        self.ocb = ocbpy.OCBoundary(self.test_file, instrument='image',
+                                    hemisphere=1)
+        self.ocb.rec_ind = 27
+
+        self.test_inst = pysat.Instrument('pysat', 'testmodel',
+                                          num_samples=50400,
+                                          clean_level='clean',
+                                          update_files=True,
+                                          file_date_range=pds.date_range(
+                                              self.ocb.dtime[0],
+                                              self.ocb.dtime[-1], freq='1D'))
+        self.pysat_var2 = 'dummy2'
+        self.test_inst.custom_attach(add_mag_coords,
+                                     kwargs={"dat": self.pysat_var2})
         self.cust_kwargs = {'mlat_name': self.pysat_lat, 'mlt_name': 'mlt',
                             'ocb': self.ocb, 'max_sdiff': self.del_time}
 
