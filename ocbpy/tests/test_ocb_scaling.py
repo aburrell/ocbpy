@@ -86,6 +86,9 @@ class TestOCBScalingMethods(unittest.TestCase):
         self.assertTrue(path.isfile(test_file))
         self.ocb = ocbpy.OCBoundary(filename=test_file, instrument='image')
         self.ocb.rec_ind = 27
+        self.ocb_attrs = ['ocb_lat', 'ocb_mlt', 'r_corr', 'ocb_n', 'ocb_e',
+                          'ocb_z']
+
         self.vdata = ocbpy.ocb_scaling.VectorData(0, self.ocb.rec_ind, 75.0,
                                                   22.0, aacgm_n=50.0,
                                                   aacgm_e=86.5, aacgm_z=5.0,
@@ -106,7 +109,7 @@ class TestOCBScalingMethods(unittest.TestCase):
 
     def tearDown(self):
         """Tear down the test environment."""
-        del self.ocb, self.vdata, self.wdata, self.zdata
+        del self.ocb, self.ocb_attrs, self.vdata, self.wdata, self.zdata
         return
 
     def test_init_nez(self):
@@ -152,17 +155,85 @@ class TestOCBScalingMethods(unittest.TestCase):
         self.assertRegex(str(self.vdata), "Scaling function")
         return
 
+    def test_vector_mult_ocb_ind(self):
+        """Test the VectorData performance with multiple OCB indices."""
+        # Update the VectorData attribute to contain a list of all good indices
+        self.vdata.ocb_ind = ocbpy.cycle_boundary.retrieve_all_good_indices(
+            self.ocb)
+
+        # Set the VectorData OCB attributes
+        self.vdata.set_ocb(self.ocb, scale_func=ocbpy.ocb_scaling.normal_evar)
+
+        # Evaluate values are realistic and appropriately shaped
+        for attr in self.ocb_attrs:
+            with self.subTest(attr=attr):
+                val = getattr(self.vdata, attr)
+                self.assertTupleEqual(self.vdata.ocb_ind.shape, val.shape)
+                self.assertTrue(numpy.isfinite(val).all())
+        return
+
+    def test_vector_mult_dat_ind(self):
+        """Test the VectorData performance with multiple OCB indices."""
+        # Update the VectorData attribute to contain a list of all good indices
+        test_shape = (3,)
+        self.vdata.aacgm_lat = numpy.full(shape=test_shape,
+                                          fill_value=self.vdata.aacgm_lat)
+        self.vdata.aacgm_mlt = numpy.full(shape=test_shape,
+                                          fill_value=self.vdata.aacgm_mlt)
+        self.vdata.dat_ind = [i * 2 for i in range(test_shape[0])]
+        
+        # Set the VectorData OCB attributes
+        self.vdata.set_ocb(self.ocb, scale_func=ocbpy.ocb_scaling.normal_evar)
+
+        # Evaluate values are realistic and appropriately shaped
+        for attr in self.ocb_attrs:
+            with self.subTest(attr=attr):
+                val = getattr(self.vdata, attr)
+                self.assertTupleEqual(val.shape, test_shape)
+                self.assertTrue(numpy.isfinite(val).all())
+        return
+
+    def test_vector_clear_data(self):
+        """Test the VectorData.clear_data method."""
+        # Set the VectorData OCB attributes
+        self.vdata.set_ocb(self.ocb)
+
+        # Evaluate values are realistic
+        for attr in self.ocb_attrs:
+            with self.subTest(attr=attr):
+                val = getattr(self.vdata, attr)
+                self.assertTrue(numpy.isfinite(val).all())
+
+        # Clear data
+        self.vdata.clear_data()
+
+        # Evaluate values are NaN
+        self.ocb_attrs = ['ocb_n', 'ocb_e', 'ocb_z', 'ocb_mag', 'pole_angle',
+                          'aacgm_naz', 'ocb_aacgm_lat', 'ocb_aacgm_mlt']
+        for attr in self.ocb_attrs:
+            with self.subTest(attr=attr):
+                val = getattr(self.vdata, attr)
+                self.assertTrue(numpy.isnan(val).all(),
+                                msg="{:} is not NaN".format(val))
+
+        # Evaluate values are zero
+        self.ocb_attrs = ['ocb_quad', 'vec_quad']
+        for attr in self.ocb_attrs:
+            with self.subTest(attr=attr):
+                val = getattr(self.vdata, attr)
+                self.assertEqual(val, 0)
+        return
+
     def test_vector_bad_lat(self):
         """Test the VectorData output with data from the wrong hemisphere."""
         self.vdata.aacgm_lat *= -1.0
         self.vdata.set_ocb(self.ocb, scale_func=ocbpy.ocb_scaling.normal_evar)
 
-        self.assertTrue(numpy.isnan(self.vdata.ocb_lat))
-        self.assertTrue(numpy.isnan(self.vdata.ocb_mlt))
-        self.assertTrue(numpy.isnan(self.vdata.r_corr))
-        self.assertTrue(numpy.isnan(self.vdata.ocb_n))
-        self.assertTrue(numpy.isnan(self.vdata.ocb_e))
-        self.assertTrue(numpy.isnan(self.vdata.ocb_z))
+        for attr in self.ocb_attrs:
+            with self.subTest(attr=attr):
+                val = getattr(self.vdata, attr)
+                self.assertTrue(numpy.isnan(val),
+                                msg="{:} is not NaN".format(val))
         return
 
     def test_calc_large_pole_angle(self):
@@ -486,6 +557,9 @@ class TestDualScalingMethods(TestOCBScalingMethods):
             eab_filename=path.join(test_dir, "test_north_eab"),
             eab_instrument='image', ocb_instrument='image', hemisphere=1,
             ocb_filename=path.join(test_dir, "test_north_circle"))
+        self.ocb_attrs = ['ocb_lat', 'ocb_mlt', 'r_corr', 'ocb_n', 'ocb_e',
+                          'ocb_z']
+
         self.vdata = ocbpy.ocb_scaling.VectorData(0, self.ocb.rec_ind,
                                                   75.0, 22.0, aacgm_n=50.0,
                                                   aacgm_e=86.5, aacgm_z=5.0,
@@ -506,7 +580,23 @@ class TestDualScalingMethods(TestOCBScalingMethods):
 
     def tearDown(self):
         """Tear down the test environment."""
-        del self.ocb, self.vdata, self.wdata, self.zdata
+        del self.ocb, self.vdata, self.wdata, self.zdata, self.ocb_attrs
+        return
+
+    def test_vector_mult_ocb_ind(self):
+        """Test the VectorData performance with multiple OCB indices."""
+        # Update the VectorData attribute to contain a list of all good indices
+        self.vdata.ocb_ind = numpy.arange(0, self.ocb.records, 1)
+
+        # Set the VectorData OCB attributes
+        self.vdata.set_ocb(self.ocb, scale_func=ocbpy.ocb_scaling.normal_evar)
+
+        # Evaluate here
+        for attr in self.ocb_attrs:
+            with self.subTest(attr=attr):
+                val = getattr(self.vdata, attr)
+                self.assertTupleEqual(self.vdata.ocb_ind.shape, val.shape)
+                self.assertTrue(numpy.isfinite(val).all())
         return
 
     def test_calc_ocb_vec_sign(self):
