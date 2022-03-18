@@ -23,7 +23,7 @@ class VectorData(object):
     Parameters
     ----------
     dat_ind : int or array-like
-        Data index (zero offset)
+        Data index (zero offset) for the input
     ocb_ind : int or array-like
         OCBoundary or DualBoundary record index matched to this data index
         (zero offset)
@@ -55,6 +55,8 @@ class VectorData(object):
 
     Attributes
     ----------
+    vshape : array-like
+        Shape of output data
     unscaled_r : float or array-like
         Radius of polar cap in degrees
     scaled_r : float or array-like
@@ -97,100 +99,31 @@ class VectorData(object):
         self.dat_units = dat_units
 
         # Assign the data and OCB indices
-        self.dat_ind = np.asarray(dat_ind)
-        self.ocb_ind = np.asarray(ocb_ind)
+        self.dat_ind = dat_ind
+        self.ocb_ind = ocb_ind
 
         # Assign the AACGM vector values and location
-        self.aacgm_n = np.asarray(aacgm_n)
-        self.aacgm_e = np.asarray(aacgm_e)
-        self.aacgm_z = np.asarray(aacgm_z)
-        self.aacgm_lat = np.asarray(aacgm_lat)
-        self.aacgm_mlt = np.asarray(aacgm_mlt)
+        self.aacgm_n = aacgm_n
+        self.aacgm_e = aacgm_e
+        self.aacgm_z = aacgm_z
+        self.aacgm_lat = aacgm_lat
+        self.aacgm_mlt = aacgm_mlt
 
-        # Test the initalization shape
-        vshapes = [self.aacgm_lat.shape, self.aacgm_mlt.shape,
-                   self.dat_ind.shape, self.aacgm_n.shape, self.aacgm_e.shape,
-                   self.aacgm_z.shape]
-        vshapes = np.unique(np.asarray(vshapes, dtype=object))
-        vshape = () if len(vshapes) == 0 else vshapes.max()
-        if len(vshapes) > 2 or (len(vshapes) == 2 and min(vshapes) != ()):
-            raise ValueError('mismatched VectorData input shapes')
+        # Test the initalization shape and update the vector shapes if needed
+        self._test_update_vector_shape()
 
-        if len(vshapes) > 1 and min(vshapes) == ():
-            if self.dat_ind.shape == ():
-                raise ValueError('data index shape must match vector shape')
-
-            # Vector input needs to be the same length
-            if self.aacgm_n.shape == ():
-                self.aacgm_n = np.full(shape=vshape, fill_value=self.aacgm_n)
-            if self.aacgm_e.shape == ():
-                self.aacgm_e = np.full(shape=vshape, fill_value=self.aacgm_e)
-            if self.aacgm_z.shape == ():
-                self.aacgm_z = np.full(shape=vshape, fill_value=self.aacgm_z)
-
-        # Assign the vector magnitudes
-        if np.all(np.isnan(aacgm_mag)):
-            self.aacgm_mag = np.sqrt(np.asarray(aacgm_n)**2
-                                     + np.asarray(aacgm_e)**2
-                                     + np.asarray(aacgm_z)**2)
-        else:
-            aacgm_sqrt = np.sqrt(np.asarray(aacgm_n)**2
-                                 + np.asarray(aacgm_e)**2
-                                 + np.asarray(aacgm_z)**2)
-            if np.any(np.greater(abs(aacgm_mag - aacgm_sqrt), 1.0e-3,
-                                 where=~np.isnan(aacgm_mag))):
-                ocbpy.logger.warning("".join(["inconsistent AACGM components ",
-                                              "with a maximum difference of ",
-                                              "{:} > 1.0e-3".format(
-                                                  abs(aacgm_mag
-                                                      - aacgm_sqrt).max())]))
-            self.aacgm_mag = aacgm_mag
+        # Assign the vector magnitude(s)
+        self.aacgm_mag = aacgm_mag
 
         # Assign the OCB vector default values
-        self.ocb_lat = np.asarray(ocb_lat)
-        self.ocb_mlt = np.asarray(ocb_mlt)
-        self.r_corr = np.asarray(r_corr)
+        self.ocb_lat = ocb_lat
+        self.ocb_mlt = ocb_mlt
+        self.r_corr = r_corr
+        self._test_update_bound_shape()
 
-        if self.ocb_lat.shape == () and self.ocb_ind.shape != ():
-            self.ocb_lat = np.full(shape=self.ocb_ind.shape,
-                                   fill_value=ocb_lat)
-
-        if self.ocb_mlt.shape == () and self.ocb_ind.shape != ():
-            self.ocb_mlt = np.full(shape=self.ocb_ind.shape,
-                                   fill_value=ocb_mlt)
-
-        if self.r_corr.shape == () and self.ocb_ind.shape != ():
-            self.r_corr = np.full(shape=self.ocb_ind.shape, fill_value=r_corr)
-
-        # Test the OCB input shape
-        oshapes = np.unique([self.ocb_lat.shape, self.ocb_mlt.shape,
-                             self.r_corr.shape])
-        oshape = () if len(oshapes) == 0 else oshapes.max()
-        if(oshape != self.ocb_ind.shape or len(oshapes) > 2
-           or (len(oshapes) == 2 and min(oshapes) != ())):
-            raise ValueError('OCB index and input shapes mismatched')
-
-        if self.ocb_ind.shape == ():
-            oshape = vshape
-        elif self.dat_ind.shape == ():
-            vshape = oshape
-
-        if oshape != vshape:
-            raise ValueError('Mismatched OCB and Vector input shapes')
-
-        # Assign the OCB vector default values and location
-        self.ocb_n = np.full(shape=vshape, fill_value=np.nan)
-        self.ocb_e = np.full(shape=vshape, fill_value=np.nan)
-        self.ocb_z = np.full(shape=vshape, fill_value=np.nan)
-        self.ocb_mag = np.full(shape=vshape, fill_value=np.nan)
-
-        # Assign the default pole locations, relative angles, and quadrants
-        self.ocb_quad = np.zeros(shape=vshape)
-        self.vec_quad = np.zeros(shape=vshape)
-        self.pole_angle = np.full(shape=vshape, fill_value=np.nan)
-        self.aacgm_naz = np.full(shape=vshape, fill_value=np.nan)
-        self.ocb_aacgm_lat = np.full(shape=vshape, fill_value=np.nan)
-        self.ocb_aacgm_mlt = np.full(shape=vshape, fill_value=np.nan)
+        # Assign the initial OCB vector default values and location, as well as
+        # the default pole locations, relative angles, and quadrants
+        self.clear_data()
 
         # Assign the vector scaling function
         self.scale_func = scale_func
@@ -305,6 +238,257 @@ class VectorData(object):
 
         return out
 
+    def __setattr__(self, name, value):
+        """Set attributes based on their type.
+
+        Parameters
+        ----------
+        name : str
+            Attribute name to be assigned to VectorData
+        value
+            Value (any type) to be assigned to attribute specified by name
+
+        """
+        # Determine the desired output type
+        out_val = np.asarray(value)
+        type_str = str(out_val.dtype)
+
+        if type_str.find('int') < 0 and type_str.find('float') < 0:
+            out_val = value
+
+        # Use Object to avoid recursion
+        super(VectorData, self).__setattr__(name, out_val)
+        return
+
+    def _ocb_attr_setter(self, ocb_name, ocb_val):
+        """Set OCB attributes.
+
+        Parameters
+        ----------
+        ocb_name : str
+            OCB attribute name
+        value
+            Value (any type) to be assigned to attribute specified by name
+
+        """
+        # Ensure the shape is correct
+        if np.asarray(ocb_val).shape == () and self.ocb_ind.shape != ():
+            ocb_val = np.full(shape=self.ocb_ind.shape, fill_value=ocb_val)
+
+        self.__setattr__(ocb_name, ocb_val)
+        return
+
+    def _test_update_vector_shape(self):
+        """Test and update the shape of the VectorData attributes.
+
+        Raises
+        ------
+        ValueError
+            If mismatches in the attribute shapes are encountered
+
+        Notes
+        -----
+        Sets the `vshape` attribute and updates the shape of `aacgm_n`,
+        `aacgm_e`, and `aacgm_z` if needed
+
+        """
+
+        # Get the required input shapes
+        vshapes = [self.aacgm_lat.shape, self.aacgm_mlt.shape,
+                   self.dat_ind.shape, self.aacgm_n.shape, self.aacgm_e.shape,
+                   self.aacgm_z.shape]
+        vshapes = np.unique(np.asarray(vshapes, dtype=object))
+
+        # Determine the desired shape
+        self.vshape = () if len(vshapes) == 0 else vshapes.max()
+
+        # Evaluate for potential mismatched attributes
+        if len(vshapes) > 2 or (len(vshapes) == 2 and min(vshapes) != ()):
+            raise ValueError('mismatched dimensions for VectorData inputs')
+
+        if len(vshapes) > 1 and min(vshapes) == ():
+            if self.dat_ind.shape == ():
+                raise ValueError('data index shape must match vector shape')
+
+            # Vector input needs to be the same length
+            if self.aacgm_n.shape == ():
+                self.aacgm_n = np.full(shape=self.vshape,
+                                       fill_value=self.aacgm_n)
+            if self.aacgm_e.shape == ():
+                self.aacgm_e = np.full(shape=self.vshape,
+                                       fill_value=self.aacgm_e)
+            if self.aacgm_z.shape == ():
+                self.aacgm_z = np.full(shape=self.vshape,
+                                       fill_value=self.aacgm_z)
+        return
+
+    def _test_update_bound_shape(self):
+        """Test and update the shape of the VectorData boundary attributes.
+
+        Raises
+        ------
+        ValueError
+            If mismatches in the attribute shapes are encountered
+
+        Notes
+        -----
+        Updates the shape of `aacgm_n`, `aacgm_e`, and `aacgm_z` if needed
+
+        """
+        # Test the OCB input shape
+        oshapes = np.unique([self.ocb_lat.shape, self.ocb_mlt.shape,
+                             self.r_corr.shape])
+        oshape = () if len(oshapes) == 0 else oshapes.max()
+        if(oshape != self.ocb_ind.shape or len(oshapes) > 2
+           or (len(oshapes) == 2 and min(oshapes) != ())):
+            raise ValueError('OCB index and input shapes mismatched')
+
+        # Compare and update the vector data shape if needed
+        if self.ocb_ind.shape == ():
+            oshape = self.vshape
+        elif self.dat_ind.shape == ():
+            self.vshape = oshape
+        else:
+            oshape = np.asarray(oshape)
+            if self.vshape.size != oshape.size or oshape != self.vshape:
+                raise ValueError('Mismatched OCB and Vector input shapes')
+        return
+
+    @property
+    def aacgm_mag(self):
+        """Magntiude of the AACGM vector(s)."""
+        return self._aacgm_mag
+
+    @aacgm_mag.setter
+    def aacgm_mag(self, aacgm_mag):
+        # Assign the vector magnitude(s)
+        aacgm_sqrt = np.sqrt(self.aacgm_n**2 + self.aacgm_e**2
+                             + self.aacgm_z**2)
+
+        if np.all(np.isnan(aacgm_mag)):
+            self._aacgm_mag = aacgm_sqrt
+        else:
+            if np.any(np.greater(abs(aacgm_mag - aacgm_sqrt), 1.0e-3,
+                                 where=~np.isnan(aacgm_mag))):
+                ocbpy.logger.warning("".join(["inconsistent AACGM components ",
+                                              "with a maximum difference of ",
+                                              "{:} > 1.0e-3".format(
+                                                  abs(aacgm_mag
+                                                      - aacgm_sqrt).max())]))
+            self._aacgm_mag = aacgm_mag
+        return
+
+    @property
+    def dat_ind(self):
+        """Data index(es)."""
+        return self._dat_ind
+
+    @dat_ind.setter
+    def dat_ind(self, dat_ind):
+        # Set the data indices, and clear old data if needed
+        if not hasattr(self, "dat_ind"):
+            self._dat_ind = dat_ind
+        else:
+            self._dat_ind = dat_ind
+
+            # Test the data and reset if necessary
+            self._test_update_vector_shape()
+
+            # Test the boundary shape
+            self._test_update_bound_shape()
+
+            # Reset the calculated boundary data
+            self.clear_data()
+
+            # Re-calculate the AACGM magnitude
+            self.aacgm_mag = np.nan
+        return
+
+    @property
+    def ocb_ind(self):
+        """Boundary index(es)."""
+        return self._ocb_ind
+
+    @ocb_ind.setter
+    def ocb_ind(self, ocb_ind):
+        # Set the OCB indices, and clear old data if needed
+        if not hasattr(self, 'ocb_ind'):
+            self._ocb_ind = ocb_ind
+        else:
+            self._ocb_ind = ocb_ind
+
+            # Test the boundaries and reset if necessary
+            try:
+                self._test_update_bound_shape()
+            except ValueError as verr:
+                if str(verr).find('OCB index and input shapes mismatch') == 0:
+                    ocbpy.logger.warning(
+                        '{:s}, unsetting boundary inputs'.format(str(verr)))
+                    self.ocb_lat = np.nan
+                    self.ocb_mlt = np.nan
+                    self.r_corr = np.nan
+
+                    if self.dat_ind.shape == ():
+                        self.vshape = ocb_ind.shape
+                else:
+                    raise ValueError(verr)
+
+            # Clear the rest of the data
+            self.clear_data()
+        return
+
+    @property
+    def ocb_lat(self):
+        """Boundary latitude in degrees."""
+        return self._ocb_lat
+
+
+    @ocb_lat.setter
+    def ocb_lat(self, ocb_lat):
+        # Set the boundary latitude value and ensure the shape is correct
+        self._ocb_attr_setter('_ocb_lat', ocb_lat)
+        return
+
+    @property
+    def ocb_mlt(self):
+        """Boundary magnetic local time in hours."""
+        return self._ocb_mlt
+
+    @ocb_mlt.setter
+    def ocb_mlt(self, ocb_mlt):
+        # Set the boundary MLT value and ensure the shape is correct
+        self._ocb_attr_setter('_ocb_mlt', ocb_mlt)
+        return
+
+    @property
+    def r_corr(self):
+        """Boundary radius correction in degrees."""
+        return self._r_corr
+
+    @r_corr.setter
+    def r_corr(self, r_corr):
+        # Set the boundary radius correction and ensure the shape is correct
+        self._ocb_attr_setter('_r_corr', r_corr)
+        return
+
+    def clear_data(self):
+        """Clear or initialize the output data attributes."""
+
+        # Assign the OCB vector default values and location
+        self.ocb_n = np.full(shape=self.vshape, fill_value=np.nan)
+        self.ocb_e = np.full(shape=self.vshape, fill_value=np.nan)
+        self.ocb_z = np.full(shape=self.vshape, fill_value=np.nan)
+        self.ocb_mag = np.full(shape=self.vshape, fill_value=np.nan)
+
+        # Assign the default pole locations, relative angles, and quadrants
+        self.ocb_quad = np.zeros(shape=self.vshape)
+        self.vec_quad = np.zeros(shape=self.vshape)
+        self.pole_angle = np.full(shape=self.vshape, fill_value=np.nan)
+        self.aacgm_naz = np.full(shape=self.vshape, fill_value=np.nan)
+        self.ocb_aacgm_lat = np.full(shape=self.vshape, fill_value=np.nan)
+        self.ocb_aacgm_mlt = np.full(shape=self.vshape, fill_value=np.nan)
+        return
+    
     def set_ocb(self, ocb, scale_func=None):
         """Set the OCBoundary values for provided data (updates all attributes).
 
@@ -321,9 +505,6 @@ class VectorData(object):
 
         """
 
-        # Initialize the OCB index
-        ocb.rec_ind = self.ocb_ind
-
         # If the OCB vector coordinates weren't included in the initial info,
         # update them here
         if(np.all(np.isnan(self.ocb_lat)) or np.all(np.isnan(self.ocb_mlt))
@@ -331,6 +512,10 @@ class VectorData(object):
             # Because the OCB and AACGM magnetic field are both time dependent,
             # can't call this function with multiple OCBs
             if self.ocb_ind.shape == ():
+                # Initialize the OCB index
+                ocb.rec_ind = self.ocb_ind
+
+                # Calcualte the coordinates and save the output
                 out_coord = ocb.normal_coord(self.aacgm_lat, self.aacgm_mlt)
 
                 if len(out_coord) == 3:
@@ -338,7 +523,9 @@ class VectorData(object):
                 else:
                     (self.ocb_lat, self.ocb_mlt, _, self.r_corr) = out_coord
             else:
+                # Cycle through the OCB indices
                 for i, ocb.rec_ind in enumerate(self.ocb_ind):
+                    # Calcualte the coordinates and save the output
                     if self.ocb_ind.shape == self.dat_ind.shape:
                         out_coord = ocb.normal_coord(self.aacgm_lat[i],
                                                      self.aacgm_mlt[i])
