@@ -741,8 +741,8 @@ class TestVectorDataRaises(unittest.TestCase):
                           {'aacgm_n': [100.0, 110.0, 30.0]},
                           {'aacgm_n': [100.0, 110.0, 30.0]}]
         self.raise_out = ['data index shape must match vector shape',
-                          'mismatched VectorData input shapes',
-                          'mismatched VectorData input shapes']
+                          'mismatched dimensions for VectorData inputs',
+                          'mismatched dimensions for VectorData inputs']
 
         for i, iattrs in enumerate(self.input_attrs):
             tset = [iattrs, self.bad_input[i], self.raise_out[i]]
@@ -1141,7 +1141,8 @@ class TestOCBScalingArrayMethods(unittest.TestCase):
 
         self.vdata = ocbpy.ocb_scaling.VectorData(*self.vargs, **self.vkwargs)
         self.assertEqual(len(self.vdata.ocb_mag), len(self.vargs[1]))
-        self.assertAlmostEqual(self.vdata.aacgm_mag, self.aacgm_mag[0])
+        self.assertTrue(abs(self.vdata.aacgm_mag - self.aacgm_mag[0]).all()
+                        < 1.0e-7,  msg="unexpected AACGM vector magnitude")
         return
 
     def test_init_mag(self):
