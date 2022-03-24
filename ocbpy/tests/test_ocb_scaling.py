@@ -731,6 +731,15 @@ class TestVectorDataRaises(unittest.TestCase):
                                                       **self.bad_input)
         return
 
+    def test_reinit_ocb_vector_failure(self):
+        """Test init failure with mismatched OCB and data array input."""
+        self.vdata.dat_ind = [3, 6, 0]
+
+        with self.assertRaisesRegex(ValueError,
+                                    "Mismatched OCB and Vector input shapes"):
+            self.vdata.ocb_ind = [27, 31]
+        return
+
     def test_init_vector_failure(self):
         """Test init failure with a bad mix of vector and scalar input."""
         self.input_attrs = [[0, self.ocb.rec_ind, [75.0, 70.0], [22.0, 20.0]],
