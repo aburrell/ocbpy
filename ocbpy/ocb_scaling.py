@@ -339,6 +339,7 @@ class VectorData(object):
         oshapes = np.unique([self.ocb_lat.shape, self.ocb_mlt.shape,
                              self.r_corr.shape])
         oshape = () if len(oshapes) == 0 else oshapes.max()
+
         if(oshape != self.ocb_ind.shape or len(oshapes) > 2
            or (len(oshapes) == 2 and min(oshapes) != ())):
             raise ValueError('OCB index and input shapes mismatched')
@@ -430,7 +431,11 @@ class VectorData(object):
 
                     if self.dat_ind.shape == ():
                         self.vshape = ocb_ind.shape
+
+                    # Re-test boundary shape
+                    self._test_update_bound_shape()
                 else:
+                    # Can't figure out how to get here, but keeping for now
                     raise ValueError(verr)
 
             # Clear the rest of the data
@@ -952,6 +957,7 @@ class VectorData(object):
             if ocb_naz.shape == ():
                 ocb_naz = self.pole_angle + self.aacgm_naz
                 if ocb_naz > 180.0:
+                    raise RuntimeError('TEST HERE')
                     ocb_naz = 360.0 - ocb_naz
             else:
                 ocb_naz[add_mask] = (self.pole_angle
@@ -969,6 +975,7 @@ class VectorData(object):
 
         if np.any(maa_mask):
             if ocb_naz.shape == ():
+                raise RuntimeError('Test Here 2!')
                 ocb_naz = self.pole_angle - self.aacgm_naz
             else:
                 ocb_naz[maa_mask] = (self.pole_angle
@@ -976,6 +983,7 @@ class VectorData(object):
 
         if np.any(cir_mask):
             if ocb_naz.shape == ():
+                raise RuntimeError('Test Here 3!')
                 ocb_naz = 360.0 - self.aacgm_naz - self.pole_angle
             else:
                 ocb_naz[cir_mask] = (360.0 - self.aacgm_naz
