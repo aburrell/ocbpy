@@ -1,8 +1,9 @@
-#!/usr/bin/env python# -*- coding: utf-8 -*-
+#!/usr/bin/env python
+# -*- coding: utf-8 -*-
 # Copyright (C) 2017, AGB & GC
 # Full license can be found in License.md
 # ----------------------------------------------------------------------------
-"""Scale data affected by magnetic field direction or electric field
+"""Scale data affected by magnetic field direction or electric field.
 
 References
 ----------
@@ -447,7 +448,6 @@ class VectorData(object):
         """Boundary latitude in degrees."""
         return self._ocb_lat
 
-
     @ocb_lat.setter
     def ocb_lat(self, ocb_lat):
         # Set the boundary latitude value and ensure the shape is correct
@@ -493,7 +493,7 @@ class VectorData(object):
         self.ocb_aacgm_lat = np.full(shape=self.vshape, fill_value=np.nan)
         self.ocb_aacgm_mlt = np.full(shape=self.vshape, fill_value=np.nan)
         return
-    
+
     def set_ocb(self, ocb, scale_func=None):
         """Set the OCBoundary values for provided data (updates all attributes).
 
@@ -591,8 +591,7 @@ class VectorData(object):
         return
 
     def define_quadrants(self):
-        """ Find the MLT quadrants (in AACGM coordinates) for the OCB pole
-        and data vector
+        """Define AACGM MLT quadrants for the OCB pole and data vector.
 
         Notes
         -----
@@ -896,7 +895,7 @@ class VectorData(object):
         return
 
     def calc_ocb_polar_angle(self):
-        """ Calculate the OCB north azimuth angle
+        """Calculate the OCB north azimuth angle.
 
         Returns
         -------
@@ -957,7 +956,6 @@ class VectorData(object):
             if ocb_naz.shape == ():
                 ocb_naz = self.pole_angle + self.aacgm_naz
                 if ocb_naz > 180.0:
-                    raise RuntimeError('TEST HERE')
                     ocb_naz = 360.0 - ocb_naz
             else:
                 ocb_naz[add_mask] = (self.pole_angle
@@ -975,7 +973,6 @@ class VectorData(object):
 
         if np.any(maa_mask):
             if ocb_naz.shape == ():
-                raise RuntimeError('Test Here 2!')
                 ocb_naz = self.pole_angle - self.aacgm_naz
             else:
                 ocb_naz[maa_mask] = (self.pole_angle
@@ -983,7 +980,6 @@ class VectorData(object):
 
         if np.any(cir_mask):
             if ocb_naz.shape == ():
-                raise RuntimeError('Test Here 3!')
                 ocb_naz = 360.0 - self.aacgm_naz - self.pole_angle
             else:
                 ocb_naz[cir_mask] = (360.0 - self.aacgm_naz
@@ -992,7 +988,7 @@ class VectorData(object):
         return ocb_naz
 
     def calc_ocb_vec_sign(self, north=False, east=False, quads=dict()):
-        """ Get the sign of the North and East components
+        """Calculate the sign of the North and East components.
 
         Parameters
         ----------
@@ -1119,8 +1115,7 @@ class VectorData(object):
         return vsigns
 
     def calc_vec_pole_angle(self):
-        """Calculate the angle between the AACGM pole, a measurement, and the
-        OCB pole using spherical triginometry
+        """Calc the angle between the AACGM pole, data, and the OCB pole.
 
         Raises
         ------
@@ -1130,7 +1125,7 @@ class VectorData(object):
         Notes
         -----
         Requires `aacgm_mlt`, `aacgm_lat`, `ocb_aacgm_mlt`, and `ocb_aacgm_lat`.
-        Updates `pole_angle`.
+        Updates `pole_angle` using spherical trigonometry.
 
         """
 
