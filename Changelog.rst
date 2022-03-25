@@ -19,6 +19,8 @@ Summary of all changes made since the first stable release
 * ENH: Updated the IMAGE OCB files and added EAB files
 * ENH: Added EAB and dual-boundary classes
 * ENH: Added function to select data along a satellite track
+* ENH: Changed attributes in VectorData into properties to ensure expected
+       behaviour if altering the class data after initialisation
 * MAINT: Removed support for Python 2.7, 3.5, and 3.6; added support for 3.10
 * MAINT: Improved PEP8 compliance
 * MAINT: Updated pysat routines to v3.0.0 standards
