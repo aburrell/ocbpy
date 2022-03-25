@@ -517,10 +517,10 @@ class VectorData(object):
             # Because the OCB and AACGM magnetic field are both time dependent,
             # can't call this function with multiple OCBs
             if self.ocb_ind.shape == ():
-                # Initialize the OCB index
+                # Initialise the OCB index
                 ocb.rec_ind = self.ocb_ind
 
-                # Calcualte the coordinates and save the output
+                # Calculate the coordinates and save the output
                 out_coord = ocb.normal_coord(self.aacgm_lat, self.aacgm_mlt)
 
                 if len(out_coord) == 3:
