@@ -181,7 +181,7 @@ class TestOCBScalingMethods(unittest.TestCase):
         self.vdata.aacgm_mlt = numpy.full(shape=test_shape,
                                           fill_value=self.vdata.aacgm_mlt)
         self.vdata.dat_ind = [i * 2 for i in range(test_shape[0])]
-        
+
         # Set the VectorData OCB attributes
         self.vdata.set_ocb(self.ocb, scale_func=ocbpy.ocb_scaling.normal_evar)
 
@@ -245,6 +245,56 @@ class TestOCBScalingMethods(unittest.TestCase):
 
         self.zdata.calc_vec_pole_angle()
         self.assertAlmostEqual(self.zdata.pole_angle, 91.72024697182087)
+        return
+
+    def test_calc_polar_angle_ocb_south_night(self):
+        """Test `calc_polar_angle` with the OCB pole in a south/night quad."""
+        # Set a useful vector locaiton and intialise with current boundary
+        self.vdata.aacgm_mlt = 0.0
+        self.vdata.aacgm_n = -10.0
+        self.vdata.aacgm_e = -10.0
+        self.vdata.set_ocb(self.ocb)
+
+        # Change the location of the boundary center
+        self.vdata.ocb_aacgm_mlt = 1.0
+        self.vdata.ocb_aacgm_lat = self.vdata.aacgm_lat - 2.0
+
+        # Update the quandrants
+        self.vdata.calc_vec_pole_angle()
+        self.vdata.define_quadrants()
+
+        # Get the polar angle
+        self.assertAlmostEqual(self.vdata.calc_ocb_polar_angle(), 116.52904962)
+        return
+
+    def test_calc_polar_angle_ocb_south_day(self):
+        """Test `calc_polar_angle` with the OCB pole in a south/day quad."""
+        # Set a useful vector locaiton and intialise with current boundary
+        self.vdata.aacgm_mlt = 0.0
+        self.vdata.set_ocb(self.ocb)
+
+        # Change the location of the boundary center
+        self.vdata.ocb_aacgm_mlt = 1.0
+        self.vdata.ocb_aacgm_lat = self.vdata.aacgm_lat - 2.0
+
+        # Update the quandrants
+        self.vdata.calc_vec_pole_angle()
+        self.vdata.define_quadrants()
+
+        # Get the polar angle
+        self.assertAlmostEqual(self.vdata.calc_ocb_polar_angle(), 48.500352141)
+        return
+
+    def test_big_pole_angle_mlt_west(self):
+        """Test `calc_ocb_polar_angle` with a neg MLT, W vect, and big angle."""
+        # Get the original angle
+        self.vdata.aacgm_mlt = -22.0
+        self.vdata.aacgm_e *= -1.0
+        self.vdata.set_ocb(self.ocb)
+
+        # Increase the pole angle enough to require an adjustment
+        self.vdata.pole_angle += 90.0
+        self.assertAlmostEqual(self.vdata.calc_ocb_polar_angle(), 159.83429474)
         return
 
     def test_calc_vec_pole_angle_acute(self):
@@ -322,8 +372,11 @@ class TestOCBScalingMethods(unittest.TestCase):
 
     def test_define_quadrants_neg_north(self):
         """Test the quadrant assignment with a vector pointing south."""
+        # Adjust the vector quadrant
         self.vdata.aacgm_n *= -1.0
-        self.vdata.set_ocb(self.ocb, scale_func=ocbpy.ocb_scaling.normal_evar)
+        self.vdata.set_ocb(self.ocb)
+
+        # Evaluate the output quadrants
         self.assertEqual(self.vdata.ocb_quad, 1)
         self.assertEqual(self.vdata.vec_quad, 4)
         return
@@ -331,7 +384,7 @@ class TestOCBScalingMethods(unittest.TestCase):
     def test_define_quadrants_noon_north(self):
         """Test quadrant assignment with a vector pointing north from noon."""
         self.vdata.aacgm_mlt = 12.0
-        self.vdata.set_ocb(self.ocb, scale_func=ocbpy.ocb_scaling.normal_evar)
+        self.vdata.set_ocb(self.ocb)
         self.assertEqual(self.vdata.ocb_quad, 2)
         self.assertEqual(self.vdata.vec_quad, 1)
         return
@@ -1151,7 +1204,7 @@ class TestOCBScalingArrayMethods(unittest.TestCase):
         self.vdata = ocbpy.ocb_scaling.VectorData(*self.vargs, **self.vkwargs)
         self.assertEqual(len(self.vdata.ocb_mag), len(self.vargs[1]))
         self.assertTrue(abs(self.vdata.aacgm_mag - self.aacgm_mag[0]).all()
-                        < 1.0e-7,  msg="unexpected AACGM vector magnitude")
+                        < 1.0e-7, msg="unexpected AACGM vector magnitude")
         return
 
     def test_init_mag(self):
