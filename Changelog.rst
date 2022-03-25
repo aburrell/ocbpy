@@ -28,8 +28,8 @@ Summary of all changes made since the first stable release
 * TST: Integrated and removed Requires.io; it requires a payed plan for GitHub
 * TST: Added flake8 and documentation tests to CI
 * TST: Moved all configurations to setup.cfg, removing .coveragecfg
-* TST: Added pysat xarray tests to the pysat test suite
-* TST: Added new unit tests for `__repr__` methods
+* TST: Improved test coverage, specifically adding pysat xarray tests and
+       expanding unit tests for `__repr__` methods
 * TST: Migrated to GitHub Actions from Travis CI and Appveyor
 
 0.2.1 (11-24-2020)
