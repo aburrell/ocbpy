@@ -41,6 +41,7 @@ class TestDMSPFileMethods(unittest.TestCase):
         self.log_capture = StringIO()
         ocbpy.logger.addHandler(logging.StreamHandler(self.log_capture))
         ocbpy.logger.setLevel(logging.WARNING)
+        return
 
     def tearDown(self):
         """Clean up the test environment."""
@@ -50,6 +51,7 @@ class TestDMSPFileMethods(unittest.TestCase):
 
         del self.tfile, self.temp_files, self.test_dmsp, self.comp_dict
         del self.out, self.lwarn, self.lout, self.log_capture
+        return
 
     def test_no_short_name_one_file(self):
         """Test get_default_file for dmsp-ssj with one boundary file."""
@@ -61,6 +63,7 @@ class TestDMSPFileMethods(unittest.TestCase):
 
         self.assertEqual(self.out[0], self.temp_files[0])
         self.assertEqual(self.out[1], self.comp_dict['instrument'])
+        return
 
     def test_no_short_name_mult_files(self):
         """Test get_default_file for dmsp-ssj with one boundary file."""
@@ -73,6 +76,7 @@ class TestDMSPFileMethods(unittest.TestCase):
 
         self.assertTrue(self.out[0] in self.temp_files)
         self.assertEqual(self.out[1], self.comp_dict['instrument'])
+        return
 
     def test_good_unknown_inst_file(self):
         """Test get_boundary_file for a good unknown instrument file."""
@@ -87,6 +91,7 @@ class TestDMSPFileMethods(unittest.TestCase):
         self.assertListEqual(
             sorted([kk for kk in self.out[self.tfile].keys()]),
             [u'etime', u'hemisphere', u'instrument', u'stime'])
+        return
 
     def test_bad_unknown_inst_file(self):
         """Test get_boundary_file for a bad unknown instrument file."""
@@ -106,6 +111,23 @@ class TestDMSPFileMethods(unittest.TestCase):
         self.assertListEqual(
             sorted([kk for kk in self.out[self.tfile].keys()]),
             [u'hemisphere', u'instrument'])
+        return
+
+    def test_get_default_from_many_options(self):
+        """Test get_default_file with good ranges with other files present."""
+        # Copy over one temporary file to the boundary directory
+        os.system("cp {:s} {:s}".format(self.test_dmsp, self.temp_files[0]))
+        self.tfile = os.path.basename(self.temp_files[0])
+
+        # Get the default file and instrument
+        self.out = files.get_default_file(self.comp_dict['stime'],
+                                          self.comp_dict['etime'],
+                                          self.comp_dict['hemisphere'])
+
+        # Evaluate the output
+        self.assertRegex(self.out[0], 'amp_north_radii.ocb')
+        self.assertRegex(self.out[1], 'ampere')
+        return
 
 
 class TestFilesMethods(unittest.TestCase):
@@ -165,6 +187,7 @@ class TestFilesMethods(unittest.TestCase):
         self.hemi = 1
         self.ikey = ''
         self.fname = None
+        return
 
     def tearDown(self):
         """Clean the test environment."""
@@ -173,22 +196,26 @@ class TestFilesMethods(unittest.TestCase):
 
         del self.out, self.orig_file, self.comp_dict, self.short_to_long
         del self.inst, self.long_to_short, self.hemi, self.ikey, self.fname
+        return
 
     def test_get_boundary_directory(self):
         """Test the default boundary directory definition."""
         self.out = files.get_boundary_directory()
         self.assertGreater(self.out.find("boundaries"), 0)
+        return
 
     def test_get_boundary_directory_failure(self):
         """Test the failure of the default boundary directory definition."""
         ocbpy.__file__ = "/fake_dir/test_file"
         with self.assertRaisesRegex(OSError, "boundary file directory"):
             files.get_boundary_directory()
+        return
 
     def test_get_boundary_files_unknown_boundary(self):
         """Test get_boundary_files for an unknown boundary."""
         self.out = files.get_boundary_files(bound='aaa')
         self.assertDictEqual(self.out, {})
+        return
 
     def test_get_boundary_files(self):
         """Test the default implementation of get_boundary_files."""
@@ -202,6 +229,7 @@ class TestFilesMethods(unittest.TestCase):
                     self.assertTrue(ckey in self.out.keys())
                     self.assertDictEqual(self.out[ckey],
                                          self.comp_dict[bound][ckey])
+        return
 
     def test_get_default_file_bad_bound(self):
         """Test get_default_file with an unknown boundary."""
@@ -209,6 +237,7 @@ class TestFilesMethods(unittest.TestCase):
 
         self.assertIsNone(self.out[0])
         self.assertEqual(len(self.out[1]), 0)
+        return
 
     def test_get_default_file_none_north_any_default_inst(self):
         """Test get_default_file with no range, northern hemisphere."""
@@ -216,6 +245,7 @@ class TestFilesMethods(unittest.TestCase):
 
         self.assertRegex(self.out[0], 'image_north_circle.ocb')
         self.assertRegex(self.out[1], 'image')
+        return
 
     def test_get_default_file_none_north_all(self):
         """Test get_default_file with no range, northern hemisphere."""
@@ -247,6 +277,7 @@ class TestFilesMethods(unittest.TestCase):
                 else:
                     self.assertRegex(self.out[0], self.fname)
                 self.assertRegex(self.out[1], iname)
+        return
 
     def test_get_default_file_none_south_all(self):
         """Test get_default_file with no range, southern hemisphere."""
@@ -282,6 +313,7 @@ class TestFilesMethods(unittest.TestCase):
                 else:
                     self.assertRegex(self.out[0], self.fname)
                 self.assertRegex(self.out[1], iname)
+        return
 
     def test_get_default_good_file_times(self):
         """Test get_default_file with good ranges."""
@@ -294,7 +326,7 @@ class TestFilesMethods(unittest.TestCase):
                 default_files = ['image_north_circle.eab']
 
             for ii in default_files:
-                with self.subTest(ii=ii):
+                with self.subTest(bound=bound, ii=ii):
                     self.out = files.get_default_file(
                         self.comp_dict[bound][ii]['stime'],
                         self.comp_dict[bound][ii]['etime'], self.hemi,
@@ -309,6 +341,7 @@ class TestFilesMethods(unittest.TestCase):
 
                     self.assertRegex(self.out[0], ii)
                     self.assertRegex(self.out[1], iname)
+        return
 
     def test_get_default_file_bad_file_times(self):
         """Test get_default_file with bad time ranges."""
@@ -320,3 +353,5 @@ class TestFilesMethods(unittest.TestCase):
 
         self.assertIsNone(self.out[0])
         self.assertEqual(len(self.out[1]), 0)
+
+        return
