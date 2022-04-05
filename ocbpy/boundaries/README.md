@@ -1,8 +1,8 @@
 This directory contains files with Open Closed field line Boundaries obtained
 from different instruments
 
-IMAGE (si12/si13/wic) File Format
----------------------------------
+IMAGE (image/si12/si13/wic) File Format
+---------------------------------------
 YR, SOY, NB, PHICENT, RCENT, R, A, R_ERR, R_MERIT
  
 YR      : Year
@@ -20,7 +20,9 @@ R_MERIT : Radial distance from the most typical pole location in degrees
 There are certain ranges for NB, RCENT, and R that you shouldn’t use that can
 be found (and explained) in Chisham (2017), doi:10.1002/2016JA023235.  These
 ranges are the defaults in OCBoundary.get_next_good_ocb_ind.  When using these
-boundaries, remember to cite Chisham (2017).
+boundaries, remember to cite Chisham (2017). From ocbpy version 0.3.0 onward,
+the SI12, SI13, and WIC files contain uncorrected auroral boundary fits, while
+the IMAGE file contains DMSP corrected average boundaries for the OCB and EAB.
 
 AMPERE (amp) File Format
 ------------------------
