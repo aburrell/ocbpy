@@ -226,11 +226,11 @@ class TestSuperMAGLoadMethods(unittest.TestCase):
                              sorted(list(self.out[1].keys())))
 
         # Test the length of the data file
-        self.assertEqual(self.out[1]['MLT'].shape[0], 2)
+        self.assertEqual(self.out[1]['MLT'].shape[0], 4)
 
         # Test the values of the last data line
         for kk in self.test_vals.keys():
-            self.assertEqual(self.out[1][kk][-1], self.test_vals[kk])
+            self.assertEqual(self.out[1][kk][1], self.test_vals[kk])
         return
 
     def test_load_failures(self):
