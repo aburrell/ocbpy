@@ -6,6 +6,7 @@ Summary of all changes made since the first stable release
 0.3.0 (XX-XX-2022)
 ------------------
 * BUG: Fixed header initialization error general instrument loading routine
+* BUG: Fixed time cycling in the `supermag2ascii_ocb` function
 * DEP: Moved OCBoundary class to hidden sub-module, `_boundary`
 * DEP: Moved `ocboundary` functions to new sub-module, `cycle_boundary`
 * DEP: Deprecated kwargs no longer needed to select good IMAGE data
