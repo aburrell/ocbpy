@@ -153,13 +153,8 @@ def supermag2ascii_ocb(smagfile, outfile, hemisphere=0, ocb=None,
                      & (np.sign(mdata['MLAT']) == hemisphere))[0]
 
     if igood.shape != mdata['MLT'].shape:
-        for k in mdata.keys():
-            mdata[k] = mdata[k][igood]
-
-        # Recalculate the number of stations if some data was removed
-        for tt in np.unique(mdata['DATETIME']):
-            itimes = np.where(mdata['DATETIME'] == tt)[0]
-            mdata['NST'][itimes] = len(itimes)
+        for mkey in mdata.keys():
+            mdata[mkey] = mdata[mkey][igood]
 
     # Open and test the file to ensure it can be written
     with open(outfile, 'w') as fout:
@@ -185,46 +180,51 @@ def supermag2ascii_ocb(smagfile, outfile, hemisphere=0, ocb=None,
                                         max_merit=max_merit, **kwargs)
 
             if imag < nmag and ocb.rec_ind < ocb.records:
+                # Get all of the points for this time pairing
+                itime = np.where(mdata['DATETIME'] == mdata['DATETIME'][imag])
+
                 # Set this value's AACGM vector values
-                vdata = ocbscal.VectorData(imag, ocb.rec_ind,
-                                           mdata['MLAT'][imag],
-                                           mdata['MLT'][imag],
-                                           aacgm_n=mdata['BN'][imag],
-                                           aacgm_e=mdata['BE'][imag],
-                                           aacgm_z=mdata['BZ'][imag],
-                                           scale_func=ocbscal.normal_curl_evar)
+                vdata = ocbscal.VectorData(
+                    itime[0], ocb.rec_ind, mdata['MLAT'][itime],
+                    mdata['MLT'][itime], aacgm_n=mdata['BN'][itime],
+                    aacgm_e=mdata['BE'][itime], aacgm_z=mdata['BZ'][itime],
+                    scale_func=ocbscal.normal_curl_evar)
 
                 vdata.set_ocb(ocb)
 
-                # Format the output line:
-                #    DATE TIME NST [SML SMU] STID [SZA] MLAT MLT BMAG BN BE BZ
-                #    OCB_MLAT OCB_MLT OCB_BMAG OCB_BN OCB_BE OCB_BZ
-                outline = "{:} {:d} {:s} ".format(mdata['DATETIME'][imag],
-                                                  mdata['NST'][imag],
-                                                  mdata['STID'][imag])
+                # Output one line for each time
+                for tind, jmag in enumerate(itime[0]):
+                    # Format the output line:
+                    #    DATE TIME NST [SML SMU] STID [SZA] MLAT MLT BMAG BN BE
+                    #    BZ OCB_MLAT OCB_MLT OCB_BMAG OCB_BN OCB_BE OCB_BZ
+                    # Recall that NST is the number of stations at this time,
+                    # so output the number of indices to be output at this time.
+                    outline = "{:} {:d} {:s} ".format(mdata['DATETIME'][jmag],
+                                                      len(itime[0]),
+                                                      mdata['STID'][jmag])
 
-                for okey in optional_keys:
-                    if okey == "SZA":
-                        outline = "{:s}{:.2f} ".format(outline,
-                                                       mdata[okey][imag])
-                    else:
-                        outline = "{:s}{:d} ".format(outline,
-                                                     mdata[okey][imag])
+                    for okey in optional_keys:
+                        if okey == "SZA":
+                            outline = "{:s}{:.2f} ".format(outline,
+                                                           mdata[okey][jmag])
+                        else:
+                            outline = "{:s}{:d} ".format(outline,
+                                                         mdata[okey][jmag])
 
-                outline = "".join([outline, "{:.2f} ".format(vdata.aacgm_lat),
-                                   "{:.2f} {:.2f} ".format(vdata.aacgm_mlt,
-                                                           vdata.aacgm_mag),
-                                   "{:.2f} {:.2f} ".format(vdata.aacgm_n,
-                                                           vdata.aacgm_e),
-                                   "{:.2f} {:.2f} {:.2f} {:.2f}".format(
-                                       vdata.aacgm_z, vdata.ocb_lat,
-                                       vdata.ocb_mlt, vdata.ocb_mag),
-                                   " {:.2f} {:.2f} {:.2f}\n".format(
-                                       vdata.ocb_n, vdata.ocb_e, vdata.ocb_z)])
-                fout.write(outline)
+                    outline = "".join([
+                        outline, "{:.2f} ".format(vdata.aacgm_lat[tind]),
+                        "{:.2f} {:.2f} {:.2f} {:.2f} {:.2f} {:.2f} ".format(
+                            vdata.aacgm_mlt[tind], vdata.aacgm_mag[tind],
+                            vdata.aacgm_n[tind], vdata.aacgm_e[tind],
+                            vdata.aacgm_z[tind], vdata.ocb_lat[tind]),
+                        "{:.2f} {:.2f} {:.2f} {:.2f} {:.2f}\n".format(
+                            vdata.ocb_mlt[tind], vdata.ocb_mag[tind],
+                            vdata.ocb_n[tind], vdata.ocb_e[tind],
+                            vdata.ocb_z[tind])])
+                    fout.write(outline)
 
                 # Move to next line
-                imag += 1
+                imag = itime[0][-1] + 1
 
     return
 
