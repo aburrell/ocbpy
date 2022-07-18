@@ -19,16 +19,24 @@ provided in the :py:mod:`ocbpy.boundaries.files` sub-module.
 IMAGE
 -----
 
-Data from three auroral instruments provide northern hemisphere OCB and EAB
-locations for 3 May 2000 02:41:43 UT - 31 Oct 2002 20:05:16, though not all of
-the times included in these files contain high-quality estimations of the
-boundary locations. Recommended selection criteria are included as defaults in
-the :py:class:`~ocbpy.OCBoundary` class. There are also boundary
-files that combine the information from all instruments to obtain the OCB and
-EAB. You can read more about the OCB determination, EAB determination, this
-selection criteria, and the three auroral instruments (IMAGE Wideband Imaging
-Camera (WIC) and FUV Spectrographic Imagers SI12 and SI13) in the articles
-listed in :ref:`cite-image`.
+Data from three auroral instruments provide northern hemisphere poleward auroral
+boundary (PAB) and EAB locations for 3 May 2000 02:41:43 UT - 31 Oct 2002
+20:05:16, though not all of the times included in these files contain
+high-quality estimations of the boundary locations. Recommended selection
+criteria are included as defaults in the :py:class:`~ocbpy.OCBoundary` class.
+There are also boundary files that combine the information from all instruments
+to obtain the OCB and EAB. These combined files are the default boundaries for
+the IMAGE time period.  You can read more about the OCB determination, EAB
+determination, this selection criteria, and the three auroral instruments
+(IMAGE Wideband Imaging Camera (WIC) and FUV Spectrographic Imagers SI12 and
+SI13) in the articles listed in :ref:`cite-image`.
+
+The most recent corrects for each instrument that add the DMSP particle
+precipitation corrections to the PAB and EAB locations are included in
+:py:mod:`ocbpy.ocb_correction`.  These corrections should be applied to the
+data used to obtain the circle fits included in the instrument files, not the
+circle fits themselves. These data sets may be obtained from the British
+Antarctic Survey.
 
 
 .. _bound-data-ampere:

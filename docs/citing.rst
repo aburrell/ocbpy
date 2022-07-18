@@ -42,8 +42,8 @@ which may also be cited if a description of the package is desired.
 IMAGE FUV Boundaries
 --------------------
 
-Please cite both the papers discussing both the instrument and the boundary
-retrieval method.
+Please cite both the papers discussing the instrument and the appropriate
+boundary retrieval method.
 
 * **SI12/SI13**: Mende, S., et al. Space Science Reviews (2000) 91: 287-318.
   http://doi.org/10.1023/A:1005292301251.
@@ -53,6 +53,8 @@ retrieval method.
   high‐latitude ionospheric climatologies and empirical models,
   J. Geophys. Res. Space Physics, 122, 932–947,
   http://doi.org/10.1002/2016JA023235.
+* **OCB**: Chisham, G. et al. (2022) Ionospheric Boundaries Derived from Auroral
+  Images. In Prep.
 * **OCB**: Chisham, G. (2017) Auroral Boundary Derived from IMAGE Satellite
   Mission Data (May 2000 - Oct 2002), Version 1.1, Polar Data Centre, Natural
   Environment Research Council, UK.
