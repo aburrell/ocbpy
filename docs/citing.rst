@@ -57,6 +57,9 @@ retrieval method.
   Mission Data (May 2000 - Oct 2002), Version 1.1, Polar Data Centre, Natural
   Environment Research Council, UK.
   http://doi.org/10.5285/75aa66c1-47b4-4344-ab5d-52ff2913a61e.
+* **OCB**: Chisham, G., et al. (2022) Ionospheric boundaries derived from
+  auroral images. Journal of Geophysical Research: Space Physics, 127,
+  e2022JA030622. https://doi.org/10.1029/2022JA030622.
 
 
 .. _cite-ampere:
