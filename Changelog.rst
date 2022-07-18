@@ -10,11 +10,12 @@ Summary of all changes made since the first stable release
 * DEP: Moved OCBoundary class to hidden sub-module, `_boundary`
 * DEP: Moved `ocboundary` functions to new sub-module, `cycle_boundary`
 * DEP: Deprecated kwargs no longer needed to select good IMAGE data
-* DOC: Improved the PEP8 compliance in the documentation examples
-* DOC: Improved the docstring numpydoc compliance
+* DOC: Improved the PEP8 and numpydoc compliance in the documentation examples
+* DOC: Updated citations
 * DOC: Updated cross-referencing and added missing API sections
 * DOC: Added examples for DMSP SSJ boundaries, pysat Instruments, and the
-       DualBoundary class
+       DualBoundary class, updated the README example
+* DOC: Improved documentation configuration
 * ENH: Added a setup configuration file
 * ENH: Changed class `__repr__` to produce a string `eval` can use as input
 * ENH: Updated the IMAGE OCB files and added EAB files
