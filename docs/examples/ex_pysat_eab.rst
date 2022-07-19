@@ -9,13 +9,13 @@ demonstrating how to use :py:mod:`pysat` with :py:mod:`ocbpy`.
 
 Using Equatorward Auroral Boundaries
 ------------------------------------
- may be loaded on their own using the
-:py:class:`~ocbpy._boundary.EABoundary` class.  This is a wrapper for the
-:py:class:`~ocbpy._boundary.OCBoundary` class with different defaults more
-appropriate for EABs.  Currently, :ref:`bound-data-image` and
-:ref:`bound-data-dmsp-ssj` both have EAB data.  This example uses
-the default file for IMAGE from the Northern hemisphere.  It is very similar
-to :ref:`exinit`, the first example in this section.
+
+EABs may be loaded using the :py:class:`~ocbpy._boundary.EABoundary` class.
+This is a wrapper for the :py:class:`~ocbpy._boundary.OCBoundary` class with
+different defaults more appropriate for EABs.  Currently,
+:ref:`bound-data-image` and :ref:`bound-data-dmsp-ssj` both have EAB data.  This
+example uses the default file for IMAGE from the Northern hemisphere.  It is
+very similar to :ref:`exinit`, the first example in this section.
 
 ::
 
@@ -53,6 +53,7 @@ The expected record index, :py:attr:`eab.rec_ind`, is ``1``.
 
 Load a pysat Instrument (Madrigal TEC)
 --------------------------------------
+
 Total Electron Content (TEC) is one of the most valuable ionospheric data sets.
 `Madrigal <http://cedar.openmadrigal.org/>`_ provides Vertical TEC (VTEC) maps
 from the 1990's onward that specify the median VTEC in 1 degree x 1 degree
@@ -60,9 +61,9 @@ geographic latitude x longitude bins.  The
 `pysat <https://github.com/pysat>`_ package,
 `pysatMadrigal <https://github.com/pysat/pysatMadrigal>`_
 has an instrument for obtaining, managing, and processing this VTEC data. To
-run this example, you must have :py:module:`pysatMadrigal`
+run this example, you must have :py:mod:`pysatMadrigal`
 `installed <https://pysatmadrigal.readthedocs.io/en/latest/installation.html>`_.
-After setting up :py:module:`pysat`, download the file needed for this example
+After setting up :py:mod:`pysat`, download the file needed for this example
 using the following commands.
 
 ::

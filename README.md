@@ -11,10 +11,11 @@ Overview </h1>
 
 OCBpy is a Python module that converts between AACGM coordinates and a magnetic
 coordinate system that adjusts latitude and local time relative to the Open
-Closed field line Boundary (OCB).  This is particulary useful for statistical
-studies of the poles, where gridding relative to a fixed magnetic coordinate
-system would cause averaging of different physical regions, such as auroral
-and polar cap measurements.  This coordinate system is described in:
+Closed field line Boundary (OCB), Equatorial Auroral Boundary (EAB), or both.
+This is particulary useful for statistical studies of the poles, where gridding
+relative to a fixed magnetic coordinate system would cause averaging of
+different physical regions, such as auroral and polar cap measurements.  This
+coordinate system is described in:
 
   * Chisham, G. (2017), A new methodology for the development of high‐latitude
     ionospheric climatologies and empirical models, Journal of Geophysical
@@ -23,14 +24,13 @@ and polar cap measurements.  This coordinate system is described in:
 
   * Full [documentation](http://ocbpy.rtfd.io/)
 
-OCBs must be obtained from observations for this coordinate transformation.
-In the British Antarctic Survey's [IMAGE Auroral Boundary data project](https://www.bas.ac.uk/project/image-auroral-boundary-data/)
-from three auroral instruments provide northern hemisphere OCB locations
-for 3 May 2000 03:01:42 UT - 22 Aug 2002 00:01:28, though not all of the times
-included in these files contain high-quality estimations of the OCB.
-Recommended selection criteria are included as defaults in the OCBoundary class.
-OCBpy also supports boundaries provided by AMPERE and DMSP:
+Boundaries must be obtained from observations or models for this coordinate
+transformation. Several boundary data sets are included within this package.
+These include northern hemisphere boundaries from the IMAGE satellite,
+northern and southern hemisphere OCBs from AMPERE, and single-point boundary
+locations from DMSP.
 
+  * [IMAGE Auroral Boundary data](https://www.bas.ac.uk/project/image-auroral-boundary-data/)
   * Burrell, A. G. et al. (2020): AMPERE Polar Cap Boundaries, Ann. Geophys.,
     38, 481-490,
     [doi:10.5194/angeo-38-481-2020](https://doi.org/10.5194/angeo-38-481-2020)
@@ -46,18 +46,18 @@ These routines may be used as a guide to write routines for other datasets.
 
 # Python versions
 
-This module currently supports Python version 3.6 - 3.9.
+This module currently supports Python version 3.7 - 3.10.
 
 # Dependencies
 
 The listed dependecies were tested with the following versions:
   * numpy
   * aacgmv2
-  * pysat (2.0.0+)
+  * pysat (3.0.1+)
   * ssj_auroral_boundary
 
 Testing is performed using the python module, unittest.  To limit dependency
-issues, pysat (>=2.0.0) and ssj_auroral_boundary are optional dependencies.
+issues, pysat (>=3.0.1) and ssj_auroral_boundary are optional dependencies.
 
 # Installation
 
@@ -92,7 +92,7 @@ To run the unit tests,
 In iPython, run:
 
 ```
-import numpy as np
+import datetime as dt
 import ocbpy
 ```
 
@@ -100,49 +100,47 @@ Then initialise an OCB class object.  This uses the default IMAGE FUV file and
 will take a few minutes to load.
 
 ```
-ocb = ocbpy.ocboundary.OCBoundary()
+ocb = ocbpy.OCBoundary()
 print(ocb)
 ```
 
 The output should be as follows:
 
 ```
-Open-Closed Boundary file: ~/ocbpy/ocbpy/boundaries/si13_north_circle
+Open-Closed Boundary file: ~/ocbpy/ocbpy/boundaries/image_north_circle.ocb
 Source instrument: IMAGE
-Open-Closed Boundary reference latitude: 74.0 degrees
+Boundary reference latitude: 74.0 degrees
 
-219927 records from 2000-05-05 11:35:27 to 2002-08-22 00:01:28
+305805 records from 2000-05-04 03:03:20 to 2002-10-31 20:05:16
 
 YYYY-MM-DD HH:MM:SS Phi_Centre R_Centre R
------------------------------------------
-2000-05-05 11:35:27 356.93 8.74 9.69
-2000-05-05 11:37:23 202.97 13.23 22.23
-2002-08-21 23:55:20 322.60 5.49 15.36
-2002-08-22 00:01:28 179.02 2.32 19.52
+-----------------------------------------------------------------------------
+2000-05-04 03:03:20 4.64 2.70 21.00
+2000-05-04 03:07:15 147.24 2.63 7.09
+2002-10-31 20:03:16 207.11 5.94 22.86
+2002-10-31 20:05:16 335.47 6.76 11.97
 
 Uses scaling function(s):
-circular(**{})
+ocbpy.ocb_correction.circular(**{})
 ```
 
-Get the first good OCB record, which will be record index 27.
+Get the first good OCB record, which will be record index 0.
 
 ```
 ocb.get_next_good_ocb_ind()
 print(ocb.rec_ind)
-
-27
 ```
 
-To get the OCB record closest to a specified time, use **ocbpy.match_data_ocb**
+To get the good OCB record closest to a specified time (with a maximum of a
+60 sec time difference, as a default), use **ocbpy.match_data_ocb**
 
 ```
-first_good_time = ocb.dtime[ocb.rec_ind]
-test_times = [first_good_time + dt.timedelta(minutes=5 * (i + 1))
-              for i in range(5)]
+test_times = [dt.datetime(otime.year, otime.month, otime.day, otime.hour,
+                          otime.minute, 0) for otime in ocb.dtime[1:10]]
 itest = ocbpy.match_data_ocb(ocb, test_times, idat=0)
 print(itest, ocb.rec_ind, test_times[itest], ocb.dtime[ocb.rec_ind])
 
-0 31 2000-05-05 13:45:30 2000-05-05 13:50:29
+4 5 2000-05-05 11:39:00 2000-05-05 11:39:20
 ```
 
 More examples are available in the documentation.

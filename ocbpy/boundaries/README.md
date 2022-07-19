@@ -17,10 +17,12 @@ A       : Psuedo area of the circle (as in AACGM, not geographic)
 R_ERR   : Root-mean squared error in the radius in degrees
 R_MERIT : Radial distance from the most typical pole location in degrees
  
-There are certain ranges for NB, RCENT, and R that you shouldn’t use that can
-be found (and explained) in Chisham (2017), doi:10.1002/2016JA023235.  These
-ranges are the defaults in OCBoundary.get_next_good_ocb_ind.  When using these
-boundaries, remember to cite Chisham (2017). From ocbpy version 0.3.0 onward,
+Previosly, there are certain ranges for NB, RCENT, and R that were not
+recommended for use (see Chisham (2017), doi:10.1002/2016JA023235).  Currently,
+R_MERIT is used instead, with recommended merit values documented in Chisham
+et al. (2022), doi:10.1029/2022JA030622.  These ranges are the defaults in
+OCBoundary.get_next_good_ocb_ind.  When using these boundaries, remember to cite
+Chisham (2017) or Chisham et al. (2022). From ocbpy version 0.3.0 onward,
 the SI12, SI13, and WIC files contain uncorrected auroral boundary fits, while
 the IMAGE file contains DMSP corrected average boundaries for the OCB and EAB.
 
