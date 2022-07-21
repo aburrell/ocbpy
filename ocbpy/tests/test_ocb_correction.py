@@ -3,7 +3,7 @@
 # Copyright (C) 2017, AGB & GC
 # Full license can be found in License.md
 # -----------------------------------------------------------------------------
-"""Tests the ocboundary class and functions."""
+"""Tests the OCB correction functions."""
 
 import numpy as np
 import unittest
