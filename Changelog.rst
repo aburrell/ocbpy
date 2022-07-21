@@ -24,6 +24,7 @@ Summary of all changes made since the first stable release
 * ENH: Changed attributes in VectorData into properties to ensure expected
        behaviour if altering the class data after initialisation
 * ENH: Added IMAGE SI12, SI13, and WIC DMSP corrections to `harmonic`
+* ENH: Made scaling optional for SuperMAG and SuperDARN vorticity data
 * MAINT: Removed support for Python 2.7, 3.5, and 3.6; added support for 3.10
 * MAINT: Improved PEP8 compliance
 * MAINT: Updated pysat routines to v3.0.0 standards

@@ -20,7 +20,8 @@ import ocbpy.ocb_scaling as ocbscal
 
 def supermag2ascii_ocb(smagfile, outfile, hemisphere=0, ocb=None,
                        ocbfile='default', instrument='', max_sdiff=600,
-                       min_merit=None, max_merit=None, **kwargs):
+                       min_merit=None, max_merit=None,
+                       scale_func=ocbscal.normal_curl_evar, **kwargs):
     """Covert and scales the SuperMAG data into OCB coordinates.
 
     Parameters
@@ -68,6 +69,9 @@ def supermag2ascii_ocb(smagfile, outfile, hemisphere=0, ocb=None,
     min_r : float
         Minimum radius for open-closed field line boundary in degrees.
         Deprecated, will be removed in version 0.3.1+ (default=10.0)
+    scale_func : function or NoneType
+        Scale the magnetic field observations unless None
+        (default=ocbpy.ocb_scale.normal_curl_evar)
 
     Raises
     ------
@@ -76,8 +80,7 @@ def supermag2ascii_ocb(smagfile, outfile, hemisphere=0, ocb=None,
 
     Notes
     -----
-    May only process one hemisphere at a time.  Scales the magnetic field
-    observations using `ocbpy.ocb_scale.normal_curl_evar`.
+    May only process one hemisphere at a time.
 
     See Also
     --------
@@ -188,7 +191,7 @@ def supermag2ascii_ocb(smagfile, outfile, hemisphere=0, ocb=None,
                     itime[0], ocb.rec_ind, mdata['MLAT'][itime],
                     mdata['MLT'][itime], aacgm_n=mdata['BN'][itime],
                     aacgm_e=mdata['BE'][itime], aacgm_z=mdata['BZ'][itime],
-                    scale_func=ocbscal.normal_curl_evar)
+                    scale_func=scale_func)
 
                 vdata.set_ocb(ocb)
 

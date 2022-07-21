@@ -19,7 +19,8 @@ import ocbpy.ocb_scaling as ocbscal
 
 def vort2ascii_ocb(vortfile, outfile, hemisphere=0, ocb=None,
                    ocbfile='default', instrument='', max_sdiff=600,
-                   save_all=False, min_merit=None, max_merit=None, **kwargs):
+                   save_all=False, min_merit=None, max_merit=None,
+                   scale_func=ocbscal.normal_curl_evar, **kwargs):
     """Covert the location of vorticity data from AACGM to OCB coordinates.
 
     Parameters
@@ -70,6 +71,9 @@ def vort2ascii_ocb(vortfile, outfile, hemisphere=0, ocb=None,
     min_r : float
         Minimum radius for open-closed field line boundary in degrees.
         Deprecated, will be removed in version 0.3.1+ (default=10.0)
+    scale_func : function or NoneType
+        Scaling function for Vorticity data or None to not scale
+        (default=ocbpy.ocb_scale.normal_curl_evar)
 
     Raises
     ------
@@ -207,8 +211,10 @@ def vort2ascii_ocb(vortfile, outfile, hemisphere=0, ocb=None,
                     nlat, nmlt, _, ncor = nout
                     rad = ocb.ocb.r[ocb.rec_ind] + ncor
 
-                nvort = ocbscal.normal_curl_evar(vdata['VORTICITY'][ivort],
-                                                 rad, ref_r)
+                if scale_func is None:
+                    nvort = vdata['VORTICITY'][ivort]
+                else:
+                    nvort = scale_func(vdata['VORTICITY'][ivort], rad, ref_r)
 
                 # Format the output line
                 #    DATE TIME (SAVE_ALL) OCB_LAT OCB_MLT NORM_VORT
