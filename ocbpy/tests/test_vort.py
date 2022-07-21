@@ -108,6 +108,8 @@ class TestVort2AsciiMethods(unittest.TestCase):
                                        "test_empty")
         self.test_output_north = os.path.join(self.ocb_dir, "tests",
                                               "test_data", "out_vort")
+        self.test_unscaled_north = os.path.join(self.ocb_dir, "tests",
+                                              "test_data", "out_vort_unscaled")
         self.test_output_dual = os.path.join(self.ocb_dir, "tests",
                                              "test_data", "out_dual_vort")
         self.test_output_south = os.path.join(self.ocb_dir, "tests",
@@ -129,6 +131,7 @@ class TestVort2AsciiMethods(unittest.TestCase):
         del self.test_file, self.temp_output, self.test_ocb, self.ocb_dir
         del self.test_output_north, self.test_output_south, self.test_eq_file
         del self.test_empty, self.test_eab, self.test_output_dual
+        del self.test_unscaled_north
         return
 
     def test_deprecated_kwargs(self):
@@ -153,6 +156,9 @@ class TestVort2AsciiMethods(unittest.TestCase):
         subtests = [(self.test_file, self.test_output_north,
                      {"ocbfile": self.test_ocb, "instrument": "image",
                       "hemisphere": 1}),
+                    (self.test_file, self.test_unscaled_north,
+                     {"ocbfile": self.test_ocb, "instrument": "image",
+                      "hemisphere": 1, "scale_func": None}),
                     (self.test_file, self.test_output_south,
                      {"ocbfile": self.test_ocb, "instrument": "image",
                       "hemisphere": -1}),

@@ -32,6 +32,9 @@ class TestSuperMAG2AsciiMethods(unittest.TestCase):
                                          "test_eq_smag")
         self.test_output_north = os.path.join(self.ocb_dir, "tests",
                                               "test_data", "out_smag")
+        self.test_unscaled_north = os.path.join(self.ocb_dir, "tests",
+                                                "test_data",
+                                                "out_smag_unscaled")
         self.test_output_dual = os.path.join(self.ocb_dir, "tests",
                                              "test_data", "out_dual_smag")
         self.test_output_south = os.path.join(self.ocb_dir, "tests",
@@ -47,7 +50,7 @@ class TestSuperMAG2AsciiMethods(unittest.TestCase):
 
         del self.test_file, self.test_output_north, self.test_ocb
         del self.test_output_south, self.temp_output, self.test_eq_file
-        del self.test_eab, self.test_output_dual
+        del self.test_eab, self.test_output_dual, self.test_unscaled_north
         return
 
     def test_deprecation_kwargs(self):
@@ -80,18 +83,23 @@ class TestSuperMAG2AsciiMethods(unittest.TestCase):
                                     self.temp_output, shallow=False))
         return
 
-    def test_supermag2ascii_north_from_ocb(self):
-        """Test SuperMAG data processing choosing north from OCBoundary."""
+    def test_supermag2ascii_north_from_ocb_w_wo_scaling(self):
+        """Test SuperMAG North from OCBoundary with and w/o scaling."""
 
-        ocb = ocbpy.ocboundary.OCBoundary(filename=self.test_ocb,
-                                          instrument='image', hemisphere=1)
+        subtests = [(self.test_output_north, {}),
+                    (self.test_unscaled_north, {'scale_func': None})]
 
-        ocb_ismag.supermag2ascii_ocb(self.test_file, self.temp_output, ocb=ocb,
-                                     hemisphere=0)
+        ocb = ocbpy.OCBoundary(filename=self.test_ocb, instrument='image',
+                               hemisphere=1)
 
-        # Compare created file to stored test file
-        self.assertTrue(filecmp.cmp(self.test_output_north,
-                                    self.temp_output, shallow=False))
+        for val in subtests:
+            with self.subTest(val=val):
+                ocb_ismag.supermag2ascii_ocb(self.test_file, self.temp_output,
+                                             ocb=ocb, hemisphere=0, **val[1])
+
+                # Compare created file to stored test file
+                self.assertTrue(filecmp.cmp(val[0], self.temp_output,
+                                            shallow=False))
         return
 
     def test_supermag2ascii_ocb_choose_south(self):
