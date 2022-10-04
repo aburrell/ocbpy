@@ -109,7 +109,8 @@ class TestVort2AsciiMethods(unittest.TestCase):
         self.test_output_north = os.path.join(self.ocb_dir, "tests",
                                               "test_data", "out_vort")
         self.test_unscaled_north = os.path.join(self.ocb_dir, "tests",
-                                              "test_data", "out_vort_unscaled")
+                                                "test_data",
+                                                "out_vort_unscaled")
         self.test_output_dual = os.path.join(self.ocb_dir, "tests",
                                              "test_data", "out_dual_vort")
         self.test_output_south = os.path.join(self.ocb_dir, "tests",
