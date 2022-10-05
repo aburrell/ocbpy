@@ -29,7 +29,7 @@ def add_ocb_to_data(pysat_inst, mlat_name='', mlt_name='', evar_names=None,
                     curl_evar_names=None, vector_names=None, hemisphere=0,
                     ocb=None, ocbfile='default', instrument='', max_sdiff=60,
                     min_merit=None, max_merit=None, **kwargs):
-    """Covert the location of pysat data into OCB coordinates.
+    """Covert the location of pysat data into OCB, EAB, or Dual coordinates.
 
     Parameters
     ----------
@@ -300,10 +300,15 @@ def add_ocb_to_data(pysat_inst, mlat_name='', mlt_name='', evar_names=None,
                                     **kwargs)
 
         if idat < ndat and ocb.rec_ind < ocb.records:
+            # Find all the indices with the same time
+            time_ind = np.where(pysat_inst.index[dat_ind[0]]
+                                == pysat_inst.index[dat_ind[0]][idat])
+            idat = time_ind[0][-1]
+
             if len(dat_ind) > 1:
-                iout = tuple(dind[idat] for dind in dat_ind)
+                iout = tuple(dind[time_ind] for dind in dat_ind)
             else:
-                iout = dat_ind[0][idat]
+                iout = dat_ind[0][time_ind]
 
             # Get the OCB coordinates
             nout = ocb.normal_coord(aacgm_lat[iout], aacgm_mlt[iout])
