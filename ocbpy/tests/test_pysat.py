@@ -128,13 +128,26 @@ class TestPysatUtils(unittest.TestCase):
                     if np.isnan(self.test_inst.meta[self.pysat_key][ll]):
                         self.assertTrue(
                             np.isnan(self.test_inst.meta[self.ocb_key][ll]))
-                    else:
+                    elif ll != self.test_inst.meta.labels.fill_val:
+                        # The OCB fill value is NaN, regardless of prior value
                         self.assertEqual(
                             self.test_inst.meta[self.ocb_key][ll],
                             self.test_inst.meta[self.pysat_key][ll])
                 except TypeError:
-                    self.assertRegex(self.test_inst.meta[self.ocb_key][ll],
-                                     self.test_inst.meta[self.pysat_key][ll])
+                    ocb_len = len(self.test_inst.meta[self.ocb_key][ll])
+                    pysat_len = len(self.test_inst.meta[self.pysat_key][ll])
+                    if pysat_len == 0:
+                        self.assertGreaterEqual(ocb_len, pysat_len)
+                    else:
+                        self.assertRegex(
+                            self.test_inst.meta[self.ocb_key][ll],
+                            self.test_inst.meta[self.pysat_key][ll],
+                            msg="".join(["Meta label ", ll, ": OCB key ",
+                                         self.ocb_key, " value `",
+                                         self.test_inst.meta[self.ocb_key][ll],
+                                         "` not in pysat key ", self.pysat_key,
+                                         " value `", self.test_inst.meta[
+                                             self.pysat_key][ll], "`"]))
 
         # Test the elements that have "OCB" appended to the text
         sline = self.test_inst.meta[self.ocb_key][
