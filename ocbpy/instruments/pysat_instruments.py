@@ -152,6 +152,8 @@ def add_ocb_to_data(pysat_inst, mlat_name='', mlt_name='', evar_names=None,
     omlt_name = "{:s}_ocb".format(mlt_name)
     ocor_name = "r_corr_ocb"
     ocb_names = [olat_name, omlt_name, ocor_name]
+    ocb_vect_attrs = ['ocb_n', 'ocb_e', 'ocb_z', 'ocb_mag', 'unscaled_r',
+                      'scaled_r']
 
     # Get a list of all necessary pysat data names
     pysat_names = [mlat_name, mlt_name]
@@ -280,8 +282,11 @@ def add_ocb_to_data(pysat_inst, mlat_name='', mlt_name='', evar_names=None,
     for oattr in ocb_names:
         eattr = oattr[:-4]
         if eattr in vector_names.keys():
-            ocb_output[oattr] = np.empty(shape=aacgm_lat.shape,
-                                         dtype=ocbscal.VectorData)
+            for vattr in ocb_vect_attrs:
+                ovattr = '_'.join([oattr, vattr])
+                ovattr = ovattr.replace('ocb_ocb_', 'ocb_')
+                ocb_output[ovattr] = np.full(aacgm_lat.shape, np.nan,
+                                             dtype=float)
         else:
             ocb_output[oattr] = np.full(aacgm_lat.shape, np.nan, dtype=float)
 
@@ -344,10 +349,17 @@ def add_ocb_to_data(pysat_inst, mlat_name='', mlt_name='', evar_names=None,
                         else:
                             vector_init[ikey] = vector_names[eattr][ikey]
 
-                    ocb_output[oattr][iout] = ocbscal.VectorData(
-                        iout, ocb.rec_ind, aacgm_lat[iout], aacgm_mlt[iout],
-                        **vector_init)
-                    ocb_output[oattr][iout].set_ocb(ocb)
+                    # Perform the vector scaling
+                    vout = ocbscal.VectorData(iout, ocb.rec_ind,
+                                              aacgm_lat[iout], aacgm_mlt[iout],
+                                              **vector_init)
+                    vout.set_ocb(ocb)
+
+                    # Assign the vector attributes to the output
+                    for vattr in ocb_vect_attrs:
+                        ovattr = '_'.join([oattr, vattr])
+                        ovattr = ovattr.replace('ocb_ocb_', 'ocb_')
+                        ocb_output[ovattr][iout] = getattr(vout, vattr)
 
             if hasattr(ocb, "ocb"):
                 unscaled_r = ocb.ocb.r[ocb.ocb.rec_ind] + ocb_output[
@@ -373,7 +385,7 @@ def add_ocb_to_data(pysat_inst, mlat_name='', mlt_name='', evar_names=None,
             idat += 1
 
     # Update the pysat Instrument
-    for oattr in ocb_output:
+    for oattr in ocb_output.keys():
         # The update procedure is different for pandas and xarray
         if pysat_inst.pandas_format:
             set_data = {oattr: ocb_output[oattr]}
@@ -384,7 +396,7 @@ def add_ocb_to_data(pysat_inst, mlat_name='', mlt_name='', evar_names=None,
             pysat_inst.data = pysat_inst.data.assign(set_data)
 
         # Update the pysat Metadata
-        eattr = oattr[:-4]
+        eattr = oattr.split('_ocb')[0]
         if hasattr(ocb, "instrument"):
             notes = "".join(["OCB obtained from ", ocb.instrument,
                              " data in file ", ocb.filename,
@@ -406,7 +418,7 @@ def add_ocb_to_data(pysat_inst, mlat_name='', mlt_name='', evar_names=None,
             else:
                 func_name = vector_names[eattr]['scale_func'].__name__
             notes += " and was scaled using {:}".format(func_name)
-            eattr = vector_attrs[oattr][0]
+            eattr = vector_attrs['_'.join([eattr, 'ocb'])][0]
             isvector = True
         else:
             isvector = False
