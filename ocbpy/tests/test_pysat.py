@@ -79,20 +79,18 @@ class TestPysatUtils(unittest.TestCase):
         self.pysat_key = 'dummy1'
         self.pysat_lat = 'latitude'
         self.notes = None
-        self.isvector = False
         self.test_inst = None
         self.ocb = None
         self.added_keys = list()
         self.pysat_keys = list()
-        self.arevectors = list()
         self.del_time = 600
         return
 
     def tearDown(self):
         """Tear down the testing environment."""
-        del self.ocb_key, self.pysat_key, self.notes, self.isvector
+        del self.ocb_key, self.pysat_key, self.notes, self.del_time
         del self.test_inst, self.ocb, self.added_keys, self.pysat_keys
-        del self.arevectors, self.del_time, self.pysat_lat
+        del self.pysat_lat
         return
 
     def eval_ocb_metadata(self):
@@ -118,7 +116,7 @@ class TestPysatUtils(unittest.TestCase):
                              self.test_inst.meta.labels.fill_val]),
                          ", not np.nan"]))
 
-        if self.pysat_key is not None and not self.isvector:
+        if self.pysat_key is not None:
             # Test the elements that are identical
             for ll in [self.test_inst.meta.labels.units,
                        self.test_inst.meta.labels.min_val,
@@ -132,7 +130,9 @@ class TestPysatUtils(unittest.TestCase):
                         # The OCB fill value is NaN, regardless of prior value
                         self.assertEqual(
                             self.test_inst.meta[self.ocb_key][ll],
-                            self.test_inst.meta[self.pysat_key][ll])
+                            self.test_inst.meta[self.pysat_key][ll],
+                            msg="unequal fill values [{:s} and {:s}]".format(
+                                self.ocb_key, self.pysat_key))
                 except TypeError:
                     ocb_len = len(self.test_inst.meta[self.ocb_key][ll])
                     pysat_len = len(self.test_inst.meta[self.pysat_key][ll])
@@ -153,10 +153,14 @@ class TestPysatUtils(unittest.TestCase):
         sline = self.test_inst.meta[self.ocb_key][
             self.test_inst.meta.labels.name].split(" ")
         self.assertRegex(sline[0], "OCB")
-        if not self.isvector and self.pysat_key is not None:
+        note_line = self.test_inst.meta[self.ocb_key][
+            self.test_inst.meta.labels.notes]
+        if self.pysat_key is not None and note_line.find('scaled using') < 0:
             self.assertRegex(" ".join(sline[1:]),
                              self.test_inst.meta[self.pysat_key][
-                                 self.test_inst.meta.labels.name])
+                                 self.test_inst.meta.labels.name],
+                             msg="Bad long name for {:}; notes are: {:}".format(
+                                 self.pysat_key, note_line))
 
         # Test the remaining elements
         self.assertEqual(self.test_inst.meta[self.ocb_key][
@@ -173,25 +177,18 @@ class TestPysatUtils(unittest.TestCase):
             return
 
         # For a test instrument, evaluate attributes
-        if len(self.arevectors) < len(self.added_keys):
-            self.arevectors = [False for okey in self.added_keys]
-
         for i, self.ocb_key in enumerate(self.added_keys):
             # Test to see that data was added
             self.assertIn(self.ocb_key, self.test_inst.variables)
 
             # Test the metadata
             self.pysat_key = self.pysat_keys[i]
-            self.isvector = self.arevectors[i]
             self.eval_ocb_metadata()
 
             # Test to see that data within the time tolerance of the test OCBs
             # has OCB locations and other data is NaN
             match_data = np.array(self.test_inst[self.ocb_key])
-            if self.isvector:
-                mask_data = np.not_equal(match_data, None)
-            else:
-                mask_data = np.isfinite(match_data)
+            mask_data = np.isfinite(match_data)
 
             self.assertTrue(mask_data.any())
 
@@ -201,18 +198,13 @@ class TestPysatUtils(unittest.TestCase):
 
             for ii in match_time:
                 check_time = abs(ii - self.ocb.dtime).min().total_seconds()
-                self.assertLessEqual(check_time, self.del_time)
+                self.assertLessEqual(check_time, self.del_time,
+                                     msg="".join(["bad time difference for ",
+                                                  "OCB key ", self.ocb_key]))
 
-            if self.isvector:
-                self.assertTrue(isinstance(match_data[0],
-                                           ocbpy.ocb_scaling.VectorData),
-                                msg='Unexpected class {:} != {:}'.format(
-                                    repr(type(match_data[0])),
-                                    repr(ocbpy.ocb_scaling.VectorData)))
-
-            elif(self.pysat_keys[i] is not None
-                 and self.pysat_keys[i] not in [self.pysat_lat, 'mlt']):
-                pysat_data = self.test_inst[self.pysat_keys[i]].where(mask_data)
+            if(self.pysat_key is not None
+               and self.pysat_key not in [self.pysat_lat, 'mlt']):
+                pysat_data = self.test_inst[self.pysat_key].where(mask_data)
 
                 # Get the scaling radius
                 if hasattr(self.ocb, "r"):
@@ -222,19 +214,20 @@ class TestPysatUtils(unittest.TestCase):
                     rscale = (self.ocb.ocb.r
                               / (90.0 - abs(self.ocb.ocb.boundary_lat)))**2
 
-                # Evaluate the data
-                self.assertGreaterEqual(match_data.min(),
-                                        pysat_data.min() * rscale.min(),
-                                        msg="".join([
-                                            "bad comparison between ",
-                                            self.ocb_key, " and ",
-                                            self.pysat_keys[i]]))
-                self.assertGreaterEqual(pysat_data.max() * rscale.max(),
-                                        match_data.max(),
-                                        msg="".join([
-                                            "bad comparison between ",
-                                            self.ocb_key, " and ",
-                                            self.pysat_keys[i]]))
+                # Evaluate the non-vector data
+                if self.ocb_key.find(self.pysat_key) >= 0:
+                    self.assertGreaterEqual(match_data.min(),
+                                            pysat_data.min() * rscale.min(),
+                                            msg="".join([
+                                                "bad comparison between ",
+                                                self.ocb_key, " and ",
+                                                self.pysat_key]))
+                    self.assertGreaterEqual(pysat_data.max() * rscale.max(),
+                                            match_data.max(),
+                                            msg="".join([
+                                                "bad comparison between ",
+                                                self.ocb_key, " and ",
+                                                self.pysat_key]))
 
         return
 
@@ -293,10 +286,8 @@ class TestPysatMethods(TestPysatUtils):
         self.pysat_key = 'dummy1'
         self.pysat_lat = 'latitude'
         self.notes = None
-        self.isvector = False
         self.added_keys = list()
         self.pysat_keys = list()
-        self.arevectors = list()
         self.del_time = 600
 
         # Set the method default values
@@ -334,9 +325,9 @@ class TestPysatMethods(TestPysatUtils):
     def tearDown(self):
         """Tear down after each test."""
 
-        del self.ocb_key, self.pysat_key, self.notes, self.isvector
+        del self.ocb_key, self.pysat_key, self.notes
         del self.test_inst, self.ocb, self.added_keys, self.pysat_keys
-        del self.arevectors, self.test_file, self.log_capture, self.pysat_lat
+        del self.test_file, self.log_capture, self.pysat_lat
         del self.lout, self.lwarn, self.ocb_kw, self.pysat_var2, self.del_time
         return
 
@@ -351,11 +342,11 @@ class TestPysatMethods(TestPysatUtils):
     def test_add_ocb_to_metadata_vector(self):
         """Test the metadata adding routine for vector data."""
         ocb_pysat.add_ocb_to_metadata(self.test_inst, "ocb_test",
-                                      self.pysat_key, notes="test notes",
+                                      self.pysat_key,
+                                      notes="test notes scaled using None",
                                       isvector=True)
 
-        self.notes = 'test notes'
-        self.isvector = True
+        self.notes = 'test notes scaled using None'
         self.eval_ocb_metadata()
 
     def test_no_overwrite_metadata(self):
@@ -419,7 +410,6 @@ class TestPysatMethods(TestPysatUtils):
         self.pysat_keys = [aa.split("_ocb")[0] for aa in self.added_keys]
         self.assertIn('r_corr', self.pysat_keys)
         self.pysat_keys[self.pysat_keys.index("r_corr")] = None
-        self.arevectors = [False for i in self.added_keys]
         self.test_ocb_added()
         return
 
@@ -491,15 +481,12 @@ class TestPysatMethods(TestPysatUtils):
         self.added_keys = [kk for kk in self.test_inst.meta.keys()
                            if kk.find('_ocb') > 0]
         self.pysat_keys = list()
-        self.arevectors = list()
         for aa in self.added_keys:
             pp = aa.split("_ocb")[0]
-            self.arevectors.append(False)
             if pp == "r_corr":
                 pp = None
             elif pp not in self.test_inst.variables:
                 pp = self.pysat_key
-                self.arevectors[-1] = True
             self.pysat_keys.append(pp)
 
         self.test_ocb_added()
@@ -520,15 +507,12 @@ class TestPysatMethods(TestPysatUtils):
         self.added_keys = [kk for kk in self.test_inst.meta.keys()
                            if kk.find('_ocb') > 0]
         self.pysat_keys = list()
-        self.arevectors = list()
         for aa in self.added_keys:
             pp = aa.split("_ocb")[0]
-            self.arevectors.append(False)
             if pp == "r_corr":
                 pp = None
             elif pp not in self.test_inst.variables:
                 pp = self.pysat_key
-                self.arevectors[-1] = True
             self.pysat_keys.append(pp)
 
         self.test_ocb_added()
@@ -550,15 +534,12 @@ class TestPysatMethods(TestPysatUtils):
         self.added_keys = [kk for kk in self.test_inst.meta.keys()
                            if kk.find('_ocb') > 0]
         self.pysat_keys = list()
-        self.arevectors = list()
         for aa in self.added_keys:
             pp = aa.split("_ocb")[0]
-            self.arevectors.append(False)
             if pp == "r_corr":
                 pp = None
             elif pp not in self.test_inst.variables:
                 pp = self.pysat_key
-                self.arevectors[-1] = True
             self.pysat_keys.append(pp)
         self.test_ocb_added()
         return
@@ -580,15 +561,12 @@ class TestPysatMethods(TestPysatUtils):
         self.added_keys = [kk for kk in self.test_inst.meta.keys()
                            if kk.find('_ocb') > 0]
         self.pysat_keys = list()
-        self.arevectors = list()
         for aa in self.added_keys:
             pp = aa.split("_ocb")[0]
-            self.arevectors.append(False)
             if pp == "r_corr":
                 pp = None
             elif pp not in self.test_inst.variables:
                 pp = self.pysat_key
-                self.arevectors[-1] = True
             self.pysat_keys.append(pp)
 
         self.test_ocb_added()
@@ -702,10 +680,8 @@ class TestPysatMethodsEAB(TestPysatMethods):
         self.pysat_key = 'dummy1'
         self.pysat_lat = 'latitude'
         self.notes = None
-        self.isvector = False
         self.added_keys = list()
         self.pysat_keys = list()
-        self.arevectors = list()
         self.del_time = 600
 
         # Set the method defaults
@@ -744,8 +720,8 @@ class TestPysatMethodsEAB(TestPysatMethods):
 
         del self.test_file, self.log_capture, self.ocb, self.test_inst
         del self.lout, self.lwarn, self.ocb_kw, self.pysat_var2, self.ocb_key
-        del self.pysat_key, self.notes, self.isvector, self.pysat_lat
-        del self.added_keys, self.pysat_keys, self.arevectors, self.del_time
+        del self.pysat_key, self.notes, self.pysat_lat, self.del_time
+        del self.added_keys, self.pysat_keys
         return
 
 
@@ -760,10 +736,8 @@ class TestPysatMethodsDual(TestPysatMethods):
         self.pysat_key = 'dummy1'
         self.pysat_lat = 'latitude'
         self.notes = None
-        self.isvector = False
         self.added_keys = list()
         self.pysat_keys = list()
-        self.arevectors = list()
         self.del_time = 600
 
         # Set the method defaults
@@ -806,8 +780,8 @@ class TestPysatMethodsDual(TestPysatMethods):
 
         del self.test_file, self.log_capture, self.ocb, self.test_inst
         del self.lout, self.lwarn, self.ocb_kw, self.pysat_var2, self.pysat_lat
-        del self.ocb_key, self.pysat_key, self.notes, self.isvector
-        del self.added_keys, self.pysat_keys, self.arevectors, self.del_time
+        del self.ocb_key, self.pysat_key, self.notes, self.del_time
+        del self.added_keys, self.pysat_keys
         return
 
 
@@ -823,10 +797,8 @@ class TestPysatMethods2DXarray(TestPysatMethods):
         self.pysat_key = 'dummy1'
         self.pysat_lat = 'latitude'
         self.notes = None
-        self.isvector = False
         self.added_keys = list()
         self.pysat_keys = list()
-        self.arevectors = list()
         self.del_time = 600
 
         # Set the method defaults
@@ -867,8 +839,8 @@ class TestPysatMethods2DXarray(TestPysatMethods):
 
         del self.test_file, self.log_capture, self.ocb, self.test_inst
         del self.lout, self.lwarn, self.ocb_kw, self.pysat_var2, self.pysat_lat
-        del self.ocb_key, self.pysat_key, self.notes, self.isvector
-        del self.added_keys, self.pysat_keys, self.arevectors, self.del_time
+        del self.ocb_key, self.pysat_key, self.notes, self.del_time
+        del self.added_keys, self.pysat_keys
         return
 
 
@@ -883,10 +855,8 @@ class TestPysatMethodsXarray(TestPysatMethods):
         self.pysat_key = 'dummy1'
         self.pysat_lat = 'latitude'
         self.notes = None
-        self.isvector = False
         self.added_keys = list()
         self.pysat_keys = list()
-        self.arevectors = list()
         self.del_time = 600
 
         # Set the method defaults
@@ -927,8 +897,8 @@ class TestPysatMethodsXarray(TestPysatMethods):
 
         del self.test_file, self.log_capture, self.ocb, self.test_inst
         del self.lout, self.lwarn, self.ocb_kw, self.pysat_var2, self.del_time
-        del self.ocb_key, self.pysat_key, self.notes, self.isvector
-        del self.added_keys, self.pysat_keys, self.arevectors, self.pysat_lat
+        del self.ocb_key, self.pysat_key, self.notes, self.pysat_lat
+        del self.added_keys, self.pysat_keys
         return
 
 
@@ -943,10 +913,8 @@ class TestPysatMethodsModel(TestPysatMethods):
         self.pysat_key = 'dummy2'
         self.pysat_lat = 'mlat'
         self.notes = None
-        self.isvector = False
         self.added_keys = list()
         self.pysat_keys = list()
-        self.arevectors = list()
         self.del_time = 600
 
         # Set the method defaults
@@ -990,8 +958,8 @@ class TestPysatMethodsModel(TestPysatMethods):
 
         del self.test_file, self.log_capture, self.ocb, self.test_inst
         del self.lout, self.lwarn, self.ocb_kw, self.pysat_var2, self.del_time
-        del self.ocb_key, self.pysat_key, self.notes, self.isvector
-        del self.added_keys, self.pysat_keys, self.arevectors, self.pysat_lat
+        del self.ocb_key, self.pysat_key, self.notes, self.pysat_lat
+        del self.added_keys, self.pysat_keys
         return
 
 
@@ -1008,10 +976,8 @@ class TestPysatCustMethods(TestPysatUtils):
         self.pysat_key = 'dummy1'
         self.pysat_lat = 'latitude'
         self.notes = None
-        self.isvector = False
         self.added_keys = list()
         self.pysat_keys = list()
-        self.arevectors = list()
         self.del_time = 600
 
         # Set the method defaults
@@ -1043,11 +1009,10 @@ class TestPysatCustMethods(TestPysatUtils):
     def tearDown(self):
         """Clean the test environment."""
 
-        del self.ocb_key, self.pysat_key, self.notes, self.isvector
-        del self.added_keys, self.pysat_keys, self.arevectors, self.pysat_lat
-        del self.test_file, self.log_capture, self.test_inst, self.ocb
-        del self.lwarn, self.lout, self.cust_kwargs, self.pysat_var2
-        del self.del_time
+        del self.ocb_key, self.pysat_key, self.notes, self.pysat_lat
+        del self.added_keys, self.pysat_keys, self.test_inst, self.ocb
+        del self.test_file, self.log_capture, self.cust_kwargs, self.pysat_var2
+        del self.lwarn, self.lout, self.del_time
         return
 
     def test_load(self):
@@ -1350,10 +1315,8 @@ class TestPysatCustMethodsEAB(TestPysatCustMethods):
         self.pysat_key = 'dummy1'
         self.pysat_lat = 'latitude'
         self.notes = None
-        self.isvector = False
         self.added_keys = list()
         self.pysat_keys = list()
-        self.arevectors = list()
         self.del_time = 600
 
         # Set the method defaults
@@ -1385,11 +1348,10 @@ class TestPysatCustMethodsEAB(TestPysatCustMethods):
     def tearDown(self):
         """Clean the test environment."""
 
-        del self.ocb_key, self.pysat_key, self.notes, self.isvector
-        del self.added_keys, self.pysat_keys, self.arevectors, self.del_time
-        del self.test_file, self.log_capture, self.test_inst, self.ocb
-        del self.lwarn, self.lout, self.cust_kwargs, self.pysat_var2
-        del self.pysat_lat
+        del self.ocb_key, self.pysat_key, self.notes, self.del_time
+        del self.added_keys, self.pysat_keys, self.test_inst, self.ocb
+        del self.test_file, self.log_capture, self.cust_kwargs, self.pysat_var2
+        del self.lwarn, self.lout, self.pysat_lat
         return
 
 
@@ -1405,10 +1367,8 @@ class TestPysatCustMethodsDual(TestPysatCustMethods):
         self.pysat_key = 'dummy1'
         self.pysat_lat = 'latitude'
         self.notes = None
-        self.isvector = False
         self.added_keys = list()
         self.pysat_keys = list()
-        self.arevectors = list()
         self.del_time = 600
 
         # Set the method defaults
@@ -1444,11 +1404,10 @@ class TestPysatCustMethodsDual(TestPysatCustMethods):
     def tearDown(self):
         """Clean the test environment."""
 
-        del self.ocb_key, self.pysat_key, self.notes, self.isvector
-        del self.added_keys, self.pysat_keys, self.arevectors, self.pysat_lat
-        del self.test_file, self.log_capture, self.test_inst, self.ocb
-        del self.lwarn, self.lout, self.cust_kwargs, self.pysat_var2
-        del self.del_time
+        del self.ocb_key, self.pysat_key, self.notes, self.pysat_lat
+        del self.added_keys, self.pysat_keys, self.test_inst, self.ocb
+        del self.test_file, self.log_capture, self.cust_kwargs, self.pysat_var2
+        del self.lwarn, self.lout, self.del_time
         return
 
 
@@ -1465,10 +1424,8 @@ class TestPysatCustMethodsXarray(TestPysatCustMethods):
         self.pysat_key = 'dummy1'
         self.pysat_lat = 'latitude'
         self.notes = None
-        self.isvector = False
         self.added_keys = list()
         self.pysat_keys = list()
-        self.arevectors = list()
         self.del_time = 600
 
         # Set the method defaults
@@ -1505,10 +1462,9 @@ class TestPysatCustMethodsXarray(TestPysatCustMethods):
     def tearDown(self):
         """Clean the test environment."""
 
-        del self.ocb_key, self.pysat_key, self.notes, self.isvector
-        del self.added_keys, self.pysat_keys, self.arevectors
-        del self.test_file, self.log_capture, self.test_inst, self.ocb
-        del self.lwarn, self.lout, self.cust_kwargs, self.pysat_var2
+        del self.ocb_key, self.pysat_key, self.notes, self.lwarn, self.lout
+        del self.added_keys, self.pysat_keys, self.test_inst, self.ocb
+        del self.test_file, self.log_capture, self.cust_kwargs, self.pysat_var2
         del self.del_time, self.pysat_lat
         return
 
@@ -1524,10 +1480,8 @@ class TestPysatCustMethods2DXarray(TestPysatCustMethods):
         self.pysat_key = 'dummy1'
         self.pysat_lat = 'latitude'
         self.notes = None
-        self.isvector = False
         self.added_keys = list()
         self.pysat_keys = list()
-        self.arevectors = list()
         self.del_time = 600
 
         # Set the method defaults
@@ -1560,10 +1514,9 @@ class TestPysatCustMethods2DXarray(TestPysatCustMethods):
     def tearDown(self):
         """Clean the test environment."""
 
-        del self.ocb_key, self.pysat_key, self.notes, self.isvector
-        del self.added_keys, self.pysat_keys, self.arevectors
-        del self.test_file, self.log_capture, self.test_inst, self.ocb
-        del self.lwarn, self.lout, self.cust_kwargs, self.pysat_var2
+        del self.ocb_key, self.pysat_key, self.notes, self.lwarn, self.lout
+        del self.added_keys, self.pysat_keys, self.test_inst, self.ocb
+        del self.test_file, self.log_capture, self.cust_kwargs, self.pysat_var2
         del self.del_time, self.pysat_lat
         return
 
@@ -1579,10 +1532,8 @@ class TestPysatCustMethodsModel(TestPysatCustMethods):
         self.pysat_key = 'dummy2'
         self.pysat_lat = 'mlat'
         self.notes = None
-        self.isvector = False
         self.added_keys = list()
         self.pysat_keys = list()
-        self.arevectors = list()
         self.del_time = 600
 
         # Set the method defaults
@@ -1617,9 +1568,8 @@ class TestPysatCustMethodsModel(TestPysatCustMethods):
     def tearDown(self):
         """Clean the test environment."""
 
-        del self.ocb_key, self.pysat_key, self.notes, self.isvector
-        del self.added_keys, self.pysat_keys, self.arevectors
-        del self.test_file, self.log_capture, self.test_inst, self.ocb
-        del self.lwarn, self.lout, self.cust_kwargs, self.pysat_var2
+        del self.ocb_key, self.pysat_key, self.notes, self.lwarn, self.lout
+        del self.added_keys, self.pysat_keys, self.test_inst, self.ocb
+        del self.test_file, self.log_capture, self.cust_kwargs, self.pysat_var2
         del self.del_time, self.pysat_lat
         return
