@@ -10,6 +10,7 @@ Summary of all changes made since the first stable release
 * DEP: Moved OCBoundary class to hidden sub-module, `_boundary`
 * DEP: Moved `ocboundary` functions to new sub-module, `cycle_boundary`
 * DEP: Deprecated kwargs no longer needed to select good IMAGE data
+* DEP: Changed the format for vector data stored in pysat Instruments
 * DOC: Improved the PEP8 and numpydoc compliance in the documentation examples
 * DOC: Updated citations
 * DOC: Updated cross-referencing and added missing API sections
