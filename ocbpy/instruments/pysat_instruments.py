@@ -207,6 +207,13 @@ def add_ocb_to_data(pysat_inst, mlat_name='', mlt_name='', evar_names=None,
                         vector_attrs[oattr].append(vector_names[eattr][vinit])
                     vdim += 1
 
+    # Determine how many of the pysat names are variables
+    pysat_var_names = len(pysat_names)
+    if not pysat_inst.pandas_format:
+        for pyname in pysat_names:
+            if pyname in pysat_inst.data.coords:
+                pysat_var_names -= 1
+
     # Append the remaining OCB output names
     for eattr in evar_names:
         ocb_names.append("{:s}_ocb".format(eattr))
@@ -364,10 +371,16 @@ def add_ocb_to_data(pysat_inst, mlat_name='', mlt_name='', evar_names=None,
 
             if len(dat_ind) > 1:
                 iout = tuple(dind[time_ind] for dind in dat_ind)
-                time_mask = np.isfinite(
-                    pysat_inst[pysat_names].to_array().max('variable').where(
-                        finite_mask & (pysat_inst[pysat_inst.index.name]
-                                       == pysat_inst.index[dat_ind[0]][idat])))
+                if pysat_var_names > 1:
+                    # If there is more than one variable, need to downselect
+                    time_sel = pysat_inst[pysat_names].to_array().max(
+                        'variable')
+                else:
+                    time_sel = pysat_inst[pysat_names]
+
+                time_mask = np.isfinite(time_sel.where(
+                    finite_mask & (pysat_inst[pysat_inst.index.name]
+                                   == pysat_inst.index[dat_ind[0]][idat])))
                 vind = iout[0]
             else:
                 iout = dat_ind[0][time_ind]
@@ -443,14 +456,22 @@ def add_ocb_to_data(pysat_inst, mlat_name='', mlt_name='', evar_names=None,
             # Scale the E-field proportional variables
             for eattr in evar_names:
                 oattr = "{:s}_ocb".format(eattr)
-                evar = pysat_inst[eattr][iout]
+                if time_mask is None:
+                    evar = pysat_inst[eattr][iout]
+                else:
+                    evar = pysat_inst[eattr].where(time_mask,
+                                                   drop=True).values.flatten()
                 ocb_output[oattr][iout] = ocbscal.normal_evar(
                     evar, unscaled_r, ref_r)
 
             # Scale the variables proportial to the curl of the E-field
             for eattr in curl_evar_names:
                 oattr = "{:s}_ocb".format(eattr)
-                evar = pysat_inst[eattr][iout]
+                if time_mask is None:
+                    evar = pysat_inst[eattr][iout]
+                else:
+                    evar = pysat_inst[eattr].where(time_mask,
+                                                   drop=True).values.flatten()
                 ocb_output[oattr][iout] = ocbscal.normal_curl_evar(
                     evar, unscaled_r, ref_r)
 
