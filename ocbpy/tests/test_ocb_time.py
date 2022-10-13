@@ -3,8 +3,7 @@
 # Copyright (C) 2017, AGB & GC
 # Full license can be found in License.md
 # -----------------------------------------------------------------------------
-""" Tests the time functions
-"""
+"""Tests the time functions."""
 
 import datetime as dt
 import numpy as np
@@ -21,7 +20,7 @@ class TestOCBTimeMethods(unittest.TestCase):
         self.dtime2 = dt.datetime(1901, 1, 1)
 
     def tearDown(self):
-        """ Clean up after each test """
+        """Clean up after each test."""
 
         del self.dtime, self.dtime2
 
@@ -320,11 +319,11 @@ class TestTimeFormatMethods(unittest.TestCase):
         self.out_len = 0
 
     def tearDown(self):
-        """ Clean up after each test """
+        """Clean up after each test."""
         del self.dt_formats, self.dtime, self.out_fmt, self.out_len
 
     def test_get_datetime_fmt_len(self):
-        """ Test the datetime format length determination"""
+        """Test the datetime format length determination."""
         # Cycle through the different formatting options
         for val in self.dt_formats:
             with self.subTest(val=val):
@@ -347,7 +346,7 @@ class TestFixRange(unittest.TestCase):
         self.out = None
 
     def tearDown(self):
-        """ Clean up after each test """
+        """Clean up after each test."""
 
         del self.vals, self.out
 
@@ -362,7 +361,7 @@ class TestFixRange(unittest.TestCase):
             ocb_time.fix_range(self.vals, -10.0, 10.0, 0.0)
 
     def test_fix_range(self):
-        """ Test fix_range success """
+        """Test fix_range success."""
         for tset in [([self.vals, 0.0, 360.0], {}),
                      ([list(self.vals), 0.0, 360.0], {}),
                      ([self.vals, -180.0, 360.0], {'val_range': 360.0}),
