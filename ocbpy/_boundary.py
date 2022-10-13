@@ -226,7 +226,7 @@ class OCBoundary(object):
         # Format the output
         out = "".join([class_name, "(filename=", repr(self.filename),
                        ", instrument=", repr(self.instrument),
-                       ", hemisphere={:d}, ".format(self.hemisphere),
+                       ", hemisphere={:d}, ".format(int(self.hemisphere)),
                        "boundary_lat={:f}, stime=".format(self.boundary_lat),
                        repr(stime), ", etime=", repr(etime), ", rfunc=",
                        repr_rfunc, ", rfunc_kwargs=", repr_rfunc_kwargs, ")"])

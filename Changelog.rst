@@ -10,6 +10,7 @@ Summary of all changes made since the first stable release
 * DEP: Moved OCBoundary class to hidden sub-module, `_boundary`
 * DEP: Moved `ocboundary` functions to new sub-module, `cycle_boundary`
 * DEP: Deprecated kwargs no longer needed to select good IMAGE data
+* DEP: Changed the format for vector data stored in pysat Instruments
 * DOC: Improved the PEP8 and numpydoc compliance in the documentation examples
 * DOC: Updated citations
 * DOC: Updated cross-referencing and added missing API sections
@@ -24,6 +25,7 @@ Summary of all changes made since the first stable release
 * ENH: Changed attributes in VectorData into properties to ensure expected
        behaviour if altering the class data after initialisation
 * ENH: Added IMAGE SI12, SI13, and WIC DMSP corrections to `harmonic`
+* ENH: Made scaling optional for SuperMAG and SuperDARN vorticity data
 * MAINT: Removed support for Python 2.7, 3.5, and 3.6; added support for 3.10
 * MAINT: Improved PEP8 compliance
 * MAINT: Updated pysat routines to v3.0.0 standards

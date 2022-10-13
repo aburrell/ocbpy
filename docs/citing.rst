@@ -70,8 +70,8 @@ AMPERE Boundaries
 -----------------
 
 Please follow the AMPERE data usage requirements provided by
-`APL <http://ampere.jhuapl.edu/AMPERE-README.pdf>`_ and cite the R1/R2 FAC
-boundary retrieval method and the OCB correction method.
+`APL <https://ampere.jhuapl.edu/info/?page=infoRulesTab>`_ and cite the R1/R2
+FAC boundary retrieval method and the OCB correction method.
 
 * **FAC**: Milan, S. E. (2019): AMPERE R1/R2 FAC radii. figshare. Dataset.
   https://doi.org/10.25392/leicester.data.11294861.v1

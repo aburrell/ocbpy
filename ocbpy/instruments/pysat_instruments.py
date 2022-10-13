@@ -29,7 +29,7 @@ def add_ocb_to_data(pysat_inst, mlat_name='', mlt_name='', evar_names=None,
                     curl_evar_names=None, vector_names=None, hemisphere=0,
                     ocb=None, ocbfile='default', instrument='', max_sdiff=60,
                     min_merit=None, max_merit=None, **kwargs):
-    """Covert the location of pysat data into OCB coordinates.
+    """Covert the location of pysat data into OCB, EAB, or Dual coordinates.
 
     Parameters
     ----------
@@ -152,6 +152,8 @@ def add_ocb_to_data(pysat_inst, mlat_name='', mlt_name='', evar_names=None,
     omlt_name = "{:s}_ocb".format(mlt_name)
     ocor_name = "r_corr_ocb"
     ocb_names = [olat_name, omlt_name, ocor_name]
+    ocb_vect_attrs = ['ocb_n', 'ocb_e', 'ocb_z', 'ocb_mag', 'unscaled_r',
+                      'scaled_r']
 
     # Get a list of all necessary pysat data names
     pysat_names = [mlat_name, mlt_name]
@@ -205,6 +207,13 @@ def add_ocb_to_data(pysat_inst, mlat_name='', mlt_name='', evar_names=None,
                         vector_attrs[oattr].append(vector_names[eattr][vinit])
                     vdim += 1
 
+    # Determine how many of the pysat names are variables
+    pysat_var_names = len(pysat_names)
+    if not pysat_inst.pandas_format:
+        for pyname in pysat_names:
+            if pyname in pysat_inst.data.coords:
+                pysat_var_names -= 1
+
     # Append the remaining OCB output names
     for eattr in evar_names:
         ocb_names.append("{:s}_ocb".format(eattr))
@@ -245,11 +254,17 @@ def add_ocb_to_data(pysat_inst, mlat_name='', mlt_name='', evar_names=None,
 
     # Ensure all data is from one hemisphere and is finite
     if pysat_inst.pandas_format:
-        finite_mask = np.isfinite(pysat_inst[:, pysat_names].max(axis=1))
+        finite_mask = ((np.sign(aacgm_lat) == hemisphere)
+                       & np.isfinite(pysat_inst[:, pysat_names].max(axis=1)))
+        dat_coords = [pysat_inst.index.name]
+        combo_shape = [pysat_inst.index.shape[0]]
     else:
-        finite_mask = np.isfinite(
-            pysat_inst[:, pysat_names].to_array().max('variable'))
-    dat_ind = np.where((np.sign(aacgm_lat) == hemisphere) & finite_mask)
+        nan_inst = pysat_inst.data.where(np.sign(pysat_inst.data[mlat_name])
+                                         >= hemisphere)
+        finite_mask = np.isfinite(nan_inst[pysat_names].to_array().max(
+            'variable'))
+        dat_coords = [coord for coord in pysat_inst[pysat_names].coords]
+    dat_ind = np.where(finite_mask)
 
     # Test the OCB data
     if ocb.records == 0:
@@ -275,13 +290,62 @@ def add_ocb_to_data(pysat_inst, mlat_name='', mlt_name='', evar_names=None,
             if hasattr(ocb, dep_comp[ckey][0]):
                 kwargs[dep_comp[ckey][0]] = dep_comp[ckey][1]
 
+    # Ensure the MLT and MLat data are the same shape
+    if(aacgm_lat.shape != aacgm_mlt.shape
+       or aacgm_lat.shape[0] != pysat_inst.index.shape[0]):
+        ocb_coords = [mlt_coord for mlt_coord
+                      in pysat_inst[mlt_name].coords.keys()]
+        if pysat_inst.index.name in ocb_coords:
+            combo_shape = list(aacgm_mlt.shape)
+        else:
+            # Ensure MLT has time dependence
+            ocb_coords.insert(0, pysat_inst.index.name)
+            combo_shape = [pysat_inst.index.shape[0]]
+            combo_shape.extend(list(aacgm_mlt.shape))
+            out_mlt, _ = np.meshgrid(aacgm_mlt, pysat_inst.index)
+
+            if out_mlt.shape != combo_shape:
+                aacgm_mlt = out_mlt.reshape(combo_shape)
+
+        # Expand the coordinates if the MLat coordinates are not the
+        # same as the MLT coordinates
+        for lat_coord in pysat_inst[mlat_name].coords:
+            if lat_coord not in pysat_inst[mlt_name].coords:
+                combo_shape.append(pysat_inst[lat_coord].shape[0])
+                ocb_coords.append(lat_coord)
+
+        # Reshape the data
+        out_lat, out_mlt = np.meshgrid(aacgm_lat, aacgm_mlt)
+        aacgm_lat = out_lat.reshape(combo_shape)
+        aacgm_mlt = out_mlt.reshape(combo_shape)
+    else:
+        ocb_coords = [pysat_inst.index.name]
+
+    # See if the data index has more dimensions than the coordinates
+    if len(dat_ind) > len(ocb_coords):
+        combo_shape = list(aacgm_lat.shape)
+        for dcoord in dat_coords:
+            if dcoord not in ocb_coords:
+                ocb_coords.append(dcoord)
+                combo_shape.append(pysat_inst[dcoord].shape[0])
+
+        # Reverse and transpose the arrays
+        combo_shape.reverse()
+        out_lat = np.full(shape=combo_shape, fill_value=aacgm_lat.transpose())
+        out_mlt = np.full(shape=combo_shape, fill_value=aacgm_mlt.transpose())
+        aacgm_lat = out_lat.transpose()
+        aacgm_mlt = out_mlt.transpose()
+
     # Initialise the OCB output
     ocb_output = dict()
     for oattr in ocb_names:
         eattr = oattr[:-4]
         if eattr in vector_names.keys():
-            ocb_output[oattr] = np.empty(shape=aacgm_lat.shape,
-                                         dtype=ocbscal.VectorData)
+            for vattr in ocb_vect_attrs:
+                ovattr = '_'.join([oattr, vattr])
+                ovattr = ovattr.replace('ocb_ocb_', 'ocb_')
+                ocb_output[ovattr] = np.full(aacgm_lat.shape, np.nan,
+                                             dtype=float)
         else:
             ocb_output[oattr] = np.full(aacgm_lat.shape, np.nan, dtype=float)
 
@@ -300,10 +364,28 @@ def add_ocb_to_data(pysat_inst, mlat_name='', mlt_name='', evar_names=None,
                                     **kwargs)
 
         if idat < ndat and ocb.rec_ind < ocb.records:
+            # Find all the indices with the same time
+            time_ind = np.where(pysat_inst.index[dat_ind[0]]
+                                == pysat_inst.index[dat_ind[0]][idat])
+            idat = time_ind[0][-1]
+
             if len(dat_ind) > 1:
-                iout = tuple(dind[idat] for dind in dat_ind)
+                iout = tuple(dind[time_ind] for dind in dat_ind)
+                if pysat_var_names > 1:
+                    # If there is more than one variable, need to downselect
+                    time_sel = pysat_inst[pysat_names].to_array().max(
+                        'variable')
+                else:
+                    time_sel = pysat_inst[pysat_names]
+
+                time_mask = np.isfinite(time_sel.where(
+                    finite_mask & (pysat_inst[pysat_inst.index.name]
+                                   == pysat_inst.index[dat_ind[0]][idat])))
+                vind = iout[0]
             else:
-                iout = dat_ind[0][idat]
+                iout = dat_ind[0][time_ind]
+                vind = iout
+                time_mask = None
 
             # Get the OCB coordinates
             nout = ocb.normal_coord(aacgm_lat[iout], aacgm_mlt[iout])
@@ -333,34 +415,63 @@ def add_ocb_to_data(pysat_inst, mlat_name='', mlt_name='', evar_names=None,
                     oattr = "{:s}_ocb".format(eattr)
                     for ikey in vector_names[eattr].keys():
                         # Not all vector names are DataFrame names
-                        if vector_names[eattr][ikey] in pysat_inst.variables:
-                            vector_init[ikey] = pysat_inst[
-                                vector_names[eattr][ikey]][iout]
-                        else:
-                            vector_init[ikey] = vector_names[eattr][ikey]
+                        vname = vector_names[eattr][ikey]
+                        if vname in pysat_inst.variables:
+                            # Test to see if the input is appropriately shaped
+                            if(not pysat_inst.pandas_format
+                               and len(ocb_coords) > len(pysat_inst[
+                                   vname].coords)):
+                                raise ValueError(''.join([
+                                    'vector variables must all have the same',
+                                    ' dimensions']))
 
-                    ocb_output[oattr][iout] = ocbscal.VectorData(
-                        iout, ocb.rec_ind, aacgm_lat[iout], aacgm_mlt[iout],
-                        **vector_init)
-                    ocb_output[oattr][iout].set_ocb(ocb)
+                            if time_mask is None:
+                                vector_init[ikey] = pysat_inst[vname][iout]
+                            else:
+                                vector_init[ikey] = pysat_inst[vname].where(
+                                    time_mask, drop=True).values.flatten()
+                        else:
+                            vector_init[ikey] = vname
+
+                    # Perform the vector scaling
+                    vout = ocbscal.VectorData(vind, ocb.rec_ind,
+                                              aacgm_lat[iout],
+                                              aacgm_mlt[iout],
+                                              **vector_init)
+                    vout.set_ocb(ocb)
+
+                    # Assign the vector attributes to the output
+                    for vattr in ocb_vect_attrs:
+                        ovattr = '_'.join([oattr, vattr])
+                        ovattr = ovattr.replace('ocb_ocb_', 'ocb_')
+                        ocb_output[ovattr][iout] = getattr(vout, vattr)
 
             if hasattr(ocb, "ocb"):
                 unscaled_r = ocb.ocb.r[ocb.ocb.rec_ind] + ocb_output[
                     ocor_name][iout]
             else:
-                unscaled_r = ocb.r[ocb.rec_ind] + ocb_output[ocor_name][iout]
+                unscaled_r = ocb.r[ocb.rec_ind] + ocb_output[
+                    ocor_name][iout]
 
             # Scale the E-field proportional variables
             for eattr in evar_names:
                 oattr = "{:s}_ocb".format(eattr)
-                evar = pysat_inst[eattr][iout]
-                ocb_output[oattr][iout] = ocbscal.normal_evar(evar, unscaled_r,
-                                                              ref_r)
+                if time_mask is None:
+                    evar = pysat_inst[eattr][iout]
+                else:
+                    evar = pysat_inst[eattr].where(time_mask,
+                                                   drop=True).values.flatten()
+                ocb_output[oattr][iout] = ocbscal.normal_evar(
+                    evar, unscaled_r, ref_r)
 
             # Scale the variables proportial to the curl of the E-field
             for eattr in curl_evar_names:
                 oattr = "{:s}_ocb".format(eattr)
-                evar = pysat_inst[eattr][iout]
+                if time_mask is None:
+                    evar = pysat_inst[eattr][iout]
+                else:
+                    evar = pysat_inst[eattr].where(time_mask,
+                                                   drop=True).values.flatten()
                 ocb_output[oattr][iout] = ocbscal.normal_curl_evar(
                     evar, unscaled_r, ref_r)
 
@@ -368,18 +479,17 @@ def add_ocb_to_data(pysat_inst, mlat_name='', mlt_name='', evar_names=None,
             idat += 1
 
     # Update the pysat Instrument
-    for oattr in ocb_output:
+    for oattr in ocb_output.keys():
         # The update procedure is different for pandas and xarray
         if pysat_inst.pandas_format:
             set_data = {oattr: ocb_output[oattr]}
             pysat_inst.data = pysat_inst.data.assign(**set_data)
         else:
-            # The OCB variable has the same dimensions as magnetic latitude
-            set_data = {oattr: (pysat_inst[mlat_name].dims, ocb_output[oattr])}
+            set_data = {oattr: (ocb_coords, ocb_output[oattr])}
             pysat_inst.data = pysat_inst.data.assign(set_data)
 
         # Update the pysat Metadata
-        eattr = oattr[:-4]
+        eattr = oattr.split('_ocb')[0]
         if hasattr(ocb, "instrument"):
             notes = "".join(["OCB obtained from ", ocb.instrument,
                              " data in file ", ocb.filename,
@@ -401,7 +511,7 @@ def add_ocb_to_data(pysat_inst, mlat_name='', mlt_name='', evar_names=None,
             else:
                 func_name = vector_names[eattr]['scale_func'].__name__
             notes += " and was scaled using {:}".format(func_name)
-            eattr = vector_attrs[oattr][0]
+            eattr = vector_attrs['_'.join([eattr, 'ocb'])][0]
             isvector = True
         else:
             isvector = False
