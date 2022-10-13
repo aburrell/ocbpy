@@ -13,18 +13,18 @@ the reproducibility of your presented results.
 OCBpy
 -----
 
-* Burrell, A. G., et al. (2020). aburrell/ocbpy:
-  Version 0.2.0. Zenodo. doi:10.5281/zenodo.1217177.
+* Burrell, A. G., et al. (2022). aburrell/ocbpy:
+  Version 0.3.0. Zenodo. doi:10.5281/zenodo.1217177.
 
 .. code-block:: latex
    
     @Misc{ocbpy,
           author = {Burrell, A. G. and Chisham, G. and Reistad, J. P.},
-	  title  = {aburrell/ocbpy: Version 0.2.0},
-  	  year   = {2020},
-	  date   = {2020-06-10},
+	  title  = {aburrell/ocbpy: Version 0.3.0},
+  	  year   = {2022},
+	  date   = {2022-10-21},
 	  doi    = {10.5281/zenodo.1179230},
-	  url    = {http://doi.org/10.5281/zenodo.1217177},
+	  url    = {http://doi.org/10.5281/zenodo.1179230},
 	  }
 
 This package was first described in the python in heliophysics over article,
