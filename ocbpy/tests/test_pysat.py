@@ -385,10 +385,15 @@ class TestPysatMethods(TestPysatUtils):
         new_lat[new_lat > 0] *= -1.0
         imax = np.where(np.nanmax(new_lat) == new_lat)  # Needed for model data
         new_lat[imax] = 0.0
-        try:
-            self.test_inst[self.pysat_lat] = new_lat
-        except ValueError:
-            self.test_inst[self.pysat_lat].values = new_lat
+        if(not self.test_inst.pandas_format
+           and self.pysat_lat in self.test_inst.data.coords):
+            self.test_inst.data = self.test_inst.data.assign_coords(
+                {self.pysat_lat: new_lat})
+        else:
+            try:
+                self.test_inst[self.pysat_lat] = new_lat
+            except ValueError:
+                self.test_inst[self.pysat_lat].values = new_lat
 
         # Add the OCB data to the Instrument and evaluate the output
         ocb_pysat.add_ocb_to_data(self.test_inst, self.pysat_lat, "mlt",
