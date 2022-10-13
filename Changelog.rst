@@ -3,7 +3,7 @@ Changelog
 
 Summary of all changes made since the first stable release
 
-0.3.0 (XX-XX-2022)
+0.3.0 (10-21-2022)
 ------------------
 * BUG: Fixed header initialization error general instrument loading routine
 * BUG: Fixed time cycling in the `supermag2ascii_ocb` function
