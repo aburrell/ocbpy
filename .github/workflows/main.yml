@@ -20,6 +20,10 @@ jobs:
     runs-on: ${{ matrix.os }}
     steps:
     - uses: actions/checkout@v3
+    - name: Check valid combination
+      if: ${{ matrix.install-extras == 2 && matrix.os == 'windows-latest'}}
+      run: exit 0
+
     - name: Set up Python ${{ matrix.python-version }}
       uses: actions/setup-python@v3
       with:
