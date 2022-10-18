@@ -26,6 +26,18 @@ except ImportError:
     no_pysat = True
 
 
+@unittest.skipIf(not no_pysat, "pysat installed, cannot test failure")
+class TestPysatFailure(unittest.TestCase):
+    """Unit tests for the pysat instrument functions without pysat installed."""
+
+    def test_import_failure(self):
+        """Test pysat import failure."""
+
+        with self.assertRaisesRegex(ImportError, 'unable to load the pysat'):
+            import ocbpy.instruments.pysat_instruments as ocb_pysat  # NOQA 401
+        return
+
+
 @unittest.skipIf(no_pysat, "pysat not installed, cannot test routines")
 class TestPysatUtils(unittest.TestCase):
     """Tests for using ocbpy with pysat data."""
@@ -56,77 +68,78 @@ class TestPysatUtils(unittest.TestCase):
         """Evaluate new OCB metadata."""
 
         # Test MetaData exists
-        if self.test_inst is None:
-            return
+        if self.test_inst is not None:
+            self.assertIsNotNone(self.test_inst.meta, msg="No meta data added")
 
-        self.assertIsNotNone(self.test_inst.meta, msg="No meta data added")
+            # Tests for MetaData
+            self.assertIn(self.ocb_key, list(self.test_inst.meta.keys()))
+            if self.pysat_key is not None:
+                self.assertIn(self.pysat_key, list(self.test_inst.meta.keys()))
 
-        # Tests for MetaData
-        self.assertIn(self.ocb_key, list(self.test_inst.meta.keys()))
-        if self.pysat_key is not None:
-            self.assertIn(self.pysat_key, list(self.test_inst.meta.keys()))
+            # Test the fill value
+            self.assertTrue(
+                np.isnan(self.test_inst.meta[self.ocb_key][
+                    self.test_inst.meta.labels.fill_val]),
+                msg="".join([repr(self.ocb_key), " fill value is ",
+                             repr(self.test_inst.meta[self.ocb_key][
+                                 self.test_inst.meta.labels.fill_val]),
+                             ", not np.nan"]))
 
-        # Test the fill value
-        self.assertTrue(
-            np.isnan(self.test_inst.meta[self.ocb_key][
-                self.test_inst.meta.labels.fill_val]),
-            msg="".join([repr(self.ocb_key), " fill value is ",
-                         repr(self.test_inst.meta[self.ocb_key][
-                             self.test_inst.meta.labels.fill_val]),
-                         ", not np.nan"]))
+            if self.pysat_key is not None:
+                # Test the elements that are identical
+                for ll in [self.test_inst.meta.labels.units,
+                           self.test_inst.meta.labels.min_val,
+                           self.test_inst.meta.labels.max_val,
+                           self.test_inst.meta.labels.fill_val]:
+                    try:
+                        if np.isnan(self.test_inst.meta[self.pysat_key][ll]):
+                            self.assertTrue(
+                                np.isnan(self.test_inst.meta[self.ocb_key][ll]))
+                        elif ll != self.test_inst.meta.labels.fill_val:
+                            # The OCB fill value is NaN, regardless of prior
+                            # value
+                            self.assertEqual(
+                                self.test_inst.meta[self.ocb_key][ll],
+                                self.test_inst.meta[self.pysat_key][ll],
+                                msg="unequal fill vals [{:s} and {:s}]".format(
+                                    self.ocb_key, self.pysat_key))
+                    except TypeError:
+                        ocb_len = len(self.test_inst.meta[self.ocb_key][ll])
+                        pysat_len = len(self.test_inst.meta[self.pysat_key][ll])
+                        if pysat_len == 0:
+                            self.assertGreaterEqual(ocb_len, pysat_len)
+                        else:
+                            self.assertRegex(
+                                self.test_inst.meta[self.ocb_key][ll],
+                                self.test_inst.meta[self.pysat_key][ll],
+                                msg="".join(["Meta label ", ll, ": OCB key ",
+                                             self.ocb_key, " value `",
+                                             self.test_inst.meta[self.ocb_key][
+                                                 ll], "` not in pysat key ",
+                                             self.pysat_key, " value `",
+                                             self.test_inst.meta[
+                                                 self.pysat_key][ll], "`"]))
 
-        if self.pysat_key is not None:
-            # Test the elements that are identical
-            for ll in [self.test_inst.meta.labels.units,
-                       self.test_inst.meta.labels.min_val,
-                       self.test_inst.meta.labels.max_val,
-                       self.test_inst.meta.labels.fill_val]:
-                try:
-                    if np.isnan(self.test_inst.meta[self.pysat_key][ll]):
-                        self.assertTrue(
-                            np.isnan(self.test_inst.meta[self.ocb_key][ll]))
-                    elif ll != self.test_inst.meta.labels.fill_val:
-                        # The OCB fill value is NaN, regardless of prior value
-                        self.assertEqual(
-                            self.test_inst.meta[self.ocb_key][ll],
-                            self.test_inst.meta[self.pysat_key][ll],
-                            msg="unequal fill values [{:s} and {:s}]".format(
-                                self.ocb_key, self.pysat_key))
-                except TypeError:
-                    ocb_len = len(self.test_inst.meta[self.ocb_key][ll])
-                    pysat_len = len(self.test_inst.meta[self.pysat_key][ll])
-                    if pysat_len == 0:
-                        self.assertGreaterEqual(ocb_len, pysat_len)
-                    else:
-                        self.assertRegex(
-                            self.test_inst.meta[self.ocb_key][ll],
-                            self.test_inst.meta[self.pysat_key][ll],
-                            msg="".join(["Meta label ", ll, ": OCB key ",
-                                         self.ocb_key, " value `",
-                                         self.test_inst.meta[self.ocb_key][ll],
-                                         "` not in pysat key ", self.pysat_key,
-                                         " value `", self.test_inst.meta[
-                                             self.pysat_key][ll], "`"]))
+            # Test the elements that have "OCB" appended to the text
+            sline = self.test_inst.meta[self.ocb_key][
+                self.test_inst.meta.labels.name].split(" ")
+            self.assertRegex(sline[0], "OCB")
+            note_line = self.test_inst.meta[self.ocb_key][
+                self.test_inst.meta.labels.notes]
+            if self.pysat_key is not None and note_line.find(
+                    'scaled using') < 0:
+                self.assertRegex(
+                    " ".join(sline[1:]), self.test_inst.meta[self.pysat_key][
+                        self.test_inst.meta.labels.name],
+                    msg="Bad long name for {:}; notes are: {:}".format(
+                        self.pysat_key, note_line))
 
-        # Test the elements that have "OCB" appended to the text
-        sline = self.test_inst.meta[self.ocb_key][
-            self.test_inst.meta.labels.name].split(" ")
-        self.assertRegex(sline[0], "OCB")
-        note_line = self.test_inst.meta[self.ocb_key][
-            self.test_inst.meta.labels.notes]
-        if self.pysat_key is not None and note_line.find('scaled using') < 0:
-            self.assertRegex(" ".join(sline[1:]),
-                             self.test_inst.meta[self.pysat_key][
-                                 self.test_inst.meta.labels.name],
-                             msg="Bad long name for {:}; notes are: {:}".format(
-                                 self.pysat_key, note_line))
-
-        # Test the remaining elements
-        self.assertEqual(self.test_inst.meta[self.ocb_key][
-            self.test_inst.meta.labels.desc].find("Open Closed"), 0)
-        if self.notes is not None:
-            self.assertRegex(self.test_inst.meta[self.ocb_key][
-                self.test_inst.meta.labels.notes], self.notes)
+            # Test the remaining elements
+            self.assertEqual(self.test_inst.meta[self.ocb_key][
+                self.test_inst.meta.labels.desc].find("Open Closed"), 0)
+            if self.notes is not None:
+                self.assertRegex(self.test_inst.meta[self.ocb_key][
+                    self.test_inst.meta.labels.notes], self.notes)
         return
 
     def test_ocb_added(self):
@@ -189,18 +202,6 @@ class TestPysatUtils(unittest.TestCase):
                                                 self.ocb_key, " and ",
                                                 self.pysat_key]))
 
-        return
-
-
-@unittest.skipIf(not no_pysat, "pysat installed, cannot test failure")
-class TestPysatFailure(unittest.TestCase):
-    """Unit tests for the pysat instrument functions without pysat installed."""
-
-    def test_import_failure(self):
-        """Test pysat import failure."""
-
-        with self.assertRaisesRegex(ImportError, 'unable to load the pysat'):
-            import ocbpy.instruments.pysat_instruments as ocb_pysat  # NOQA 401
         return
 
 
@@ -634,6 +635,7 @@ class TestPysatMethods(TestPysatUtils):
         return
 
 
+@unittest.skipIf(no_pysat, "pysat not installed, cannot test routines")
 class TestPysatMethodsEAB(TestPysatMethods):
     """Integration tests for using ocbpy.EABoundary on pysat pandas data."""
 
@@ -690,6 +692,7 @@ class TestPysatMethodsEAB(TestPysatMethods):
         return
 
 
+@unittest.skipIf(no_pysat, "pysat not installed, cannot test routines")
 class TestPysatMethodsDual(TestPysatMethods):
     """Integration tests for using ocbpy.DualBoundary on pysat pandas data."""
 
@@ -1269,6 +1272,7 @@ class TestPysatCustMethods(TestPysatUtils):
         return
 
 
+@unittest.skipIf(no_pysat, "pysat not installed, cannot test routines")
 class TestPysatCustMethodsEAB(TestPysatCustMethods):
     """Integration tests for pysat pandas through custom with EABs."""
 
@@ -1319,6 +1323,7 @@ class TestPysatCustMethodsEAB(TestPysatCustMethods):
         return
 
 
+@unittest.skipIf(no_pysat, "pysat not installed, cannot test routines")
 class TestPysatCustMethodsDual(TestPysatCustMethods):
     """Integration tests for pysat pandas through custom with dual boundaries.
 
