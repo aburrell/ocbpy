@@ -12,10 +12,11 @@ jobs:
     strategy:
       fail-fast: false
       matrix:
-        os: [ubuntu-latest, macos-latest]
+        os: [ubuntu-latest, macos-latest, windows-latest]
         python-version: ["3.7", "3.8", "3.9", "3.10"]
+	install-extras: ["0", "1", "2"]
 
-    name: Python ${{ matrix.python-version }} on ${{ matrix.os }}
+    name: Python ${{ matrix.python-version }} on ${{ matrix.os }} with extras ${{ matrix.install-extras }}
     runs-on: ${{ matrix.os }}
     steps:
     - uses: actions/checkout@v3
@@ -27,7 +28,7 @@ jobs:
     - name: Install standard and test dependencies, then ocbpy
       run: |
         pip install -r requirements.txt
-        bash requirements.extra 0
+        bash requirements.extra ${{ matrix.install-extras }}
         python setup.py install
 
     - name: Test PEP8 compliance
