@@ -26,11 +26,11 @@ jobs:
         python-version: ${{ matrix.python-version }}
 
     - name: Set CDF Lib environment variable
-      if: ${{ matrix.install-extras == "2" }}
+      if: ${{ matrix.install-extras == 2 }}
       run: echo "CDF_LIB=$HOME/lib" >> $GITHUB_ENV
 
     - name: Install standard and test dependencies, then ocbpy for SSJ
-      if: ${{ matrix.install-extras == "2" }}
+      if: ${{ matrix.install-extras == 2 }}
       env:
         CDF_LIB: $HOME/lib
       run: |
