@@ -57,7 +57,19 @@ jobs:
     - name: Run unit and integration tests
       run: coverage run --rcfile=setup.cfg -m unittest discover
 
-    - name: Publish results to coveralls upon success
-      env:
-        GITHUB_TOKEN: ${{ secrets.GITHUB_TOKEN }}
-      run: coveralls --rcfile=setup.cfg --service=github
+    - name: Coveralls parallel
+      uses: coverallsapp/github-action@master
+      with:
+        github-token: ${{ secrets.github_token }}
+        flag-name: run-${{ matrix.python-version }}-${{ matrix.os }}-${{ matrix.install-extras }}
+        parallel: true
+
+  finish:
+    needs: build
+    runs-on: ubuntu-latest
+    steps:
+    - name: Coveralls Finished
+      uses: coverallsapp/github-action@master
+      with:
+        github-token: ${{ secrets.github_token }}
+        parallel-finished: true
