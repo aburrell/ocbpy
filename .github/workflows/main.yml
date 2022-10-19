@@ -55,7 +55,7 @@ jobs:
       run: flake8 . --count --exit-zero --max-complexity=10 --statistics
 
     - name: Run unit and integration tests
-      run: coverage run --rcfile=setup.cfg -m unittest discover
+      run: coverage run --parallel-mode --rcfile=setup.cfg -m unittest discover
 
     - name: Coveralls parallel
       uses: coverallsapp/github-action@master
