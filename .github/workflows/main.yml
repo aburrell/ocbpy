@@ -67,7 +67,7 @@ jobs:
   finish:
     needs: build
     runs-on: ubuntu-latest
-    stragegy:
+    strategy:
       matrix:
         python-version: ["3.10"]
     steps:
