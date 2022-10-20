@@ -30,7 +30,7 @@ jobs:
 
     - name: Set CDF Lib environment variable
       if: ${{ matrix.install-extras == 2 }}
-       run: echo "CDF_LIB=$HOME/lib" >> $GITHUB_ENV
+      run: echo "CDF_LIB=$HOME/lib" >> $GITHUB_ENV
 
     - name: Install standard and test dependencies, then ocbpy for SSJ
       if: ${{ matrix.install-extras == 2 }}
