@@ -77,6 +77,8 @@ jobs:
         with:
           python-version: ${{ matrix.python-version }}
       - name: Coveralls Finished
+        env:
+          GITHUB_TOKEN: ${{ secrets.GITHUB_TOKEN }}
         run: |
           pip install --upgrade coveralls
           coveralls --service=github --finish || true
