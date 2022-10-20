@@ -30,7 +30,7 @@ jobs:
 
     - name: Set CDF Lib environment variable
       if: ${{ matrix.install-extras == 2 }}
-      run: echo "CDF_LIB=$HOME/lib" >> $GITHUB_ENV
+       run: echo "CDF_LIB=$HOME/lib" >> $GITHUB_ENV
 
     - name: Install standard and test dependencies, then ocbpy for SSJ
       if: ${{ matrix.install-extras == 2 }}
@@ -60,5 +60,23 @@ jobs:
     - name: Publish results to coveralls upon success
       env:
         GITHUB_TOKEN: ${{ secrets.GITHUB_TOKEN }}
-      run: coveralls --rcfile=setup.cfg --service=github
+        COVERALLS_PARALLEL: true
+        COVERALLS_FLAG_NAME: run-${{ matrix.python-version }}-${{ matrix.os }}-${{ matrix.install-extras }}
+      run: coveralls --rcfile=setup.cfg --service=github || true
 
+  finish:
+    needs: build
+    runs-on: ubuntu-latest
+    stragegy:
+      matrix:
+        python-version: ["3.10"]
+    steps:
+      - uses: actions/checkout@v3
+      - name: Set up Python ${{ matrix.python-version }}
+        uses: actions/setup-python@v3
+        with:
+          python-version: ${{ matrix.python-version }}
+      - name: Coveralls Finished
+        run: |
+          pip install --upgrade coveralls
+          coveralls --service=github --finish || true
