@@ -3,46 +3,25 @@
 # Copyright (C) 2019, AGB & GC
 # Full license can be found in License.md
 # -----------------------------------------------------------------------------
-""" Download and format DMSP SSJ boundary files
-
-Functions
----------
-fetch_ssj_files(stime, etime, [out_dir, sat_nums])
-    Download DMSP SSJ files
-create_ssj_boundary_files(cdf_files, [out_dir, out_cols, make_plots, plot_dir])
-    Obtain pass boundaries from DMSP SSJ files
-format_ssj_boundary_files(csv_files, [ref_alt, method])
-    Format the individual pass boundaries, grouping data by boundary and
-    hemisphere
-fetch_format_ssj_boundary_files(stime, etime, [out_dir, rm_temp, ref_alt,
-                                               method])
-    Download and format the individual pass boundaries
-
-Moduleauthor
-------------
-Angeline G. Burrell (AGB), 25 September 2019, Naval Research Laboratory (NRL)
+"""Download and format DMSP SSJ boundary files.
 
 References
 ----------
-Kilcommons, L.M., et al. (2017), A new DMSP magnetometer and auroral boundary
- data set and estimates of field-aligned currents in dynamic auroral boundary
- coordinates, J. Geophys. Res.: Space Phys., 122, pp 9068-9079,
- doi:10.1002/2016ja023342,
+.. [2] Angeline Burrell, Christer van der Meeren, & Karl M. Laundal. (2020).
+   aburrell/aacgmv2 (All Versions). Zenodo. doi:10.5281/zenodo.1212694.
+
+.. [5] Kilcommons, L.M., et al. (2017), A new DMSP magnetometer and auroral
+   boundary data set and estimates of field-aligned currents in dynamic auroral
+   boundary coordinates, J. Geophys. Res.: Space Phys., 122, pp 9068-9079,
+   doi:10.1002/2016ja023342.
 
 """
-
-from __future__ import absolute_import, unicode_literals
 
 import datetime as dt
 import numpy as np
 import os
-import sys
 
 import ocbpy
-
-if sys.version_info.major == 2:
-    import warnings
-    warnings.simplefilter('default')
 
 # AGB: The TypeError exception below is necessary due to a bug in
 # ssj_auroral_boundary that was introduced by a change in matplotlib
@@ -59,18 +38,18 @@ except (ImportError, TypeError) as ierr:
 
 
 def fetch_ssj_files(stime, etime, out_dir=None, sat_nums=None):
-    """ Download DMSP SSJ files and place them in a specified directory
+    """Download DMSP SSJ files and place them in a specified directory.
 
     Parameters
     ----------
-    stime : (dt.datetime)
+    stime : dt.datetime
         Start time
-    etime : (dt.datetime)
+    etime : dt.datetime
         End time
-    out_dir : (str/NoneType)
+    out_dir : str or NoneType
         Output directory or None to download to ocbpy boundary directory
         (default=None)
-    sat_nums : (list/NoneType)
+    sat_nums : list or NoneType
         Satellite numbers or None for all satellites (default=None)
 
     Returns
@@ -78,10 +57,15 @@ def fetch_ssj_files(stime, etime, out_dir=None, sat_nums=None):
     out_files : list
         List of filenames corresponding to downloaded files
 
+    Raises
+    ------
+    ValueError
+       If an unknown satellite ID is provided.
+
     Notes
     -----
     If a file already exists, the routine will add the file to the output list
-    without downloading it again
+    without downloading it again.
 
     """
 
@@ -145,13 +129,13 @@ def fetch_ssj_files(stime, etime, out_dir=None, sat_nums=None):
 def create_ssj_boundary_files(cdf_files, out_dir=None,
                               out_cols=['glat', 'glon'],
                               make_plots=False, plot_dir=None):
-    """ Create SSJ boundary files for a list of DMSP SSJ daily satellite files
+    """Create SSJ boundary files for a list of DMSP SSJ daily satellite files.
 
     Parameters
     ----------
-    cdf_files : (array-like)
+    cdf_files : array-like
         List of daily satellite files
-    out_dir : (str/NoneType)
+    out_dir : str or NoneType
         Output directory for the boundary files or None to use the ocbpy
         boundary directory (default=None)
     out_cols : list
@@ -159,7 +143,7 @@ def create_ssj_boundary_files(cdf_files, out_dir=None,
         of mlat, mlt, glat, glon, diff_flux (default=['glat', 'glon'])
     make_plots : bool
         Make plots for the boundary passes (default=False)
-    plot_dir : string or NoneType
+    plot_dir : str or NoneType
         If plots are made, this is their output directory.  If None, will be
         set to the same value as out_dir.  (default=None)
 
@@ -167,6 +151,11 @@ def create_ssj_boundary_files(cdf_files, out_dir=None,
     -------
     out_files : list
         List of output .csv boundary files
+
+    Raises
+    ------
+    ValueError
+        If incorrect input is provided
 
     """
     # Test the directory inputs
@@ -217,21 +206,21 @@ def create_ssj_boundary_files(cdf_files, out_dir=None,
 
 def format_ssj_boundary_files(csv_files, ref_alt=830.0,
                               method='GEOCENTRIC|ALLOWTRACE'):
-    """ Create SSJ boundary files for a list of DMSP SSJ daily satellite files
+    """Create SSJ boundary files for a list of DMSP SSJ daily satellite files.
 
     Parameters
     ----------
-    csv_files : (list)
+    csv_files : list
         List of SSJ CSV boundary files with directory structure
-    ref_alt : (float)
+    ref_alt : float
         Reference altitude for boundary locations in km (default=830.0)
-    method : (str)
+    method : str
         AACGMV2 method, may use 'TRACE', 'ALLOWTRACE', 'BADIDEA', 'GEOCENTRIC'
-        (default='GEOCENTRIC|ALLOWTRACE')
+        [2]_ (default='GEOCENTRIC|ALLOWTRACE')
 
     Returns
     -------
-    bound_files : (list)
+    bound_files : list
         List of successfully updated .csv boundary files
 
     Notes
@@ -239,28 +228,34 @@ def format_ssj_boundary_files(csv_files, ref_alt=830.0,
     Output format is 'sc date time r x y fom x_1 y_1 x_2 y_2'
     where:
 
-    sc    = Spacecraft number
-    date  = YYYY-MM-DD
-    time  = HH:MM:SS of midpoint between the two measurements for this pass
-    r     = Half the distance between the two pass boundaries
-    x     = Distance between the midpoint of the two pass boundaries
-            and the AACGMV2 pole in degrees along the dusk-dawn meridian
-    y     = distance between the midpoint of the two pass boundaries and the
-            AACGMV2 pole in degrees along the midnight-noon meridian
-    fom   = FOM for the boundaries found along this pass
-    x_1   = x coordinate of the first boundary
-    y_1   = y coordinate of the first boundary
-    x_2   = x coordinate of the second boundary
-    y_2   = y coordinate of the second boundary
+    ===== ==================================================================
+     sc    Spacecraft number
+     date  YYYY-MM-DD
+     time  HH:MM:SS of midpoint between the two measurements for this pass
+     r     Half the distance between the two pass boundaries
+     x     Distance between the midpoint of the two pass boundaries
+           and the AACGMV2 pole in degrees along the dusk-dawn meridian
+     y     distance between the midpoint of the two pass boundaries and the
+           AACGMV2 pole in degrees along the midnight-noon meridian
+     fom   FOM for the boundaries found along this pass
+     x_1   x coordinate of the first boundary
+     y_1   y coordinate of the first boundary
+     x_2   x coordinate of the second boundary
+     y_2   y coordinate of the second boundary
+    ===== ==================================================================
 
     Because two points are not enough to define the OCB or EAB across all local
     times, a circle that intersects the two boundary pass points is defined and
     the boundary location saved.  The DMSP SSJ boundary correction function
     will use this information to only return values within a small distance of
-    the boundary locations.
+    the boundary locations [5]_.
 
     Separate files are created for each boundary and hemisphere, dates and
     spacecraft are combined.
+
+    See Also
+    --------
+    aacgmv2
 
     """
 
@@ -339,19 +334,20 @@ def format_ssj_boundary_files(csv_files, ref_alt=830.0,
 
             # Load the file data
             data = np.loadtxt(infile, skiprows=skiprows, delimiter=',')
-            if data.shape[1] != len(header_list):
+            if len(data.shape) != 2 or data.shape[1] != len(header_list):
                 bad_files.append(infile)
             else:
                 # Establish the desired data indices
                 time_ind = {bb: [header_list.index('UTSec {:s}{:d}'.format(
-                    bb, i)) for i in [1, 2]]
-                            for bb in bound_prefix.keys()}
-                lat_ind = {bb: [header_list.index(
-                    'SC_GEOCENTRIC_LAT {:s}{:d}'.format(bb, i))
-                                for i in [1, 2]] for bb in bound_prefix.keys()}
-                lon_ind = {bb: [header_list.index(
-                    'SC_GEOCENTRIC_LON {:s}{:d}'.format(bb, i))
-                                for i in [1, 2]] for bb in bound_prefix.keys()}
+                    bb, i)) for i in [1, 2]] for bb in bound_prefix.keys()}
+                lat_ind = {bb:
+                           [header_list.index(
+                               'SC_GEOCENTRIC_LAT {:s}{:d}'.format(bb, i))
+                            for i in [1, 2]] for bb in bound_prefix.keys()}
+                lon_ind = {bb:
+                           [header_list.index(
+                               'SC_GEOCENTRIC_LON {:s}{:d}'.format(bb, i))
+                            for i in [1, 2]] for bb in bound_prefix.keys()}
 
                 # Calculate the midpoint seconds of day
                 mid_utsec = {bb: 0.5 * (data[:, time_ind[bb][1]]
@@ -377,14 +373,14 @@ def format_ssj_boundary_files(csv_files, ref_alt=830.0,
                             data_line[lat_ind[bb]], data_line[lon_ind[bb]],
                             ref_alt, mid_time, method=method)
 
-                        # Determine the circle radius in degrees
-                        rad = 0.5 * abs(mloc[0][0]-mloc[0][1])
-
                         # Get the X-Y coordinates of each pass where X is
                         # positive towards dawn and Y is positive towards noon
-                        theta = np.radians(mloc[2] * 15.0 - 90.0)
+                        theta = ocbpy.ocb_time.hr2rad(mloc[2] - 6.0)
                         x = (90.0 - abs(mloc[0])) * np.cos(theta)
                         y = (90.0 - abs(mloc[0])) * np.sin(theta)
+
+                        # Get the distance between the Cartesian points
+                        rad = np.sqrt((x[0] - x[1])**2 + (y[0] - y[1])**2) / 2.0
 
                         # The midpoint is the center of this circle
                         mid_x = 0.5 * sum(x)
@@ -419,29 +415,33 @@ def format_ssj_boundary_files(csv_files, ref_alt=830.0,
 def fetch_format_ssj_boundary_files(stime, etime, out_dir=None, rm_temp=True,
                                     ref_alt=830.0,
                                     method='GEOCENTRIC|ALLOWTRACE'):
-    """ Download DMSP SSJ data and create boundary files for each hemisphere
+    """Download DMSP SSJ data and create boundary files for each hemisphere.
 
     Parameters
     ----------
-    stime : (dt.datetime)
+    stime : dt.datetime
         Start time
-    etime : (dt.datetime)
+    etime : dt.datetime
         End time
-    out_dir : (str/NoneType)
+    out_dir : str or NoneType
         Output directory or None to download to ocbpy boundary directory
         (default=None)
-    rm_temp : (boolean)
+    rm_temp : bool
         Remove all files that are not the final boundary files (default=True)
-    ref_alt : (float)
+    ref_alt : float
         Reference altitude for boundary locations in km (default=830.0)
-    method : (str)
+    method : str
         AACGMV2 method, may use 'TRACE', 'ALLOWTRACE', 'BADIDEA', 'GEOCENTRIC'
-        (default='GEOCENTRIC|ALLOWTRACE')
+        [2]_ (default='GEOCENTRIC|ALLOWTRACE')
 
     Returns
     -------
-    bound_files : (list)
+    bound_files : list
         List of the boundary file names
+
+    See Also
+    --------
+    aacgmv2
 
     """
 

@@ -3,83 +3,57 @@
 # Copyright (C) 2017, AGB & GC
 # Full license can be found in License.md
 # -----------------------------------------------------------------------------
-""" Tests the ocboundary class and functions
-"""
+"""Tests the OCB correction functions."""
 
 import numpy as np
-from sys import version_info
 import unittest
 
 from ocbpy import ocb_correction as ocb_cor
 
 
 class TestOCBCorrectionFailure(unittest.TestCase):
+    """Unit tests for correction failure evaluations."""
+
     def setUp(self):
-        """ Set up the test runs """
+        """Set up the test runs."""
         self.mlt = 12.0
         self.bad_kwarg = 'bad_kwarg'
         self.functions = {'elliptical': ocb_cor.elliptical,
                           'harmonic': ocb_cor.harmonic}
         self.bound = None
+        return
 
     def tearDown(self):
-        """ Tear down the test runs """
+        """Tear down the test runs."""
         del self.mlt, self.bad_kwarg, self.functions, self.bound
+        return
 
-    @unittest.skipIf(version_info.major == 2,
-                     'Python 2.7 does not support subTest')
     def test_instrument_failure(self):
-        """ Test failure when an unknown instrument is provided """
+        """Test failure when an unknown instrument is provided."""
 
         for self.bound in self.functions.keys():
             with self.subTest(bound=self.bound):
-                with self.assertRaises(ValueError):
+                msg = "no {:s} correction for".format(self.bound)
+                with self.assertRaisesRegex(ValueError, msg):
                     self.functions[self.bound](self.mlt,
                                                instrument=self.bad_kwarg)
+        return
 
-    @unittest.skipIf(version_info.major == 3, 'Already tested, remove in 2020')
-    def test_elliptical_instrument_failure(self):
-        """ Test failure in elliptical when an unknown instrument is provided
-        """
-        self.bound = 'elliptical'
-        with self.assertRaises(ValueError):
-            self.functions[self.bound](self.mlt, instrument=self.bad_kwarg)
-
-    @unittest.skipIf(version_info.major == 3, 'Already tested, remove in 2020')
-    def test_harmonic_instrument_failure(self):
-        """ Test failure in harmonic when an unknown instrument is provided"""
-
-        self.bound = 'harmonic'
-        with self.assertRaises(ValueError):
-            self.functions[self.bound](self.mlt, instrument=self.bad_kwarg)
-
-    @unittest.skipIf(version_info.major == 2,
-                     'Python 2.7 does not support subTest')
     def test_method_failure(self):
-        """ Test failure when an unknown method is provided """
+        """Test failure when an unknown method is provided."""
+        msg = "unknown coefficient computation method"
         for self.bound in self.functions.keys():
             with self.subTest(bound=self.bound):
-                with self.assertRaises(ValueError):
+                with self.assertRaisesRegex(ValueError, msg):
                     self.functions[self.bound](self.mlt, method=self.bad_kwarg)
-
-    @unittest.skipIf(version_info.major == 3, 'Already tested, remove in 2020')
-    def test_elliptical_method_failure(self):
-        """ Test failure in elliptical when an unknown method is provided"""
-        self.bound = 'elliptical'
-        with self.assertRaises(ValueError):
-            self.functions[self.bound](self.mlt, method=self.bad_kwarg)
-
-    @unittest.skipIf(version_info.major == 3, 'Already tested, remove in 2020')
-    def test_harmonic_method_failure(self):
-        """ Test failure in harmonic when an unknown method is provided"""
-        self.bound = 'harmonic'
-        with self.assertRaises(ValueError):
-            self.functions[self.bound](self.mlt, method=self.bad_kwarg)
+        return
 
 
 class TestOCBCorrection(unittest.TestCase):
+    """Unit tests for the boundary correction functions."""
+
     def setUp(self):
-        """ Set up test runs """
+        """Set up test runs."""
         self.functions = {'circular': ocb_cor.circular,
                           'elliptical': ocb_cor.elliptical,
                           'harmonic': ocb_cor.harmonic}
@@ -91,100 +65,65 @@ class TestOCBCorrection(unittest.TestCase):
                                                   -3.4392638193624325])}
         self.gaus_results = {'elliptical': -2.51643691301747,
                              'harmonic': -2.293294645880221}
+        self.image_results = {'si12': {'ocb': np.array([0.67103129,
+                                                        -0.10084541]),
+                                       'eab': np.array([0.31691853,
+                                                        2.68970685])},
+                              'si13': {'ocb': np.array([0.71521016,
+                                                        -0.86843608]),
+                                       'eab': np.array([1.55220967,
+                                                        -0.19812977])},
+                              'wic': {'ocb': np.array([0.83660688,
+                                                       -1.62097642]),
+                                      'eab': np.array([1.89268527,
+                                                       0.13983824])}}
         self.bound = None
+        return
 
     def tearDown(self):
-        """ Clean up after each test """
+        """Clean up after each test."""
         del self.mlt, self.functions, self.def_results, self.gaus_results
-        del self.bound
+        del self.bound, self.image_results
+        return
 
-    @unittest.skipIf(version_info.major == 2,
-                     'Python 2.7 does not support subTest')
     def test_default_float(self):
-        """ Test the boundary functions using a float and function defaults"""
+        """Test the boundary functions using a float and function defaults."""
         for self.bound in self.functions.keys():
             with self.subTest(bound=self.bound):
                 self.assertEqual(self.functions[self.bound](self.mlt[0]),
                                  self.def_results[self.bound][0])
+        return
 
-    @unittest.skipIf(version_info.major == 3, 'Already tested, remove in 2020')
-    def test_circular_default_float(self):
-        """ Test the default circular boundary function with a float"""
-        self.bound = 'circular'
-        self.assertEqual(self.functions[self.bound](self.mlt[0]),
-                         self.def_results[self.bound][0])
-
-    @unittest.skipIf(version_info.major == 3, 'Already tested, remove in 2020')
-    def test_ampere_harmonic_float(self):
-        """ Test the default harmonic boundary function for a value"""
-        self.bound = 'harmonic'
-        self.assertEqual(self.functions[self.bound](self.mlt[0]),
-                         self.def_results[self.bound][0])
-
-    @unittest.skipIf(version_info.major == 3, 'Already tested, remove in 2020')
-    def test_ampere_elliptical_float(self):
-        """ Test the default elliptical boundary function for a value"""
-        self.bound = 'elliptical'
-        self.assertEqual(self.functions[self.bound](self.mlt[0]),
-                         self.def_results[self.bound][0])
-
-    @unittest.skipIf(version_info.major == 2,
-                     'Python 2.7 does not support subTest')
     def test_default_arr(self):
-        """ Test the boundary functions using an array and function defaults"""
+        """Test the boundary functions using an array and function defaults."""
         for self.bound in self.functions.keys():
             with self.subTest(bound=self.bound):
                 self.assertTrue(np.all(
                     abs(self.functions[self.bound](self.mlt)
                         - self.def_results[self.bound]) < 1.0e-7))
-
-    @unittest.skipIf(version_info.major == 3, 'Already tested, remove in 2020')
-    def test_circular_default_arr(self):
-        """ Test the default circular boundary function with an array"""
-        self.bound = 'circular'
-        self.assertTrue(np.all(self.functions[self.bound](self.mlt)
-                               == self.def_results[self.bound]))
-
-    @unittest.skipIf(version_info.major == 3, 'Already tested, remove in 2020')
-    def test_ampere_elliptical_arr(self):
-        """ Test the default elliptical boundary function for an array"""
-        self.bound = 'elliptical'
-        self.assertTrue(np.all(abs(self.functions[self.bound](self.mlt)
-                                   - self.def_results[self.bound]) < 1.0e-7))
-
-    @unittest.skipIf(version_info.major == 3, 'Already tested, remove in 2020')
-    def test_ampere_harmonic_arr(self):
-        """ Test the default harmonic boundary function for an array"""
-        self.bound = 'harmonic'
-        self.assertTrue(np.all(abs(self.functions[self.bound](self.mlt)
-                                   - self.def_results[self.bound]) < 1.0e-7))
+        return
 
     def test_circular_offset(self):
-        """ Test the circular boundary function with an offset """
+        """Test the circular boundary function with an offset."""
         self.assertEqual(ocb_cor.circular(self.mlt[0], r_add=1.0), 1.0)
+        return
 
-    @unittest.skipIf(version_info.major == 2,
-                     'Python 2.7 does not support subTest')
     def test_gauss_method(self):
-        """ Test the boundary functions using an array and function defaults"""
+        """Test the boundary functions using an array and function defaults."""
         for self.bound in self.gaus_results.keys():
             with self.subTest(bound=self.bound):
                 self.assertAlmostEqual(
                     self.functions[self.bound](self.mlt[0], method='gaussian'),
                     self.gaus_results[self.bound])
+        return
 
-    @unittest.skipIf(version_info.major == 3, 'Already tested, remove in 2020')
-    def test_ampere_harmonic_gaussian(self):
-        """ Test the gaussian harmonic boundary function """
-        self.bound = 'harmonic'
-        self.assertAlmostEqual(self.functions[self.bound](self.mlt[0],
-                                                          method="gaussian"),
-                               self.gaus_results[self.bound])
-
-    @unittest.skipIf(version_info.major == 3, 'Already tested, remove in 2020')
-    def test_elliptical_gaussian(self):
-        """ Test the gaussian elliptical boundary function """
-        self.bound = 'elliptical'
-        self.assertAlmostEqual(self.functions[self.bound](self.mlt[0],
-                                                          method="gaussian"),
-                               self.gaus_results[self.bound])
+    def test_image_harmonic(self):
+        """Test the IMAGE harmonic correction functions."""
+        for self.bound in self.image_results.keys():
+            for method in self.image_results[self.bound].keys():
+                with self.subTest(bound=self.bound, method=method):
+                    self.assertTrue(np.all(
+                        abs(self.functions["harmonic"](
+                            self.mlt, instrument=self.bound, method=method)
+                            - self.image_results[self.bound][method]) < 1.0e-7))
+        return

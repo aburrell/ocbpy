@@ -1,137 +1,88 @@
-#!/usr/bin/env python# -*- coding: utf-8 -*-
+#!/usr/bin/env python
+# -*- coding: utf-8 -*-
 # Copyright (C) 2017, AGB & GC
 # Full license can be found in License.md
 # ----------------------------------------------------------------------------
-"""Scale data affected by magnetic field direction or electric field
-
-Routines
---------
-normal_evar(evar, unscaled_r, scaled_r)
-    Normalise a variable proportaional to the electric field (such as velocity)
-normal_curl_evar(curl_evar, unscaled_r, scaled_r)
-    Normalise a variable proportional to the curl of the electric field (such
-    as vorticity)
-
-Classes
--------
-VectorData(object)
-    Holds vector data in AACGM N-E-Z coordinates along with location
-    information.  Converts vector from AACGM to OCB coordinates.
-
-Moduleauthor
-------------
-Angeline G. Burrell (AGB), 12 May 2017, University of Texas, Dallas
+"""Scale data affected by magnetic field direction or electric field.
 
 References
 ----------
-Chisham, G. (2017), A new methodology for the development of high-latitude
-ionospheric climatologies and empirical models, Journal of Geophysical
-Research: Space Physics, 122, doi:10.1002/2016JA023235.
+.. [1] Chisham, G. (2017), A new methodology for the development of
+   high-latitude ionospheric climatologies and empirical models, Journal of
+   Geophysical Research: Space Physics, 122, doi:10.1002/2016JA023235.
 
 """
 
-from __future__ import absolute_import, unicode_literals
 import numpy as np
 
 import ocbpy
 
 
 class VectorData(object):
-    """ Object containing a vector data point
+    """Object containing a vector data.
 
     Parameters
     ----------
-    dat_ind : (int or array-like)
-        Data index (zero offset)
-    ocb_ind : (int or array-like)
-        OCBoundary record index matched to this data index (zero offset)
-    aacgm_lat : (float or array-like)
+    dat_ind : int or array-like
+        Data index (zero offset) for the input
+    ocb_ind : int or array-like
+        OCBoundary or DualBoundary record index matched to this data index
+        (zero offset)
+    aacgm_lat : float or array-like
         Vector AACGM latitude (degrees)
-    aacgm_mlt : (float or array-like)
+    aacgm_mlt : float or array-like
         Vector AACGM MLT (hours)
-    ocb_lat : (float or array-like)
+    ocb_lat : float or array-like
         Vector OCB latitude (degrees) (default=np.nan)
-    ocb_mlt : (float or array-like)
+    ocb_mlt : float or array-like
         Vector OCB MLT (hours) (default=np.nan)
-    aacgm_n : (float or array-like)
+    aacgm_n : float or array-like
         AACGM North pointing vector (positive towards North) (default=0.0)
-    aacgm_e : (float or array-like)
+    aacgm_e : float or array-like
         AACGM East pointing vector (completes right-handed coordinate system
         (default = 0.0)
-    aacgm_z : (float or array-like)
+    aacgm_z : float or array-like
         AACGM Vertical pointing vector (positive down) (default=0.0)
-    aacgm_mag : (float or array-like)
+    aacgm_mag : float or array-like
         Vector magnitude (default=np.nan)
-    scale_func : (function)
-        Function for scaling AACGM magnitude with arguements:
-        [measurement value, mesurement AACGM latitude (degrees),
-        mesurement OCB latitude (degrees)]
-        (default=None)
-    dat_name : (str)
+    dat_name : str
         Data name (default=None)
-    dat_units : (str)
+    dat_units : str
         Data units (default=None)
+    scale_func : function
+        Function for scaling AACGM magnitude with arguements: [measurement
+        value, mesurement AACGM latitude (degrees), mesurement OCB latitude
+        (degrees)] (default=None)
 
     Attributes
     ----------
-    dat_name : (str or NoneType)
-        Name of data
-    dat_units : (str or NoneType)
-        Units of data
-    dat_ind : (int or array-like)
-        Vector data index in external data array
-    ocb_ind : (int or array-like)
-        OCBoundary rec_ind value(s) that matches dat_ind or a single rec_ind
-        value for all dat_ind
-    unscaled_r : (float or array-like)
+    vshape : array-like
+        Shape of output data
+    unscaled_r : float or array-like
         Radius of polar cap in degrees
-    scaled_r : (float or array-like)
+    scaled_r : float or array-like
         Radius of normalised OCB polar cap in degrees
-    aacgm_n : (float or array-like)
-        AACGM north component of data vector (default=0.0)
-    aacgm_e : (float or array-like)
-        AACGM east component of data vector (default=0.0)
-    aacgm_z : (float or array-like)
-        AACGM vertical component of data vector (default=0.0)
-    aacgm_mag : (float or array-like)
-        Magnitude of data vector in AACGM coordinates (default=np.nan)
-    aacgm_lat : (float or array-like)
-        AACGM latitude of data vector in degrees
-    aacgm_mlt : (float or array-like)
-        AACGM MLT of data vector in hours
-    ocb_n : (float or array-like)
+    ocb_n : float or array-like
         OCB north component of data vector (default=np.nan)
-    ocb_e : (float or array-like)
+    ocb_e : float or array-like
         OCB east component of data vector (default=np.nan)
-    ocb_z : (float or array-like)
+    ocb_z : float or array-like
         OCB vertical component of data vector (default=np.nan)
-    ocb_mag : (float or array-like)
+    ocb_mag : float or array-like
         OCB magnitude of data vector (default=np.nan)
-    ocb_lat : (float or array-like)
-        OCB latitude of data vector in degrees (default=np.nan)
-    ocb_mlt : (float or array-like)
-        OCB MLT of data vector in hours (default=np.nan)
-    ocb_quad : (int or array-like)
+    ocb_quad : int or array-like
         AACGM quadrant of OCB pole (default=0)
-    vec_quad : (int or array-like)
+    vec_quad : int or array-like
         AACGM quadrant of Vector (default=0)
-    pole_angle : (float or array-like)
+    pole_angle : float or array-like
         Angle at vector location appended by AACGM and OCB poles in degrees
         (default=np.nan)
-    aacgm_naz : (float or array-like)
+    aacgm_naz : float or array-like
         AACGM north azimuth of data vector in degrees (default=np.nan)
-    ocb_aacgm_lat : (float or array-like)
+    ocb_aacgm_lat : float or array-like
         AACGM latitude of OCB pole in degrees (default=np.nan)
-    ocb_aacgm_mlt : (float or array-like)
+    ocb_aacgm_mlt : float or array-like
         AACGM MLT of OCB pole in hours (default=np.nan)
-    scale_func : (function or NoneType)
-        Funciton that scales the magnitude of the data vector from AACGM
-        polar cap coverage to OCB polar cap coverage
-
-    Methods
-    -------
-    set_ocb(ocb, scale_func=None)
-        Set the ocb coordinates and vector values
 
     Notes
     -----
@@ -143,147 +94,37 @@ class VectorData(object):
                  ocb_mlt=np.nan, r_corr=np.nan, aacgm_n=0.0, aacgm_e=0.0,
                  aacgm_z=0.0, aacgm_mag=np.nan, dat_name=None, dat_units=None,
                  scale_func=None):
-        """ Initialize VectorData object
-
-        Parameters
-        ----------
-        dat_ind : (int or array-like)
-            Data index (zero offset)
-        ocb_ind : (int or array-like)
-            OCBoundary record index matched to this data index (zero offset)
-        aacgm_lat : (float or array-like)
-            Vector AACGM latitude (degrees)
-        aacgm_mlt : (float or array-like)
-            Vector AACGM MLT (hours)
-        ocb_lat : (float or array-like)
-            Vector OCB latitude (degrees) (default=np.nan)
-        ocb_mlt : (float or array-like)
-            Vector OCB MLT (hours) (default=np.nan)
-        aacgm_n : (float or array-like)
-            AACGM North pointing vector (positive towards North) (default=0.0)
-        aacgm_e : (float or array-like)
-            AACGM East pointing vector (completes right-handed coordinate
-            system (default=0.0)
-        aacgm_z : (float or array-like)
-            AACGM Vertical pointing vector (positive down) (default=0.0)
-        aacgm_mag : (float or array-like)
-            Vector magnitude (default = np.nan)
-        dat_name : (str)
-            Data name (default=None)
-        dat_units : (str)
-            Data units (default=None)
-        scale_func : (function)
-            Function for scaling AACGM magnitude with arguements:
-            [measurement value, mesurement AACGM latitude (degrees),
-            mesurement OCB latitude (degrees)]
-            Not necessary if no magnitude scaling is needed. (default=None)
-
-        Raises
-        ------
-        ValueError
-            If the vector magnitude and AACGM components are inconsistent
-
-        """
 
         # Assign the vector data name and units
         self.dat_name = dat_name
         self.dat_units = dat_units
 
         # Assign the data and OCB indices
-        self.dat_ind = np.asarray(dat_ind)
-        self.ocb_ind = np.asarray(ocb_ind)
+        self.dat_ind = dat_ind
+        self.ocb_ind = ocb_ind
 
         # Assign the AACGM vector values and location
-        self.aacgm_n = np.asarray(aacgm_n)
-        self.aacgm_e = np.asarray(aacgm_e)
-        self.aacgm_z = np.asarray(aacgm_z)
-        self.aacgm_lat = np.asarray(aacgm_lat)
-        self.aacgm_mlt = np.asarray(aacgm_mlt)
+        self.aacgm_n = aacgm_n
+        self.aacgm_e = aacgm_e
+        self.aacgm_z = aacgm_z
+        self.aacgm_lat = aacgm_lat
+        self.aacgm_mlt = aacgm_mlt
 
-        # Test the initalization shape
-        vshapes = [self.aacgm_lat.shape, self.aacgm_mlt.shape,
-                   self.dat_ind.shape, self.aacgm_n.shape, self.aacgm_e.shape,
-                   self.aacgm_z.shape]
-        vshapes = np.unique(np.asarray(vshapes, dtype=object))
-        vshape = () if len(vshapes) == 0 else vshapes.max()
-        if len(vshapes) > 2 or (len(vshapes) == 2 and min(vshapes) != ()):
-            raise ValueError('mismatched VectorData input shapes')
+        # Test the initalization shape and update the vector shapes if needed
+        self._test_update_vector_shape()
 
-        if len(vshapes) > 1 and min(vshapes) == ():
-            if self.dat_ind.shape == ():
-                raise ValueError('data index shape must match vector shape')
-
-            # Vector input needs to be the same length
-            if self.aacgm_n.shape == ():
-                self.aacgm_n = np.full(shape=vshape, fill_value=self.aacgm_n)
-            if self.aacgm_e.shape == ():
-                self.aacgm_e = np.full(shape=vshape, fill_value=self.aacgm_e)
-            if self.aacgm_z.shape == ():
-                self.aacgm_z = np.full(shape=vshape, fill_value=self.aacgm_z)
-
-        # Assign the vector magnitudes
-        if np.all(np.isnan(aacgm_mag)):
-            self.aacgm_mag = np.sqrt(np.asarray(aacgm_n)**2
-                                     + np.asarray(aacgm_e)**2
-                                     + np.asarray(aacgm_z)**2)
-        else:
-            aacgm_sqrt = np.sqrt(np.asarray(aacgm_n)**2
-                                 + np.asarray(aacgm_e)**2
-                                 + np.asarray(aacgm_z)**2)
-            if np.any(np.greater(abs(aacgm_mag - aacgm_sqrt), 1.0e-3,
-                                 where=~np.isnan(aacgm_mag))):
-                ocbpy.logger.warning("".join(["inconsistent AACGM components ",
-                                              "with a maximum difference of ",
-                                              "{:} > 1.0e-3".format(
-                                                  abs(aacgm_mag
-                                                      - aacgm_sqrt).max())]))
-            self.aacgm_mag = aacgm_mag
+        # Assign the vector magnitude(s)
+        self.aacgm_mag = aacgm_mag
 
         # Assign the OCB vector default values
-        self.ocb_lat = np.asarray(ocb_lat)
-        self.ocb_mlt = np.asarray(ocb_mlt)
-        self.r_corr = np.asarray(r_corr)
+        self.ocb_lat = ocb_lat
+        self.ocb_mlt = ocb_mlt
+        self.r_corr = r_corr
+        self._test_update_bound_shape()
 
-        if self.ocb_lat.shape == () and self.ocb_ind.shape != ():
-            self.ocb_lat = np.full(shape=self.ocb_ind.shape,
-                                   fill_value=ocb_lat)
-
-        if self.ocb_mlt.shape == () and self.ocb_ind.shape != ():
-            self.ocb_mlt = np.full(shape=self.ocb_ind.shape,
-                                   fill_value=ocb_mlt)
-
-        if self.r_corr.shape == () and self.ocb_ind.shape != ():
-            self.r_corr = np.full(shape=self.ocb_ind.shape, fill_value=r_corr)
-
-        # Test the OCB input shape
-        oshapes = np.unique([self.ocb_lat.shape, self.ocb_mlt.shape,
-                             self.r_corr.shape])
-        oshape = () if len(oshapes) == 0 else oshapes.max()
-        if(oshape != self.ocb_ind.shape or len(oshapes) > 2
-           or (len(oshapes) == 2 and min(oshapes) != ())):
-            raise ValueError('OCB index and input shapes mismatched')
-
-        if self.ocb_ind.shape == ():
-            oshape = vshape
-        elif self.dat_ind.shape == ():
-            vshape = oshape
-
-        if oshape != vshape:
-            raise ValueError('Mismatched OCB and Vector input shapes')
-
-        # Assign the OCB vector default values and location
-        self.ocb_n = np.full(shape=vshape, fill_value=np.nan)
-        self.ocb_e = np.full(shape=vshape, fill_value=np.nan)
-        self.ocb_z = np.full(shape=vshape, fill_value=np.nan)
-        self.ocb_mag = np.full(shape=vshape, fill_value=np.nan)
-
-        # Assign the default pole locations, relative angles, and quadrants
-        self.ocb_quad = np.zeros(shape=vshape)
-        self.vec_quad = np.zeros(shape=vshape)
-        self.pole_angle = np.full(shape=vshape, fill_value=np.nan)
-        self.aacgm_naz = np.full(shape=vshape, fill_value=np.nan)
-        self.ocb_aacgm_lat = np.full(shape=vshape, fill_value=np.nan)
-        self.ocb_aacgm_mlt = np.full(shape=vshape, fill_value=np.nan)
+        # Assign the initial OCB vector default values and location, as well as
+        # the default pole locations, relative angles, and quadrants
+        self.clear_data()
 
         # Assign the vector scaling function
         self.scale_func = scale_func
@@ -291,8 +132,34 @@ class VectorData(object):
         return
 
     def __repr__(self):
-        """ Provide readable representation of the DataVector object
-        """
+        """Provide an evaluatable representation of the VectorData object."""
+
+        # Format the function representations
+        if self.scale_func is None:
+            repr_func = self.scale_func.__repr__()
+        else:
+            repr_func = ".".join([self.scale_func.__module__,
+                                  self.scale_func.__name__])
+
+        # Format the base output
+        out = "".join(["ocbpy.ocb_scaling.VectorData(", repr(self.dat_ind),
+                       ", ", repr(self.ocb_ind), ", ", repr(self.aacgm_lat),
+                       ", ", repr(self.aacgm_mlt), ", ocb_lat=",
+                       repr(self.ocb_lat), ", ocb_mlt=", repr(self.ocb_mlt),
+                       ", r_corr=", repr(self.r_corr), ", aacgm_n=",
+                       repr(self.aacgm_n), ", aacgm_e=", repr(self.aacgm_e),
+                       ", aacgm_z=", repr(self.aacgm_z), ", aacgm_mag=",
+                       repr(self.aacgm_mag), ", dat_name=",
+                       repr(self.dat_name), ", dat_units=",
+                       repr(self.dat_units), ", scale_func=", repr_func, ")"])
+
+        # Reformat the numpy representations
+        out = out.replace('array', 'numpy.array')
+
+        return out
+
+    def __str__(self):
+        """Provide user readable representation of the VectorData object."""
 
         out = "Vector data:"
         if self.dat_name is not None:
@@ -300,8 +167,8 @@ class VectorData(object):
         if self.dat_units is not None:
             out += " ({:s})".format(self.dat_units)
 
-        out += "\nData Index {:}\tOCB Index {:}\n".format(self.dat_ind,
-                                                          self.ocb_ind)
+        out += "\nData Index {:}\tBoundary Index {:}\n".format(self.dat_ind,
+                                                               self.ocb_ind)
         out += "-------------------------------------------\n"
 
         # Print AACGM vector location(s)
@@ -372,102 +239,334 @@ class VectorData(object):
 
         return out
 
-    def __str__(self):
-        """ Provide readable representation of the DataVector object
-        """
-
-        out = self.__repr__()
-        return out
-
-    def set_ocb(self, ocb, scale_func=None):
-        """ Set the OCBoundary values for this data point
+    def __setattr__(self, name, value):
+        """Set attributes based on their type.
 
         Parameters
         ----------
-        ocb : (OCBoundary)
-            Open Closed Boundary class object
-        scale_func : (function)
-            Function for scaling AACGM magnitude with arguements:
+        name : str
+            Attribute name to be assigned to VectorData
+        value
+            Value (any type) to be assigned to attribute specified by name
+
+        """
+        # Determine the desired output type
+        out_val = np.asarray(value)
+        type_str = str(out_val.dtype)
+
+        if type_str.find('int') < 0 and type_str.find('float') < 0:
+            out_val = value
+
+        # Use Object to avoid recursion
+        super(VectorData, self).__setattr__(name, out_val)
+        return
+
+    def _ocb_attr_setter(self, ocb_name, ocb_val):
+        """Set OCB attributes.
+
+        Parameters
+        ----------
+        ocb_name : str
+            OCB attribute name
+        value
+            Value (any type) to be assigned to attribute specified by name
+
+        """
+        # Ensure the shape is correct
+        if np.asarray(ocb_val).shape == () and self.ocb_ind.shape != ():
+            ocb_val = np.full(shape=self.ocb_ind.shape, fill_value=ocb_val)
+
+        self.__setattr__(ocb_name, ocb_val)
+        return
+
+    def _test_update_vector_shape(self):
+        """Test and update the shape of the VectorData attributes.
+
+        Raises
+        ------
+        ValueError
+            If mismatches in the attribute shapes are encountered
+
+        Notes
+        -----
+        Sets the `vshape` attribute and updates the shape of `aacgm_n`,
+        `aacgm_e`, and `aacgm_z` if needed
+
+        """
+
+        # Get the required input shapes
+        vshapes = [self.aacgm_lat.shape, self.aacgm_mlt.shape,
+                   self.dat_ind.shape, self.aacgm_n.shape, self.aacgm_e.shape,
+                   self.aacgm_z.shape]
+        vshapes = np.unique(np.asarray(vshapes, dtype=object))
+
+        # Determine the desired shape
+        self.vshape = () if len(vshapes) == 0 else vshapes.max()
+
+        # Evaluate for potential mismatched attributes
+        if len(vshapes) > 2 or (len(vshapes) == 2 and min(vshapes) != ()):
+            raise ValueError('mismatched dimensions for VectorData inputs')
+
+        if len(vshapes) > 1 and min(vshapes) == ():
+            if self.dat_ind.shape == ():
+                raise ValueError('data index shape must match vector shape')
+
+            # Vector input needs to be the same length
+            if self.aacgm_n.shape == ():
+                self.aacgm_n = np.full(shape=self.vshape,
+                                       fill_value=self.aacgm_n)
+            if self.aacgm_e.shape == ():
+                self.aacgm_e = np.full(shape=self.vshape,
+                                       fill_value=self.aacgm_e)
+            if self.aacgm_z.shape == ():
+                self.aacgm_z = np.full(shape=self.vshape,
+                                       fill_value=self.aacgm_z)
+        return
+
+    def _test_update_bound_shape(self):
+        """Test and update the shape of the VectorData boundary attributes.
+
+        Raises
+        ------
+        ValueError
+            If mismatches in the attribute shapes are encountered
+
+        Notes
+        -----
+        Updates the shape of `aacgm_n`, `aacgm_e`, and `aacgm_z` if needed
+
+        """
+        # Test the OCB input shape
+        oshapes = np.unique([self.ocb_lat.shape, self.ocb_mlt.shape,
+                             self.r_corr.shape])
+        oshape = () if len(oshapes) == 0 else oshapes.max()
+
+        if(oshape != self.ocb_ind.shape or len(oshapes) > 2
+           or (len(oshapes) == 2 and min(oshapes) != ())):
+            raise ValueError('OCB index and input shapes mismatched')
+
+        # Compare and update the vector data shape if needed
+        if self.ocb_ind.shape == ():
+            oshape = self.vshape
+        elif self.dat_ind.shape == ():
+            self.vshape = oshape
+        else:
+            oshape = np.asarray(oshape)
+            if self.vshape.size != oshape.size or oshape != self.vshape:
+                raise ValueError('Mismatched OCB and Vector input shapes')
+        return
+
+    @property
+    def aacgm_mag(self):
+        """Magntiude of the AACGM vector(s)."""
+        return self._aacgm_mag
+
+    @aacgm_mag.setter
+    def aacgm_mag(self, aacgm_mag):
+        # Assign the vector magnitude(s)
+        aacgm_sqrt = np.sqrt(self.aacgm_n**2 + self.aacgm_e**2
+                             + self.aacgm_z**2)
+
+        if np.all(np.isnan(aacgm_mag)):
+            self._aacgm_mag = aacgm_sqrt
+        else:
+            if np.any(np.greater(abs(aacgm_mag - aacgm_sqrt), 1.0e-3,
+                                 where=~np.isnan(aacgm_mag))):
+                ocbpy.logger.warning("".join(["inconsistent AACGM components ",
+                                              "with a maximum difference of ",
+                                              "{:} > 1.0e-3".format(
+                                                  abs(aacgm_mag
+                                                      - aacgm_sqrt).max())]))
+            self._aacgm_mag = aacgm_mag
+        return
+
+    @property
+    def dat_ind(self):
+        """Data index(es)."""
+        return self._dat_ind
+
+    @dat_ind.setter
+    def dat_ind(self, dat_ind):
+        # Set the data indices, and clear old data if needed
+        if not hasattr(self, "dat_ind"):
+            self._dat_ind = dat_ind
+        else:
+            self._dat_ind = dat_ind
+
+            # Test the data and reset if necessary
+            self._test_update_vector_shape()
+
+            # Test the boundary shape
+            self._test_update_bound_shape()
+
+            # Reset the calculated boundary data
+            self.clear_data()
+
+            # Re-calculate the AACGM magnitude
+            self.aacgm_mag = np.nan
+        return
+
+    @property
+    def ocb_ind(self):
+        """Boundary index(es)."""
+        return self._ocb_ind
+
+    @ocb_ind.setter
+    def ocb_ind(self, ocb_ind):
+        # Set the OCB indices, and clear old data if needed
+        if not hasattr(self, 'ocb_ind'):
+            self._ocb_ind = ocb_ind
+        else:
+            self._ocb_ind = ocb_ind
+
+            # Test the boundaries and reset if necessary
+            try:
+                self._test_update_bound_shape()
+            except ValueError as verr:
+                if str(verr).find('OCB index and input shapes mismatch') == 0:
+                    ocbpy.logger.warning(
+                        '{:s}, unsetting boundary inputs'.format(str(verr)))
+                    self.ocb_lat = np.nan
+                    self.ocb_mlt = np.nan
+                    self.r_corr = np.nan
+
+                    if self.dat_ind.shape == ():
+                        self.vshape = ocb_ind.shape
+
+                    # Re-test boundary shape
+                    self._test_update_bound_shape()
+                else:
+                    # Can't figure out how to get here, but keeping for now
+                    raise ValueError(verr)
+
+            # Clear the rest of the data
+            self.clear_data()
+        return
+
+    @property
+    def ocb_lat(self):
+        """Boundary latitude in degrees."""
+        return self._ocb_lat
+
+    @ocb_lat.setter
+    def ocb_lat(self, ocb_lat):
+        # Set the boundary latitude value and ensure the shape is correct
+        self._ocb_attr_setter('_ocb_lat', ocb_lat)
+        return
+
+    @property
+    def ocb_mlt(self):
+        """Boundary magnetic local time in hours."""
+        return self._ocb_mlt
+
+    @ocb_mlt.setter
+    def ocb_mlt(self, ocb_mlt):
+        # Set the boundary MLT value and ensure the shape is correct
+        self._ocb_attr_setter('_ocb_mlt', ocb_mlt)
+        return
+
+    @property
+    def r_corr(self):
+        """Boundary radius correction in degrees."""
+        return self._r_corr
+
+    @r_corr.setter
+    def r_corr(self, r_corr):
+        # Set the boundary radius correction and ensure the shape is correct
+        self._ocb_attr_setter('_r_corr', r_corr)
+        return
+
+    def clear_data(self):
+        """Clear or initialize the output data attributes."""
+
+        # Assign the OCB vector default values and location
+        self.ocb_n = np.full(shape=self.vshape, fill_value=np.nan)
+        self.ocb_e = np.full(shape=self.vshape, fill_value=np.nan)
+        self.ocb_z = np.full(shape=self.vshape, fill_value=np.nan)
+        self.ocb_mag = np.full(shape=self.vshape, fill_value=np.nan)
+
+        # Assign the default pole locations, relative angles, and quadrants
+        self.ocb_quad = np.zeros(shape=self.vshape)
+        self.vec_quad = np.zeros(shape=self.vshape)
+        self.pole_angle = np.full(shape=self.vshape, fill_value=np.nan)
+        self.aacgm_naz = np.full(shape=self.vshape, fill_value=np.nan)
+        self.ocb_aacgm_lat = np.full(shape=self.vshape, fill_value=np.nan)
+        self.ocb_aacgm_mlt = np.full(shape=self.vshape, fill_value=np.nan)
+        return
+
+    def set_ocb(self, ocb, scale_func=None):
+        """Set the OCBoundary values for provided data (updates all attributes).
+
+        Parameters
+        ----------
+        ocb : ocbpy.OCBoundary or ocbpy.DualBoundary
+            OCB, EAB, or Dual boundary object
+        scale_func : function
+            Function for scaling AACGM magnitude with arguments:
             [measurement value, mesurement AACGM latitude (degrees),
             mesurement OCB latitude (degrees)]
             Not necessary if defined earlier or no scaling is needed.
             (default=None)
 
-        Updates
-        -------
-        self.unscaled_r : (float or array-like)
-            Radius of polar cap in degrees
-        self.scaled_r : (float)
-            Radius of normalised OCB polar cap in degrees
-        self.ocb_n : (float or array-like)
-            Vector OCB North component
-        self.ocb_e : (float or array-like)
-            Vector OCB East component
-        self.ocb_z : (float or array-like)
-            Vector OCB vertical component (positive downward)
-        self.ocb_mag : (float or array-like)
-            Vector OCB magnitude
-        self.ocb_lat : (float or array-like)
-            Vector OCB latitude, if not updated already (degrees)
-        self.ocb_mlt : (float or array-like)
-            Vector OCB MLT, if not updated already (hours)
-        self.r_corr : (float or array-like)
-            OCB radius correction for vector location (degrees)
-        self.ocb_quad : (int or array-like)
-            OCB pole AACGM quadrant
-        self.vec_quad : (int or array-like)
-            Vector AACGM quadrant
-        self.pole_angle : (float or array-like)
-            Angle at the vector in the triangle formed by the poles and vector
-            (degrees)
-        self.aacgm_naz : (float or array-like)
-            AACGM north azimuth angle (degrees)
-        self.ocb_aacgm_lat : (float or array-like)
-            AACGM latitude of the OCB pole (degrees)
-        self.ocb_aacgm_mlt : (float or array-like)
-            AACGM MLT of the OCB pole (hours)
-        self.scale_func : (function)
-            Function for scaling AACGM magnitude with arguements:
-            [measurement value, unscaled polar cap radius (degrees),
-            scaled polar cap radius (degrees)]
-            Not necessary if defined earlier or if no scaling is needed.
-
         """
-
-        # Initialize the OCB index
-        ocb.rec_ind = self.ocb_ind
 
         # If the OCB vector coordinates weren't included in the initial info,
         # update them here
-        if(np.all(np.isnan(self.ocb_lat)) or np.all(np.isnan(self.ocb_mlt)) or
-           np.all(np.isnan(self.r_corr))):
+        if(np.all(np.isnan(self.ocb_lat)) or np.all(np.isnan(self.ocb_mlt))
+           or np.all(np.isnan(self.r_corr))):
             # Because the OCB and AACGM magnetic field are both time dependent,
             # can't call this function with multiple OCBs
             if self.ocb_ind.shape == ():
-                (self.ocb_lat, self.ocb_mlt,
-                 self.r_corr) = ocb.normal_coord(self.aacgm_lat,
-                                                 self.aacgm_mlt)
+                # Initialise the OCB index
+                ocb.rec_ind = self.ocb_ind
+
+                # Calculate the coordinates and save the output
+                out_coord = ocb.normal_coord(self.aacgm_lat, self.aacgm_mlt)
+
+                if len(out_coord) == 3:
+                    (self.ocb_lat, self.ocb_mlt, self.r_corr) = out_coord
+                else:
+                    (self.ocb_lat, self.ocb_mlt, _, self.r_corr) = out_coord
             else:
+                # Cycle through the OCB indices
                 for i, ocb.rec_ind in enumerate(self.ocb_ind):
+                    # Calcualte the coordinates and save the output
                     if self.ocb_ind.shape == self.dat_ind.shape:
-                        (self.ocb_lat[i], self.ocb_mlt[i],
-                         self.r_corr[i]) = ocb.normal_coord(self.aacgm_lat[i],
-                                                            self.aacgm_mlt[i])
+                        out_coord = ocb.normal_coord(self.aacgm_lat[i],
+                                                     self.aacgm_mlt[i])
                     else:
+                        out_coord = ocb.normal_coord(self.aacgm_lat,
+                                                     self.aacgm_mlt)
+
+                    if len(out_coord) == 3:
                         (self.ocb_lat[i], self.ocb_mlt[i],
-                         self.r_corr[i]) = ocb.normal_coord(self.aacgm_lat,
-                                                            self.aacgm_mlt)
+                         self.r_corr[i]) = out_coord
+                    else:
+                        (self.ocb_lat[i], self.ocb_mlt[i], _,
+                         self.r_corr[i]) = out_coord
 
         # Exit if the OCB coordinates can't be calculated at this location
-        if(np.all(np.isnan(self.ocb_lat)) or np.all(np.isnan(self.ocb_mlt)) or
-           np.all(np.isnan(self.r_corr))):
+        if(np.all(np.isnan(self.ocb_lat)) or np.all(np.isnan(self.ocb_mlt))
+           or np.all(np.isnan(self.r_corr))):
             return
 
         # Set the AACGM coordinates of the OCB pole
-        self.unscaled_r = ocb.r[self.ocb_ind] + self.r_corr
-        self.scaled_r = 90.0 - abs(ocb.boundary_lat)
-        self.ocb_aacgm_mlt = ocbpy.ocb_time.deg2hr(ocb.phi_cent[self.ocb_ind])
-        self.ocb_aacgm_lat = 90.0 - ocb.r_cent[self.ocb_ind]
+        if hasattr(ocb, "ocb"):
+            iocb = ocb.ocb_ind[self.ocb_ind]
+            self.unscaled_r = ocb.ocb.r[iocb] + self.r_corr
+            self.scaled_r = np.full(
+                shape=self.unscaled_r.shape,
+                fill_value=(90.0 - abs(ocb.ocb.boundary_lat)))
+            self.ocb_aacgm_mlt = ocbpy.ocb_time.deg2hr(
+                ocb.ocb.phi_cent[iocb])
+            self.ocb_aacgm_lat = 90.0 - ocb.ocb.r_cent[iocb]
+        else:
+            self.unscaled_r = ocb.r[self.ocb_ind] + self.r_corr
+            self.scaled_r = np.full(shape=self.unscaled_r.shape,
+                                    fill_value=(90.0 - abs(ocb.boundary_lat)))
+            self.ocb_aacgm_mlt = ocbpy.ocb_time.deg2hr(
+                ocb.phi_cent[self.ocb_ind])
+            self.ocb_aacgm_lat = 90.0 - ocb.r_cent[self.ocb_ind]
 
         # Get the angle at the data vector appended by the AACGM and OCB poles
         self.calc_vec_pole_angle()
@@ -492,30 +591,16 @@ class VectorData(object):
         return
 
     def define_quadrants(self):
-        """ Find the MLT quadrants (in AACGM coordinates) for the OCB pole
-        and data vector
-
-        Requires
-        --------
-        self.ocb_aacgm_mlt : (float or array-like)
-            OCB pole MLT in AACGM coordinates in hours
-        self.aacgm_mlt : (float or array-like)
-            Vector AACGM MLT in hours
-        self.pole_angle : (float or array-like)
-            vector angle in poles-vector triangle in degrees
-
-        Updates
-        -------
-        self.ocb_quad : (int or array-like)
-            OCB pole quadrant
-        self.vec_quad : (int or array-like)
-            Vector quadrant
+        """Define AACGM MLT quadrants for the OCB pole and data vector.
 
         Notes
         -----
         North (N) and East (E) are defined by the AACGM directions centred on
         the data vector location, assuming vertical is positive downwards
         Quadrants: 1 [N, E]; 2 [N, W]; 3 [S, W]; 4 [S, E]
+
+        Requires `ocb_aacgm_mlt`, `aacgm_mlt`, and `pole_angle`.
+        Updates `ocb_quad` and `vec_quad`
 
         Raises
         ------
@@ -599,9 +684,9 @@ class VectorData(object):
                       & nan_mask)
         quad2_mask = (np.greater_equal(self.aacgm_n, 0.0, where=nan_mask)
                       & np.less(self.aacgm_e, 0.0, where=nan_mask) & nan_mask)
-        quad3_mask = (np.less(self.aacgm_n, 0.0,  where=nan_mask)
+        quad3_mask = (np.less(self.aacgm_n, 0.0, where=nan_mask)
                       & np.less(self.aacgm_e, 0.0, where=nan_mask) & nan_mask)
-        quad4_mask = (np.less(self.aacgm_n, 0.0,  where=nan_mask)
+        quad4_mask = (np.less(self.aacgm_n, 0.0, where=nan_mask)
                       & np.greater_equal(self.aacgm_e, 0.0, where=nan_mask)
                       & nan_mask)
 
@@ -623,34 +708,17 @@ class VectorData(object):
         return
 
     def scale_vector(self):
-        """ Normalise a variable proportional to the curl of the electric field.
-
-        Requires
-        --------
-        self.ocb_lat : (float or array-like)
-            OCB latitude in degrees
-        self.ocb_mlt : (float or array-like)
-            OCB MLT in hours
-        self.ocb_aacgm_mlt : (float or array-like)
-            OCB pole MLT in AACGM coordinates in hours
-        self.pole_angle : (float or array-like)
-            vector angle in poles-vector triangle
-
-        Updates
-        -------
-        ocb_n : (float or array-like)
-            OCB scaled north component
-        ocb_e : (float or array-like)
-            OCB scaled east component
-        ocb_z : (float or array-like)
-            OCB scaled vertical component
-        ocb_mag : (float or array-like)
-            OCB scaled magnitude
+        """Normalise a variable proportional to the curl of the electric field.
 
         Raises
         ------
         ValueError
             If the required input is not defined
+
+        Notes
+        -----
+        Requires `ocb_lat`, `ocb_mlt`, `ocb_aacgm_mlt`, and `pole_angle`.
+        Updates `ocb_n`, `ocb_e`, `ocb_z`, and `ocb_mag`
 
         """
 
@@ -722,20 +790,20 @@ class VectorData(object):
                 else:
                     self.ocb_n[ns_mask] = self.scale_func(
                         self.aacgm_n[ns_mask], self.unscaled_r[ns_mask],
-                        self.scaled_r)
+                        self.scaled_r[ns_mask])
                     self.ocb_e[ns_mask] = self.scale_func(
                         self.aacgm_e[ns_mask], self.unscaled_r[ns_mask],
-                        self.scaled_r)
+                        self.scaled_r[ns_mask])
                     self.ocb_z[ns_mask] = self.scale_func(
                         self.aacgm_z[ns_mask], self.unscaled_r[ns_mask],
-                        self.scaled_r)
+                        self.scaled_r[ns_mask])
 
             # Determine if the measurement is on or between the poles
             # This does not affect the vertical direction
-            sign_mask = ((self.pole_angle == 0.0) &
-                         np.greater_equal(self.aacgm_lat, self.ocb_aacgm_lat,
-                                          where=~np.isnan(self.aacgm_lat)) &
-                         ~np.isnan(self.aacgm_lat))
+            sign_mask = ((self.pole_angle == 0.0)
+                         & np.greater_equal(self.aacgm_lat, self.ocb_aacgm_lat,
+                                            where=~np.isnan(self.aacgm_lat))
+                         & ~np.isnan(self.aacgm_lat))
             if np.any(sign_mask):
                 if self.ocb_n.shape == ():
                     self.ocb_n *= -1.0
@@ -774,16 +842,18 @@ class VectorData(object):
             if self.scale_func is not None:
                 if self.unscaled_r.shape == ():
                     un_r = self.unscaled_r
+                    sc_r = self.scaled_r
                 else:
                     un_r = self.unscaled_r[norm_mask]
+                    sc_r = self.scaled_r[norm_mask]
 
                 if self.aacgm_z.shape == ():
                     a_z = self.aacgm_z
                 else:
                     a_z = self.aacgm_z[norm_mask]
 
-                vmag = self.scale_func(vmag, un_r, self.scaled_r)
-                vz = self.scale_func(a_z,  un_r, self.scaled_r)
+                vmag = self.scale_func(vmag, un_r, sc_r)
+                vz = self.scale_func(a_z, un_r, sc_r)
             else:
                 if self.aacgm_z.shape == ():
                     vz = self.aacgm_z
@@ -825,28 +895,21 @@ class VectorData(object):
         return
 
     def calc_ocb_polar_angle(self):
-        """ Calculate the OCB north azimuth angle
-
-        Requires
-        --------
-        self.ocb_quad : (int or array-like)
-            OCB quadrant
-        self.vec_quad : (int or array-like)
-            Vector quadrant
-        self.aacgm_naz : (float or array-like)
-            AACGM polar angle
-        self.pole_angle : (float or array-like)
-            Vector angle between AACGM pole, vector origin, and OCB pole
+        """Calculate the OCB north azimuth angle.
 
         Returns
         -------
-        ocb_naz : (float or array-like)
+        ocb_naz : float or array-like
             Angle between measurement vector and OCB pole in degrees
 
         Raises
         ------
         ValueError
             If the required input is undefined
+
+        Notes
+        -----
+        Requires `ocb_quad`, `vec_quad`, `aacgm_naz`, and `pole_angle`
 
         """
 
@@ -925,32 +988,21 @@ class VectorData(object):
         return ocb_naz
 
     def calc_ocb_vec_sign(self, north=False, east=False, quads=dict()):
-        """ Get the sign of the North and East components
+        """Calculate the sign of the North and East components.
 
         Parameters
         ----------
-        north : (boolean)
+        north : bool
             Get the sign of the north component(s) (default=False)
-        east : (boolean)
+        east : bool
             Get the sign of the east component(s) (default=False)
-        quads : (dictionary)
+        quads : dict
             Dictionary of boolean values or arrays of boolean values for OCB
             and Vector quadrants. (default=dict())
 
-        Requires
-        --------
-        self.ocb_quad : (int or array-like)
-            OCB pole quadrant
-        self.vec_quad : (int or array-like)
-            Vector quadrant
-        self.aacgm_naz : (float or array-like)
-            AACGM polar angle in degrees
-        self.pole_angle : (float or array-like)
-            Vector angle in degrees
-
         Returns
         -------
-        vsigns : (dict)
+        vsigns : dict
             Dictionary with keys 'north' and 'east' containing the desired
             signs
 
@@ -958,6 +1010,10 @@ class VectorData(object):
         ------
         ValueError
             If the required input is undefined
+
+        Notes
+        -----
+        Requires `ocb_quad`, `vec_quad`, `aacgm_naz`, and `pole_angle`
 
         """
 
@@ -1030,10 +1086,10 @@ class VectorData(object):
         if east:
             minus_pole = 180.0 - self.pole_angle
 
-            pmask = (quads[1][4] | quads[2][1] | quads[3][2] | quads[4][3] |
-                     ((quads[1][1] | quads[4][4])
-                      & np.greater_equal(self.aacgm_naz, self.pole_angle,
-                                         where=nan_mask))
+            pmask = (quads[1][4] | quads[2][1] | quads[3][2] | quads[4][3]
+                     | ((quads[1][1] | quads[4][4])
+                        & np.greater_equal(self.aacgm_naz, self.pole_angle,
+                                           where=nan_mask))
                      | ((quads[3][1] | quads[2][4])
                         & np.less_equal(self.aacgm_naz, minus_pole,
                                         where=nan_mask))
@@ -1059,29 +1115,17 @@ class VectorData(object):
         return vsigns
 
     def calc_vec_pole_angle(self):
-        """Calculate the angle between the AACGM pole, a measurement, and the
-        OCB pole using spherical triginometry
-
-        Requires
-        --------
-        self.aacgm_mlt : (float or array-like)
-            AACGM MLT of vector origin in hours
-        self.aacgm_lat : (float or array-like)
-            AACGM latitude of vector origin in degrees
-        self.ocb_aacgm_mlt : (float or array-like)
-            AACGM MLT of the OCB pole in hours
-        self.ocb_aacgm_lat : (float or array-like)
-            AACGM latitude of the OCB pole in degrees
-
-        Updates
-        -------
-        self.pole_angle : (float or array-like)
-            Angle in degrees between AACGM north, a measurement, and OCB north
+        """Calc the angle between the AACGM pole, data, and the OCB pole.
 
         Raises
         ------
         ValueError
             If the input is undefined or inappropriately sized arrays
+
+        Notes
+        -----
+        Requires `aacgm_mlt`, `aacgm_lat`, `ocb_aacgm_mlt`, and `ocb_aacgm_lat`.
+        Updates `pole_angle` using spherical trigonometry.
 
         """
 
@@ -1106,7 +1150,7 @@ class VectorData(object):
 
         # Convert the AACGM MLT of the observation and OCB pole to radians,
         # then calculate the difference between them.
-        del_long = ocbpy.ocb_time.hr2rad(self.ocb_aacgm_mlt-self.aacgm_mlt)
+        del_long = ocbpy.ocb_time.hr2rad(self.ocb_aacgm_mlt - self.aacgm_mlt)
 
         if del_long.shape == ():
             if del_long < -np.pi:
@@ -1181,20 +1225,20 @@ class VectorData(object):
 
 
 def normal_evar(evar, unscaled_r, scaled_r):
-    """ Normalise a variable proportional to the electric field
+    """Normalise a variable proportional to the electric field.
 
     Parameters
     ----------
-    evar : (float or array)
+    evar : float or array
         Variable related to electric field (e.g. velocity)
-    unscaled_r : (float or array)
+    unscaled_r : float or array
         Radius of polar cap in degrees
-    scaled_r : (float or array)
+    scaled_r : float or array
         Radius of normalised OCB polar cap in degrees
 
     Returns
     -------
-    nvar : (float or array)
+    nvar : float or array
         Normalised variable
 
     Notes
@@ -1203,13 +1247,7 @@ def normal_evar(evar, unscaled_r, scaled_r):
     regardless of the radius of the Open Closed field line Boundary.  This is
     commonly assumed when looking at statistical patterns that control the IMF
     (which accounts for dayside reconnection) and assume that the nightside
-    reconnection influence is averaged out over the averaged period.
-
-    References
-    ----------
-    Chisham, G. (2017), A new methodology for the development of high‐latitude
-    ionospheric climatologies and empirical models, Journal of Geophysical
-    Research: Space Physics, doi:10.1002/2016JA023235.
+    reconnection influence is averaged out over the averaged period [1]_.
 
     """
 
@@ -1219,20 +1257,20 @@ def normal_evar(evar, unscaled_r, scaled_r):
 
 
 def normal_curl_evar(curl_evar, unscaled_r, scaled_r):
-    """ Normalise a variable proportional to the curl of the electric field
+    """Normalise a variable proportional to the curl of the electric field.
 
     Parameters
     ----------
-    curl_evar : (float or array)
+    curl_evar : float or array
         Variable related to electric field (e.g. vorticity)
-    unscaled_r : (float or array)
+    unscaled_r : float or array
         Radius of polar cap in degrees
-    scaled_r : (float or array)
+    scaled_r : float or array
         Radius of normalised OCB polar cap in degrees
 
     Returns
     -------
-    nvar : (float or array)
+    nvar : float or array
         Normalised variable
 
     Notes
@@ -1241,13 +1279,7 @@ def normal_curl_evar(curl_evar, unscaled_r, scaled_r):
     regardless of the radius of the Open Closed field line Boundary.  This is
     commonly assumed when looking at statistical patterns that control the IMF
     (which accounts for dayside reconnection) and assume that the nightside
-    reconnection influence is averaged out over the averaged period.
-
-    References
-    ----------
-    Chisham, G. (2017), A new methodology for the development of high‐latitude
-    ionospheric climatologies and empirical models, Journal of Geophysical
-    Research: Space Physics, doi:10.1002/2016JA023235.
+    reconnection influence is averaged out over the averaged period [1]_.
 
     """
 
@@ -1257,16 +1289,16 @@ def normal_curl_evar(curl_evar, unscaled_r, scaled_r):
 
 
 def hav(alpha):
-    """ Formula for haversine
+    """Calculate the haversine.
 
     Parameters
     ----------
-    alpha : (float or array-like)
+    alpha : float or array-like
         Angle in radians
 
     Returns
     -------
-    hav_alpha : (float or array-like)
+    hav_alpha : float or array-like
         Haversine of alpha, equal to the square of the sine of half-alpha
 
     """
@@ -1277,16 +1309,16 @@ def hav(alpha):
 
 
 def archav(hav):
-    """ Formula for the inverse haversine
+    """Calculate the inverse haversine.
 
     Parameters
     ----------
-    hav : (float or array-like)
+    hav : float or array-like
         Haversine of an angle
 
     Returns
     -------
-    alpha : (float or array-like)
+    alpha : float or array-like
         Angle in radians
 
     Notes

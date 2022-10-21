@@ -1,10 +1,8 @@
 graft ocbpy/tests/test_data
 graft ocbpy/boundaries
 
-include AUTHORS.rst
-include README.md
-include License.md
-include CODE_OF_CONDUCT.md
-include CODE_OF_CONDUCT.rst
-include CONTRIBUTING.rst
-include Changelog.rst
+include *.rst
+include *.md
+
+include *.yml
+include .zenodo.json

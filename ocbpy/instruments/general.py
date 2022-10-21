@@ -2,17 +2,7 @@
 # Copyright (C) 2017 AGB
 # Full license can be found in LICENSE.txt
 # ---------------------------------------------------------------------------
-""" General loading routines for data files
-
-Functions
----------
-test_file(filename)
-    Test to see whether file exists and is small enough to load
-load_ascii_data(filename, hlines, kwargs)
-    Load time-sorted ascii data file
-
-"""
-from __future__ import absolute_import, unicode_literals
+"""General loading routines for data files."""
 
 import numpy as np
 from os import path
@@ -22,18 +12,21 @@ import ocbpy.ocb_time as ocbt
 
 
 def test_file(filename):
-    """Test to ensure the file is small enough to read in.  Python can only
-    allocate 2GB of data without crashing
+    """Test to ensure the file is small enough to load.
 
     Parameters
     ----------
-    filename : (str)
+    filename : str
         Filename to test
 
     Returns
     -------
-    good_flag : (bool)
+    good_flag : bool
         True if good, bad if false
+
+    Notes
+    -----
+    Python can only allocate 2GB of data without crashing
 
     """
 
@@ -44,7 +37,8 @@ def test_file(filename):
     fsize = path.getsize(filename)
 
     if(fsize > 2.0e9):
-        ocbpy.logger.warning("File size [{:.2f} GB > 2 GB]".format(fsize*1e-9))
+        ocbpy.logger.warning(
+            "File size [{:.2f} GB > 2 GB]".format(fsize * 1e-9))
         return False
     elif(fsize == 0):
         ocbpy.logger.warning("empty file [{:s}]".format(filename))
@@ -54,46 +48,48 @@ def test_file(filename):
 
 
 def load_ascii_data(filename, hlines, gft_kwargs=dict(), hsplit=None,
-                    datetime_cols=list(), datetime_fmt=None, int_cols=list(),
-                    str_cols=list(), max_str_length=50, header=list()):
-    """ Load an ascii data file into a dict of numpy array
+                    datetime_cols=None, datetime_fmt=None, int_cols=None,
+                    str_cols=None, max_str_length=50, header=None):
+    """Load an ASCII data file into a dict of numpy arrays.
 
     Parameters
     ----------
-    filename : (str)
+    filename : str
         data file name
-    hlines : (int)
+    hlines : int
         number of lines in header.  If zero, must include header.
-    gft_kwargs : (dict)
+    gft_kwargs : dict
         Dictionary holding optional keyword arguments for the numpy genfromtxt
         routine (default=dict())
-    hsplit : (str, NoneType)
+    hsplit : str, NoneType
         character seperating data labels in header.  None splits on all
         whitespace characters. (default=None)
-    datetime_cols : (list of ints)
+    datetime_cols : list, NoneType
         If there are date strings or values that should be converted to a
         datetime object, list them in order here. Not processed as floats.
-        (default=[])
-    datetime_fmt : (str or NoneType)
+        NoneType produces an empty list. (default=None)
+    datetime_fmt : str, NoneType
         Format needed to convert the datetime_cols entries into a datetime
         object.  Special formats permitted are: 'YEAR SOY', 'SOD'.
         'YEAR SOY' must be used together; 'SOD' indicates seconds of day, and
         may be used with any date format (default=None)
-    int_cols : (list of ints)
-        Data that should be processed as integers, not floats. (default=[])
-    str_cols : (list of ints)
-        Data that should be processed as strings, not floats. (default=[])
-    max_str_length : (int)
+    int_cols : list, NoneType
+        Data that should be processed as integers, not floats. NoneType
+        produces an empty list. (default=None)
+    str_cols : list, NoneType
+        Data that should be processed as strings, not floats. NoneType produces
+        an empty list. (default=None)
+    max_str_length : int
         Maximum allowed string length. (default=50)
-    header : (list of str)
+    header : list, NoneType
         Header string(s) where the last line contains whitespace separated data
-        names (default=list())
+        names. NoneType produces an empty list. (default=None)
 
     Returns
     -------
-    header : (list of strings)
+    header : list of strings
         Contains all specified header lines
-    out : (dict of numpy.arrays)
+    out : dict of numpy.arrays
         The dict keys are specified by the header data line, the data
         for each key are stored in the numpy array
 
@@ -102,6 +98,18 @@ def load_ascii_data(filename, hlines, gft_kwargs=dict(), hsplit=None,
     Data is assumed to be float unless otherwise stated.
 
     """
+    # Initialize the empty lists
+    if datetime_cols is None:
+        datetime_cols = list()
+
+    if int_cols is None:
+        int_cols = list()
+
+    if str_cols is None:
+        str_cols = list()
+
+    if header is None:
+        header = list()
 
     # Test to ensure the file is small enough to read in.  Python can only
     # allocate 2GB of data.  If you load something larger, python will crash
@@ -121,11 +129,11 @@ def load_ascii_data(filename, hlines, gft_kwargs=dict(), hsplit=None,
 
         if datetime_fmt.upper().find("YEAR") >= 0:
             ipart = datetime_fmt.upper().find("YEAR")
-            case_part = datetime_fmt[ipart:ipart+4]
+            case_part = datetime_fmt[ipart:ipart + 4]
             int_cols.append(dfmt_parts.index(case_part))
         if datetime_fmt.upper().find("SOY") >= 0:
             ipart = datetime_fmt.upper().find("SOY")
-            case_part = datetime_fmt[ipart:ipart+3]
+            case_part = datetime_fmt[ipart:ipart + 3]
             int_cols.append(dfmt_parts.index(case_part))
 
     # Open the data file and read the header rows

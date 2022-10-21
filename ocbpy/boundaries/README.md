@@ -1,9 +1,9 @@
 This directory contains files with Open Closed field line Boundaries obtained
 from different instruments
 
-IMAGE (si12/si13/wic) File Format
----------------------------------
-YR, SOY, NB, PHICENT, RCENT, R, A, R_ERR
+IMAGE (image/si12/si13/wic) File Format
+---------------------------------------
+YR, SOY, NB, PHICENT, RCENT, R, A, R_ERR, R_MERIT
  
 YR      : Year
 SOY     : Seconds of year (be careful in leap years)
@@ -12,14 +12,19 @@ PHICENT : Angle from midnight of the line from the AACGM pole to the
           ‘fitted pole’  (effectively MLT*15)
 RCENT   : AACGM Co-latitude of the location of the ‘fitted pole’
 R       : radius of the circle (co-latitude) remembering that the circle centre
-          is the ‘fitted pole’
-A       : Area of the circle
-R_ERR   : Error in the radius
+          is the ‘fitted pole’ in degrees
+A       : Psuedo area of the circle (as in AACGM, not geographic)
+R_ERR   : Root-mean squared error in the radius in degrees
+R_MERIT : Radial distance from the most typical pole location in degrees
  
-There are certain ranges for NB, RCENT, and R that you shouldn’t use that can
-be found (and explained) in Chisham (2017), doi:10.1002/2016JA023235.  These
-ranges are the defaults in OCBoundary.get_next_good_ocb_ind.  When using these
-boundaries, remember to cite Chisham (2017).
+Previosly, there are certain ranges for NB, RCENT, and R that were not
+recommended for use (see Chisham (2017), doi:10.1002/2016JA023235).  Currently,
+R_MERIT is used instead, with recommended merit values documented in Chisham
+et al. (2022), doi:10.1029/2022JA030622.  These ranges are the defaults in
+OCBoundary.get_next_good_ocb_ind.  When using these boundaries, remember to cite
+Chisham (2017) or Chisham et al. (2022). From ocbpy version 0.3.0 onward,
+the SI12, SI13, and WIC files contain uncorrected auroral boundary fits, while
+the IMAGE file contains DMSP corrected average boundaries for the OCB and EAB.
 
 AMPERE (amp) File Format
 ------------------------
@@ -43,17 +48,18 @@ remember to cite Burrell at al. (2019).
 
 Files
 -----
-amp_north_radii.txt : Active Magnetosphere and Planetary Electrodynamics
-                      Response Experiment
-		      [Waters, et al. (2001), Geophys. Res. Lett., 28,
-		       2165-2168]
-amp_south_radii.txt : Active Magnetosphere and Planetary Electrodynamics
-                      Response Experiment
-		      [Waters, et al. (2001), Geophys. Res. Lett., 28,
-		       2165-2168]
-si12_north_circle   : Spectrographic Imager SI12
-       		      [Mende, et al. (2000), Space Sci. Rev., 91, 287–318]
-si13_north_circle   : Spectrographic Imager SI13
-                      [Mende, et al. (2000), Space Sci. Rev., 91, 287–318]
-wic_north_circle    : Wideband Imaging Camera (WIC)
-                      [Mende, et al. (2000b), Space Sci. Rev., 91, 271–285]
+amp_north_radii.txt    : Active Magnetosphere and Planetary Electrodynamics
+                         Response Experiment
+		         [Waters, et al. (2001), Geophys. Res. Lett., 28,
+		          2165-2168]
+amp_south_radii.txt    : Active Magnetosphere and Planetary Electrodynamics
+                         Response Experiment
+		         [Waters, et al. (2001), Geophys. Res. Lett., 28,
+		          2165-2168]
+si12_north_circle.xxx  : Spectrographic Imager SI12
+       		         [Mende, et al. (2000), Space Sci. Rev., 91, 287–318]
+si13_north_circle.xxx  : Spectrographic Imager SI13
+                         [Mende, et al. (2000), Space Sci. Rev., 91, 287–318]
+wic_north_circle.xxx   : Wideband Imaging Camera (WIC)
+                         [Mende, et al. (2000b), Space Sci. Rev., 91, 271–285]
+image_north_circle.xxx : Combined data from all IMAGE instruments

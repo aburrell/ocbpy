@@ -22,13 +22,16 @@ Please describe the tests that you ran to verify your changes. Provide
 instructions so we can reproduce. Please also list any relevant details for
 your test configuration
 
-- [ ] Test A
-- [ ] Test B
+```
+import ocbpy
+# Do a thing
+```
 
-**Test Configuration**:
-- Operating system
-- Version number
-- Any details about your local setup that are relevant
+## Test Configuration
+
+- Operating system: (Hal)
+- Version number: (Python 1.0)
+- Any details about your local setup that are relevant: (e.g., pysat version)
 
 # Checklist:
 
@@ -43,4 +46,4 @@ your test configuration
 - [ ] New and existing unit tests pass locally with my changes
 - [ ] Any dependent changes have been merged and published in downstream modules
 - [ ] Add a note to ``Changelog.rst``, summarising the changes
-- [ ] Add yourself to ``AUTHORS.rst``
+- [ ] Add yourself to ``AUTHORS.rst`` and ``.zenodo.json``

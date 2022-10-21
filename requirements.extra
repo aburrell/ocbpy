@@ -7,20 +7,21 @@ EXTRAS=$1
 
 if [ $EXTRAS = 1 ]; then
     # Install pysat, which currently is not vetted for Windows.
-    # Although ocbpy works with pysat >= 2.0.0, the testing suite is not
-    # provided in versions below 2.2.1. The way custom functions work changed
-    # in pysat 3.0.0.  The next OCBpy release will require pysat >= 3.0.0
-    pip install "pysat>=2.2.1,<3.0.0"
+    # Although older ocbpy work with pysat >= 2.0.0, the testing suite is not
+    # provided in versions below 2.2.1 and the custom function interface
+    # changed in pysat 3.0.0
+    pip install pysat>=3.0.1
     mkdir $HOME/pysatData
+    python -c "import pysat; pysat.params['data_dirs'] = '$HOME/pysatData'"
     echo "Installed pysat"
 elif [ $EXTRAS = 2 ]; then
     # Install code for ssj_auroral_boundary on linux
     #
     # Get CDF software and install it
-    wget https://spdf.sci.gsfc.nasa.gov/pub/software/cdf/dist/cdf37_1/linux/cdf37_1-dist-cdf.tar.gz
-    tar xzf cdf37_1-dist-cdf.tar.gz
-    make OS=linux ENV=gnu -C cdf37_1-dist/ all
-    make INSTALLDIR=$HOME -C cdf37_1-dist/ install
+    wget https://spdf.gsfc.nasa.gov/pub/software/cdf/dist/cdf38_0/linux/cdf38_0-dist-cdf.tar.gz
+    tar xzf cdf38_0-dist-cdf.tar.gz
+    make OS=linux ENV=gnu -C cdf38_0-dist/ all
+    make INSTALLDIR=$HOME -C cdf38_0-dist/ install
     # Running this command for definitions will break matplotlib
     # . $HOME/bin/definitions.B
     # Define environment variables in the .yml file
