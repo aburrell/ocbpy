@@ -3,6 +3,7 @@ graft ocbpy/boundaries
 
 include *.rst
 include *.md
+include LICENSE
 
 include *.yml
 include .zenodo.json
