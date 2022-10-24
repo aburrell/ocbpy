@@ -457,11 +457,10 @@ class TestSSJFormat(unittest.TestCase):
             # Try to read in a bad CDF filename
             self.out = boundaries.dmsp_ssj_files.format_ssj_boundary_files(
                 [self.test_dir])
-            self.assertEqual(len(self.out), 0)
 
-            # Test the logging output
-            self.lout = self.log_capture.getvalue()
-            self.assertRegex(self.lout, "bad input file")
+        # Test the logging output
+        self.lout = self.log_capture.getvalue()
+        self.assertRegex(self.lout, "bad input file")
         return
 
     def test_format_ssj_boundary_files_failure(self):

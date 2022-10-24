@@ -28,4 +28,4 @@ from ocbpy._boundary import OCBoundary
 from ocbpy.cycle_boundary import match_data_ocb
 
 # Define the global variables
-__version__ = str('0.2.1')
+__version__ = str('0.3.0')
