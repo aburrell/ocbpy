@@ -673,7 +673,7 @@ def fetch_format_ssj_boundary_files(stime, etime, out_dir=None, rm_temp=True,
 
         # Create CSV files with geographic coordinates for the boundaries
         csv_files = create_ssj_boundary_files(dmsp_files, out_dir=out_dir)
-        
+
         # Remove the DMSP files, as their data has been processed
         if rm_temp:
             for tmp_file in dmsp_files:
