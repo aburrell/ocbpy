@@ -28,6 +28,7 @@ elif [ $EXTRAS = 2 ]; then
 
     # Install the python requirements
     pip install scipy matplotlib h5py networkx ffnet ephem spacepy colorlog
+    pip install zenodo_get
     pip install git+https://github.com/lkilcommons/geospacepy-lite.git@master
     pip install git+https://github.com/lkilcommons/ssj_auroral_boundary@master
 
@@ -57,7 +58,7 @@ elif [ $EXTRAS -ge 32  ]; then
 
     # Install code for ssj_auroral_boundary on windows (EXTRAS is 32 or 64)
     $PYTHON\\python.exe -m pip install wheel scipy matplotlib networkx h5py
-    $PYTHON\\python.exe -m pip install ephem spacepy colorlog
+    $PYTHON\\python.exe -m pip install ephem spacepy colorlog zenodo_get
     $PYTHON\\python.exe -m pip install git+https://github.com/lkilcommons/geospacepy-lite.git@master
     $PYTHON\\python.exe -m pip install git+https://github.com/lkilcommons/ssj_auroral_boundary@master
 
