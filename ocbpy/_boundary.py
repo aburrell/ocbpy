@@ -16,7 +16,6 @@ References
 
 """
 
-import datetime as dt
 import numpy as np
 import types
 import warnings

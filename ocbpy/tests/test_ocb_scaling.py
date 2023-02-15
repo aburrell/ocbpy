@@ -8,7 +8,6 @@
 from io import StringIO
 import logging
 import numpy
-from numpy import nan
 from os import path
 import unittest
 

@@ -8,7 +8,6 @@
 import datetime as dt
 import logging
 from io import StringIO
-import numpy as np
 import os
 import unittest
 

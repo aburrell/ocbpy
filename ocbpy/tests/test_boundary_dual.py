@@ -5,7 +5,6 @@
 # -----------------------------------------------------------------------------
 """Tests the boundary DualBoundary class."""
 
-import datetime
 from io import StringIO
 import logging
 import numpy
@@ -14,7 +13,7 @@ import sys
 import unittest
 
 import ocbpy
-from . import test_boundary_ocb as test_ocb
+import test_boundary_ocb as test_ocb
 
 win_list = ['windows', 'win32', 'win64', 'cygwin']
 
