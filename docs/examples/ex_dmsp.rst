@@ -14,7 +14,7 @@ need the
 package, but now we preferentially support using the
 `zendodo_get <https://github.com/dvolgyes/zenodo_get>`__ package to obtain the
 boundary files from their
-`archive <https://zenodo.org/record/3373812#.Y-0S3-zMLBt>`__. Once installed,
+`archive <https://zenodo.org/record/3373812>`__. Once installed,
 you can download DMSP SSJ data and obtain a boundary file for a specified time
 period (or all available times) using :py:mod:`ocbpy.boundaries.dmsp_ssj_files`.
 For this example, we'll use a single day. You can download the files into any
