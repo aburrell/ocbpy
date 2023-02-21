@@ -678,15 +678,20 @@ def fetch_format_ssj_boundary_files(stime, etime, out_dir=None, rm_temp=True,
         if rm_temp:
             for tmp_file in dmsp_files:
                 os.remove(tmp_file)
+
+        # Set the potential error string
+        estr = "unable to download and process the SSJ files {:}".format(
+            dmsp_files)
     else:
         # Fetch the DMSP SSJ boundary files from the Zenodo archive
         csv_files = fetch_ssj_boundary_files(stime, etime, out_dir=out_dir,
                                              rm_temp=rm_temp)
+        estr = "unable to download the SSJ files from {:} to {:}".format(stime,
+                                                                         etime)
 
     # Test to see if there are any DMSP processed files
     if len(csv_files) == 0:
-        raise ValueError("".join(["unable to process the downloaded SSJ ",
-                                  "files {:}".format(dmsp_files)]))
+        raise ValueError(estr)
 
     # Create the boundary files
     bound_files = format_ssj_boundary_files(csv_files, ref_alt=ref_alt,
