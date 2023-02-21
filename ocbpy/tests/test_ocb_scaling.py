@@ -8,6 +8,7 @@
 from io import StringIO
 import logging
 import numpy
+from numpy import nan  # noqa F401
 from os import path
 import unittest
 

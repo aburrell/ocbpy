@@ -11,7 +11,7 @@ import numpy
 from os import path
 
 import ocbpy
-import test_boundary_ocb as test_ocb
+from . import test_boundary_ocb as test_ocb
 
 
 class TestEABoundaryDeprecations(test_ocb.TestOCBoundaryDeprecations):

@@ -13,7 +13,7 @@ import sys
 import unittest
 
 import ocbpy
-import test_boundary_ocb as test_ocb
+from . import test_boundary_ocb as test_ocb
 
 win_list = ['windows', 'win32', 'win64', 'cygwin']
 
