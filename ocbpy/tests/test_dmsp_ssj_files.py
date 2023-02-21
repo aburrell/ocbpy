@@ -111,7 +111,7 @@ class TestSSJFetchDep(unittest.TestCase):
             self.assertEqual(len(self.fetch_files), 1)
             sat_num = int(self.fetch_files[0].split('dmsp-f')[1][:2])
             self.assertEqual(self.sat_nums[0], sat_num)
-        except ProxyError:
+        except (ProxyError, TimeoutError):
             pass
         return
 
@@ -725,7 +725,7 @@ class TestSSJFetchFormat(unittest.TestCase):
             try:
                 dmsp_ssj_files.fetch_format_ssj_boundary_files(
                     *self.in_args, use_dep=True)
-            except ProxyError:
+            except (ProxyError, TimeoutError):
                 pass
         return
 
@@ -813,7 +813,7 @@ class TestSSJFetchFormat(unittest.TestCase):
             # Append the temporary files to the output for removal on teardown
             self.out.extend(temp_out)
             self.out.extend(test_out)
-        except ProxyError:
+        except (ProxyError, TimeoutError):
             pass
 
         return
