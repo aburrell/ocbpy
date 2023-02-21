@@ -63,6 +63,8 @@ def fetch_ssj_files(stime, etime, out_dir=None, sat_nums=None):
     ------
     ValueError
         If an unknown satellite ID is provided.
+    ProxyError
+        If the URL provided for the NOAA database is no longer available
 
     Notes
     -----
@@ -74,6 +76,10 @@ def fetch_ssj_files(stime, etime, out_dir=None, sat_nums=None):
     DeprecationWarning
         ssj_auroral_boundaries package is no longer supported; use
         `fetch_ssj_boundary_files`
+
+    See Also
+    ---------
+    requests.exceptions.ProxyError
 
     """
     # TODO(#109): add version for removal
@@ -644,9 +650,21 @@ def fetch_format_ssj_boundary_files(stime, etime, out_dir=None, rm_temp=True,
     bound_files : list
         List of the boundary file names
 
+    Raises
+    ------
+    ProxyError
+        If the URL provided for the NOAA database is no longer available when
+        using `use_dep=True`
+
+    Warnings
+    --------
+    DeprecationWarning
+        ssj_auroral_boundaries package is no longer supported; use
+        `fetch_ssj_boundary_files`
+
     See Also
     --------
-    aacgmv2
+    aacgmv2, requests.exceptions.ProxyError
 
     """
 
