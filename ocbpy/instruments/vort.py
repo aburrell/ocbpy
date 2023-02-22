@@ -11,7 +11,6 @@ Specialised SuperDARN data product, available from: gchi@bas.ac.uk
 """
 import datetime as dt
 import numpy as np
-import warnings
 
 import ocbpy
 import ocbpy.ocb_scaling as ocbscal
@@ -20,7 +19,7 @@ import ocbpy.ocb_scaling as ocbscal
 def vort2ascii_ocb(vortfile, outfile, hemisphere=0, ocb=None,
                    ocbfile='default', instrument='', max_sdiff=600,
                    save_all=False, min_merit=None, max_merit=None,
-                   scale_func=ocbscal.normal_curl_evar, **kwargs):
+                   scale_func=ocbscal.normal_curl_evar):
     """Covert the location of vorticity data from AACGM to OCB coordinates.
 
     Parameters
@@ -54,23 +53,6 @@ def vort2ascii_ocb(vortfile, outfile, hemisphere=0, ocb=None,
     max_merit : float or NoneTye
         Maximum value for the default figure of merit or None to not apply a
         custom maximum (default=None)
-    kwargs : dict
-        Dict with optional selection criteria.  The key should correspond to a
-        data attribute and the value must be a tuple with the first value
-        specifying 'max', 'min', 'maxeq', 'mineq', or 'equal' and the second
-        value specifying the value to use in the comparison.
-    min_sectors : int
-        Minimum number of MLT sectors required for good OCB. Deprecated, will
-        be removed in version 0.3.1+ (default=7)
-    rcent_dev : float
-        Maximum number of degrees between the new centre and the AACGM pole.
-        Deprecated, will be removed in version 0.3.1+ (default=8.0)
-    max_r : float
-        Maximum radius for open-closed field line boundary in degrees.
-        Deprecated, will be removed in version 0.3.1+ (default=23.0)
-    min_r : float
-        Minimum radius for open-closed field line boundary in degrees.
-        Deprecated, will be removed in version 0.3.1+ (default=10.0)
     scale_func : function or NoneType
         Scaling function for Vorticity data or None to not scale
         (default=ocbpy.ocb_scale.normal_curl_evar)
@@ -135,25 +117,6 @@ def vort2ascii_ocb(vortfile, outfile, hemisphere=0, ocb=None,
         ocbpy.logger.error("no data in Boundary file(s)")
         return
 
-    # Add check for deprecated and custom kwargs
-    dep_comp = {'min_sectors': ['num_sectors', ('mineq', 7)],
-                'rcent_dev': ['r_cent', ('maxeq', 8.0)],
-                'max_r': ['r', ('maxeq', 23.0)],
-                'min_r': ['r', ('mineq', 10.0)]}
-    cust_keys = list(kwargs.keys())
-
-    for ckey in cust_keys:
-        if ckey in dep_comp.keys():
-            warnings.warn("".join(["Deprecated kwarg will be removed in ",
-                                   "version 0.3.1+. To replecate behaviour",
-                                   ", use {", dep_comp[ckey][0], ": ",
-                                   repr(dep_comp[ckey][1]), "}"]),
-                          DeprecationWarning, stacklevel=2)
-            del kwargs[ckey]
-
-            if hasattr(ocb, dep_comp[ckey][0]):
-                kwargs[dep_comp[ckey][0]] = dep_comp[ckey][1]
-
     # Remove the data from the opposite hemisphere
     igood = np.where(np.sign(vdata['CENTRE_MLAT']) == hemisphere)[0]
 
@@ -196,7 +159,7 @@ def vort2ascii_ocb(vortfile, outfile, hemisphere=0, ocb=None,
         while ivort < num_vort and ocb.rec_ind < ocb.records:
             ivort = ocbpy.match_data_ocb(ocb, vdata['DATETIME'], idat=ivort,
                                          max_tol=max_sdiff, min_merit=min_merit,
-                                         max_merit=max_merit, **kwargs)
+                                         max_merit=max_merit)
 
             if ivort < num_vort and ocb.rec_ind < ocb.records:
                 # Use the indexed OCB to convert the AACGM grid coordinate to
