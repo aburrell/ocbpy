@@ -17,7 +17,6 @@ from ocbpy import _boundary  # noqa F401 E402
 from ocbpy import boundaries  # noqa F401
 from ocbpy import cycle_boundary  # noqa F401
 from ocbpy import instruments  # noqa F401
-from ocbpy import ocboundary  # noqa F401
 from ocbpy import ocb_correction  # noqa F401
 from ocbpy import ocb_scaling  # noqa F401
 from ocbpy import ocb_time  # noqa F401
