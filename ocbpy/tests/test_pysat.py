@@ -344,21 +344,6 @@ class TestPysatMethods(TestPysatUtils):
         self.test_ocb_added()
         return
 
-    def test_deprecated_kwargs(self):
-        """Test DeprecationWarning raised for deprecation kwargs."""
-        # Set the deprecated keyword arguments with standard values
-        dep_inputs = {"min_sectors": 7, "rcent_dev": 8.0, "max_r": 23.0,
-                      "min_r": 10.0}
-
-        for dkey in dep_inputs.keys():
-            with self.subTest(dkey=dkey):
-                self.ocb_kw[dkey] = dep_inputs[dkey]
-                with self.assertWarnsRegex(DeprecationWarning,
-                                           "Deprecated kwarg will be removed"):
-                    ocb_pysat.add_ocb_to_data(self.test_inst, self.pysat_lat,
-                                              "mlt", **self.ocb_kw)
-        return
-
     def test_add_ocb_to_data_ocb_file(self):
         """Test adding ocb to pysat data using the OCB file name."""
         ocb_pysat.add_ocb_to_data(self.test_inst, self.pysat_lat, "mlt",
