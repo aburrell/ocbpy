@@ -12,7 +12,6 @@ pysat is available at: http://github.com/pysat/pysat or pypi
 
 import datetime as dt
 import numpy as np
-import warnings
 
 try:
     import pysat
@@ -80,18 +79,6 @@ def add_ocb_to_data(pysat_inst, mlat_name='', mlt_name='', evar_names=None,
         data attribute and the value must be a tuple with the first value
         specifying 'max', 'min', 'maxeq', 'mineq', or 'equal' and the second
         value specifying the value to use in the comparison.
-    min_sectors : int
-        Minimum number of MLT sectors required for good OCB. Deprecated, will
-        be removed in version 0.3.1+  (default=7)
-    rcent_dev : float
-        Maximum number of degrees between the new centre and the AACGM pole.
-        Deprecated, will be removed in version 0.3.1+ (default=8.0)
-    max_r : float
-        Maximum radius for open-closed field line boundary in degrees.
-        Deprecated, will be removed in version 0.3.1+ (default=23.0)
-    min_r : float
-        Minimum radius for open-closed field line boundary in degrees.
-        Deprecated, will be removed in version 0.3.1+ (default=10.0)
 
     Raises
     ------
@@ -270,25 +257,6 @@ def add_ocb_to_data(pysat_inst, mlat_name='', mlt_name='', evar_names=None,
     if ocb.records == 0:
         ocbpy.logger.error("no data in Boundary file(s)")
         return
-
-    # Add check for deprecated and custom kwargs
-    dep_comp = {'min_sectors': ['num_sectors', ('mineq', 7)],
-                'rcent_dev': ['r_cent', ('maxeq', 8.0)],
-                'max_r': ['r', ('maxeq', 23.0)],
-                'min_r': ['r', ('mineq', 10.0)]}
-    cust_keys = list(kwargs.keys())
-
-    for ckey in cust_keys:
-        if ckey in dep_comp.keys():
-            warnings.warn("".join(["Deprecated kwarg will be removed in ",
-                                   "version 0.3.1+. To replecate behaviour",
-                                   ", use {", dep_comp[ckey][0], ": ",
-                                   repr(dep_comp[ckey][1]), "}"]),
-                          DeprecationWarning, stacklevel=2)
-            del kwargs[ckey]
-
-            if hasattr(ocb, dep_comp[ckey][0]):
-                kwargs[dep_comp[ckey][0]] = dep_comp[ckey][1]
 
     # Ensure the MLT and MLat data are the same shape
     if(aacgm_lat.shape != aacgm_mlt.shape

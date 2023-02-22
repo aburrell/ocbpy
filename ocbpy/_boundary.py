@@ -18,7 +18,6 @@ References
 
 import numpy as np
 import types
-import warnings
 
 import aacgmv2
 
@@ -458,18 +457,6 @@ class OCBoundary(object):
         max_merit : float or NoneTye
             Maximum value for the default figure of merit or None to not apply
             a custom maximum (default=None)
-        min_sectors : int
-            Minimum number of MLT sectors required for good OCB. Deprecated,
-            will be removed in version 0.3.1+ (default=7)
-        rcent_dev : float
-            Maximum number of degrees between the new centre and the AACGM pole
-             Deprecated, will be removed in version 0.3.1+ (default=8.0)
-        max_r : float
-            Maximum radius for open-closed field line boundary in degrees.
-            Deprecated, will be removed in version 0.3.1+ (default=23.0)
-        min_r : float
-            Minimum radius for open-closed field line boundary in degrees
-            Deprecated, will be removed in version 0.3.1+ (default=10.0)
         kwargs : dict
             Dict with optional selection criteria.  The key should correspond
             to a data attribute and the value must be a tuple with the first
@@ -482,39 +469,20 @@ class OCBoundary(object):
         greater than self.records if there aren't any more good records
         available after the starting point
 
-        Deprecated IMAGE FUV checks that:
-        - more than 6 MLT boundary values have contributed to OCB circle
-        - the OCB 'pole' is with 8 degrees of the AACGM pole
-        - the OCB 'radius' is greater than 10 and less than 23 degrees
         AMPERE/DMSP-SSJ and new IMAGE FUV checks that:
         - the Figure of Merit is greater than or equal to the specified minimum
           (`min_fom`) or less than or equal to the specified maximum (`max_fom`)
 
         """
 
-        # Add check for deprecated and custom kwargs
-        dep_comp = {'min_sectors': ['num_sectors', ('mineq', 7)],
-                    'rcent_dev': ['r_cent', ('maxeq', 8.0)],
-                    'max_r': ['r', ('maxeq', 23.0)],
-                    'min_r': ['r', ('mineq', 10.0)]}
+        # Check the custom kwargs
         cust_keys = list(kwargs.keys())
 
         for ckey in cust_keys:
-            if ckey in dep_comp.keys():
-                warnings.warn("".join(["Deprecated kwarg will be removed in ",
-                                       "version 0.3.1+. To replecate behaviour",
-                                       ", use {", dep_comp[ckey][0], ": ",
-                                       repr(dep_comp[ckey][1]), "}"]),
-                              DeprecationWarning, stacklevel=2)
+            if not hasattr(self, ckey):
+                logger.warning(
+                    "Removing unknown selection attribute {:}".format(ckey))
                 del kwargs[ckey]
-
-                if hasattr(self, dep_comp[ckey][0]):
-                    kwargs[dep_comp[ckey][0]] = dep_comp[ckey][1]
-            else:
-                if not hasattr(self, ckey):
-                    logger.warning(
-                        "Removing unknown selection attribute {:}".format(ckey))
-                    del kwargs[ckey]
 
         # Adjust the FoM determination for custom inputs
         if min_merit is None:
