@@ -8,14 +8,18 @@ For more information about these boundaries, see Section
 Loading DMSP SSJ Boundaries
 ---------------------------
 Unlike the IMAGE and AMPERE boundaries, the DMSP SSJ boundaries are not included
-with the package.  However, routines to obtain them are.  To use them, you need
-to install the
+with the package. However, routines to obtain them are. To use them, you used to
+need the
 `ssj_auroral_boundary <https://github.com/lkilcommons/ssj_auroral_boundary>`__
-package.  Once installed, you can download DMSP SSJ data and obtain a boundary
-file for a specified time period using
-:py:mod:`ocbpy.boundaries.dmsp_ssj_files`.  For this example, we'll use a
-single day. You can download the files into any directory, but this example will
-put them in the same directory as the other OCB files.
+package, but now we preferentially support using the
+`zendodo_get <https://github.com/dvolgyes/zenodo_get>`__ package to obtain the
+boundary files from their
+`archive <https://zenodo.org/record/3373812>`__. Once installed,
+you can download DMSP SSJ data and obtain a boundary file for a specified time
+period (or all available times) using :py:mod:`ocbpy.boundaries.dmsp_ssj_files`.
+For this example, we'll use a single day. You can download the files into any
+directory, but this example will put them in the same directory as the other
+boundary files.
 
 ::
    
@@ -28,19 +32,21 @@ put them in the same directory as the other OCB files.
    etime = stime + dt.timedelta(days=1)
    out_dir = os.path.join(os.path.split(ocbpy.__file__)[0], "boundaries")
 
+   # Set `use_dep=True` in the function below to use the deprecated subroutines
    bfiles = ocbpy.boundaries.dmsp_ssj_files.fetch_format_ssj_boundary_files(
        stime, etime, out_dir=out_dir, rm_temp=False)
 
 
 By setting ``rm_temp=False``, all of the different DMSP files will be kept in
-the specified output directory.  You should have three CDF files (the data
-downloaded from each DMSP spacecraft), the CSV files (the boundaries calculated
-for each DMSP spacecraft) and four boundary files.  The boundary files have
-an extention of ``.eab`` for the Equatorial Auroral Boundary and ``.ocb`` for
-the Open-Closed field line Boundary.  The files are separated by hemisphere, and
-also specify the date range.  Because only one day was obtained, the start and
-end dates in the filename are identical.  When ``rm_temp=True``, the CDF and CSV
-files are removed.
+the specified output directory.  If you set ``use_dep=True`` you should have
+three CDF files (the data downloaded from each DMSP spacecraft), the CSV files
+(the boundaries calculated for each DMSP spacecraft) and four boundary files.
+Otherwise you will have a zip archive, the CSV files, and the boundary files.
+The boundary files have an extention of ``.eab`` for the Equatorial Auroral
+Boundary and ``.ocb`` for the Open-Closed field line Boundary.  The files are
+separated by hemisphere, and also specify the date range.  Because only one day
+was obtained, the start and end dates in the filename are identical.  When
+``rm_temp=True``, the zip archive (or CDF files) and CSV files are removed.
 
 You can now load the DMSP SSJ boundaries by specifying the desired filename,
 instrument, and hemisphere or merely the instrument and hemisphere.

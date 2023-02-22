@@ -5,12 +5,10 @@
 # -----------------------------------------------------------------------------
 """Tests the boundary EABoundary class."""
 
-import datetime as dt
 from io import StringIO
 import logging
 import numpy
 from os import path
-import unittest
 
 import ocbpy
 from . import test_boundary_ocb as test_ocb

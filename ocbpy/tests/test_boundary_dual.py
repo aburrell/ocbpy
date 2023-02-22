@@ -5,7 +5,6 @@
 # -----------------------------------------------------------------------------
 """Tests the boundary DualBoundary class."""
 
-import datetime
 from io import StringIO
 import logging
 import numpy

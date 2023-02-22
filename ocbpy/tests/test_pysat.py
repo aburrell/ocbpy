@@ -12,8 +12,6 @@ from os import path
 from packaging import version
 import unittest
 
-import aacgmv2
-
 import ocbpy
 
 try:

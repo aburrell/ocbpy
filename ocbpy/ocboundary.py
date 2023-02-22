@@ -17,17 +17,9 @@ References
 
 """
 
-import datetime as dt
-import numpy as np
-import types
 import warnings
 
-import aacgmv2
-
 import ocbpy
-import ocbpy.ocb_correction as ocbcor
-from ocbpy import ocb_time
-from ocbpy.boundaries.files import get_default_file
 
 
 class OCBoundary(ocbpy._boundary.OCBoundary):

@@ -6,7 +6,6 @@
 """Tests the SuperMAG instrument functions."""
 import datetime as dt
 import filecmp
-import numpy as np
 import os
 import unittest
 

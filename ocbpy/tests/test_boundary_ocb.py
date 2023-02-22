@@ -11,7 +11,6 @@ import logging
 import numpy
 from os import path
 import unittest
-import warnings
 
 import ocbpy
 
