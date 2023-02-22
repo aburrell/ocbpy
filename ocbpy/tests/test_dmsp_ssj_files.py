@@ -13,7 +13,7 @@ import numpy as np
 import os
 import unittest
 
-from requests.exceptions import ProxyError
+from requests.exceptions import ProxyError, ConnectionError
 
 import ocbpy
 from ocbpy import boundaries
@@ -55,7 +55,7 @@ class TestSSJFetchDep(unittest.TestCase):
         with self.assertWarnsRegex(DeprecationWarning, dep_str):
             try:
                 dmsp_ssj_files.fetch_ssj_files(*self.in_args)
-            except ProxyError:
+            except (ConnectionError, ProxyError, TimeoutError):
                 pass
 
         return
@@ -96,7 +96,7 @@ class TestSSJFetchDep(unittest.TestCase):
                 self.assertRegex(os.path.dirname(ff), self.in_args[2])
                 sat_num = int(ff.split('dmsp-f')[1][:2])
                 self.assertIn(sat_num, self.sat_nums)
-        except ProxyError:
+        except (ConnectionError, ProxyError, TimeoutError):
             pass
 
         return
@@ -111,7 +111,7 @@ class TestSSJFetchDep(unittest.TestCase):
             self.assertEqual(len(self.fetch_files), 1)
             sat_num = int(self.fetch_files[0].split('dmsp-f')[1][:2])
             self.assertEqual(self.sat_nums[0], sat_num)
-        except (ProxyError, TimeoutError):
+        except (ConnectionError, ProxyError, TimeoutError):
             pass
         return
 
@@ -725,7 +725,7 @@ class TestSSJFetchFormat(unittest.TestCase):
             try:
                 dmsp_ssj_files.fetch_format_ssj_boundary_files(
                     *self.in_args, use_dep=True)
-            except (ProxyError, TimeoutError):
+            except (ConnectionError, ProxyError, TimeoutError):
                 pass
         return
 
@@ -813,7 +813,7 @@ class TestSSJFetchFormat(unittest.TestCase):
             # Append the temporary files to the output for removal on teardown
             self.out.extend(temp_out)
             self.out.extend(test_out)
-        except (ProxyError, TimeoutError):
+        except (ConnectionError, ProxyError, TimeoutError):
             pass
 
         return
