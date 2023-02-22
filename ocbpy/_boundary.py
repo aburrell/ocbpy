@@ -18,7 +18,6 @@ References
 
 import numpy as np
 import types
-import warnings
 
 import aacgmv2
 
@@ -447,7 +446,7 @@ class OCBoundary(object):
 
         return
 
-    def get_next_good_ocb_ind(self, min_merit=None, max_merit=None, **kwargs):
+    def get_next_good_ocb_ind(self, min_merit=None, max_merit=None):
         """Cycle to the the next quality OCB record.
 
         Parameters
@@ -458,23 +457,6 @@ class OCBoundary(object):
         max_merit : float or NoneTye
             Maximum value for the default figure of merit or None to not apply
             a custom maximum (default=None)
-        min_sectors : int
-            Minimum number of MLT sectors required for good OCB. Deprecated,
-            will be removed in version 0.3.1+ (default=7)
-        rcent_dev : float
-            Maximum number of degrees between the new centre and the AACGM pole
-             Deprecated, will be removed in version 0.3.1+ (default=8.0)
-        max_r : float
-            Maximum radius for open-closed field line boundary in degrees.
-            Deprecated, will be removed in version 0.3.1+ (default=23.0)
-        min_r : float
-            Minimum radius for open-closed field line boundary in degrees
-            Deprecated, will be removed in version 0.3.1+ (default=10.0)
-        kwargs : dict
-            Dict with optional selection criteria.  The key should correspond
-            to a data attribute and the value must be a tuple with the first
-            value specifying 'max', 'min', 'maxeq', 'mineq', or 'equal' and the
-            second value specifying the value to use in the comparison.
 
         Notes
         -----
@@ -482,39 +464,11 @@ class OCBoundary(object):
         greater than self.records if there aren't any more good records
         available after the starting point
 
-        Deprecated IMAGE FUV checks that:
-        - more than 6 MLT boundary values have contributed to OCB circle
-        - the OCB 'pole' is with 8 degrees of the AACGM pole
-        - the OCB 'radius' is greater than 10 and less than 23 degrees
-        AMPERE/DMSP-SSJ and new IMAGE FUV checks that:
+        AMPERE/DMSP-SSJ and IMAGE FUV checks that:
         - the Figure of Merit is greater than or equal to the specified minimum
           (`min_fom`) or less than or equal to the specified maximum (`max_fom`)
 
         """
-
-        # Add check for deprecated and custom kwargs
-        dep_comp = {'min_sectors': ['num_sectors', ('mineq', 7)],
-                    'rcent_dev': ['r_cent', ('maxeq', 8.0)],
-                    'max_r': ['r', ('maxeq', 23.0)],
-                    'min_r': ['r', ('mineq', 10.0)]}
-        cust_keys = list(kwargs.keys())
-
-        for ckey in cust_keys:
-            if ckey in dep_comp.keys():
-                warnings.warn("".join(["Deprecated kwarg will be removed in ",
-                                       "version 0.3.1+. To replecate behaviour",
-                                       ", use {", dep_comp[ckey][0], ": ",
-                                       repr(dep_comp[ckey][1]), "}"]),
-                              DeprecationWarning, stacklevel=2)
-                del kwargs[ckey]
-
-                if hasattr(self, dep_comp[ckey][0]):
-                    kwargs[dep_comp[ckey][0]] = dep_comp[ckey][1]
-            else:
-                if not hasattr(self, ckey):
-                    logger.warning(
-                        "Removing unknown selection attribute {:}".format(ckey))
-                    del kwargs[ckey]
 
         # Adjust the FoM determination for custom inputs
         if min_merit is None:
@@ -530,24 +484,6 @@ class OCBoundary(object):
             # Evaluate the current boundary for quality, using optional
             # parameters
             good = True
-
-            for ckey in kwargs.keys():
-                test_val = getattr(self, ckey)[self.rec_ind]
-                if kwargs[ckey][0] == "min" and test_val <= kwargs[ckey][1]:
-                    good = False
-                    break
-                elif kwargs[ckey][0] == "mineq" and test_val < kwargs[ckey][1]:
-                    good = False
-                    break
-                elif kwargs[ckey][0] == "equal" and test_val != kwargs[ckey][1]:
-                    good = False
-                    break
-                elif kwargs[ckey][0] == "maxeq" and test_val > kwargs[ckey][1]:
-                    good = False
-                    break
-                elif kwargs[ckey][0] == "max" and test_val >= kwargs[ckey][1]:
-                    good = False
-                    break
 
             # Evaluate the current boundary for quality, using non-optional
             # parameters
@@ -1237,8 +1173,7 @@ class DualBoundary(object):
         return
 
     def set_good_ind(self, ocb_min_merit=None, ocb_max_merit=None,
-                     ocb_kwargs=None, eab_min_merit=None, eab_max_merit=None,
-                     eab_kwargs=None):
+                     eab_min_merit=None, eab_max_merit=None):
         """Pair the good indices for the quality EABs and OCBs.
 
         Parameters
@@ -1249,24 +1184,12 @@ class DualBoundary(object):
         ocb_max_merit : float or NoneTye
             Maximum value for the default figure of merit or None to not apply
             a custom maximum (default=None)
-        ocb_kwargs : dict or NoneType
-            Dict with optional selection criteria.  The key should correspond
-            to a data attribute and the value must be a tuple with the first
-            value specifying 'max', 'min', 'maxeq', 'mineq', or 'equal' and the
-            second value specifying the value to use in the comparison.
-            None provides no optional selection criteria. (default=None)
         eab_min_merit : float or NoneType
             Minimum value for the default figure of merit or None to not apply
             a custom minimum (default=None)
         eab_max_merit : float or NoneTye
             Maximum value for the default figure of merit or None to not apply
             a custom maximum (default=None)
-        eab_kwargs : dict or NoneType
-            Dict with optional selection criteria.  The key should correspond
-            to a data attribute and the value must be a tuple with the first
-            value specifying 'max', 'min', 'maxeq', 'mineq', or 'equal' and the
-            second value specifying the value to use in the comparison.
-            None provides no optional selection criteria. (default=None)
 
         """
 
@@ -1287,18 +1210,8 @@ class DualBoundary(object):
         self.eab.rec_ind = -1
 
         # Get the good OCB indices
-        if ocb_kwargs is None:
-            ocb_kwargs = {}
-        ocb_kwargs['min_merit'] = ocb_min_merit
-        ocb_kwargs['max_merit'] = ocb_max_merit
-        good_ocb = cycle_boundary.retrieve_all_good_indices(self.ocb,
-                                                            **ocb_kwargs)
-
-        # Initialize the EAB good index selection options
-        if eab_kwargs is None:
-            eab_kwargs = {}
-        eab_kwargs['min_merit'] = eab_min_merit
-        eab_kwargs['max_merit'] = eab_max_merit
+        good_ocb = cycle_boundary.retrieve_all_good_indices(
+            self.ocb, min_merit=ocb_min_merit, max_merit=ocb_max_merit)
 
         # Match the EABs with the good OCB times
         iocb = 0
@@ -1306,7 +1219,8 @@ class DualBoundary(object):
             # Cycle the OCB record index to match the next good EAB index
             iocb = cycle_boundary.match_data_ocb(
                 self.eab, self.ocb.dtime[good_ocb], idat=iocb,
-                max_tol=self.max_delta, **eab_kwargs)
+                max_tol=self.max_delta, min_merit=eab_min_merit,
+                max_merit=eab_max_merit)
 
             # Save the paired data
             if iocb is not None and iocb < len(good_ocb):
@@ -1317,7 +1231,8 @@ class DualBoundary(object):
                 iocb = None
 
             # Cycle to the next good EAB index
-            self.eab.get_next_good_ocb_ind(**eab_kwargs)
+            self.eab.get_next_good_ocb_ind(min_merit=eab_min_merit,
+                                           max_merit=eab_max_merit)
 
         # Re-cast the class attributes as arrays
         self.dtime = np.asarray(self.dtime)
