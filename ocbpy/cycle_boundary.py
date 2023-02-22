@@ -6,12 +6,13 @@
 
 import datetime as dt
 import numpy as np
+import warnings
 
 from ocbpy import logger
 from ocbpy import ocb_time
 
 
-def retrieve_all_good_indices(ocb, min_merit=None, max_merit=None):
+def retrieve_all_good_indices(ocb, min_merit=None, max_merit=None, **kwargs):
     """Retrieve all good indices from the OCBoundary class.
 
     Parameters
@@ -25,6 +26,11 @@ def retrieve_all_good_indices(ocb, min_merit=None, max_merit=None):
     max_merit : float or NoneTye
         Maximum value for the default figure of merit or None to not apply a
         custom maximum (default=None)
+    kwargs : dict
+        Dict with optional selection criteria.  The key should correspond to a
+        data attribute and the value must be a tuple with the first value
+        specifying 'max', 'min', 'maxeq', 'mineq', or 'equal' and the second
+        value specifying the value to use in the comparison.
 
     Returns
     -------
@@ -44,7 +50,8 @@ def retrieve_all_good_indices(ocb, min_merit=None, max_merit=None):
 
     # Cycle through all records
     while ocb.rec_ind < ocb.records:
-        ocb.get_next_good_ocb_ind(min_merit=min_merit, max_merit=max_merit)
+        ocb.get_next_good_ocb_ind(min_merit=min_merit, max_merit=max_merit,
+                                  **kwargs)
         if ocb.rec_ind < ocb.records:
             good_ind.append(int(ocb.rec_ind))
 
@@ -56,7 +63,7 @@ def retrieve_all_good_indices(ocb, min_merit=None, max_merit=None):
 
 
 def match_data_ocb(ocb, dat_dtime, idat=0, max_tol=60, min_merit=None,
-                   max_merit=None):
+                   max_merit=None, **kwargs):
     """Match data records with OCB records.
 
     Parameters
@@ -76,6 +83,23 @@ def match_data_ocb(ocb, dat_dtime, idat=0, max_tol=60, min_merit=None,
     max_merit : float or NoneTye
         Maximum value for the default figure of merit or None to not apply a
         custom maximum (default=None)
+    kwargs : dict
+        Dict with optional selection criteria.  The key should correspond to a
+        data attribute and the value must be a tuple with the first value
+        specifying 'max', 'min', 'maxeq', 'mineq', or 'equal' and the second
+        value specifying the value to use in the comparison.
+    min_sectors : int
+        Minimum number of MLT sectors required for good OCB. Deprecated, will
+        be removed in version 0.3.1+ (default=7)
+    rcent_dev : float
+        Maximum number of degrees between the new centre and the AACGM pole.
+        Deprecated, will be removed in version 0.3.1+ (default=8.0)
+    max_r : float
+        Maximum radius for open-closed field line boundary in degrees
+        Deprecated, will be removed in version 0.3.1+ (default=23.0)
+    min_r : float
+        Minimum radius for open-closed field line boundary in degrees
+        Deprecated, will be removed in version 0.3.1+ (default=10.0)
 
     Returns
     -------
@@ -94,6 +118,25 @@ def match_data_ocb(ocb, dat_dtime, idat=0, max_tol=60, min_merit=None,
 
     """
 
+    # Add check for deprecated and custom kwargs
+    dep_comp = {'min_sectors': ['num_sectors', ('mineq', 7)],
+                'rcent_dev': ['r_cent', ('maxeq', 8.0)],
+                'max_r': ['r', ('maxeq', 23.0)],
+                'min_r': ['r', ('mineq', 10.0)]}
+    cust_keys = list(kwargs.keys())
+
+    for ckey in cust_keys:
+        if ckey in dep_comp.keys():
+            warnings.warn("".join(["Deprecated kwarg will be removed in ",
+                                   "version 0.3.1+. To replecate behaviour",
+                                   ", use {", dep_comp[ckey][0], ": ",
+                                   repr(dep_comp[ckey][1]), "}"]),
+                          DeprecationWarning, stacklevel=2)
+            del kwargs[ckey]
+
+            if hasattr(ocb, dep_comp[ckey][0]):
+                kwargs[dep_comp[ckey][0]] = dep_comp[ckey][1]
+
     # Initalise the data record limit
     dat_records = len(dat_dtime)
 
@@ -103,21 +146,24 @@ def match_data_ocb(ocb, dat_dtime, idat=0, max_tol=60, min_merit=None,
     if ocb.rec_ind >= ocb.records:
         return idat
 
-    # Get the boundary class cycle method and set the inputs
-    cycle_kwargs = {}
+    # Get the boundary class cycle method
     if hasattr(ocb, "get_next_good_ocb_ind"):
         cycle_method = getattr(ocb, "get_next_good_ocb_ind")
+        cycle_kwargs = dict(kwargs)
         cycle_kwargs["min_merit"] = min_merit
         cycle_kwargs["max_merit"] = max_merit
     elif hasattr(ocb, "get_next_good_ind"):
         cycle_method = getattr(ocb, "get_next_good_ind")
+        cycle_kwargs = {}
 
         # If the selection method differs from the default, re-select the
         # good indices
-        if min_merit is not None or max_merit is not None:
+        if(min_merit is not None or max_merit is not None
+           or len(kwargs.keys()) > 0):
             logger.info("updating DualBoundary good index pairs")
             ocb.set_good_ind(ocb_min_merit=min_merit, ocb_max_merit=max_merit,
-                             eab_min_merit=min_merit, eab_max_merit=max_merit)
+                             ocb_kwargs=kwargs, eab_min_merit=min_merit,
+                             eab_max_merit=max_merit, eab_kwargs=kwargs)
 
             # Re-evaluate record index
             if ocb.rec_ind >= ocb.records:
