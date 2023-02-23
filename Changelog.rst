@@ -7,6 +7,7 @@ Summary of all changes made since the first stable release
 ------------------
 * DEP: Deprecated functions that depend on ssj_auroral_boundary_package
 * DEP: Removed classes and kwargs deprecated in v0.3.0
+* MAINT: Added a pyproject.toml file
 
 0.3.0 (10-21-2022)
 ------------------

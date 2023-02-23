@@ -5,5 +5,7 @@ include *.rst
 include *.md
 include LICENSE
 
+include *.cfg
+include *.toml
 include *.yml
 include .zenodo.json
