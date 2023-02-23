@@ -135,24 +135,6 @@ class TestVort2AsciiMethods(unittest.TestCase):
         del self.test_unscaled_north
         return
 
-    def test_deprecated_kwargs(self):
-        """Test DeprecationWarning raised for deprecated kwarg input."""
-        # Set the deprecated keyword arguments with standard values
-        dep_inputs = {"min_sectors": 7, "rcent_dev": 8.0, "max_r": 23.0,
-                      "min_r": 10.0}
-
-        # Cycle through the keyword arguments that should raise a warning
-        for dkey in dep_inputs.keys():
-            kwargs = {dkey: dep_inputs[dkey]}
-            with self.subTest(kwargs=kwargs):
-                with self.assertWarnsRegex(DeprecationWarning,
-                                           "Deprecated kwarg will be removed"):
-                    ocb_ivort.vort2ascii_ocb(self.test_file, self.temp_output,
-                                             ocbfile=self.test_ocb,
-                                             instrument="image", hemisphere=1,
-                                             **kwargs)
-        return
-
     def test_vort2ascii_ocb(self):
         """Test vorticity conversion with different hemispheres and methods."""
         # Initialize the subTest input

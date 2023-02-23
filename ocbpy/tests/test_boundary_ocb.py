@@ -15,41 +15,6 @@ import unittest
 import ocbpy
 
 
-class TestOCBoundaryDeprecations(unittest.TestCase):
-    """Test the deprecation warnings within the OCBoundary class."""
-
-    def setUp(self):
-        """Initialize the test environment."""
-        self.test_class = ocbpy.OCBoundary
-        test_dir = path.join(path.dirname(ocbpy.__file__), "tests",
-                             "test_data")
-        self.inst_init = {"instrument": "image", "hemisphere": 1,
-                          "filename": path.join(test_dir,
-                                                "test_north_circle")}
-
-    def tearDown(self):
-        """Clean up the test environment."""
-        del self.test_class, self.inst_init
-
-    def test_get_next_good_ocb_ind_kwargs(self):
-        """Test warnings for deprecated kwargs in `get_next_good_ocb_ind`."""
-        # Set the deprecated keyword arguments with standard values
-        dep_inputs = {"min_sectors": 7, "rcent_dev": 8.0, "max_r": 23.0,
-                      "min_r": 10.0}
-
-        # Initialize the boundary object
-        bound = self.test_class(**self.inst_init)
-
-        # Cycle through the keyword arguments that should raise a warning
-        for dkey in dep_inputs.keys():
-            kwargs = {dkey: dep_inputs[dkey]}
-            with self.subTest(kwargs=kwargs):
-                with self.assertWarnsRegex(DeprecationWarning,
-                                           "Deprecated kwarg will be removed"):
-                    bound.get_next_good_ocb_ind(**kwargs)
-        return
-
-
 class TestOCBoundaryLogFailure(unittest.TestCase):
     """Test the logging messages raised by the OCBoundary class."""
 

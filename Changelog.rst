@@ -6,6 +6,7 @@ Summary of all changes made since the first stable release
 0.X.X (XX-XX-2023)
 ------------------
 * DEP: Deprecated functions that depend on ssj_auroral_boundary_package
+* DEP: Removed classes and kwargs deprecated in v0.3.0
 
 0.3.0 (10-21-2022)
 ------------------

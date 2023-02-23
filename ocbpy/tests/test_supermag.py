@@ -52,24 +52,6 @@ class TestSuperMAG2AsciiMethods(unittest.TestCase):
         del self.test_eab, self.test_output_dual, self.test_unscaled_north
         return
 
-    def test_deprecation_kwargs(self):
-        """Test the SuperMAG deprecated kwargs."""
-        # Set the deprecated keyword arguments with standard values
-        dep_inputs = {"min_sectors": 7, "rcent_dev": 8.0, "max_r": 23.0,
-                      "min_r": 10.0}
-
-        # Cycle through the keyword arguments that should raise a warning
-        for dkey in dep_inputs.keys():
-            kwargs = {dkey: dep_inputs[dkey]}
-            with self.subTest(kwargs=kwargs):
-                with self.assertWarnsRegex(DeprecationWarning,
-                                           "Deprecated kwarg will be removed"):
-                    ocb_ismag.supermag2ascii_ocb(
-                        self.test_file, self.temp_output,
-                        ocbfile=self.test_ocb, instrument='image',
-                        hemisphere=1, **kwargs)
-        return
-
     def test_supermag2ascii_ocb_choose_north(self):
         """Test SuperMAG data processing for a mixed file choosing north."""
 
