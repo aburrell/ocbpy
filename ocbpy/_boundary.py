@@ -303,7 +303,7 @@ class OCBoundary(object):
             hlines = 0
             ocb_cols = "year soy num_sectors phi_cent r_cent r a r_err fom"
             datetime_fmt = ""
-            self.max_fom = 5.0  # From Chisham et al. (in prep)
+            self.max_fom = 5.0  # From Chisham et al. (2022)
         elif self.instrument == "ampere":
             hlines = 0
             ocb_cols = "date time r x y fom"
@@ -955,7 +955,7 @@ class EABoundary(OCBoundary):
 
         """
 
-        if input_instrument in ["", "default", "image", "dmsp-ssj"]:
+        if input_instrument in ["", "default", "image", "dmsp-ssj", "ampere"]:
             self.rfunc = ocbcor.circular
         elif not hasattr(input_instrument, "lower"):
             # Allow an empty class object to be initialised
@@ -981,11 +981,11 @@ class DualBoundary(object):
         by time.  If NoneType, no file is loaded.  If 'default',
         `ocbpy.boundaries.files.get_default_file` is called. (default='default')
     eab_instrument : str
-        Instrument providing the EABoundaries.  Requires 'image' or 'dmsp-ssj'
-        if a file is provided.  If using filename='default', also accepts
-        'si12', 'si13', 'wic', and ''.  (default='')
+        Instrument providing the EABoundaries.  Requires 'image', 'ampere', or
+        'dmsp-ssj' if a file is provided.  If using filename='default', also
+        accepts 'si12', 'si13', 'wic', and ''.  (default='')
     ocb_instrument : str
-        Instrument providing the OCBoundaries.  Requires 'image', 'ampere, or
+        Instrument providing the OCBoundaries.  Requires 'image', 'ampere', or
         'dmsp-ssj' if a file is provided.  If using filename='default', also
         accepts 'si12', 'si13', 'wic', and ''.  (default='')
     hemisphere : int
