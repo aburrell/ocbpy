@@ -70,11 +70,17 @@ AMPERE Boundaries
 -----------------
 
 Please follow the AMPERE data usage requirements provided by
-`APL <https://ampere.jhuapl.edu/info/?page=infoRulesTab>`_ and cite the R1/R2
-FAC boundary retrieval method and the OCB correction method.
+`APL <https://ampere.jhuapl.edu/info/?page=infoRulesTab>`_, acknowledge the
+AMPERE team and the use of AMPERE data, cite the boundary retrieval method, and
+(if using the OCB, not the EAB/HMB) the OCB correction method. The V2 data set
+also includes fits to the R1 and R2 peaks, for those interested.
 
-* **FAC**: Milan, S. E. (2019): AMPERE R1/R2 FAC radii. figshare. Dataset.
-  https://doi.org/10.25392/leicester.data.11294861.v1
+* **FAC**: Milan, S. E., et al. (2015): Principal Component Analysis of
+  Birkeland currents determined by the Active Magnetosphere and Planetary
+  Electrodynamics Response Experiment, J. Geophys. Res. Space Physics, 120,
+  https://doi.org/10.1002/2015JA021680
+* **FAC**: Milan, Stephen (2023): AMPERE R1/R2 FAC radii v2. University of
+  Leicester. Dataset. https://doi.org/10.25392/leicester.data.22241338.v1
 * **OCB**: Burrell, A. G., et al. (2020): AMPERE Polar Cap Boundaries,
   Ann. Geophys., 38, 481-490, http://doi.org/10.5194/angeo-38-481-2020
 
