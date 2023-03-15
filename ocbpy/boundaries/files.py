@@ -61,7 +61,7 @@ def get_boundary_files(bound='ocb'):
              "wic": dt.datetime(2000, 5, 4),
              "image": dt.datetime(2000, 5, 3),
              "dmsp-ssj": dt.datetime(2010, 1, 1)}
-    etime = {"amp": dt.datetime(2017, 1, 1),
+    etime = {"amp": dt.datetime(2022, 1, 1),
              "si12": dt.datetime(2002, 11, 1),
              "si13": dt.datetime(2002, 11, 1),
              "wic": dt.datetime(2002, 11, 1),

@@ -140,7 +140,7 @@ class TestFilesMethods(unittest.TestCase):
         self.comp_dict = {'ocb': {'amp_north_radii.ocb':
                                   {'instrument': 'amp', 'hemisphere': 1,
                                    'stime': dt.datetime(2010, 1, 1, 0, 0),
-                                   'etime': dt.datetime(2017, 1, 1, 0, 0)},
+                                   'etime': dt.datetime(2022, 1, 1, 0, 0)},
                                   'wic_north_circle.ocb':
                                   {'instrument': 'wic', 'hemisphere': 1,
                                    'stime': dt.datetime(2000, 5, 4, 0, 0),
@@ -160,7 +160,7 @@ class TestFilesMethods(unittest.TestCase):
                                   'amp_south_radii.ocb':
                                   {'instrument': 'amp', 'hemisphere': -1,
                                    'stime': dt.datetime(2010, 1, 1, 0, 0),
-                                   'etime': dt.datetime(2017, 1, 1, 0, 0)}},
+                                   'etime': dt.datetime(2022, 1, 1, 0, 0)}},
                           'eab': {'wic_north_circle.eab':
                                   {'instrument': 'wic', 'hemisphere': 1,
                                    'stime': dt.datetime(2000, 5, 4, 0, 0),
@@ -176,7 +176,15 @@ class TestFilesMethods(unittest.TestCase):
                                   'si12_north_circle.eab':
                                   {'instrument': 'si12', 'hemisphere': 1,
                                    'stime': dt.datetime(2000, 5, 4, 0, 0),
-                                   'etime': dt.datetime(2002, 11, 1, 0, 0)}}}
+                                   'etime': dt.datetime(2002, 11, 1, 0, 0)},
+                                  'amp_north_radii.eab':
+                                  {'instrument': 'amp', 'hemisphere': 1,
+                                   'stime': dt.datetime(2010, 1, 1, 0, 0),
+                                   'etime': dt.datetime(2022, 1, 1, 0, 0)},
+                                  'amp_south_radii.eab':
+                                  {'instrument': 'amp', 'hemisphere': -1,
+                                   'stime': dt.datetime(2010, 1, 1, 0, 0),
+                                   'etime': dt.datetime(2022, 1, 1, 0, 0)}}}
 
         self.short_to_long = {"amp": "ampere", "si12": "image",
                               "si13": "image", "wic": "image", "": "image"}

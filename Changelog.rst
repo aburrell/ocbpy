@@ -8,6 +8,8 @@ Summary of all changes made since the first stable release
 * DEP: Deprecated functions that depend on ssj_auroral_boundary_package
 * DEP: Removed classes and kwargs deprecated in v0.3.0
 * MAINT: Added a pyproject.toml file
+* ENH: Added AMPERE OCBs up to 2022, using updated AMPERE data
+* ENH: Added AMPERE EABs, using the Heppner-Maynard boundary as a valid EAB
 
 0.3.0 (10-21-2022)
 ------------------
