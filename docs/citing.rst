@@ -53,14 +53,11 @@ boundary retrieval method.
   high‐latitude ionospheric climatologies and empirical models,
   J. Geophys. Res. Space Physics, 122, 932–947, doi:10.1002/2016JA023235.
 * **OCB**: Chisham, G. et al. (2022) Ionospheric Boundaries Derived from Auroral
-  Images. In Prep.
-* **OCB**: Chisham, G. (2017) Auroral Boundary Derived from IMAGE Satellite
-  Mission Data (May 2000 - Oct 2002), Version 1.1, Polar Data Centre, Natural
-  Environment Research Council, UK.
-  http://doi.org/10.5285/75aa66c1-47b4-4344-ab5d-52ff2913a61e.
-* **OCB**: Chisham, G., et al. (2022) Ionospheric boundaries derived from
-  auroral images. Journal of Geophysical Research: Space Physics, 127,
-  e2022JA030622. https://doi.org/10.1029/2022JA030622.
+  Images. JGR Space Physics, 127, 7, e2022JA030622, doi:10.1029/2022JA030622.
+* **OCB**: Chisham, G. (2022). Ionospheric boundaries derived from IMAGE
+  satellite mission data (May 2000-October 2002), version 2.0. [Dataset]. NERC
+  EDS UK Polar Data Centre.
+  https://doi.org/10.5285/fa592594-93e0-4ee1-8268-b031ce21c3ca
 
 
 .. _cite-ampere:
