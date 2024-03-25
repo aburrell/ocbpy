@@ -82,11 +82,10 @@ def fetch_ssj_files(stime, etime, out_dir=None, sat_nums=None):
     requests.exceptions.ProxyError
 
     """
-    # TODO(#109): add version for removal
     warnings.warn("".join(["ssj_auroral_boundaries package is no longer ",
                            "supported; use `fetch_ssj_boundary_files` to ",
                            "access the boundary Zenodo archive. This function",
-                           " will be removed in version 0.X.X+."]),
+                           " will be removed in version 0.4.1+."]),
                   DeprecationWarning, stacklevel=2)
 
     # Get and test the output directory
@@ -184,11 +183,10 @@ def create_ssj_boundary_files(cdf_files, out_dir=None,
         `fetch_ssj_boundary_files`
 
     """
-    # TODO(#109): add version for removal
     warnings.warn("".join(["ssj_auroral_boundaries package is no longer ",
                            "supported; use `fetch_ssj_boundary_files` to ",
                            "access the boundary Zenodo archive. This function",
-                           " will be removed in version 0.X.X+."]),
+                           " will be removed in version 0.4.1+."]),
                   DeprecationWarning, stacklevel=2)
 
     # Test the directory inputs
@@ -673,11 +671,10 @@ def fetch_format_ssj_boundary_files(stime, etime, out_dir=None, rm_temp=True,
     if 'use_dep' in kwargs.keys():
         use_dep = kwargs['use_dep']
 
-        # TODO(#109): add version for removal
         warnings.warn("".join(["ssj_auroral_boundaries package is no longer ",
                                "supported. Temporary support of `use_dep` ",
                                "kwarg to access deprecated routines will be "
-                               "removed in version 0.X.X+."]),
+                               "removed in version 0.4.1+."]),
                       DeprecationWarning, stacklevel=2)
 
     if use_dep:
