@@ -11,7 +11,8 @@ name = "ocbpy"
 license = {file = "LICENSE"}
 description = 'Location relative to open/closed field line boundary'
 maintainers = [
-    {name = "Angeline G. Burrell", email = "angeline.burrell@nrl.navy.mil"},
+    {name = "Angeline G. Burrell",
+    email = "angeline.g.burrell.civ@us.navy.mil"},
 ]
 requires-python = ">=3.7"
 dependencies = [
@@ -49,6 +50,7 @@ classifiers = [
     "Programming Language :: Python :: 3.8",
     "Programming Language :: Python :: 3.9",
     "Programming Language :: Python :: 3.10",
+    "Programming Language :: Python :: 3.11",
     'Operating System :: Unix',
     'Operating System :: POSIX',
     'Operating System :: POSIX :: Linux',
@@ -67,6 +69,7 @@ doc = [
     "pysat",
     "sphinx>=1.3",
     "sphinx-rtd-theme",
+    "numpydoc",
 ]
 
 [project.urls]
@@ -74,3 +77,27 @@ source = "https://github.com/aburrell/ocbpy"
 documentation = "https://ocbpy.readthedocs.io/en/latest/"
 tracker = "https://github.com/aburrell/ocbpy/issues"
 download = "https://github.com/aburrell/ocbpy/releases"
+
+
+[tool.coverage.run]
+relative_files = True
+include = */ocbpy/*
+          */ocbpy/tests/*
+
+[tool.coverage.paths]
+ocb_paths = ocbpy/
+            */lib/*/site-packages/ocbpy
+
+[tool.coverage.report]
+omit = */lib/*/site-packages/*.py
+       */lib/*/site-packages/a*/*
+       */lib/*/site-packages/c*/*
+       */lib/*/site-packages/d*/*
+       */lib/*/site-packages/g*/*
+       */lib/*/site-packages/i*/*
+       */lib/*/site-packages/m*/*
+       */lib/*/site-packages/n*/*
+       */lib/*/site-packages/p*/*
+       */lib/*/site-packages/r*/*
+       */lib/*/site-packages/s*/*
+       */lib/*/site-packages/u*/*
