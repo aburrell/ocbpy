@@ -337,12 +337,16 @@ class VectorData(object):
 
         """
         # Test the OCB input shape
-        oshapes = np.unique([self.ocb_lat.shape, self.ocb_mlt.shape,
-                             self.r_corr.shape])
-        oshape = () if len(oshapes) == 0 else oshapes.max()
+        oshapes = list()
+        for oshape in [self.ocb_lat.shape, self.ocb_mlt.shape,
+                       self.r_corr.shape]:
+            if oshape not in oshapes:
+                oshapes.append(oshape)
 
-        if(oshape != self.ocb_ind.shape or len(oshapes) > 2
-           or (len(oshapes) == 2 and min(oshapes) != ())):
+        oshape = () if len(oshapes) == 0 else max(oshapes)
+
+        if(np.array(oshape).size != self.ocb_ind.size or len(oshapes) > 2
+           or (len(oshapes) == 2 and len(min(oshapes)) > 0)):
             raise ValueError('OCB index and input shapes mismatched')
 
         # Compare and update the vector data shape if needed
