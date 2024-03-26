@@ -102,7 +102,6 @@ def add_ocb_to_data(pysat_inst, mlat_name='', mlt_name='', evar_names=None,
                               'scale_func': local_scale_func}}
 
     """
-
     # Test the input
     if evar_names is None:
         evar_names = []
@@ -133,6 +132,9 @@ def add_ocb_to_data(pysat_inst, mlat_name='', mlt_name='', evar_names=None,
                    or eattr in vector_names.keys()
                    for eattr in curl_evar_names]):
         raise ValueError('at least one unknown E field name')
+
+    # Ensure the correct data format
+    max_sdiff = int(max_sdiff)
 
     # Format the new data column names
     olat_name = "{:s}_ocb".format(mlat_name)
@@ -250,7 +252,7 @@ def add_ocb_to_data(pysat_inst, mlat_name='', mlt_name='', evar_names=None,
                                          >= hemisphere)
         finite_mask = np.isfinite(nan_inst[pysat_names].to_array().max(
             'variable'))
-        dat_coords = [coord for coord in pysat_inst[pysat_names].coords]
+        dat_coords = [coord for coord in pysat_inst[pysat_names].coords.keys()]
     dat_ind = np.where(finite_mask)
 
     # Test the OCB data
@@ -289,8 +291,8 @@ def add_ocb_to_data(pysat_inst, mlat_name='', mlt_name='', evar_names=None,
     else:
         ocb_coords = [pysat_inst.index.name]
 
-    # See if the data index has more dimensions than the coordinates
-    if len(dat_ind) > len(ocb_coords):
+    # See if the data has more dimensions than the OCB coordinates
+    if len(dat_coords) > len(ocb_coords):
         combo_shape = list(aacgm_lat.shape)
         for dcoord in dat_coords:
             if dcoord not in ocb_coords:
@@ -319,25 +321,23 @@ def add_ocb_to_data(pysat_inst, mlat_name='', mlt_name='', evar_names=None,
 
     # Cycle through the data, matching data and OCB records
     idat = 0
-    ndat = len(dat_ind[0])
+    uind = np.unique(dat_ind[0])
+    ndat = len(uind)
     if hasattr(ocb, "boundary_lat"):
         ref_r = 90.0 - abs(ocb.boundary_lat)
     else:
         ref_r = 90.0 - abs(ocb.ocb.boundary_lat)
 
     while idat < ndat and ocb.rec_ind < ocb.records:
-        idat = ocbpy.match_data_ocb(ocb, pysat_inst.index[dat_ind[0]],
+        idat = ocbpy.match_data_ocb(ocb, pysat_inst.index[uind],
                                     idat=idat, max_tol=max_sdiff,
                                     min_merit=min_merit, max_merit=max_merit,
                                     **kwargs)
 
         if idat < ndat and ocb.rec_ind < ocb.records:
-            # Find all the indices with the same time
-            time_ind = np.where(pysat_inst.index[dat_ind[0]]
-                                == pysat_inst.index[dat_ind[0]][idat])
-            idat = time_ind[0][-1]
+            time_ind = np.where(dat_ind[0] == uind[idat])[0]
 
-            if len(dat_ind) > 1:
+            if len(dat_coords) > 1:
                 iout = tuple(dind[time_ind] for dind in dat_ind)
                 if pysat_var_names > 1:
                     # If there is more than one variable, need to downselect
@@ -348,7 +348,7 @@ def add_ocb_to_data(pysat_inst, mlat_name='', mlt_name='', evar_names=None,
 
                 time_mask = np.isfinite(time_sel.where(
                     finite_mask & (pysat_inst[pysat_inst.index.name]
-                                   == pysat_inst.index[dat_ind[0]][idat])))
+                                   == pysat_inst.index[uind][idat])))
                 vind = iout[0]
             else:
                 iout = dat_ind[0][time_ind]
@@ -378,6 +378,7 @@ def add_ocb_to_data(pysat_inst, mlat_name='', mlt_name='', evar_names=None,
                                   "dat_name": None, "dat_units": None,
                                   "scale_func": None}
                 vector_init = dict(vector_default)
+                vshape = list()
 
                 for eattr in vector_names.keys():
                     oattr = "{:s}_ocb".format(eattr)
@@ -385,21 +386,22 @@ def add_ocb_to_data(pysat_inst, mlat_name='', mlt_name='', evar_names=None,
                         # Not all vector names are DataFrame names
                         vname = vector_names[eattr][ikey]
                         if vname in pysat_inst.variables:
-                            # Test to see if the input is appropriately shaped
-                            if(not pysat_inst.pandas_format
-                               and len(ocb_coords) > len(pysat_inst[
-                                   vname].coords)):
-                                raise ValueError(''.join([
-                                    'vector variables must all have the same',
-                                    ' dimensions']))
-
                             if time_mask is None:
                                 vector_init[ikey] = pysat_inst[vname][iout]
                             else:
-                                vector_init[ikey] = pysat_inst[vname].where(
-                                    time_mask, drop=True).values.flatten()
+                                vector_init[ikey] = reshape_pad_mask_flatten(
+                                    pysat_inst[vname], time_mask)
+
+                            # Save the vector shapes for testing
+                            if vector_init[ikey].shape not in vshape:
+                                vshape.append(vector_init[ikey].shape)
                         else:
                             vector_init[ikey] = vname
+
+                    # Evaluate the consistency of the vector inputs
+                    if len(vshape) > 1:
+                        raise ValueError(
+                            'vector variables must all have the same shape')
 
                     # Perform the vector scaling
                     vout = ocbscal.VectorData(vind, ocb.rec_ind,
@@ -421,27 +423,21 @@ def add_ocb_to_data(pysat_inst, mlat_name='', mlt_name='', evar_names=None,
                 unscaled_r = ocb.r[ocb.rec_ind] + ocb_output[
                     ocor_name][iout]
 
-            # Scale the E-field proportional variables
-            for eattr in evar_names:
-                oattr = "{:s}_ocb".format(eattr)
-                if time_mask is None:
-                    evar = pysat_inst[eattr][iout]
-                else:
-                    evar = pysat_inst[eattr].where(time_mask,
-                                                   drop=True).values.flatten()
-                ocb_output[oattr][iout] = ocbscal.normal_evar(
-                    evar, unscaled_r, ref_r)
+            # Scale the proportional variables
+            for scale_names, scale_func in [
+                    (evar_names, ocbscal.normal_evar),
+                    (curl_evar_names, ocbscal.normal_curl_evar)]:
+                for eattr in scale_names:
+                    oattr = "{:s}_ocb".format(eattr)
+                    if time_mask is None:
+                        evar = pysat_inst[eattr][iout]
+                    else:
+                        evar = reshape_pad_mask_flatten(pysat_inst[eattr],
+                                                        time_mask)
 
-            # Scale the variables proportial to the curl of the E-field
-            for eattr in curl_evar_names:
-                oattr = "{:s}_ocb".format(eattr)
-                if time_mask is None:
-                    evar = pysat_inst[eattr][iout]
-                else:
-                    evar = pysat_inst[eattr].where(time_mask,
-                                                   drop=True).values.flatten()
-                ocb_output[oattr][iout] = ocbscal.normal_curl_evar(
-                    evar, unscaled_r, ref_r)
+                    # Scale the variable
+                    ocb_output[oattr][iout] = scale_func(evar, unscaled_r,
+                                                         ref_r)
 
             # Move to next line
             idat += 1
@@ -488,6 +484,45 @@ def add_ocb_to_data(pysat_inst, mlat_name='', mlt_name='', evar_names=None,
                             isvector=isvector)
 
     return
+
+def reshape_pad_mask_flatten(data, mask):
+    """Reshape, pad, mask, and flatten data.
+
+    Parameters
+    ----------
+    data : xr.DataArray
+        Data to be reshaped, padded, masked, and flattened for processing.
+    mask : xr.DataArray
+        Mask with the desired dimensions
+
+    Returns
+    -------
+    flat : np.array
+        Flattened array of good data, as specified by the mask
+
+    """
+    if np.all(mask.dims == data.dims):
+        flat = data.where(mask, drop=True).values.flatten()
+    else:
+        # Reshape this data variable for existing dims
+        data_dims = [dim for dim in mask.dims if dim in data.dims]
+        flat = data.transpose(*data_dims).values
+
+        # Pad by adding the additional dimensions if needed
+        if len(data_dims) < len(mask.dims):
+            try:
+                flat = np.full(shape=tuple(reversed(list(mask.shape))),
+                               fill_value=flat.transpose()).transpose()
+            except Exception as aerr:
+                # Using Exception instead of AssertionError because the
+                # catch is not consistent
+                raise ValueError(''.join(['vector variables must all have the',
+                                          ' same shape, {:}'.format(aerr)]))
+
+        # Downselect and flatten the data
+        flat = flat[mask.values].flatten()
+
+    return flat
 
 
 def add_ocb_to_metadata(pysat_inst, ocb_name, pysat_name, overwrite=False,
