@@ -26,7 +26,8 @@ def get_boundary_directory():
     boundary_dir = os.path.join(str(pathlib.Path(
         ocbpy.boundaries.__file__).resolve().parent))
 
-    if not os.path.isdir(boundary_dir):
+    if not os.path.isdir(boundary_dir) or boundary_dir.find(
+            "ocbpy") < 0 or boundary_dir.find("boundaries") < 0:
         raise OSError("can't find the OCBpy boundary file directory")
 
     return boundary_dir
