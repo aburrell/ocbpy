@@ -447,9 +447,9 @@ class TestOCBoundaryMethodsNorth(cc.TestLogWarnings):
         """Test the normalisation calculation in the north."""
         self.set_ocb()
         self.out = self.ocb.normal_coord(self.lat[-1], self.mlt[-1])
-        self.assertAlmostEqual(self.out[0][0], self.ocb_lat[-1])
-        self.assertAlmostEqual(self.out[1][0], self.ocb_mlt[-1])
-        self.assertEqual(self.out[2][0], self.r_corr)
+        self.assertAlmostEqual(self.out[0], self.ocb_lat[-1])
+        self.assertAlmostEqual(self.out[1], self.ocb_mlt[-1])
+        self.assertEqual(self.out[2], self.r_corr)
         return
 
     def test_normal_coord_north_array(self):
@@ -477,9 +477,9 @@ class TestOCBoundaryMethodsNorth(cc.TestLogWarnings):
         self.set_ocb()
         self.out = self.ocb.normal_coord(self.lat[-1], self.mlt[-1],
                                          coords='Mag')
-        self.assertAlmostEqual(self.out[0][0], self.ocb_lat[-1])
-        self.assertAlmostEqual(self.out[1][0], self.ocb_mlt[-1])
-        self.assertEqual(self.out[2][0], self.r_corr)
+        self.assertAlmostEqual(self.out[0], self.ocb_lat[-1])
+        self.assertAlmostEqual(self.out[1], self.ocb_mlt[-1])
+        self.assertEqual(self.out[2], self.r_corr)
         return
 
     def test_normal_coord_north_geodetic(self):
@@ -890,17 +890,17 @@ class TestOCBoundaryMethodsSouth(unittest.TestCase):
         self.ocb.rfunc_kwargs[self.ocb.rec_ind]['r_add'] = self.r_corr
         self.out = self.ocb.normal_coord(self.lat[0], self.mlt[0])
 
-        self.assertAlmostEqual(self.out[0][0], -87.0909090909091, places=3)
-        self.assertAlmostEqual(self.out[1][0], 6.0, places=3)
-        self.assertEqual(self.out[2][0], self.r_corr)
+        self.assertAlmostEqual(self.out[0], -87.0909090909091, places=3)
+        self.assertAlmostEqual(self.out[1], 6.0, places=3)
+        self.assertEqual(self.out[2], self.r_corr)
         return
 
     def test_revert_coord_south(self):
         """Test the reversion to AACGM coordinates in the south."""
         self.out = self.ocb.revert_coord(self.ocb_lat[1], self.ocb_mlt[1],
                                          self.r_corr)
-        self.assertAlmostEqual(self.out[0][0], self.lat[1])
-        self.assertAlmostEqual(self.out[1][0], self.mlt[1])
+        self.assertAlmostEqual(self.out[0], self.lat[1])
+        self.assertAlmostEqual(self.out[1], self.mlt[1])
         return
 
     def test_revert_coord_south_array(self):
@@ -928,8 +928,8 @@ class TestOCBoundaryMethodsSouth(unittest.TestCase):
         """Test reversion to AACGM coordinates in the south with Mag label."""
         self.out = self.ocb.revert_coord(self.ocb_lat[1], self.ocb_mlt[1],
                                          self.r_corr, coords='MAG')
-        self.assertAlmostEqual(self.out[0][0], self.lat[1])
-        self.assertAlmostEqual(self.out[1][0], self.mlt[1])
+        self.assertAlmostEqual(self.out[0], self.lat[1])
+        self.assertAlmostEqual(self.out[1], self.mlt[1])
         return
 
     def test_revert_coord_south_geodetic(self):

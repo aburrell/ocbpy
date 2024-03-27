@@ -206,9 +206,9 @@ class TestEABoundaryMethodsSouth(test_ocb.TestOCBoundaryMethodsSouth):
         self.ocb.rfunc_kwargs[self.ocb.rec_ind]['r_add'] = self.r_corr
         self.out = self.ocb.normal_coord(self.lat[0], self.mlt[0])
 
-        self.assertAlmostEqual(self.out[0][0], -84.764005494, places=3)
-        self.assertAlmostEqual(self.out[1][0], 6.02245269240, places=3)
-        self.assertEqual(self.out[2][0], self.r_corr)
+        self.assertAlmostEqual(self.out[0], -84.764005494, places=3)
+        self.assertAlmostEqual(self.out[1], 6.02245269240, places=3)
+        self.assertEqual(self.out[2], self.r_corr)
         return
 
     def test_aacgm_boundary_location_good_south(self):

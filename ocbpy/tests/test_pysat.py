@@ -598,7 +598,7 @@ class TestPysatMethods(TestPysatUtils, cc.TestLogWarnings):
         ocb_pysat.add_ocb_to_data(self.test_inst, self.pysat_lat, "mlt",
                                   **self.ocb_kw, max_sdiff=self.del_time)
 
-        self.lwarn = u"no data in Boundary file(s)"
+        self.lwarn = u"no data in Boundary file"
         self.eval_logging_message()
         return
 
@@ -998,7 +998,7 @@ class TestPysatCustMethods(TestPysatUtils, cc.TestLogWarnings):
         self.test_load()
 
         # Test the logging output
-        self.lwarn = u'no data in Boundary file(s)'
+        self.lwarn = u'no data in Boundary file'
         self.eval_logging_message()
         return
 
