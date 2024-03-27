@@ -25,8 +25,7 @@ class TestOCBScalingLogFailure(cc.TestLogWarnings):
         ocbpy.logger.setLevel(logging.INFO)
 
         # Initialize the testing variables
-        test_file = path.join(path.dirname(ocbpy.__file__), "tests",
-                              "test_data", "test_north_circle")
+        test_file = path.join(cc.test_dir, "test_north_circle")
         self.assertTrue(path.isfile(test_file))
         self.ocb = ocbpy.OCBoundary(filename=test_file, instrument='image')
         self.ocb.rec_ind = 27
@@ -39,7 +38,7 @@ class TestOCBScalingLogFailure(cc.TestLogWarnings):
 
     def tearDown(self):
         """Tear down the test case."""
-        super.tearDown()
+        super().tearDown()
         del self.ocb, self.vdata
         return
 
@@ -77,8 +76,7 @@ class TestOCBScalingMethods(unittest.TestCase):
     def setUp(self):
         """Initialize the OCBoundary and VectorData objects."""
 
-        test_file = path.join(path.dirname(ocbpy.__file__), "tests",
-                              "test_data", "test_north_circle")
+        test_file = path.join(cc.test_dir, "test_north_circle")
         self.assertTrue(path.isfile(test_file))
         self.ocb = ocbpy.OCBoundary(filename=test_file, instrument='image')
         self.ocb.rec_ind = 27
