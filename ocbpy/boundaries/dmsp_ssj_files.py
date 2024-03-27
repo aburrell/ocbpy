@@ -324,13 +324,21 @@ def fetch_ssj_boundary_files(stime=None, etime=None, out_dir=None,
 
     # Get the archive name from the output
     try:
-        zind = zen_split.index('Link:') + 1
-        archive_name = os.path.join(out_dir, os.path.split(zen_split[zind])[-1])
+        link_ind = zen_split.index('Link:') + 1
+
+        # If the archive is already available, message may differ
+        zip_name = os.path.split(zen_split[link_ind])
+        while zip_name[-1].find(".zip") <= 0:
+            zip_name = os.path.split(zip_name[0])
+
+        # Set the archive name
+        archive_name = os.path.join(out_dir, zip_name[-1])
     except (ValueError, IndexError):
         raise IOError('unable to identify zenodo archive: {:}'.format(zen_msg))
 
     if not os.path.isfile(archive_name):
-        raise IOError('error downloading archive to output dir')
+        raise IOError('error downloading archive to output dir: {:}'.format(
+            archive_name))
 
     # Access the zip archive
     with zipfile.ZipFile(archive_name, 'r') as zref:
