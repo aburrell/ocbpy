@@ -243,8 +243,8 @@ class TestSSJCreate(cc.TestLogWarnings):
         dep_str = "ssj_auroral_boundaries package is no longer supported"
 
         with self.assertWarnsRegex(DeprecationWarning, dep_str):
-            dmsp_ssj_files.create_ssj_boundary_files(self.cdf_files,
-                                                     out_dir=self.test_dir)
+            self.out = dmsp_ssj_files.create_ssj_boundary_files(
+                self.cdf_files, out_dir=self.test_dir)
         return
 
     def test_create_ssj_boundary_files_failure(self):
@@ -268,30 +268,19 @@ class TestSSJCreate(cc.TestLogWarnings):
                 self.cdf_files, out_dir=self.test_dir, out_cols=['fake'])
         return
 
-    def test_create_ssj_boundary_files_log_cdf_failure(self):
-        """Test create_ssj_boundary_files raising CDF logging warning."""
+    def test_create_ssj_boundary_files_log_failure(self):
+        """Test create_ssj_boundary_files raising logging warning."""
 
-        # Run with bad input file
-        for fname in self.comp_files:
-            self.assertTrue(os.path.isfile(fname),
-                            msg="missing test file: {:}".format(fname))
-        self.out = dmsp_ssj_files.create_ssj_boundary_files(self.comp_files)
-        self.assertEqual(len(self.out), 0)
+        # Run with bad input files
+        for in_files, self.lwarn in ([self.comp_files, "CDF"],
+                                     [[cc.test_dir], "bad input file"]):
+            with self.subTest(in_files=in_files):
+                self.out = dmsp_ssj_files.create_ssj_boundary_files(in_files)
+                self.assertEqual(len(self.out), 0,
+                                 msg="unexpected output: {:}".format(self.out))
 
-        # Test logging output
-        self.lwarn = "CDF"
-        self.eval_logging_message()
-        return
-
-    def test_create_ssj_boundary_files_log_not_a_file_failure(self):
-        """Test create_ssj_boundary_files raising bad file logging warning."""
-        # Run with bad input file
-        self.out = dmsp_ssj_files.create_ssj_boundary_files([cc.test_dir])
-        self.assertEqual(len(self.out), 0)
-
-        # Test logging output
-        self.lwarn = "bad input file"
-        self.eval_logging_message()
+                # Test logging output
+                self.eval_logging_message()
         return
 
     def test_create_ssj_boundary_files_default(self):
