@@ -13,7 +13,6 @@ import unittest
 
 from requests.exceptions import ProxyError, ConnectionError
 
-import ocbpy
 from ocbpy import boundaries
 import ocbpy.tests.class_common as cc
 
