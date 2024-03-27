@@ -6,22 +6,22 @@
 """Tests the boundaries.files functions."""
 
 import datetime as dt
-from io import StringIO
-import logging
 import os
 import unittest
 
 import ocbpy
 from ocbpy.boundaries import files
+import ocbpy.tests.class_common as cc
 
 
-class TestDMSPFileMethods(unittest.TestCase):
+class TestDMSPFileMethods(cc.TestLogWarnings):
     """"Unit tests for the DMSP SSJ file routines."""
 
     def setUp(self):
         """Initialize the test case by copying over necessary files."""
-        self.test_dmsp = os.path.join(os.path.dirname(ocbpy.__file__), "tests",
-                                      "test_data", "dmsp-ssj_north_out.ocb")
+        super().setUp()
+
+        self.test_dmsp = os.path.join(cc.test_dir, "dmsp-ssj_north_out.ocb")
         self.temp_files = [os.path.join(files.get_boundary_directory(),
                                         "dmsp-ssj_north_out1.ocb"),
                            os.path.join(files.get_boundary_directory(),
@@ -35,12 +35,6 @@ class TestDMSPFileMethods(unittest.TestCase):
                           "etime": dt.datetime(2011, 1, 1)}
         self.out = list()
         self.tfile = u''
-
-        self.lwarn = u''
-        self.lout = u''
-        self.log_capture = StringIO()
-        ocbpy.logger.addHandler(logging.StreamHandler(self.log_capture))
-        ocbpy.logger.setLevel(logging.WARNING)
         return
 
     def tearDown(self):
@@ -50,7 +44,8 @@ class TestDMSPFileMethods(unittest.TestCase):
                 os.remove(self.tfile)
 
         del self.tfile, self.temp_files, self.test_dmsp, self.comp_dict
-        del self.out, self.lwarn, self.lout, self.log_capture
+        del self.out
+        super().tearDown()
         return
 
     def test_no_short_name_one_file(self):
@@ -103,10 +98,9 @@ class TestDMSPFileMethods(unittest.TestCase):
 
         # Get the default file and instrument
         self.out = files.get_boundary_files()
-        self.lout = self.log_capture.getvalue()
 
         # Test logging error message and data output
-        self.assertTrue(self.lout.find(self.lwarn) >= 0)
+        self.eval_logging_message()
         self.assertTrue(self.tfile in self.out.keys())
         self.assertListEqual(
             sorted([kk for kk in self.out[self.tfile].keys()]),
@@ -136,7 +130,6 @@ class TestFilesMethods(unittest.TestCase):
     def setUp(self):
         """Initialize the test class."""
         self.out = None
-        self.orig_file = ocbpy.__file__
         self.comp_dict = {'ocb': {'amp_north_radii.ocb':
                                   {'instrument': 'amp', 'hemisphere': 1,
                                    'stime': dt.datetime(2010, 1, 1, 0, 0),
@@ -199,11 +192,8 @@ class TestFilesMethods(unittest.TestCase):
 
     def tearDown(self):
         """Clean the test environment."""
-        if ocbpy.__file__ != self.orig_file:
-            ocbpy.__file__ = self.orig_file
-
-        del self.out, self.orig_file, self.comp_dict, self.short_to_long
-        del self.inst, self.long_to_short, self.hemi, self.ikey, self.fname
+        del self.out, self.comp_dict, self.short_to_long, self.fname
+        del self.inst, self.long_to_short, self.hemi, self.ikey
         return
 
     def test_get_boundary_directory(self):
@@ -214,9 +204,12 @@ class TestFilesMethods(unittest.TestCase):
 
     def test_get_boundary_directory_failure(self):
         """Test the failure of the default boundary directory definition."""
-        ocbpy.__file__ = "/fake_dir/test_file"
+        good_location = str(ocbpy.boundaries.__file__)
+        ocbpy.boundaries.__file__ = "/fake_dir/test_file"
         with self.assertRaisesRegex(OSError, "boundary file directory"):
-            files.get_boundary_directory()
+            ocbpy.boundaries.files.get_boundary_directory()
+
+        ocbpy.boundaries.__file__ = good_location
         return
 
     def test_get_boundary_files_unknown_boundary(self):
