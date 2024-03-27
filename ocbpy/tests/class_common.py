@@ -41,5 +41,5 @@ class TestLogWarnings(unittest.TestCase):
 
         # Test logging error message and data output
         self.lout = self.log_capture.getvalue()
-        self.assertTrue(self.lout.find(self.lwarn) >= 0)
+        self.assertRegex(self.lout, self.lwarn)
         return
