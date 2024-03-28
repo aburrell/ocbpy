@@ -63,20 +63,13 @@ jobs:
       run: coveralls --rcfile=pyproject.toml --service=github || true
 
   finish:
+    name: Finish Coverage Analysis
     needs: build
     runs-on: ubuntu-latest
-    strategy:
-      matrix:
-        python-version: ["3.11"]
     steps:
-      - uses: actions/checkout@v4
-      - name: Set up Python ${{ matrix.python-version }}
-        uses: actions/setup-python@v5
-        with:
-          python-version: ${{ matrix.python-version }}
       - name: Coveralls Finished
         env:
           GITHUB_TOKEN: ${{ secrets.GITHUB_TOKEN }}
         run: |
           pip install --upgrade coveralls
-          coveralls --service=github --finish || true
+          coveralls --service=github --finish
