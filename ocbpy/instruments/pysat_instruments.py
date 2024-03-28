@@ -485,6 +485,7 @@ def add_ocb_to_data(pysat_inst, mlat_name='', mlt_name='', evar_names=None,
 
     return
 
+
 def reshape_pad_mask_flatten(data, mask):
     """Reshape, pad, mask, and flatten data.
 
