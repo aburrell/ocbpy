@@ -1,8 +1,8 @@
 [build-system]
 requires = [
-	 "oldest-supported-numpy",
-	 "setuptools",
-	 "wheel",
+    "oldest-supported-numpy",
+    "setuptools",
+    "wheel",
 ]
 
 [project]
@@ -11,8 +11,7 @@ name = "ocbpy"
 license = {file = "LICENSE"}
 description = 'Location relative to open/closed field line boundary'
 maintainers = [
-    {name = "Angeline G. Burrell",
-    email = "angeline.g.burrell.civ@us.navy.mil"},
+    {name = "Angeline G. Burrell", email = "angeline.g.burrell.civ@us.navy.mil"},
 ]
 requires-python = ">=3.7"
 dependencies = [
@@ -84,26 +83,25 @@ documentation = "https://ocbpy.readthedocs.io/en/latest/"
 tracker = "https://github.com/aburrell/ocbpy/issues"
 download = "https://github.com/aburrell/ocbpy/releases"
 
-
 [tool.coverage.run]
-relative_files = True
-include = */ocbpy/*
-          */ocbpy/tests/*
+relative_files = true
+include = ["*/ocbpy/*",
+           "*/ocbpy/tests/*"]
 
 [tool.coverage.paths]
-ocb_paths = ocbpy/
-            */lib/*/site-packages/ocbpy
+ocb_paths = ["ocbpy/",
+             "*/lib/*/site-packages/ocbpy"]
 
 [tool.coverage.report]
-omit = */lib/*/site-packages/*.py
-       */lib/*/site-packages/a*/*
-       */lib/*/site-packages/c*/*
-       */lib/*/site-packages/d*/*
-       */lib/*/site-packages/g*/*
-       */lib/*/site-packages/i*/*
-       */lib/*/site-packages/m*/*
-       */lib/*/site-packages/n*/*
-       */lib/*/site-packages/p*/*
-       */lib/*/site-packages/r*/*
-       */lib/*/site-packages/s*/*
-       */lib/*/site-packages/u*/*
+omit = ["*/lib/*/site-packages/*.py",
+        "*/lib/*/site-packages/a*/*",
+        "*/lib/*/site-packages/c*/*",
+        "*/lib/*/site-packages/d*/*",
+        "*/lib/*/site-packages/g*/*",
+        "*/lib/*/site-packages/i*/*",
+        "*/lib/*/site-packages/m*/*",
+        "*/lib/*/site-packages/n*/*",
+        "*/lib/*/site-packages/p*/*",
+        "*/lib/*/site-packages/r*/*",
+        "*/lib/*/site-packages/s*/*",
+        "*/lib/*/site-packages/u*/*"]
