@@ -71,7 +71,7 @@ doc = [
     "numpydoc",
 ]
 test = [
-     "coverage",
+     "coverage[toml]",
      "coveralls",
      "flake8",
      "packaging",
