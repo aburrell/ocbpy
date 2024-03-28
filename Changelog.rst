@@ -3,13 +3,22 @@ Changelog
 
 Summary of all changes made since the first stable release
 
-0.X.X (XX-XX-2023)
+0.4.0 (XX-XX-2024)
 ------------------
 * DEP: Deprecated functions that depend on ssj_auroral_boundary_package
 * DEP: Removed classes and kwargs deprecated in v0.3.0
-* MAINT: Added a pyproject.toml file
+* MAINT: Added a pyproject.toml file and removed setup.py
+* MAINT: Updated numpy logic to address DeprecationWarnings
+* MAINT: Updated GitHub Action yamls to use pyproject.toml and cycle versions
 * ENH: Added AMPERE OCBs up to 2022, using updated AMPERE data
 * ENH: Added AMPERE EABs, using the Heppner-Maynard boundary as a valid EAB
+* ENH: Changed default directory ID to use `pathlib`
+* ENH: Allow data padding in `pysat_instrument` functions
+* BUG: Fixed a typo in the documentation's pysat example
+* BUG: Added an error catch for badly formatted SuperMAG file reading
+* TST: Added a new CI test for the Test PyPi Release Candidate
+* TST: Reduced duplication by creating a common test class and test variable
+* DOC: Improved docstring style compliance and correctness
 
 0.3.0 (10-21-2022)
 ------------------
