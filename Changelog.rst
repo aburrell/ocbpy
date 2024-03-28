@@ -18,6 +18,7 @@ Summary of all changes made since the first stable release
 * BUG: Added an error catch for badly formatted SuperMAG file reading
 * TST: Added a new CI test for the Test PyPi Release Candidate
 * TST: Reduced duplication by creating a common test class and test variable
+* TST: Added a ReadTheDocs yaml
 * DOC: Improved docstring style compliance and correctness
 
 0.3.0 (10-21-2022)
