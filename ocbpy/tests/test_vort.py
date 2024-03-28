@@ -7,37 +7,29 @@
 
 import datetime as dt
 import filecmp
-from io import StringIO
-import logging
 import numpy as np
 import os
 import unittest
 
-
 import ocbpy
 import ocbpy.instruments.vort as ocb_ivort
+from ocbpy.tests import class_common as cc
 
 
-class TestVortLogWarnings(unittest.TestCase):
+class TestVortLogWarnings(cc.TestLogWarnings):
     """Unit tests for the vorticity instrument logging warnings."""
 
     def setUp(self):
         """Initialize the test environment."""
 
-        self.ocb_dir = os.path.dirname(ocbpy.__file__)
-        self.test_file = os.path.join(self.ocb_dir, "tests", "test_data",
-                                      "test_vort")
-        self.test_ocb = os.path.join(self.ocb_dir, "tests", "test_data",
-                                     "test_north_circle")
-        self.temp_output = os.path.join(self.ocb_dir, "tests", "test_data",
-                                        "temp_vort")
-        self.assertTrue(os.path.isfile(self.test_file))
+        super().setUp()
 
-        self.lwarn = u''
-        self.lout = u''
-        self.log_capture = StringIO()
-        ocbpy.logger.addHandler(logging.StreamHandler(self.log_capture))
-        ocbpy.logger.setLevel(logging.WARNING)
+        self.test_file = os.path.join(cc.test_dir, "test_vort")
+        self.test_ocb = os.path.join(cc.test_dir, "test_north_circle")
+        self.temp_output = os.path.join(cc.test_dir, "temp_vort")
+        self.assertTrue(os.path.isfile(self.test_file),
+                        msg="'{:}' is not a file".format(self.test_file))
+
         return
 
     def tearDown(self):
@@ -45,8 +37,9 @@ class TestVortLogWarnings(unittest.TestCase):
         if os.path.isfile(self.temp_output):
             os.remove(self.temp_output)
 
-        del self.test_file, self.temp_output, self.test_ocb, self.ocb_dir
-        del self.lwarn, self.lout, self.log_capture
+        del self.test_file, self.temp_output, self.test_ocb
+
+        super().tearDown()
         return
 
     def test_vort2ascii_ocb_wrong_hemi(self):
@@ -56,10 +49,9 @@ class TestVortLogWarnings(unittest.TestCase):
         ocb_ivort.vort2ascii_ocb(self.test_file, self.temp_output,
                                  ocbfile=self.test_ocb, instrument='image',
                                  hemisphere=-1)
-        self.lout = self.log_capture.getvalue()
 
         # Test logging error message
-        self.assertTrue(self.lout.find(self.lwarn) >= 0)
+        self.eval_logging_message()
         return
 
     def test_vort_unexpected_line(self):
@@ -81,10 +73,11 @@ class TestVortLogWarnings(unittest.TestCase):
 
                 # Load the bad file
                 data = ocb_ivort.load_vorticity_ascii_data(self.temp_output)
-                self.lout = self.log_capture.getvalue()
 
-                # Test logging error message and data output
-                self.assertTrue(self.lout.find(self.lwarn) >= 0)
+                # Test logging error message
+                self.eval_logging_message()
+
+                # Test the data output
                 self.assertIsNone(data)
         return
 
@@ -95,33 +88,23 @@ class TestVort2AsciiMethods(unittest.TestCase):
     def setUp(self):
         """Initialize the testing set up."""
 
-        self.ocb_dir = os.path.dirname(ocbpy.__file__)
-        self.test_ocb = os.path.join(self.ocb_dir, "tests", "test_data",
-                                     "test_north_circle")
-        self.test_eab = os.path.join(self.ocb_dir, "tests", "test_data",
-                                     "test_north_eab")
-        self.test_file = os.path.join(self.ocb_dir, "tests", "test_data",
-                                      "test_hemi_vort")
-        self.test_eq_file = os.path.join(self.ocb_dir, "tests", "test_data",
-                                         "test_eq_hemi_vort")
-        self.test_empty = os.path.join(self.ocb_dir, "tests", "test_data",
-                                       "test_empty")
-        self.test_output_north = os.path.join(self.ocb_dir, "tests",
-                                              "test_data", "out_vort")
-        self.test_unscaled_north = os.path.join(self.ocb_dir, "tests",
-                                                "test_data",
+        self.test_ocb = os.path.join(cc.test_dir, "test_north_circle")
+        self.test_eab = os.path.join(cc.test_dir, "test_north_eab")
+        self.test_file = os.path.join(cc.test_dir, "test_hemi_vort")
+        self.test_eq_file = os.path.join(cc.test_dir, "test_eq_hemi_vort")
+        self.test_empty = os.path.join(cc.test_dir, "test_empty")
+        self.test_output_north = os.path.join(cc.test_dir, "out_vort")
+        self.test_unscaled_north = os.path.join(cc.test_dir,
                                                 "out_vort_unscaled")
-        self.test_output_dual = os.path.join(self.ocb_dir, "tests",
-                                             "test_data", "out_dual_vort")
-        self.test_output_south = os.path.join(self.ocb_dir, "tests",
-                                              "test_data", "out_south_vort")
-        self.temp_output = os.path.join(self.ocb_dir, "tests", "test_data",
-                                        "temp_vort")
+        self.test_output_dual = os.path.join(cc.test_dir, "out_dual_vort")
+        self.test_output_south = os.path.join(cc.test_dir, "out_south_vort")
+        self.temp_output = os.path.join(cc.test_dir, "temp_vort")
         self.test_vals = {'CENTRE_MLAT': 67.27, 'DAY': 5, 'MLT': 3.127,
                           'UTH': 13.65, 'VORTICITY': 0.0020967, 'YEAR': 2000,
                           'DATETIME': dt.datetime(2000, 5, 5, 13, 39, 00),
                           'MONTH': 5}
-        self.assertTrue(os.path.isfile(self.test_file))
+        self.assertTrue(os.path.isfile(self.test_file),
+                        msg="'{:}' is not a file".format(self.test_file))
         return
 
     def tearDown(self):
@@ -129,10 +112,9 @@ class TestVort2AsciiMethods(unittest.TestCase):
         if os.path.isfile(self.temp_output):
             os.remove(self.temp_output)
 
-        del self.test_file, self.temp_output, self.test_ocb, self.ocb_dir
-        del self.test_output_north, self.test_output_south, self.test_eq_file
-        del self.test_empty, self.test_eab, self.test_output_dual
-        del self.test_unscaled_north
+        del self.test_file, self.temp_output, self.test_ocb, self.test_eq_file
+        del self.test_output_north, self.test_output_south, self.test_eab
+        del self.test_empty, self.test_output_dual, self.test_unscaled_north
         return
 
     def test_vort2ascii_ocb(self):

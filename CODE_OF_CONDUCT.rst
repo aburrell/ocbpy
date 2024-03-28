@@ -61,9 +61,9 @@ Enforcement
 -----------
 
 Instances of abusive, harassing, or otherwise unacceptable behavior may be
-reported by contacting the project team at angeline.burrell@nrl.navy.mil. The
-project team will review and investigate all complaints, and will respond in a
-way that it deems appropriate to the circumstances. The project team is
+reported by contacting the project team at angeline.g.burrell.civ@us.navy.mil.
+The project team will review and investigate all complaints, and will respond in
+a way that it deems appropriate to the circumstances. The project team is
 obligated to maintain confidentiality with regard to the reporter of an
 incident. Further details of specific enforcement policies may be posted
 separately.
@@ -78,5 +78,5 @@ Attribution
 This Code of Conduct is adapted from the Contributor Covenant [homepage]_,
 version [1.4]_.
 
-.. [homepage] https://contributor-covenant.org
-.. [1.4] https://contributor-covenant.org/version/1/4/
+.. [homepage] https://www.contributor-covenant.org/
+.. [1.4] https://www.contributor-covenant.org/version/1/4/

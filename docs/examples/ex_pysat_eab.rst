@@ -74,8 +74,8 @@ using the following commands.
 
    # Replace `user` with a string holding your name and `password` with your
    # email.  Madrigal uses these to demonstrate their utility to funders.
-   tec = pysat.Instrumet(inst_module=py_mad.instruments.gnss_tec, tag='vtec',
-                         user=user, password=password)
+   tec = pysat.Instrument(inst_module=py_mad.instruments.gnss_tec, tag='vtec',
+                          user=user, password=password)
    tec.download(start=eab.dtime[eab.rec_ind])
    print(tec.files.files)
 

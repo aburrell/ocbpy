@@ -7,16 +7,14 @@
 
 import datetime as dt
 from glob import glob
-from io import StringIO
-import logging
 import numpy as np
 import os
 import unittest
 
 from requests.exceptions import ProxyError, ConnectionError
 
-import ocbpy
 from ocbpy import boundaries
+import ocbpy.tests.class_common as cc
 
 no_ssj = False if hasattr(boundaries, 'dmsp_ssj_files') else True
 
@@ -31,7 +29,7 @@ class TestSSJFetchDep(unittest.TestCase):
 
     def setUp(self):
         """Initialize the test class."""
-        self.ocb_dir = os.path.dirname(ocbpy.__file__)
+        self.ocb_dir = os.path.split(os.path.split(cc.test_dir)[0])[0]
         self.sat_nums = [16, 17, 18]
         self.in_args = [dt.datetime(2010, 1, 1), dt.datetime(2010, 1, 2),
                         os.path.join(self.ocb_dir, "tests", "test_data"),
@@ -151,28 +149,25 @@ class TestSSJFetchDep(unittest.TestCase):
 
 @unittest.skipIf(no_ssj,
                  "ssj_auroral_boundary not installed, cannot test routines")
-class TestSSJCreate(unittest.TestCase):
+class TestSSJCreate(cc.TestLogWarnings):
     """Unit tests for `create_ssj_boundary_files`."""
 
     def setUp(self):
         """Initialize the test class."""
-        self.ocb_dir = os.path.dirname(ocbpy.__file__)
-        self.test_dir = os.path.join(self.ocb_dir, "tests")
+        super().setUp()
+
+        self.test_dir = os.path.split(cc.test_dir)[0]
         self.base_file = "".join(["dmsp-f16_ssj_precipitating-electrons-ions",
                                   "_20101231_v1.1.2"])
-        self.comp_files = [os.path.join(self.test_dir, "test_data",
+        self.comp_files = [os.path.join(cc.test_dir,
                                         "{:s}_boundaries.csv".format(
                                             self.base_file))]
-        self.cdf_files = [os.path.join(self.test_dir, "test_data",
+        self.cdf_files = [os.path.join(cc.test_dir,
                                        '{:s}.cdf'.format(self.base_file))]
         self.out_cols = ['mlat', 'mlt']
         self.out = list()
         self.eval_ref = self.comp_files[0]
         self.eval_out = None
-        self.lout = ''
-        self.log_capture = StringIO()
-        ocbpy.logger.addHandler(logging.StreamHandler(self.log_capture))
-        ocbpy.logger.setLevel(logging.WARNING)
         return
 
     def tearDown(self):
@@ -181,9 +176,10 @@ class TestSSJCreate(unittest.TestCase):
             for ff in self.out:
                 os.remove(ff)
 
-        del self.ocb_dir, self.out, self.test_dir, self.cdf_files
-        del self.comp_files, self.log_capture, self.lout, self.base_file
-        del self.out_cols, self.eval_ref, self.eval_out
+        del self.out, self.cdf_files, self.out_cols, self.eval_out
+        del self.comp_files, self.base_file, self.eval_ref, self.test_dir
+
+        super().tearDown()
         return
 
     def eval_file_data(self, geo=False, mag=False, test_plot=False):
@@ -246,8 +242,8 @@ class TestSSJCreate(unittest.TestCase):
         dep_str = "ssj_auroral_boundaries package is no longer supported"
 
         with self.assertWarnsRegex(DeprecationWarning, dep_str):
-            dmsp_ssj_files.create_ssj_boundary_files(self.cdf_files,
-                                                     out_dir=self.test_dir)
+            self.out = dmsp_ssj_files.create_ssj_boundary_files(
+                self.cdf_files, out_dir=self.test_dir)
         return
 
     def test_create_ssj_boundary_files_failure(self):
@@ -272,19 +268,18 @@ class TestSSJCreate(unittest.TestCase):
         return
 
     def test_create_ssj_boundary_files_log_failure(self):
-        """Test create_ssj_boundary_files raising logging errors."""
+        """Test create_ssj_boundary_files raising logging warning."""
 
-        # Cycle through the different value error raises
-        for ii in [(self.comp_files, "CDF"),
-                   ([self.test_dir], "bad input file")]:
-            with self.subTest(ii=list(ii)):
-                # Run with bad input file
-                self.out = dmsp_ssj_files.create_ssj_boundary_files(ii[0])
-                self.assertEqual(len(self.out), 0)
+        # Run with bad input files
+        for in_files, self.lwarn in ([self.comp_files, "CDF"],
+                                     [[cc.test_dir], "bad input file"]):
+            with self.subTest(in_files=in_files):
+                self.out = dmsp_ssj_files.create_ssj_boundary_files(in_files)
+                self.assertEqual(len(self.out), 0,
+                                 msg="unexpected output: {:}".format(self.out))
 
                 # Test logging output
-                self.lout = self.log_capture.getvalue()
-                self.assertRegex(self.lout, ii[1])
+                self.eval_logging_message()
         return
 
     def test_create_ssj_boundary_files_default(self):
@@ -357,11 +352,10 @@ class TestSSJFetch(unittest.TestCase):
 
     def setUp(self):
         """Initialize the test class."""
-        self.ocb_dir = os.path.dirname(ocbpy.__file__)
+        self.ocb_dir = os.path.split(os.path.split(cc.test_dir)[0])[0]
         self.sat_nums = [16, 17, 18]
         self.in_args = [dt.datetime(2010, 1, 1), dt.datetime(2010, 1, 2),
-                        os.path.join(self.ocb_dir, "tests", "test_data"),
-                        self.sat_nums]
+                        cc.test_dir, self.sat_nums]
         self.fetch_files = list()
         return
 
@@ -518,36 +512,33 @@ class TestSSJEvalFilename(unittest.TestCase):
 
 @unittest.skipIf(no_ssj,
                  "ssj_auroral_boundary not installed, cannot test routines")
-class TestSSJFormat(unittest.TestCase):
+class TestSSJFormat(cc.TestLogWarnings):
     """Unit tests for `format_ssj_boundary_files`."""
 
     def setUp(self):
         """Initialize the test class."""
-        self.ocb_dir = os.path.dirname(ocbpy.__file__)
-        self.test_dir = os.path.join(self.ocb_dir, "tests", "test_data")
+        super().setUp()
+
+        self.test_dir = cc.test_dir
         self.comp_files = {"dmsp-ssj_north_20101231_20101231_v1.1.2.eab":
-                           os.path.join(self.test_dir,
+                           os.path.join(cc.test_dir,
                                         "dmsp-ssj_north_out.eab"),
                            "dmsp-ssj_south_20101231_20101231_v1.1.2.eab":
-                           os.path.join(self.test_dir,
+                           os.path.join(cc.test_dir,
                                         "dmsp-ssj_south_out.eab"),
                            "dmsp-ssj_north_20101231_20101231_v1.1.2.ocb":
-                           os.path.join(self.test_dir,
+                           os.path.join(cc.test_dir,
                                         "dmsp-ssj_north_out.ocb"),
                            "dmsp-ssj_south_20101231_20101231_v1.1.2.ocb":
-                           os.path.join(self.test_dir,
+                           os.path.join(cc.test_dir,
                                         "dmsp-ssj_south_out.ocb")}
-        self.csv_files = [os.path.join(self.test_dir,
+        self.csv_files = [os.path.join(cc.test_dir,
                                        "".join(["dmsp-f16_ssj_precipitating",
                                                 "-electrons-ions_20101231_",
                                                 "v1.1.2_boundaries.csv"]))]
         self.out = list()
         self.ldtype = [int, '|U50', '|U50', float, float, float,
                        float, float, float, float, float]
-        self.lout = ''
-        self.log_capture = StringIO()
-        ocbpy.logger.addHandler(logging.StreamHandler(self.log_capture))
-        ocbpy.logger.setLevel(logging.WARNING)
         return
 
     def tearDown(self):
@@ -556,8 +547,9 @@ class TestSSJFormat(unittest.TestCase):
             for fout in self.out:
                 os.remove(fout)
 
-        del self.ocb_dir, self.out, self.test_dir, self.csv_files
-        del self.log_capture, self.lout, self.comp_files, self.ldtype
+        del self.out, self.test_dir, self.csv_files, self.comp_files
+        del self.ldtype
+        super().tearDown()
         return
 
     def eval_formatted_output(self, limit_line_comp=False):
@@ -617,7 +609,7 @@ class TestSSJFormat(unittest.TestCase):
         """Test `format_ssj_boundary_files` with mixed good/bad file input."""
 
         # Create an empty, badly formatted input file
-        self.csv_files.append(os.path.join(self.test_dir, "".join([
+        self.csv_files.append(os.path.join(cc.test_dir, "".join([
             "dmsp-f47_ssj_precipitating-electrons-ion_20101231_v1.1.2_",
             "boundaries.csv"])))
         with open(self.csv_files[-1], "w") as fp:
@@ -634,8 +626,7 @@ class TestSSJFormat(unittest.TestCase):
         self.eval_formatted_output()
 
         # Evaluate the logging messages
-        self.lout = self.log_capture.getvalue()
-        self.assertRegex(self.lout, self.lwarn)
+        self.eval_logging_message()
 
         # Prepare the empty file for clean up
         self.out.append(self.csv_files[-1])
@@ -664,11 +655,11 @@ class TestSSJFormat(unittest.TestCase):
 
         with self.assertRaisesRegex(ValueError, "empty list of input CSV"):
             # Try to read in a bad CDF filename
-            self.out = dmsp_ssj_files.format_ssj_boundary_files([self.test_dir])
+            self.out = dmsp_ssj_files.format_ssj_boundary_files([cc.test_dir])
 
         # Test the logging output
-        self.lout = self.log_capture.getvalue()
-        self.assertRegex(self.lout, "bad input file")
+        self.lwarn = "bad input file"
+        self.eval_logging_message()
         return
 
     def test_format_ssj_boundary_files_failure(self):
@@ -686,20 +677,15 @@ class TestSSJFetchFormat(unittest.TestCase):
 
     def setUp(self):
         """Initialize the test class."""
-        self.ocb_dir = os.path.dirname(ocbpy.__file__)
-        self.test_dir = os.path.join(self.ocb_dir, "tests")
+        self.test_dir = os.path.split(cc.test_dir)[0]
         self.comp_files = {"dmsp-ssj_north_20101231_20101231_v1.1.2.eab":
-                           os.path.join(self.test_dir, "test_data",
-                                        "dmsp-ssj_north_out.eab"),
+                           os.path.join(cc.test_dir, "dmsp-ssj_north_out.eab"),
                            "dmsp-ssj_south_20101231_20101231_v1.1.2.eab":
-                           os.path.join(self.test_dir, "test_data",
-                                        "dmsp-ssj_south_out.eab"),
+                           os.path.join(cc.test_dir, "dmsp-ssj_south_out.eab"),
                            "dmsp-ssj_north_20101231_20101231_v1.1.2.ocb":
-                           os.path.join(self.test_dir, "test_data",
-                                        "dmsp-ssj_north_out.ocb"),
+                           os.path.join(cc.test_dir, "dmsp-ssj_north_out.ocb"),
                            "dmsp-ssj_south_20101231_20101231_v1.1.2.ocb":
-                           os.path.join(self.test_dir, "test_data",
-                                        "dmsp-ssj_south_out.ocb")}
+                           os.path.join(cc.test_dir, "dmsp-ssj_south_out.ocb")}
         self.in_args = [dt.datetime(2010, 12, 31), dt.datetime(2011, 1, 1),
                         self.test_dir]
         self.out = list()
@@ -713,8 +699,7 @@ class TestSSJFetchFormat(unittest.TestCase):
             for ff in self.out:
                 os.remove(ff)
 
-        del self.ocb_dir, self.out, self.test_dir, self.in_args
-        del self.comp_files, self.ldtype
+        del self.out, self.in_args, self.comp_files, self.ldtype, self.test_dir
         return
 
     def test_use_deprecated(self):

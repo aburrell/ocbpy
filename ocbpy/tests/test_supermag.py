@@ -12,6 +12,7 @@ import unittest
 import ocbpy
 import ocbpy.instruments.supermag as ocb_ismag
 from ocbpy.instruments import general
+from ocbpy.tests import class_common as cc
 
 
 class TestSuperMAG2AsciiMethods(unittest.TestCase):
@@ -20,26 +21,16 @@ class TestSuperMAG2AsciiMethods(unittest.TestCase):
     def setUp(self):
         """Initialize the setup for SuperMAG processing unit tests."""
 
-        self.ocb_dir = os.path.dirname(ocbpy.__file__)
-        self.test_ocb = os.path.join(self.ocb_dir, "tests", "test_data",
-                                     "test_north_circle")
-        self.test_eab = os.path.join(self.ocb_dir, "tests", "test_data",
-                                     "test_north_eab")
-        self.test_file = os.path.join(self.ocb_dir, "tests", "test_data",
-                                      "test_hemi_smag")
-        self.test_eq_file = os.path.join(self.ocb_dir, "tests", "test_data",
-                                         "test_eq_smag")
-        self.test_output_north = os.path.join(self.ocb_dir, "tests",
-                                              "test_data", "out_smag")
-        self.test_unscaled_north = os.path.join(self.ocb_dir, "tests",
-                                                "test_data",
+        self.test_ocb = os.path.join(cc.test_dir, "test_north_circle")
+        self.test_eab = os.path.join(cc.test_dir, "test_north_eab")
+        self.test_file = os.path.join(cc.test_dir, "test_hemi_smag")
+        self.test_eq_file = os.path.join(cc.test_dir, "test_eq_smag")
+        self.test_output_north = os.path.join(cc.test_dir, "out_smag")
+        self.test_unscaled_north = os.path.join(cc.test_dir,
                                                 "out_smag_unscaled")
-        self.test_output_dual = os.path.join(self.ocb_dir, "tests",
-                                             "test_data", "out_dual_smag")
-        self.test_output_south = os.path.join(self.ocb_dir, "tests",
-                                              "test_data", "out_south_smag")
-        self.temp_output = os.path.join(self.ocb_dir, "tests", "test_data",
-                                        "temp_smag")
+        self.test_output_dual = os.path.join(cc.test_dir, "out_dual_smag")
+        self.test_output_south = os.path.join(cc.test_dir, "out_south_smag")
+        self.temp_output = os.path.join(cc.test_dir, "temp_smag")
         return
 
     def tearDown(self):
@@ -182,15 +173,15 @@ class TestSuperMAG2AsciiMethods(unittest.TestCase):
         return
 
 
-class TestSuperMAGLoadMethods(unittest.TestCase):
+class TestSuperMAGLoadMethods(cc.TestLogWarnings):
     """Test the SuperMAG loading functions."""
 
     def setUp(self):
         """Initialize the test set up."""
 
-        self.ocb_dir = os.path.dirname(ocbpy.__file__)
-        self.test_file = os.path.join(self.ocb_dir, "tests", "test_data",
-                                      "test_smag")
+        super().setUp()
+
+        self.test_file = os.path.join(cc.test_dir, "test_smag")
         self.test_vals = {'BE': -6.0, 'BN': -23.6, 'BZ': -25.2, 'DAY': 5,
                           'DEC': 17.13, 'HOUR': 13, 'MIN': 40, 'MLAT': 77.22,
                           'DATETIME': dt.datetime(2000, 5, 5, 13, 40, 30),
@@ -198,12 +189,14 @@ class TestSuperMAGLoadMethods(unittest.TestCase):
                           'SML': -195, 'SMU': 124, 'STID': "THL", 'SZA': 76.97,
                           'YEAR': 2000}
         self.out = list()
-        self.assertTrue(os.path.isfile(self.test_file))
+        self.assertTrue(os.path.isfile(self.test_file),
+                        msg="'{:}' is not a file".format(self.test_file))
         return
 
     def tearDown(self):
         """Tear down the test environment."""
         del self.test_file, self.out, self.test_vals
+        super().tearDown()
         return
 
     def test_load_supermag_ascii_data(self):
@@ -225,11 +218,15 @@ class TestSuperMAGLoadMethods(unittest.TestCase):
     def test_load_failures(self):
         """Test graceful failures with different bad file inputs."""
 
-        for val in ['fake_file', os.path.join(self.ocb_dir, "test",
-                                              "test_data", "test_vort")]:
+        for val, self.lwarn in [('fake_file', 'name provided is not a file'),
+                                (os.path.join(cc.test_dir, "test_vort"),
+                                 'no data in the SuperMAG file')]:
             with self.subTest(val=val):
                 self.out = ocb_ismag.load_supermag_ascii_data(val)
 
-                self.assertListEqual(self.out[0], list())
+                # Test the logging message
+                self.eval_logging_message()
+
+                # Test the output, header may or may not be empty
                 self.assertDictEqual(self.out[1], dict())
         return

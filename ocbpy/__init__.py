@@ -5,9 +5,14 @@
 # ----------------------------------------------------------------------------
 """Auroral oval and polar cap normalised location calculation tools."""
 
-# Define a logger object to allow easier log handling
 import logging
 
+try:
+    from importlib import metadata
+except ImportError:
+    import importlib_metadata as metadata
+
+# Define a logger object to allow easier log handling
 logging.raiseExceptions = False
 logger = logging.getLogger('ocbpy_logger')
 
@@ -27,4 +32,4 @@ from ocbpy._boundary import OCBoundary  # noqa F401
 from ocbpy.cycle_boundary import match_data_ocb  # noqa F401
 
 # Define the global variables
-__version__ = str('0.3.0')
+__version__ = metadata.version('ocbpy')

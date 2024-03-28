@@ -5,13 +5,12 @@
 # -----------------------------------------------------------------------------
 """Tests the boundary EABoundary class."""
 
-from io import StringIO
-import logging
 import numpy
 from os import path
 
 import ocbpy
-from . import test_boundary_ocb as test_ocb
+import ocbpy.tests.class_common as cc
+import ocbpy.tests.test_boundary_ocb as test_ocb
 
 
 class TestEABoundaryLogFailure(test_ocb.TestOCBoundaryLogFailure):
@@ -19,23 +18,13 @@ class TestEABoundaryLogFailure(test_ocb.TestOCBoundaryLogFailure):
 
     def setUp(self):
         """Initialize the test class."""
+        super().setUp()
+
+        # Update the setup
         self.test_class = ocbpy.EABoundary
-        test_dir = path.join(path.dirname(ocbpy.__file__), "tests",
-                             "test_data")
         self.inst_init = {"instrument": "image", "hemisphere": 1,
-                          "filename": path.join(test_dir,
+                          "filename": path.join(cc.test_dir,
                                                 "test_north_circle")}
-
-        self.lwarn = ""
-        self.lout = ""
-        self.log_capture = StringIO()
-        ocbpy.logger.addHandler(logging.StreamHandler(self.log_capture))
-        ocbpy.logger.setLevel(logging.WARNING)
-        return
-
-    def tearDown(self):
-        """Tear down the test case."""
-        del self.lwarn, self.lout, self.log_capture, self.test_class
         return
 
 
@@ -44,9 +33,10 @@ class TestEABoundaryInstruments(test_ocb.TestOCBoundaryInstruments):
 
     def setUp(self):
         """Initialize the instrument information."""
+        super().setUp()
+
+        # Update the attributes
         self.test_class = ocbpy.EABoundary
-        self.test_dir = path.join(path.dirname(ocbpy.__file__), "tests",
-                                  "test_data")
         self.inst_attrs = {"image": ["year", "soy", "num_sectors", "a",
                                      "r_err", "fom"],
                            "dmsp-ssj": ["date", "time", "sc", "x", "y", "fom",
@@ -56,21 +46,14 @@ class TestEABoundaryInstruments(test_ocb.TestOCBoundaryInstruments):
                           "dmsp-ssj": ["year", "soy", "num_sectors", "a",
                                        "r_err"]}
         self.inst_init = [{"instrument": "image", "hemisphere": 1,
-                           "filename": path.join(self.test_dir,
+                           "filename": path.join(cc.test_dir,
                                                  "test_north_circle")},
                           {"instrument": "dmsp-ssj", "hemisphere": 1,
-                           "filename": path.join(self.test_dir,
+                           "filename": path.join(cc.test_dir,
                                                  "dmsp-ssj_north_out.eab")},
                           {"instrument": "dmsp-ssj", "hemisphere": -1,
-                           "filename": path.join(self.test_dir,
+                           "filename": path.join(cc.test_dir,
                                                  "dmsp-ssj_south_out.eab")}]
-        self.ocb = None
-        return
-
-    def tearDown(self):
-        """Clean up the test environment."""
-        del self.test_dir, self.inst_attrs, self.inst_init, self.ocb
-        del self.test_class
         return
 
 
@@ -79,23 +62,9 @@ class TestEABoundaryMethodsGeneral(test_ocb.TestOCBoundaryMethodsGeneral):
 
     def setUp(self):
         """Initialize the test environment."""
-        self.test_class = ocbpy.EABoundary
-        ocb_dir = path.dirname(ocbpy.__file__)
-        self.set_empty = {"filename": path.join(ocb_dir, "tests", "test_data",
-                                                "test_empty"),
-                          "instrument": "image"}
-        self.set_default = {"filename": path.join(ocb_dir, "tests",
-                                                  "test_data",
-                                                  "test_north_circle"),
-                            "instrument": "image"}
-        self.assertTrue(path.isfile(self.set_empty['filename']))
-        self.assertTrue(path.isfile(self.set_default['filename']))
-        self.ocb = None
-        return
+        super().setUp()
 
-    def tearDown(self):
-        """Clean up the test environment."""
-        del self.set_empty, self.set_default, self.ocb, self.test_class
+        self.test_class = ocbpy.EABoundary
         return
 
 
@@ -104,65 +73,53 @@ class TestEABoundaryMethodsNorth(test_ocb.TestOCBoundaryMethodsNorth):
 
     def setUp(self):
         """Initialize the test environment."""
+        super().setUp()
+
         self.test_class = ocbpy.EABoundary
         self.ref_boundary = 64.0
-        self.set_north = {'filename': path.join(path.dirname(ocbpy.__file__),
-                                                "tests", "test_data",
-                                                "test_north_circle"),
-                          'instrument': 'image'}
-        self.assertTrue(path.isfile(self.set_north['filename']))
-        self.ocb = self.test_class(**self.set_north)
-        self.ocb.rec_ind = 27
 
-        self.mlt = numpy.linspace(0.0, 24.0, num=6)
-        self.lat = numpy.linspace(0.0, 90.0, num=len(self.mlt))
         self.ocb_lat = [numpy.nan, -37.95918548, -6.92874899, 20.28409774,
                         51.9732, 84.90702626]
         self.ocb_mlt = [numpy.nan, 4.75942194, 9.76745427, 14.61843964,
                         19.02060793, 17.832]
-        self.r_corr = 0.0
-        self.out = None
-        return
-
-    def tearDown(self):
-        """Clean up the test environment."""
-        del self.ocb, self.set_north, self.mlt, self.lat, self.ocb_lat
-        del self.ocb_mlt, self.r_corr, self.out, self.test_class
-        del self.ref_boundary
         return
 
     def test_normal_coord_north_geodetic(self):
         """Test the geodetic normalisation calculation in the north."""
+        self.set_ocb()
         self.out = self.ocb.normal_coord(self.lat[-1], self.mlt[-1],
                                          coords='geodetic')
-        self.assertAlmostEqual(float(self.out[0]), 72.5526, places=3)
-        self.assertAlmostEqual(float(self.out[1]), 19.3839, places=3)
-        self.assertEqual(float(self.out[2]), self.r_corr)
+        self.assertAlmostEqual(self.out[0][0], 72.5526, places=3)
+        self.assertAlmostEqual(self.out[1][0], 19.3839, places=3)
+        self.assertEqual(self.out[2][0], self.r_corr)
         return
 
     def test_normal_coord_north_geocentric(self):
         """Test the geocentric normalisation calculation in the north."""
+        self.set_ocb()
         self.out = self.ocb.normal_coord(self.lat[-1], self.mlt[-1],
                                          coords='geocentric')
-        self.assertAlmostEqual(float(self.out[0]), 72.5564, places=3)
-        self.assertAlmostEqual(float(self.out[1]), 19.3852, places=3)
-        self.assertEqual(float(self.out[2]), self.r_corr)
+        self.assertAlmostEqual(self.out[0][0], 72.5564, places=3)
+        self.assertAlmostEqual(self.out[1][0], 19.3852, places=3)
+        self.assertEqual(self.out[2][0], self.r_corr)
         return
 
     def test_revert_coord_north_geodetic(self):
         """Test the reversion to geodetic coordinates in the north."""
+        self.set_ocb()
         self.out = self.ocb.revert_coord(self.ocb_lat[-2], self.ocb_mlt[-2],
                                          self.r_corr, coords='geodetic')
-        self.assertAlmostEqual(float(self.out[0]), 77.13321838, places=3)
-        self.assertAlmostEqual(float(self.out[1]), 19.18124285, places=3)
+        self.assertAlmostEqual(self.out[0][0], 77.13321838, places=3)
+        self.assertAlmostEqual(self.out[1][0], 19.18124285, places=3)
         return
 
     def test_revert_coord_north_geocentric(self):
         """Test the reversion to geocentric coordinates in the north."""
+        self.set_ocb()
         self.out = self.ocb.revert_coord(self.ocb_lat[-2], self.ocb_mlt[-2],
                                          self.r_corr, coords='geocentric')
-        self.assertAlmostEqual(float(self.out[0]), 77.05394766, places=3)
-        self.assertAlmostEqual(float(self.out[1]), 19.18124285, places=3)
+        self.assertAlmostEqual(self.out[0][0], 77.05394766, places=3)
+        self.assertAlmostEqual(self.out[1][0], 19.18124285, places=3)
         return
 
 
@@ -171,10 +128,11 @@ class TestEABoundaryMethodsSouth(test_ocb.TestOCBoundaryMethodsSouth):
 
     def setUp(self):
         """Initialize the test environment."""
+        super().setUp()
+
         self.test_class = ocbpy.EABoundary
         self.ref_boundary = -64.0
-        self.set_south = {"filename": path.join(path.dirname(ocbpy.__file__),
-                                                "tests", "test_data",
+        self.set_south = {"filename": path.join(cc.test_dir,
                                                 "dmsp-ssj_south_out.eab"),
                           "instrument": "dmsp-ssj",
                           "hemisphere": -1,
@@ -187,15 +145,6 @@ class TestEABoundaryMethodsSouth(test_ocb.TestOCBoundaryMethodsSouth):
         self.lat = numpy.full(shape=self.mlt.shape, fill_value=-75.0)
         self.ocb_lat = [-84.51747815, -82.89664467, -76.7993294, -78.4535674]
         self.ocb_mlt = [6.02245268, 6.69193021, 18.56617597, 18.88837759]
-        self.r_corr = 0.0
-        self.out = None
-        return
-
-    def tearDown(self):
-        """Clean up the test environment."""
-        del self.ocb, self.set_south, self.mlt, self.lat, self.ocb_lat
-        del self.ocb_mlt, self.r_corr, self.out, self.test_class
-        del self.ref_boundary
         return
 
     def test_dmspssj_attrs(self):
@@ -220,9 +169,9 @@ class TestEABoundaryMethodsSouth(test_ocb.TestOCBoundaryMethodsSouth):
         self.out = self.ocb.normal_coord(self.lat[0], self.mlt[0], height=830,
                                          coords='geocentric')
 
-        self.assertAlmostEqual(float(self.out[0]), -76.3801206, places=3)
-        self.assertAlmostEqual(float(self.out[1]), 20.494021798, places=3)
-        self.assertEqual(float(self.out[2]), self.r_corr)
+        self.assertAlmostEqual(self.out[0][0], -76.3801206, places=3)
+        self.assertAlmostEqual(self.out[1][0], 20.494021798, places=3)
+        self.assertEqual(self.out[2][0], self.r_corr)
         return
 
     def test_normal_coord_south_geodetic(self):
@@ -230,25 +179,25 @@ class TestEABoundaryMethodsSouth(test_ocb.TestOCBoundaryMethodsSouth):
         self.out = self.ocb.normal_coord(self.lat[0], self.mlt[0], height=830,
                                          coords='geodetic')
 
-        self.assertAlmostEqual(float(self.out[0]), -76.34575670, places=3)
-        self.assertAlmostEqual(float(self.out[1]), 20.524524159, places=3)
-        self.assertEqual(float(self.out[2]), self.r_corr)
+        self.assertAlmostEqual(self.out[0][0], -76.34575670, places=3)
+        self.assertAlmostEqual(self.out[1][0], 20.524524159, places=3)
+        self.assertEqual(self.out[2][0], self.r_corr)
         return
 
     def test_revert_coord_south_geodetic(self):
         """Test the reversion to geodetic coordinates in the south."""
         self.out = self.ocb.revert_coord(self.ocb_lat[1], self.ocb_mlt[1],
                                          self.r_corr, coords='geodetic')
-        self.assertAlmostEqual(float(self.out[0]), -66.317542, places=3)
-        self.assertAlmostEqual(float(self.out[1]), 5.90843131, places=3)
+        self.assertAlmostEqual(self.out[0][0], -66.317542, places=3)
+        self.assertAlmostEqual(self.out[1][0], 5.90843131, places=3)
         return
 
     def test_revert_coord_south_geocentric(self):
         """Test the reversion to geocentric coordinates in the south."""
         self.out = self.ocb.revert_coord(self.ocb_lat[1], self.ocb_mlt[1],
                                          self.r_corr, coords='geocentric')
-        self.assertAlmostEqual(float(self.out[0]), -66.1832772, places=3)
-        self.assertAlmostEqual(float(self.out[1]), 5.90843131, places=3)
+        self.assertAlmostEqual(self.out[0][0], -66.1832772, places=3)
+        self.assertAlmostEqual(self.out[1][0], 5.90843131, places=3)
         return
 
     def test_normal_coord_south_corrected(self):
@@ -257,9 +206,9 @@ class TestEABoundaryMethodsSouth(test_ocb.TestOCBoundaryMethodsSouth):
         self.ocb.rfunc_kwargs[self.ocb.rec_ind]['r_add'] = self.r_corr
         self.out = self.ocb.normal_coord(self.lat[0], self.mlt[0])
 
-        self.assertAlmostEqual(float(self.out[0]), -84.764005494, places=3)
-        self.assertAlmostEqual(float(self.out[1]), 6.02245269240, places=3)
-        self.assertEqual(float(self.out[2]), self.r_corr)
+        self.assertAlmostEqual(self.out[0], -84.764005494, places=3)
+        self.assertAlmostEqual(self.out[1], 6.02245269240, places=3)
+        self.assertEqual(self.out[2], self.r_corr)
         return
 
     def test_aacgm_boundary_location_good_south(self):
@@ -381,9 +330,4 @@ class TestEABoundaryFailure(test_ocb.TestOCBoundaryFailure):
     def setUp(self):
         """Set up the test environment."""
         self.test_class = ocbpy.EABoundary
-        return
-
-    def tearDown(self):
-        """Clean up the test environment."""
-        del self.test_class
         return

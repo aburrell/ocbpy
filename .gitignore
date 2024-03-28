@@ -1,5 +1,6 @@
 # Autosaves
 *~
+.DS_Store
 
 # Compiled python modules.
 *.py[cod]

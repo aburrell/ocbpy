@@ -6,31 +6,22 @@
 """Tests the general instrument sub-module."""
 
 import datetime as dt
-import logging
-from io import StringIO
 import os
-import unittest
 
-import ocbpy
 import ocbpy.instruments.general as ocb_igen
+import ocbpy.tests.class_common as cc
 
 
-class TestGeneralFileTestFunctions(unittest.TestCase):
+class TestGeneralFileTestFunctions(cc.TestLogWarnings):
     """Unit tests for the general file functions."""
 
     def setUp(self):
         """Set up the test environment."""
-        self.test_file = os.path.join(os.path.dirname(ocbpy.__file__), "tests",
-                                      "test_data", "test_north_circle")
-        self.temp_output = os.path.join(os.path.dirname(ocbpy.__file__),
-                                        "tests", "test_data", "temp_gen")
-        self.rstat = None
+        super().setUp()
 
-        self.lwarn = u""
-        self.lout = u""
-        self.log_capture = StringIO()
-        ocbpy.logger.addHandler(logging.StreamHandler(self.log_capture))
-        ocbpy.logger.setLevel(logging.WARNING)
+        self.test_file = os.path.join(cc.test_dir, "test_north_circle")
+        self.temp_output = os.path.join(cc.test_dir, "temp_gen")
+        self.rstat = None
         return
 
     def tearDown(self):
@@ -38,8 +29,8 @@ class TestGeneralFileTestFunctions(unittest.TestCase):
         if os.path.isfile(self.temp_output):
             os.remove(self.temp_output)
 
-        del self.test_file, self.lwarn, self.lout, self.log_capture, self.rstat
-        del self.temp_output
+        del self.test_file, self.rstat, self.temp_output
+        super().tearDown()
         return
 
     def test_file_test_success(self):
@@ -53,9 +44,8 @@ class TestGeneralFileTestFunctions(unittest.TestCase):
         self.lwarn = u"name provided is not a file"
 
         self.rstat = ocb_igen.test_file("/")
-        self.lout = self.log_capture.getvalue()
 
-        self.assertTrue(self.lout.find(self.lwarn) >= 0)
+        self.eval_logging_message()
         self.assertFalse(self.rstat)
         return
 
@@ -66,9 +56,8 @@ class TestGeneralFileTestFunctions(unittest.TestCase):
         # Create an empty file and read it in
         open(self.temp_output, 'a').close()
         self.rstat = ocb_igen.test_file(self.temp_output)
-        self.lout = self.log_capture.getvalue()
 
-        self.assertTrue(self.lout.find(self.lwarn) >= 0)
+        self.eval_logging_message()
         self.assertFalse(self.rstat)
         return
 
@@ -81,26 +70,22 @@ class TestGeneralFileTestFunctions(unittest.TestCase):
             fout.truncate(2024 * 1024 * 1024)
 
         self.rstat = ocb_igen.test_file(self.temp_output)
-        self.lout = self.log_capture.getvalue()
 
-        self.assertTrue(self.lout.find(self.lwarn) >= 0)
+        self.eval_logging_message()
         self.assertFalse(self.rstat)
         return
 
 
-class TestGeneralLoadFunctions(unittest.TestCase):
+class TestGeneralLoadFunctions(cc.TestLogWarnings):
     """Unit tests for the general loading functions."""
 
     def setUp(self):
         """Set up a clean test environment."""
+        super().setUp()
 
-        ocb_dir = os.path.dirname(ocbpy.__file__)
-        self.test_file_soy = os.path.join(ocb_dir, "tests", "test_data",
-                                          "test_north_circle")
-        self.test_file_dt = os.path.join(ocb_dir, "tests", "test_data",
-                                         "dmsp-ssj_north_out.ocb")
-        self.test_file_sod = os.path.join(ocb_dir, "tests", "test_data",
-                                          "test_sod")
+        self.test_file_soy = os.path.join(cc.test_dir, "test_north_circle")
+        self.test_file_dt = os.path.join(cc.test_dir, "dmsp-ssj_north_out.ocb")
+        self.test_file_sod = os.path.join(cc.test_dir, "test_sod")
         self.headers = {self.test_file_soy:
                         [u"YEAR SOY NB PHICENT RCENT R A RERR FOM"],
                         self.test_file_sod:
@@ -128,18 +113,14 @@ class TestGeneralLoadFunctions(unittest.TestCase):
                             'max_str_length': 50, 'header': list()}
         self.out = None
 
-        self.lwarn = u""
-        self.lout = u""
-        self.log_capture = StringIO()
-        ocbpy.logger.addHandler(logging.StreamHandler(self.log_capture))
-        ocbpy.logger.setLevel(logging.WARNING)
         return
 
     def tearDown(self):
         """Clean up the test environment."""
-        del self.test_file_soy, self.lwarn, self.lout, self.log_capture
-        del self.test_file_dt, self.headers, self.out, self.test_out
-        del self.load_kwargs
+        super().tearDown()
+
+        del self.test_file_soy, self.test_file_dt, self.headers, self.out
+        del self.test_out, self.load_kwargs
         return
 
     def test_load_ascii_data_badfile(self):
@@ -161,11 +142,10 @@ class TestGeneralLoadFunctions(unittest.TestCase):
 
         self.out = ocb_igen.load_ascii_data(self.test_file_soy, 0,
                                             **self.load_kwargs)
-        self.lout = self.log_capture.getvalue()
+
+        self.eval_logging_message()
         self.assertListEqual(self.out[0], [])
         self.assertDictEqual(self.out[1], {})
-
-        self.assertTrue(self.lout.find(self.lwarn) >= 0)
         return
 
     def test_load_ascii_data_w_header(self):
