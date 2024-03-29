@@ -56,20 +56,18 @@ jobs:
       run: coverage run --rcfile=pyproject.toml -m unittest discover
 
     - name: Publish results to coveralls upon success
-      env:
-        GITHUB_TOKEN: ${{ secrets.GITHUB_TOKEN }}
-        COVERALLS_PARALLEL: true
-        COVERALLS_FLAG_NAME: run-${{ matrix.python-version }}-${{ matrix.os }}-${{ matrix.install-extras }}
-      run: coveralls --rcfile=pyproject.toml --service=github || true
+      uses: coverallsapp/github-action@v2
+      with:
+        flag-name: run-${{ join(matrix.*, '-') }}
+        parallel: true
 
   finish:
     name: Finish Coverage Analysis
     needs: build
+    if: ${{ always() }}
     runs-on: ubuntu-latest
     steps:
       - name: Coveralls Finished
-        env:
-          GITHUB_TOKEN: ${{ secrets.GITHUB_TOKEN }}
-        run: |
-          pip install --upgrade coveralls
-          coveralls --service=github --finish || true
+        uses: coverallsapp/github-action@v2
+        with:
+          parallel-finished: true
