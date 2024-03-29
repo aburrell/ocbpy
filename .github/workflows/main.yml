@@ -16,7 +16,7 @@ jobs:
         python-version: ["3.7", "3.8", "3.9", "3.10", "3.11"]
         install-extras: [0, 1, 2]  # TODO(#129): update to replace extra flag
         exclude:
-          - os: windows-latest
+          - os: "windows-latest"
             install-extras: 2
 
     name: Python ${{ matrix.python-version }} on ${{ matrix.os }} with extras ${{ matrix.install-extras }}
@@ -68,8 +68,8 @@ jobs:
         COVERALLS_REPO_TOKEN: ${{ secrets.GITHUB_TOKEN }}
         COVERALLS_PARALLEL: true
       run: |
-        curl -sL https://github.com/coverallsapp/coverage-reporter/releases/latest/download/coveralls-windows.zip | zcat > ./coveralls.exe
-        ./coveralls.exe
+        curl -sL https://github.com/coverallsapp/coverage-reporter/releases/latest/download/coveralls-windows.zip
+	zcat coveralls-window.zip > ./coveralls.exe && ./coveralls.exe
 
     - name: Report Coveralls (macOS)
       if: startsWith(matrix.os, 'macos')
