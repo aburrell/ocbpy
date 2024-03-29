@@ -12,7 +12,7 @@ jobs:
     strategy:
       fail-fast: false
       matrix:
-        os: [ubuntu-latest, macos-latest, windows-latest]
+        os: ["ubuntu-latest", "macos-latest", "windows-latest"]
         python-version: ["3.7", "3.8", "3.9", "3.10", "3.11"]
         install-extras: [0, 1, 2]  # TODO(#129): update to replace extra flag
         exclude:
@@ -56,33 +56,33 @@ jobs:
       run: coverage run --rcfile=pyproject.toml -m unittest discover
 
     - name: Report Coveralls (Linux)
-      if: ${{ matrix.os == "ubuntu-latest" }}
-      run: curl -sL https://coveralls.io/coveralls-linux.tar.gz | tar -xz && ./coveralls
+      if: startsWith(matrix.os, 'ubuntu')
       env:
         COVERALLS_REPO_TOKEN: ${{ secrets.GITHUB_TOKEN }}
         COVERALLS_PARALLEL: true
+      run: curl -sL https://coveralls.io/coveralls-linux.tar.gz | tar -xz && ./coveralls
 
     - name: Report Coveralls (Windows)
-      if: ${{ matrix.os == "windows-latest" }}
-      run: curl -sL https://github.com/coverallsapp/coverage-reporter/releases/latest/download/coveralls-windows.zip | zcat > ./coveralls.exe && ./coveralls.exe
+      if: startsWith(matrix.os, 'windows')
       env:
         COVERALLS_REPO_TOKEN: ${{ secrets.GITHUB_TOKEN }}
         COVERALLS_PARALLEL: true
+      run: curl -sL https://github.com/coverallsapp/coverage-reporter/releases/latest/download/coveralls-windows.zip | zcat > ./coveralls.exe && ./coveralls.exe
 
     - name: Report Coveralls (macOS)
-      if: ${{ matrix.os == "macos-latest" }}
+      if: startsWith(matrix.os, 'macos')
+      env:
+        GITHUB_TOKEN: ${{ secrets.GITHUB_TOKEN }}
+        COVERALLS_PARALLEL: true
       run: |
         brew tap coverallsapp/coveralls --quiet
         brew install coveralls --quiet
         coveralls
-      env:
-        GITHUB_TOKEN: ${{ secrets.GITHUB_TOKEN }}
-        COVERALLS_PARALLEL: true
 
   finish:
     name: Finish Coverage Analysis
     needs: build
-    runs-on: ubuntu-latest
+    runs-on: "ubuntu-latest"
     steps:
       - name: Coveralls Finished
         env:
