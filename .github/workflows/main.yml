@@ -56,21 +56,21 @@ jobs:
       run: coverage run --rcfile=pyproject.toml -m unittest discover
 
     - name: Report Coveralls (Linux)
-      if: ${{ matrix.os }} == "ubuntu-latest"
+      if: ${{ matrix.os == "ubuntu-latest" }}
       run: curl -sL https://coveralls.io/coveralls-linux.tar.gz | tar -xz && ./coveralls
       env:
         COVERALLS_REPO_TOKEN: ${{ secrets.GITHUB_TOKEN }}
         COVERALLS_PARALLEL: true
 
     - name: Report Coveralls (Windows)
-      if: ${{ matrix.os }} == "windows-latest"
+      if: ${{ matrix.os == "windows-latest" }}
       run: curl -sL https://github.com/coverallsapp/coverage-reporter/releases/latest/download/coveralls-windows.zip | zcat > ./coveralls.exe && ./coveralls.exe
       env:
         COVERALLS_REPO_TOKEN: ${{ secrets.GITHUB_TOKEN }}
         COVERALLS_PARALLEL: true
 
     - name: Report Coveralls (macOS)
-      if: ${{ matrix.os }} == "macos-latest"
+      if: ${{ matrix.os == "macos-latest" }}
       run: |
         brew tap coverallsapp/coveralls --quiet
         brew install coveralls --quiet
