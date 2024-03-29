@@ -60,7 +60,7 @@ jobs:
         GITHUB_TOKEN: ${{ secrets.GITHUB_TOKEN }}
         COVERALLS_PARALLEL: true
         COVERALLS_FLAG_NAME: run-${{ matrix.python-version }}-${{ matrix.os }}-${{ matrix.install-extras }}
-      run: coveralls --rcfile=pyproject.toml --service=github || true
+      run: coveralls --rcfile=pyproject.toml --service=github
 
   finish:
     name: Finish Coverage Analysis
