@@ -69,7 +69,7 @@ jobs:
         COVERALLS_PARALLEL: true
       run: |
         curl -sL https://github.com/coverallsapp/coverage-reporter/releases/latest/download/coveralls-windows.zip
-	zcat coveralls-window.zip > ./coveralls.exe && ./coveralls.exe
+        zcat coveralls-window.zip > ./coveralls.exe && ./coveralls.exe
 
     - name: Report Coveralls (macOS)
       if: startsWith(matrix.os, 'macos')
