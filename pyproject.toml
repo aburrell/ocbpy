@@ -74,6 +74,7 @@ test = [
      "coverage[toml]",
      "flake8",
      "packaging",
+     "requests",
 ]
 
 [project.urls]
