@@ -55,12 +55,29 @@ jobs:
     - name: Run unit and integration tests
       run: coverage run --rcfile=pyproject.toml -m unittest discover
 
-    - name: Publish results to coveralls upon success
+    - name: Report Coveralls (Linux)
+      if: ${{ matrix.os }} == "ubuntu-latest"
+      run: curl -sL https://coveralls.io/coveralls-linux.tar.gz | tar -xz && ./coveralls
+      env:
+        COVERALLS_REPO_TOKEN: ${{ secrets.GITHUB_TOKEN }}
+        COVERALLS_PARALLEL: true
+
+    - name: Report Coveralls (Windows)
+      if: ${{ matrix.os }} == "windows-latest"
+      run: curl -sL https://github.com/coverallsapp/coverage-reporter/releases/latest/download/coveralls-windows.zip | zcat > ./coveralls.exe && ./coveralls.exe
+      env:
+        COVERALLS_REPO_TOKEN: ${{ secrets.GITHUB_TOKEN }}
+        COVERALLS_PARALLEL: true
+
+    - name: Report Coveralls (macOS)
+      if: ${{ matrix.os }} == "macos-latest"
+      run: |
+        brew tap coverallsapp/coveralls --quiet
+        brew install coveralls --quiet
+        coveralls
       env:
         GITHUB_TOKEN: ${{ secrets.GITHUB_TOKEN }}
         COVERALLS_PARALLEL: true
-        COVERALLS_FLAG_NAME: run-${{ matrix.python-version }}-${{ matrix.os }}-${{ matrix.install-extras }}
-      run: coveralls --rcfile=pyproject.toml --service=github || true
 
   finish:
     name: Finish Coverage Analysis
@@ -70,6 +87,4 @@ jobs:
       - name: Coveralls Finished
         env:
           GITHUB_TOKEN: ${{ secrets.GITHUB_TOKEN }}
-        run: |
-          pip install --upgrade coveralls
-          coveralls --service=github --finish || true
+        run: curl -sL https://coveralls.io/coveralls-linux.tar.gz | tar -xz && ./coveralls

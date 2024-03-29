@@ -72,7 +72,6 @@ doc = [
 ]
 test = [
      "coverage[toml]",
-     "coveralls",
      "flake8",
      "packaging",
 ]
