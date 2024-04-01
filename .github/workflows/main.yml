@@ -87,4 +87,6 @@ jobs:
       - name: Coveralls Finished
         env:
           GITHUB_TOKEN: ${{ secrets.GITHUB_TOKEN }}
-        run: curl -sL https://coveralls.io/coveralls-linux.tar.gz | tar -xz && ./coveralls
+        run: |
+          curl -k https://coveralls.io/webhook?repo_token=$GITHUB_TOKEN -d "payload[build_num]=$BUILD_NUMBER&payload[status]=done"
+          curl -sL https://coveralls.io/coveralls-linux.tar.gz | tar -xz && ./coveralls
