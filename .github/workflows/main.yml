@@ -46,20 +46,6 @@ jobs:
         pip install .[test]
         bash requirements.extra ${{ matrix.install-extras }}
 
-    - name: Install Coveralls Reporter (Linux)
-      if: startsWith(matrix.os, 'ubuntu')
-      run: curl -sL https://coveralls.io/coveralls-linux.tar.gz | tar -xz
-
-    - name: Install Coveralls Reporter (Windows)
-      if: startsWith(matrix.os, 'windows')
-      run: curl -L https://github.com/coverallsapp/coverage-reporter/releases/latest/download/coveralls-windows.exe -o coveralls.exe
-
-    - name: Report Coveralls (macOS)
-      if: startsWith(matrix.os, 'macos')
-      run: |
-        brew tap coverallsapp/coveralls --quiet
-        brew install coveralls --quiet
-
     - name: Test PEP8 compliance
       run: flake8 . --count --show-source --statistics
 
@@ -68,6 +54,34 @@ jobs:
 
     - name: Run unit and integration tests
       run: coverage run --rcfile=pyproject.toml -m unittest discover
+
+    - name: Install and run Coveralls Reporter(Linux)
+      if: startsWith(matrix.os, 'ubuntu')
+      env:
+        COVERALLS_REPO_TOKEN: ${{ secrets.COVERALLS_REPO_TOKEN }}
+        COVERALLS_PARALLEL: true
+      run: |
+        curl -sL https://coveralls.io/coveralls-linux.tar.gz | tar -xz
+        ./coveralls report --parallel --repo-token=${{ secrets.COVERALLS_REPO_TOKEN }}
+
+    - name: Install and run Coveralls Reporter (Windows)
+      if: startsWith(matrix.os, 'windows')
+      env:
+        COVERALLS_REPO_TOKEN: ${{ secrets.COVERALLS_REPO_TOKEN }}
+        COVERALLS_PARALLEL: true
+      run: |
+        curl -L https://github.com/coverallsapp/coverage-reporter/releases/latest/download/coveralls-windows.exe -o coveralls.exe
+        ./coveralls.exe report --parallel --repo-token=${{ secrets.COVERALLS_REPO_TOKEN }}
+
+    - name: Report  and run Coveralls (macOS)
+      if: startsWith(matrix.os, 'macos')
+      env:
+        COVERALLS_REPO_TOKEN: ${{ secrets.COVERALLS_REPO_TOKEN }}
+        COVERALLS_PARALLEL: true
+      run: |
+        brew tap coverallsapp/coveralls --quiet
+        brew install coveralls --quiet
+        coveralls report --parallel --repo-token=${{ secrets.COVERALLS_REPO_TOKEN }}
 
     - name: Report test coverage to Coveralls
       env:
