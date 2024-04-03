@@ -91,4 +91,4 @@ jobs:
       - name: Coveralls Finished
         env:
           COVERALLS_REPO_TOKEN: ${{ secrets.COVERALLS_REPO_TOKEN }}
-        run: coveralls done
+        run: ./coveralls done
