@@ -83,11 +83,6 @@ jobs:
         brew install coveralls --quiet
         coveralls report --parallel --repo-token=${{ secrets.COVERALLS_REPO_TOKEN }}
 
-    - name: Report test coverage to Coveralls
-      env:
-        COVERALLS_REPO_TOKEN: ${{ secrets.COVERALLS_REPO_TOKEN }}
-      run: coveralls report --parallel --repo-token=${{ secrets.COVERALLS_REPO_TOKEN }}
-
   finish:
     name: Finish Coverage Analysis
     needs: build
