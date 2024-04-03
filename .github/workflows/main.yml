@@ -91,4 +91,7 @@ jobs:
       - name: Coveralls Finished
         env:
           COVERALLS_REPO_TOKEN: ${{ secrets.COVERALLS_REPO_TOKEN }}
-        run: ./coveralls done
+          COVERALLS_PARALLEL: true
+        run: |
+          curl -sL https://coveralls.io/coveralls-linux.tar.gz | tar -xz
+          ./coveralls done
