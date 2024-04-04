@@ -10,6 +10,7 @@ Summary of all changes made since the first stable release
 * MAINT: Added a pyproject.toml file and removed setup.py
 * MAINT: Updated numpy logic to address DeprecationWarnings
 * MAINT: Updated GitHub Action yamls to use pyproject.toml and cycle versions
+* MAINT: Updated GitHub Action yamls to use coveralls-reporter
 * ENH: Added AMPERE OCBs up to 2022, using updated AMPERE data
 * ENH: Added AMPERE EABs, using the Heppner-Maynard boundary as a valid EAB
 * ENH: Changed default directory ID to use `pathlib`
