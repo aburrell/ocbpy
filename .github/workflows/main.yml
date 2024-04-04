@@ -55,8 +55,8 @@ jobs:
     - name: Run unit and integration tests
       run: |
         coverage run --rcfile=pyproject.toml -m unittest discover
-	coverage report
-	coverage xml --rcfile=pyproject.toml
+        coverage report
+        coverage xml --rcfile=pyproject.toml
 
     - name: Install and run Coveralls Reporter(Linux)
       if: startsWith(matrix.os, 'ubuntu')
