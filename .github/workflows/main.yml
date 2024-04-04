@@ -97,4 +97,4 @@ jobs:
           COVERALLS_PARALLEL: true
         run: |
           curl -sL https://coveralls.io/coveralls-linux.tar.gz | tar -xz
-          ./coveralls done
+          ./coveralls done --build-number ${{ github.run_number }}
