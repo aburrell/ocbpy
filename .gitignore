@@ -5,10 +5,11 @@
 # Compiled python modules.
 *.py[cod]
 
-# Test directories
+# Test directories and files
 /build/
 .tox
 .coverage
+coverage.xml
 
 # Setuptools distribution folder.
 /dist/
