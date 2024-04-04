@@ -53,7 +53,10 @@ jobs:
       run: flake8 . --count --exit-zero --max-complexity=10 --statistics
 
     - name: Run unit and integration tests
-      run: coverage run --rcfile=pyproject.toml -m unittest discover
+      run: |
+        coverage run --rcfile=pyproject.toml -m unittest discover
+	coverage report
+	coverage xml --rcfile=pyproject.toml
 
     - name: Install and run Coveralls Reporter(Linux)
       if: startsWith(matrix.os, 'ubuntu')
@@ -62,7 +65,7 @@ jobs:
         COVERALLS_PARALLEL: true
       run: |
         curl -sL https://coveralls.io/coveralls-linux.tar.gz | tar -xz
-        ./coveralls report --parallel --repo-token=${{ secrets.COVERALLS_REPO_TOKEN }}
+        ./coveralls report -format cobertura --parallel --repo-token=${{ secrets.COVERALLS_REPO_TOKEN }}
 
     - name: Install and run Coveralls Reporter (Windows)
       if: startsWith(matrix.os, 'windows')
@@ -71,7 +74,7 @@ jobs:
         COVERALLS_PARALLEL: true
       run: |
         curl -L https://github.com/coverallsapp/coverage-reporter/releases/latest/download/coveralls-windows.exe -o coveralls.exe
-        ./coveralls.exe report --parallel --repo-token=${{ secrets.COVERALLS_REPO_TOKEN }}
+        ./coveralls.exe report -format cobertura --parallel --repo-token=${{ secrets.COVERALLS_REPO_TOKEN }}
 
     - name: Report  and run Coveralls (macOS)
       if: startsWith(matrix.os, 'macos')
@@ -81,7 +84,7 @@ jobs:
       run: |
         brew tap coverallsapp/coveralls --quiet
         brew install coveralls --quiet
-        coveralls report --parallel --repo-token=${{ secrets.COVERALLS_REPO_TOKEN }}
+        coveralls report -format cobertura --parallel --repo-token=${{ secrets.COVERALLS_REPO_TOKEN }}
 
   finish:
     name: Finish Coverage Analysis
