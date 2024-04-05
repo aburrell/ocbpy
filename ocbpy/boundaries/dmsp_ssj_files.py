@@ -82,11 +82,10 @@ def fetch_ssj_files(stime, etime, out_dir=None, sat_nums=None):
     requests.exceptions.ProxyError
 
     """
-    # TODO(#109): add version for removal
     warnings.warn("".join(["ssj_auroral_boundaries package is no longer ",
                            "supported; use `fetch_ssj_boundary_files` to ",
                            "access the boundary Zenodo archive. This function",
-                           " will be removed in version 0.X.X+."]),
+                           " will be removed in version 0.4.1+."]),
                   DeprecationWarning, stacklevel=2)
 
     # Get and test the output directory
@@ -184,11 +183,10 @@ def create_ssj_boundary_files(cdf_files, out_dir=None,
         `fetch_ssj_boundary_files`
 
     """
-    # TODO(#109): add version for removal
     warnings.warn("".join(["ssj_auroral_boundaries package is no longer ",
                            "supported; use `fetch_ssj_boundary_files` to ",
                            "access the boundary Zenodo archive. This function",
-                           " will be removed in version 0.X.X+."]),
+                           " will be removed in version 0.4.1+."]),
                   DeprecationWarning, stacklevel=2)
 
     # Test the directory inputs
@@ -326,13 +324,21 @@ def fetch_ssj_boundary_files(stime=None, etime=None, out_dir=None,
 
     # Get the archive name from the output
     try:
-        zind = zen_split.index('Link:') + 1
-        archive_name = os.path.join(out_dir, os.path.split(zen_split[zind])[-1])
+        link_ind = zen_split.index('Link:') + 1
+
+        # If the archive is already available, message may differ
+        zip_name = os.path.split(zen_split[link_ind])
+        while zip_name[-1].find(".zip") <= 0:
+            zip_name = os.path.split(zip_name[0])
+
+        # Set the archive name
+        archive_name = os.path.join(out_dir, zip_name[-1])
     except (ValueError, IndexError):
         raise IOError('unable to identify zenodo archive: {:}'.format(zen_msg))
 
     if not os.path.isfile(archive_name):
-        raise IOError('error downloading archive to output dir')
+        raise IOError('error downloading archive to output dir: {:}'.format(
+            archive_name))
 
     # Access the zip archive
     with zipfile.ZipFile(archive_name, 'r') as zref:
@@ -673,11 +679,10 @@ def fetch_format_ssj_boundary_files(stime, etime, out_dir=None, rm_temp=True,
     if 'use_dep' in kwargs.keys():
         use_dep = kwargs['use_dep']
 
-        # TODO(#109): add version for removal
         warnings.warn("".join(["ssj_auroral_boundaries package is no longer ",
                                "supported. Temporary support of `use_dep` ",
                                "kwarg to access deprecated routines will be "
-                               "removed in version 0.X.X+."]),
+                               "removed in version 0.4.1+."]),
                       DeprecationWarning, stacklevel=2)
 
     if use_dep:

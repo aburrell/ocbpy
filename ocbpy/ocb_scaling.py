@@ -295,13 +295,15 @@ class VectorData(object):
         """
 
         # Get the required input shapes
-        vshapes = [self.aacgm_lat.shape, self.aacgm_mlt.shape,
-                   self.dat_ind.shape, self.aacgm_n.shape, self.aacgm_e.shape,
-                   self.aacgm_z.shape]
-        vshapes = np.unique(np.asarray(vshapes, dtype=object))
+        vshapes = list()
+        for vshape in [self.aacgm_lat.shape, self.aacgm_mlt.shape,
+                       self.dat_ind.shape, self.aacgm_n.shape,
+                       self.aacgm_e.shape, self.aacgm_z.shape]:
+            if vshape not in vshapes:
+                vshapes.append(vshape)
 
         # Determine the desired shape
-        self.vshape = () if len(vshapes) == 0 else vshapes.max()
+        self.vshape = () if len(vshapes) == 0 else max(vshapes)
 
         # Evaluate for potential mismatched attributes
         if len(vshapes) > 2 or (len(vshapes) == 2 and min(vshapes) != ()):
@@ -337,12 +339,17 @@ class VectorData(object):
 
         """
         # Test the OCB input shape
-        oshapes = np.unique([self.ocb_lat.shape, self.ocb_mlt.shape,
-                             self.r_corr.shape])
-        oshape = () if len(oshapes) == 0 else oshapes.max()
+        oshapes = list()
+        for oshape in [self.ocb_lat.shape, self.ocb_mlt.shape,
+                       self.r_corr.shape]:
+            if oshape not in oshapes:
+                oshapes.append(oshape)
 
-        if(oshape != self.ocb_ind.shape or len(oshapes) > 2
-           or (len(oshapes) == 2 and min(oshapes) != ())):
+        oshape = () if len(oshapes) == 0 else max(oshapes)
+
+        if (self.ocb_ind.shape != () and (oshape == () or np.all(
+                oshape != self.ocb_ind.shape))) or len(oshapes) > 2 or (
+                    len(oshapes) == 2 and len(min(oshapes)) > 0):
             raise ValueError('OCB index and input shapes mismatched')
 
         # Compare and update the vector data shape if needed

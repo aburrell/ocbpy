@@ -210,6 +210,8 @@ def load_supermag_ascii_data(filename):
 
     Returns
     -------
+    header : list
+        List of strings containing the header
     out : dict
         The dict keys are specified by the header data line, the data
         for each key are stored in the numpy array
@@ -281,6 +283,13 @@ def load_supermag_ascii_data(filename):
                         if n == snum:
                             n = -1
                             ind = {"SMU": fill_val, "SML": fill_val}
+
+    # If no data was found, this may not be the correct type of file
+    if hflag:
+        ocbpy.logger.error(
+            "no data in the SuperMAG file '{:}', check format.".format(
+                filename))
+        return header, dict()
 
     # Recast data as numpy arrays and replace fill value with np.nan
     for k in out:

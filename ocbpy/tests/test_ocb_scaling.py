@@ -5,7 +5,6 @@
 # -----------------------------------------------------------------------------
 """Tests the ocb_scaling class and functions."""
 
-from io import StringIO
 import logging
 import numpy
 from numpy import nan  # noqa F401
@@ -13,23 +12,20 @@ from os import path
 import unittest
 
 import ocbpy
+import ocbpy.tests.class_common as cc
 
 
-class TestOCBScalingLogFailure(unittest.TestCase):
+class TestOCBScalingLogFailure(cc.TestLogWarnings):
     """Unit tests for logging messages in ocb_scaling module."""
 
     def setUp(self):
         """Initialize the test class."""
-        # Initialize the logging info
-        self.lwarn = u""
-        self.lout = u""
-        self.log_capture = StringIO()
-        ocbpy.logger.addHandler(logging.StreamHandler(self.log_capture))
+        # Update the logging info
+        super().setUp()
         ocbpy.logger.setLevel(logging.INFO)
 
         # Initialize the testing variables
-        test_file = path.join(path.dirname(ocbpy.__file__), "tests",
-                              "test_data", "test_north_circle")
+        test_file = path.join(cc.test_dir, "test_north_circle")
         self.assertTrue(path.isfile(test_file))
         self.ocb = ocbpy.OCBoundary(filename=test_file, instrument='image')
         self.ocb.rec_ind = 27
@@ -42,7 +38,8 @@ class TestOCBScalingLogFailure(unittest.TestCase):
 
     def tearDown(self):
         """Tear down the test case."""
-        del self.lwarn, self.lout, self.log_capture, self.ocb, self.vdata
+        super().tearDown()
+        del self.ocb, self.vdata
         return
 
     def test_no_scale_func(self):
@@ -53,9 +50,8 @@ class TestOCBScalingLogFailure(unittest.TestCase):
         self.vdata.set_ocb(self.ocb)
         self.assertIsNone(self.vdata.scale_func)
 
-        self.lout = self.log_capture.getvalue()
         # Test logging error message for each bad initialization
-        self.assertTrue(self.lout.find(self.lwarn) >= 0)
+        self.eval_logging_message()
         return
 
     def test_inconsistent_vector_warning(self):
@@ -69,9 +65,8 @@ class TestOCBScalingLogFailure(unittest.TestCase):
                                                   dat_name="Test",
                                                   dat_units="$m s^{-1}$")
 
-        self.lout = self.log_capture.getvalue()
         # Test logging error message for each bad initialization
-        self.assertTrue(self.lout.find(self.lwarn) >= 0)
+        self.eval_logging_message()
         return
 
 
@@ -81,8 +76,7 @@ class TestOCBScalingMethods(unittest.TestCase):
     def setUp(self):
         """Initialize the OCBoundary and VectorData objects."""
 
-        test_file = path.join(path.dirname(ocbpy.__file__), "tests",
-                              "test_data", "test_north_circle")
+        test_file = path.join(cc.test_dir, "test_north_circle")
         self.assertTrue(path.isfile(test_file))
         self.ocb = ocbpy.OCBoundary(filename=test_file, instrument='image')
         self.ocb.rec_ind = 27
@@ -603,13 +597,10 @@ class TestDualScalingMethods(TestOCBScalingMethods):
     def setUp(self):
         """Initialize the DualBoundary and VectorData objects."""
 
-        test_dir = path.join(path.dirname(ocbpy.__file__), "tests",
-                             "test_data")
-        self.assertTrue(path.isdir(test_dir))
         self.ocb = ocbpy.DualBoundary(
-            eab_filename=path.join(test_dir, "test_north_eab"),
+            eab_filename=path.join(cc.test_dir, "test_north_eab"),
             eab_instrument='image', ocb_instrument='image', hemisphere=1,
-            ocb_filename=path.join(test_dir, "test_north_circle"))
+            ocb_filename=path.join(cc.test_dir, "test_north_circle"))
         self.ocb_attrs = ['ocb_lat', 'ocb_mlt', 'r_corr', 'ocb_n', 'ocb_e',
                           'ocb_z']
 
@@ -736,8 +727,7 @@ class TestVectorDataRaises(unittest.TestCase):
 
     def setUp(self):
         """Initialize the tests for calc_vec_pole_angle."""
-        test_file = path.join(path.dirname(ocbpy.__file__), "tests",
-                              "test_data", "test_north_circle")
+        test_file = path.join(cc.test_dir, "test_north_circle")
         self.assertTrue(path.isfile(test_file))
         self.ocb = ocbpy.OCBoundary(filename=test_file, instrument='image')
         self.ocb.rec_ind = 27
@@ -1081,8 +1071,7 @@ class TestOCBScalingArrayMethods(unittest.TestCase):
 
     def setUp(self):
         """Set up the test environment."""
-        test_file = path.join(path.dirname(ocbpy.__file__), "tests",
-                              "test_data", "test_north_circle")
+        test_file = path.join(cc.test_dir, "test_north_circle")
         self.ocb = ocbpy.OCBoundary(filename=test_file, instrument='image')
 
         # Construct a set of test vectors that have all the different OCB
