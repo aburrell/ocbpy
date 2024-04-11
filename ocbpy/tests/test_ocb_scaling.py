@@ -55,8 +55,8 @@ class TestOCBScalingLogFailure(cc.TestLogWarnings):
         return
 
     def test_inconsistent_vector_warning(self):
-        """Test init failure with inconsistent AACGM components."""
-        self.lwarn = u"inconsistent AACGM"
+        """Test init failure with inconsistent vector components."""
+        self.lwarn = u"inconsistent vector components"
 
         # Initalize the VectorData class with inconsistent vector magnitudes
         self.vdata = ocbpy.ocb_scaling.VectorData(0, self.ocb.rec_ind,
@@ -108,13 +108,13 @@ class TestOCBScalingMethods(unittest.TestCase):
 
     def test_init_nez(self):
         """Test the set up of the VectorData object without magnitude."""
-        self.assertAlmostEqual(self.vdata.aacgm_mag, 100.036243432)
-        self.assertAlmostEqual(self.zdata.aacgm_mag, 0.0)
+        self.assertAlmostEqual(self.vdata.vect_mag, 100.036243432)
+        self.assertAlmostEqual(self.zdata.vect_mag, 0.0)
         return
 
     def test_init_mag(self):
         """Test the initialisation of the VectorData object with magnitude."""
-        self.assertAlmostEqual(self.wdata.aacgm_mag, 100.036243432)
+        self.assertAlmostEqual(self.wdata.vect_mag, 100.036243432)
         return
 
     def test_repr_string(self):
@@ -160,8 +160,9 @@ class TestOCBScalingMethods(unittest.TestCase):
 
         # Evaluate values are realistic and appropriately shaped
         for attr in self.ocb_attrs:
-            with self.subTest(attr=attr):
-                val = getattr(self.vdata, attr)
+            val = getattr(self.vdata, attr)
+
+            with self.subTest(attr=attr, val=val):
                 self.assertTupleEqual(self.vdata.ocb_ind.shape, val.shape)
                 self.assertTrue(numpy.isfinite(val).all())
         return
@@ -170,10 +171,10 @@ class TestOCBScalingMethods(unittest.TestCase):
         """Test the VectorData performance with multiple OCB indices."""
         # Update the VectorData attribute to contain a list of all good indices
         test_shape = (3,)
-        self.vdata.aacgm_lat = numpy.full(shape=test_shape,
-                                          fill_value=self.vdata.aacgm_lat)
-        self.vdata.aacgm_mlt = numpy.full(shape=test_shape,
-                                          fill_value=self.vdata.aacgm_mlt)
+        self.vdata.lat = numpy.full(shape=test_shape,
+                                    fill_value=self.vdata.lat)
+        self.vdata.lt = numpy.full(shape=test_shape,
+                                   fill_value=self.vdata.lt)
         self.vdata.dat_ind = [i * 2 for i in range(test_shape[0])]
 
         # Set the VectorData OCB attributes
@@ -220,7 +221,7 @@ class TestOCBScalingMethods(unittest.TestCase):
 
     def test_vector_bad_lat(self):
         """Test the VectorData output with data from the wrong hemisphere."""
-        self.vdata.aacgm_lat *= -1.0
+        self.vdata.lat *= -1.0
         self.vdata.set_ocb(self.ocb, scale_func=ocbpy.ocb_scaling.normal_evar)
 
         for attr in self.ocb_attrs:
@@ -244,14 +245,14 @@ class TestOCBScalingMethods(unittest.TestCase):
     def test_calc_polar_angle_ocb_south_night(self):
         """Test `calc_polar_angle` with the OCB pole in a south/night quad."""
         # Set a useful vector locaiton and intialise with current boundary
-        self.vdata.aacgm_mlt = 0.0
-        self.vdata.aacgm_n = -10.0
-        self.vdata.aacgm_e = -10.0
+        self.vdata.lt = 0.0
+        self.vdata.vect_n = -10.0
+        self.vdata.vect_e = -10.0
         self.vdata.set_ocb(self.ocb)
 
         # Change the location of the boundary center
         self.vdata.ocb_aacgm_mlt = 1.0
-        self.vdata.ocb_aacgm_lat = self.vdata.aacgm_lat - 2.0
+        self.vdata.ocb_aacgm_lat = self.vdata.lat - 2.0
 
         # Update the quandrants
         self.vdata.calc_vec_pole_angle()
@@ -264,12 +265,12 @@ class TestOCBScalingMethods(unittest.TestCase):
     def test_calc_polar_angle_ocb_south_day(self):
         """Test `calc_polar_angle` with the OCB pole in a south/day quad."""
         # Set a useful vector locaiton and intialise with current boundary
-        self.vdata.aacgm_mlt = 0.0
+        self.vdata.lt = 0.0
         self.vdata.set_ocb(self.ocb)
 
         # Change the location of the boundary center
         self.vdata.ocb_aacgm_mlt = 1.0
-        self.vdata.ocb_aacgm_lat = self.vdata.aacgm_lat - 2.0
+        self.vdata.ocb_aacgm_lat = self.vdata.lat - 2.0
 
         # Update the quandrants
         self.vdata.calc_vec_pole_angle()
@@ -282,8 +283,8 @@ class TestOCBScalingMethods(unittest.TestCase):
     def test_big_pole_angle_mlt_west(self):
         """Test `calc_ocb_polar_angle` with a neg MLT, W vect, and big angle."""
         # Get the original angle
-        self.vdata.aacgm_mlt = -22.0
-        self.vdata.aacgm_e *= -1.0
+        self.vdata.lt = -22.0
+        self.vdata.vect_e *= -1.0
         self.vdata.set_ocb(self.ocb)
 
         # Increase the pole angle enough to require an adjustment
@@ -300,7 +301,7 @@ class TestOCBScalingMethods(unittest.TestCase):
     def test_calc_vec_pole_angle_zero(self):
         """Test the polar angle calculation with an angle of zero."""
         self.vdata.set_ocb(self.ocb)
-        self.vdata.aacgm_mlt = self.vdata.ocb_aacgm_mlt
+        self.vdata.lt = self.vdata.ocb_aacgm_mlt
         self.vdata.calc_vec_pole_angle()
         self.assertEqual(self.vdata.pole_angle, 0.0)
         return
@@ -309,8 +310,8 @@ class TestOCBScalingMethods(unittest.TestCase):
         """Test the polar angle calculation with an angle of 180 deg."""
         self.vdata.set_ocb(self.ocb)
         self.vdata.ocb_aacgm_mlt = 6.0
-        self.vdata.aacgm_mlt = 6.0
-        self.vdata.aacgm_lat = 45.0 + 0.5 * self.vdata.ocb_aacgm_lat
+        self.vdata.lt = 6.0
+        self.vdata.lat = 45.0 + 0.5 * self.vdata.ocb_aacgm_lat
         self.vdata.calc_vec_pole_angle()
         self.assertEqual(self.vdata.pole_angle, 180.0)
         return
@@ -323,8 +324,8 @@ class TestOCBScalingMethods(unittest.TestCase):
         # the angle would be 45 degrees
         self.vdata.set_ocb(self.ocb)
         self.vdata.ocb_aacgm_mlt = 0.0
-        self.vdata.aacgm_mlt = 6.0
-        self.vdata.aacgm_lat = self.vdata.ocb_aacgm_lat
+        self.vdata.lt = 6.0
+        self.vdata.lat = self.vdata.ocb_aacgm_lat
         self.vdata.calc_vec_pole_angle()
         self.assertAlmostEqual(self.vdata.pole_angle, 45.03325090532819)
         return
@@ -332,8 +333,8 @@ class TestOCBScalingMethods(unittest.TestCase):
     def test_calc_vec_pole_angle_oblique(self):
         """Test the polar angle calculation with an isosceles triangle."""
         self.vdata.set_ocb(self.ocb)
-        self.vdata.aacgm_mlt = self.vdata.ocb_aacgm_mlt - 1.0
-        self.vdata.aacgm_lat = 45.0 + 0.5 * self.vdata.ocb_aacgm_lat
+        self.vdata.lt = self.vdata.ocb_aacgm_mlt - 1.0
+        self.vdata.lat = 45.0 + 0.5 * self.vdata.ocb_aacgm_lat
         self.vdata.calc_vec_pole_angle()
         self.assertAlmostEqual(self.vdata.pole_angle, 150.9561733411)
         return
@@ -344,8 +345,8 @@ class TestOCBScalingMethods(unittest.TestCase):
         self.vdata.ocb_aacgm_mlt = self.ocb.phi_cent[self.vdata.ocb_ind] / 15.0
         self.vdata.ocb_aacgm_lat = 90.0 - self.ocb.r_cent[self.vdata.ocb_ind]
         (self.vdata.ocb_lat, self.vdata.ocb_mlt,
-         self.vdata.r_corr) = self.ocb.normal_coord(self.vdata.aacgm_lat,
-                                                    self.vdata.aacgm_mlt)
+         self.vdata.r_corr) = self.ocb.normal_coord(self.vdata.lat,
+                                                    self.vdata.lt)
         self.vdata.calc_vec_pole_angle()
 
         # Get the test quadrants
@@ -356,10 +357,10 @@ class TestOCBScalingMethods(unittest.TestCase):
 
     def test_define_quadrants_neg_adj_mlt_west(self):
         """Test quadrant assignment with a negative AACGM MLT and W vect."""
-        self.vdata.aacgm_mlt = -22.0
-        self.vdata.aacgm_e *= -1.0
+        self.vdata.lt = -22.0
+        self.vdata.vect_e *= -1.0
         self.vdata.set_ocb(self.ocb)
-        self.assertGreater(self.vdata.ocb_aacgm_mlt - self.vdata.aacgm_mlt, 24)
+        self.assertGreater(self.vdata.ocb_aacgm_mlt - self.vdata.lt, 24)
         self.assertEqual(self.vdata.ocb_quad, 1)
         self.assertEqual(self.vdata.vec_quad, 2)
         return
@@ -367,7 +368,7 @@ class TestOCBScalingMethods(unittest.TestCase):
     def test_define_quadrants_neg_north(self):
         """Test the quadrant assignment with a vector pointing south."""
         # Adjust the vector quadrant
-        self.vdata.aacgm_n *= -1.0
+        self.vdata.vect_n *= -1.0
         self.vdata.set_ocb(self.ocb)
 
         # Evaluate the output quadrants
@@ -377,7 +378,7 @@ class TestOCBScalingMethods(unittest.TestCase):
 
     def test_define_quadrants_noon_north(self):
         """Test quadrant assignment with a vector pointing north from noon."""
-        self.vdata.aacgm_mlt = 12.0
+        self.vdata.lt = 12.0
         self.vdata.set_ocb(self.ocb)
         self.assertEqual(self.vdata.ocb_quad, 2)
         self.assertEqual(self.vdata.vec_quad, 1)
@@ -386,9 +387,9 @@ class TestOCBScalingMethods(unittest.TestCase):
     def test_define_quadrants_aligned_poles_southwest(self):
         """Test quad assignment w/vector pointing SW and both poles aligned."""
         self.vdata.set_ocb(self.ocb, scale_func=ocbpy.ocb_scaling.normal_evar)
-        self.vdata.aacgm_mlt = self.vdata.ocb_aacgm_mlt + 12.0
-        self.vdata.aacgm_n = -10.0
-        self.vdata.aacgm_e = -10.0
+        self.vdata.lt = self.vdata.ocb_aacgm_mlt + 12.0
+        self.vdata.vect_n = -10.0
+        self.vdata.vect_e = -10.0
         self.vdata.set_ocb(self.ocb, scale_func=ocbpy.ocb_scaling.normal_evar)
         self.assertEqual(self.vdata.ocb_quad, 2)
         self.assertEqual(self.vdata.vec_quad, 3)
@@ -396,10 +397,10 @@ class TestOCBScalingMethods(unittest.TestCase):
 
     def test_define_quadrants_ocb_south_night(self):
         """Test quadrant assignment with the OCB pole in a south/night quad."""
-        self.vdata.aacgm_mlt = 0.0
+        self.vdata.lt = 0.0
         self.vdata.set_ocb(self.ocb, scale_func=ocbpy.ocb_scaling.normal_evar)
         self.vdata.ocb_aacgm_mlt = 23.0
-        self.vdata.ocb_aacgm_lat = self.vdata.aacgm_lat - 2.0
+        self.vdata.ocb_aacgm_lat = self.vdata.lat - 2.0
         self.vdata.calc_vec_pole_angle()
         self.vdata.define_quadrants()
         self.assertEqual(self.vdata.ocb_quad, 3)
@@ -408,10 +409,10 @@ class TestOCBScalingMethods(unittest.TestCase):
 
     def test_define_quadrants_ocb_south_day(self):
         """Test quadrant assignment with the OCB pole in a south/day quad."""
-        self.vdata.aacgm_mlt = 0.0
+        self.vdata.lt = 0.0
         self.vdata.set_ocb(self.ocb, scale_func=ocbpy.ocb_scaling.normal_evar)
         self.vdata.ocb_aacgm_mlt = 1.0
-        self.vdata.ocb_aacgm_lat = self.vdata.aacgm_lat - 2.0
+        self.vdata.ocb_aacgm_lat = self.vdata.lat - 2.0
         self.vdata.calc_vec_pole_angle()
         self.vdata.define_quadrants()
         self.assertEqual(self.vdata.ocb_quad, 4)
@@ -420,7 +421,7 @@ class TestOCBScalingMethods(unittest.TestCase):
 
     def test_undefinable_quadrants(self):
         """Test OCBScaling initialization for undefinable quadrants."""
-        self.vdata.aacgm_lat = 0.0
+        self.vdata.lat = 0.0
         self.vdata.set_ocb(self.ocb, scale_func=ocbpy.ocb_scaling.normal_evar)
         self.assertEqual(self.vdata.ocb_quad, 0)
         self.assertEqual(self.vdata.vec_quad, 0)
@@ -432,8 +433,9 @@ class TestOCBScalingMethods(unittest.TestCase):
         self.assertEqual(self.vdata.ocb_quad, 1)
         self.assertEqual(self.vdata.vec_quad, 1)
         self.vdata.ocb_quad = 0
+
+        # If `ocb_quad` is not reset within this method, it raises a ValueError
         self.vdata.scale_vector()
-        self.assertEqual(self.vdata.ocb_quad, 1)
         return
 
     def test_lost_vec_quadrant(self):
@@ -442,8 +444,9 @@ class TestOCBScalingMethods(unittest.TestCase):
         self.assertEqual(self.vdata.ocb_quad, 1)
         self.assertEqual(self.vdata.vec_quad, 1)
         self.vdata.vec_quad = 0
+
+        # If `vec_quad` is not reset within this method, it raises a ValueError
         self.vdata.scale_vector()
-        self.assertEqual(self.vdata.vec_quad, 1)
         return
 
     def test_calc_ocb_vec_sign(self):
@@ -453,14 +456,14 @@ class TestOCBScalingMethods(unittest.TestCase):
         self.vdata.ocb_aacgm_mlt = self.ocb.phi_cent[self.vdata.ocb_ind] / 15.0
         self.vdata.ocb_aacgm_lat = 90.0 - self.ocb.r_cent[self.vdata.ocb_ind]
         (self.vdata.ocb_lat, self.vdata.ocb_mlt,
-         self.vdata.r_corr) = self.ocb.normal_coord(self.vdata.aacgm_lat,
-                                                    self.vdata.aacgm_mlt)
+         self.vdata.r_corr) = self.ocb.normal_coord(self.vdata.lat,
+                                                    self.vdata.lt)
         self.vdata.calc_vec_pole_angle()
         self.vdata.define_quadrants()
 
-        vmag = numpy.sqrt(self.vdata.aacgm_n**2 + self.vdata.aacgm_e**2)
+        vmag = numpy.sqrt(self.vdata.vect_n**2 + self.vdata.vect_e**2)
         self.vdata.aacgm_naz = numpy.degrees(numpy.arccos(
-            self.vdata.aacgm_n / vmag))
+            self.vdata.vect_n / vmag))
 
         # Calculate the vector data signs
         vsigns = self.vdata.calc_ocb_vec_sign(north=True, east=True)
@@ -476,14 +479,14 @@ class TestOCBScalingMethods(unittest.TestCase):
         self.vdata.ocb_aacgm_mlt = self.ocb.phi_cent[self.vdata.ocb_ind] / 15.0
         self.vdata.ocb_aacgm_lat = 90.0 - self.ocb.r_cent[self.vdata.ocb_ind]
         (self.vdata.ocb_lat, self.vdata.ocb_mlt,
-         self.vdata.r_corr) = self.ocb.normal_coord(self.vdata.aacgm_lat,
-                                                    self.vdata.aacgm_mlt)
+         self.vdata.r_corr) = self.ocb.normal_coord(self.vdata.lat,
+                                                    self.vdata.lt)
         self.vdata.calc_vec_pole_angle()
         self.vdata.define_quadrants()
 
-        vmag = numpy.sqrt(self.vdata.aacgm_n**2 + self.vdata.aacgm_e**2)
+        vmag = numpy.sqrt(self.vdata.vect_n**2 + self.vdata.vect_e**2)
         self.vdata.aacgm_naz = numpy.degrees(numpy.arccos(
-            self.vdata.aacgm_n / vmag))
+            self.vdata.vect_n / vmag))
 
         # Scale the data vector
         self.vdata.scale_vector()
@@ -493,15 +496,15 @@ class TestOCBScalingMethods(unittest.TestCase):
         self.assertAlmostEqual(self.vdata.ocb_e, 77.9686428950)
 
         # Test to see that the magnitudes and z-components are the same
-        self.assertAlmostEqual(self.vdata.aacgm_mag, self.vdata.ocb_mag)
-        self.assertAlmostEqual(self.vdata.ocb_z, self.vdata.aacgm_z)
+        self.assertAlmostEqual(self.vdata.vect_mag, self.vdata.ocb_mag)
+        self.assertAlmostEqual(self.vdata.ocb_z, self.vdata.vect_z)
 
         return
 
     def test_scale_vec_z_zero(self):
         """Test the calc of the OCB vector sign with no vertical aacgm_z."""
         # Re-assing the necessary variable
-        self.vdata.aacgm_z = 0.0
+        self.vdata.vect_z = 0.0
 
         # Run the scale_vector routine
         self.vdata.set_ocb(self.ocb, scale_func=ocbpy.ocb_scaling.normal_evar)
@@ -517,29 +520,34 @@ class TestOCBScalingMethods(unittest.TestCase):
         self.vdata.set_ocb(self.ocb)
         self.vdata.pole_angle = 0.0
 
-        nscale = ocbpy.ocb_scaling.normal_evar(self.vdata.aacgm_n,
+        nscale = ocbpy.ocb_scaling.normal_evar(self.vdata.vect_n,
                                                self.vdata.unscaled_r,
                                                self.vdata.scaled_r)
-        escale = ocbpy.ocb_scaling.normal_evar(self.vdata.aacgm_e,
+        escale = ocbpy.ocb_scaling.normal_evar(self.vdata.vect_e,
                                                self.vdata.unscaled_r,
                                                self.vdata.scaled_r)
 
         # Cycle through all the possible options for a pole angle of zero/180
-        for tset in [('scale_func', None, self.vdata.aacgm_n,
-                      self.vdata.aacgm_e),
+        for tset in [('scale_func', None, self.vdata.vect_n,
+                      self.vdata.vect_e),
                      ('scale_func', ocbpy.ocb_scaling.normal_evar, nscale,
                       escale),
-                     ('ocb_aacgm_lat', self.vdata.aacgm_lat, -1.0 * nscale,
-                      -1.0 * escale)]:
+                     ('ocb_aacgm_lat', self.vdata.lat, -1.0 * self.vdata.vect_n,
+                      -1.0 * self.vdata.vect_e)]:
+            # Update the vector data
+            self.hold_val = getattr(self.vdata, tset[0])
+            setattr(self.vdata, tset[0], tset[1])
+
+            # Run the scale_vector routine with the new attributes
+            self.vdata.scale_vector()
+
+            # Assess the ocb north and east components
             with self.subTest(tset=tset):
-                setattr(self.vdata, tset[0], tset[1])
-
-                # Run the scale_vector routine with the new attributes
-                self.vdata.scale_vector()
-
-                # Assess the ocb north and east components
                 self.assertEqual(self.vdata.ocb_n, tset[2])
                 self.assertEqual(self.vdata.ocb_e, tset[3])
+
+            # Reset the vector data
+            setattr(self.vdata, tset[0], self.hold_val)
 
         return
 
@@ -557,7 +565,7 @@ class TestOCBScalingMethods(unittest.TestCase):
         # Set the OCB values without any E-field scaling, test to see that the
         # AACGM and OCB vector magnitudes are the same
         self.vdata.set_ocb(self.ocb)
-        self.assertAlmostEqual(self.vdata.aacgm_mag, self.vdata.ocb_mag)
+        self.assertAlmostEqual(self.vdata.vect_mag, self.vdata.ocb_mag)
         return
 
     def test_set_ocb_evar(self):
@@ -652,14 +660,14 @@ class TestDualScalingMethods(TestOCBScalingMethods):
         self.vdata.ocb_aacgm_lat = 90.0 - self.ocb.ocb.r_cent[
             self.vdata.ocb_ind]
         (self.vdata.ocb_lat, self.vdata.ocb_mlt, _,
-         self.vdata.r_corr) = self.ocb.normal_coord(self.vdata.aacgm_lat,
-                                                    self.vdata.aacgm_mlt)
+         self.vdata.r_corr) = self.ocb.normal_coord(self.vdata.lat,
+                                                    self.vdata.lt)
         self.vdata.calc_vec_pole_angle()
         self.vdata.define_quadrants()
 
-        vmag = numpy.sqrt(self.vdata.aacgm_n**2 + self.vdata.aacgm_e**2)
+        vmag = numpy.sqrt(self.vdata.vect_n**2 + self.vdata.vect_e**2)
         self.vdata.aacgm_naz = numpy.degrees(numpy.arccos(
-            self.vdata.aacgm_n / vmag))
+            self.vdata.vect_n / vmag))
 
         # Calculate the vector data signs
         vsigns = self.vdata.calc_ocb_vec_sign(north=True, east=True)
@@ -677,14 +685,14 @@ class TestDualScalingMethods(TestOCBScalingMethods):
         self.vdata.ocb_aacgm_lat = 90.0 - self.ocb.ocb.r_cent[
             self.vdata.ocb_ind]
         (self.vdata.ocb_lat, self.vdata.ocb_mlt, _,
-         self.vdata.r_corr) = self.ocb.normal_coord(self.vdata.aacgm_lat,
-                                                    self.vdata.aacgm_mlt)
+         self.vdata.r_corr) = self.ocb.normal_coord(self.vdata.lat,
+                                                    self.vdata.lt)
         self.vdata.calc_vec_pole_angle()
         self.vdata.define_quadrants()
 
-        vmag = numpy.sqrt(self.vdata.aacgm_n**2 + self.vdata.aacgm_e**2)
+        vmag = numpy.sqrt(self.vdata.vect_n**2 + self.vdata.vect_e**2)
         self.vdata.aacgm_naz = numpy.degrees(numpy.arccos(
-            self.vdata.aacgm_n / vmag))
+            self.vdata.vect_n / vmag))
 
         # Scale the data vector
         self.vdata.scale_vector()
@@ -696,9 +704,9 @@ class TestDualScalingMethods(TestOCBScalingMethods):
                                msg="eastern vector coordinates differe")
 
         # Test to see that the magnitudes and z-components are the same
-        self.assertAlmostEqual(self.vdata.aacgm_mag, self.vdata.ocb_mag,
+        self.assertAlmostEqual(self.vdata.vect_mag, self.vdata.ocb_mag,
                                msg="vector magnitudes differ")
-        self.assertAlmostEqual(self.vdata.ocb_z, self.vdata.aacgm_z,
+        self.assertAlmostEqual(self.vdata.ocb_z, self.vdata.vect_z,
                                msg="vector vertical commonents differ")
 
         return
@@ -711,8 +719,8 @@ class TestDualScalingMethods(TestOCBScalingMethods):
         self.vdata.ocb_aacgm_lat = 90.0 - self.ocb.ocb.r_cent[
             self.vdata.ocb_ind]
         (self.vdata.ocb_lat, self.vdata.ocb_mlt, _,
-         self.vdata.r_corr) = self.ocb.normal_coord(self.vdata.aacgm_lat,
-                                                    self.vdata.aacgm_mlt)
+         self.vdata.r_corr) = self.ocb.normal_coord(self.vdata.lat,
+                                                    self.vdata.lt)
         self.vdata.calc_vec_pole_angle()
 
         # Get the test quadrants
@@ -806,41 +814,32 @@ class TestVectorDataRaises(unittest.TestCase):
 
     def test_bad_calc_vec_pole_angle(self):
         """Test calc_vec_pole_angle failure with bad input."""
-        self.input_attrs = ['aacgm_mlt', 'ocb_aacgm_mlt', 'aacgm_lat',
-                            'ocb_aacgm_lat']
-        self.raise_out = ["AACGM MLT of Vector", "AACGM MLT of OCB pole",
-                          "AACGM latitude of Vector",
+        # Define the different test combinations
+        self.input_attrs = ['lt', 'ocb_aacgm_mlt', 'lat', 'ocb_aacgm_lat']
+        self.raise_out = ["Vector local time is undefined",
+                          "AACGM MLT of OCB pole",
+                          "Vector latitude is undefined",
                           "AACGM latitude of OCB pole"]
         tsets = [(iattrs, bi, self.raise_out[i])
                  for i, iattrs in enumerate(self.input_attrs)
                  for bi in self.bad_input]
         self.vdata.set_ocb(self.ocb, None)
 
+        # Cycle through the different test combinations
         for tset in tsets:
-            with self.subTest(tset=tset):
-                self.hold_val = getattr(self.vdata, tset[0])
-                setattr(self.vdata, tset[0], tset[1])
+            # Save the original value
+            self.hold_val = numpy.asarray(getattr(self.vdata, tset[0]))
 
+            # Update to the bad value
+            setattr(self.vdata, tset[0], tset[1])
+
+            with self.subTest(tset=tset):
+                # Test the appropriate error is raised with a bad value
                 with self.assertRaisesRegex(ValueError, tset[2]):
                     self.vdata.calc_vec_pole_angle()
 
-                setattr(self.vdata, tset[0], self.hold_val)
-        return
-
-    def test_no_ocb_lat(self):
-        """Test failure when OCB latitude is not available."""
-        self.vdata.ocb_lat = numpy.nan
-
-        with self.assertRaisesRegex(ValueError, 'OCB coordinates required'):
-            self.vdata.scale_vector()
-        return
-
-    def test_no_ocb_mlt(self):
-        """Test failure when OCB MLT is not available."""
-        self.vdata.ocb_mlt = numpy.nan
-
-        with self.assertRaisesRegex(ValueError, 'OCB coordinates required'):
-            self.vdata.scale_vector()
+            # Reset to the good value
+            setattr(self.vdata, tset[0], self.hold_val)
         return
 
     def test_no_ocb_pole_location(self):
@@ -867,16 +866,18 @@ class TestVectorDataRaises(unittest.TestCase):
         self.vdata.set_ocb(self.ocb, None)
         self.vdata.ocb_quad = -1
 
-        with self.assertRaisesRegex(ValueError, "OCB quadrant undefined"):
+        with self.assertRaisesRegex(
+                ValueError, "destination coordinate pole quadrant is "):
             self.vdata.calc_ocb_polar_angle()
         return
 
     def test_bad_vec_quad(self):
         """Test failure when vector quadrant is wrong."""
-        self.vdata.set_ocb(self.ocb, None)
+        self.vdata.set_ocb(self.ocb, scale_func=None)
         self.vdata.vec_quad = -1
 
-        with self.assertRaisesRegex(ValueError, "Vector quadrant undefined"):
+        with self.assertRaisesRegex(ValueError,
+                                    "data vector quadrant is undefined"):
             self.vdata.calc_ocb_polar_angle()
         return
 
@@ -886,7 +887,7 @@ class TestVectorDataRaises(unittest.TestCase):
         self.vdata.aacgm_naz = numpy.nan
 
         with self.assertRaisesRegex(ValueError,
-                                    "AACGM polar angle undefined"):
+                                    "AACGM North polar angle undefined"):
             self.vdata.calc_ocb_polar_angle()
         return
 
@@ -913,7 +914,8 @@ class TestVectorDataRaises(unittest.TestCase):
         self.vdata.set_ocb(self.ocb, None)
         self.vdata.ocb_quad = -1
 
-        with self.assertRaisesRegex(ValueError, "OCB quadrant undefined"):
+        with self.assertRaisesRegex(
+                ValueError, "destination coordinate pole quadrant is"):
             self.vdata.calc_ocb_vec_sign(north=True)
         return
 
@@ -922,7 +924,8 @@ class TestVectorDataRaises(unittest.TestCase):
         self.vdata.set_ocb(self.ocb, None)
         self.vdata.vec_quad = -1
 
-        with self.assertRaisesRegex(ValueError, "Vector quadrant undefined"):
+        with self.assertRaisesRegex(ValueError,
+                                    "data vector quadrant is undefined"):
             self.vdata.calc_ocb_vec_sign(north=True)
         return
 
@@ -945,7 +948,7 @@ class TestVectorDataRaises(unittest.TestCase):
             self.vdata.calc_ocb_vec_sign(north=True)
         return
 
-    def test_bad_define_quandrants_pole_mlt(self):
+    def test_bad_define_quadrants_pole_mlt(self):
         """Test define_quadrants failure with bad pole MLT."""
         self.vdata.set_ocb(self.ocb, None)
         self.vdata.ocb_aacgm_mlt = numpy.nan
@@ -954,17 +957,17 @@ class TestVectorDataRaises(unittest.TestCase):
             self.vdata.define_quadrants()
         return
 
-    def test_bad_define_quandrants_vec_mlt(self):
+    def test_bad_define_quadrants_vec_mlt(self):
         """Test define_quadrants failure with bad vector MLT."""
         self.vdata.set_ocb(self.ocb, None)
-        self.vdata.aacgm_mlt = numpy.nan
+        self.vdata.lt = numpy.nan
 
         with self.assertRaisesRegex(ValueError,
-                                    "Vector AACGM location required"):
+                                    "Vector location required"):
             self.vdata.define_quadrants()
         return
 
-    def test_bad_define_quandrants_pole_angle(self):
+    def test_bad_define_quadrants_pole_angle(self):
         """Test define_quadrants failure with bad pole angle."""
         self.vdata.set_ocb(self.ocb, None)
         self.vdata.pole_angle = numpy.nan
@@ -1095,9 +1098,9 @@ class TestOCBScalingArrayMethods(unittest.TestCase):
                                   4, 1]}
 
         self.vargs = [numpy.arange(0, 17, 1), 27, lats, mlts]
-        self.vkwargs = {'aacgm_n': numpy.array(north),
-                        'aacgm_e': numpy.array(east),
-                        'aacgm_z': numpy.array(vert), 'dat_name': 'Test',
+        self.vkwargs = {'vect_n': numpy.array(north),
+                        'vect_e': numpy.array(east),
+                        'vect_z': numpy.array(vert), 'dat_name': 'Test',
                         'dat_units': 'm/s'}
         self.vdata = None
         self.out = None
@@ -1124,7 +1127,7 @@ class TestOCBScalingArrayMethods(unittest.TestCase):
         self.vdata = ocbpy.ocb_scaling.VectorData(*self.vargs, **self.vkwargs)
         self.out = str(self.vdata)
         self.assertRegex(self.out, "Index")
-        self.assertRegex(self.out, "nan, nan, {:d}".format(self.vargs[1]))
+        self.assertRegex(self.out, "nan, nan, N/A, {:d}".format(self.vargs[1]))
         return
 
     def test_array_vector_str_calc(self):
@@ -1152,9 +1155,9 @@ class TestOCBScalingArrayMethods(unittest.TestCase):
         self.set_vector_ocb_ind()
         self.vargs[2] = self.vargs[2][0]
         self.vargs[3] = self.vargs[3][0]
-        self.vkwargs['aacgm_n'] = self.vkwargs['aacgm_n'][0]
-        self.vkwargs['aacgm_e'] = self.vkwargs['aacgm_e'][0]
-        self.vkwargs['aacgm_z'] = self.vkwargs['aacgm_z'][0]
+        self.vkwargs['vect_n'] = self.vkwargs['vect_n'][0]
+        self.vkwargs['vect_e'] = self.vkwargs['vect_e'][0]
+        self.vkwargs['vect_z'] = self.vkwargs['vect_z'][0]
         self.vdata = ocbpy.ocb_scaling.VectorData(*self.vargs, **self.vkwargs)
         self.vdata.set_ocb(self.ocb)
         self.out = str(self.vdata)
@@ -1165,9 +1168,9 @@ class TestOCBScalingArrayMethods(unittest.TestCase):
     def test_init_nez_vec_array(self):
         """Test VectorData initialisation  with vector array components."""
         self.vdata = ocbpy.ocb_scaling.VectorData(*self.vargs, **self.vkwargs)
-        self.assertEqual(len(self.vdata.aacgm_mag), len(self.vargs[0]))
+        self.assertEqual(len(self.vdata.vect_mag), len(self.vargs[0]))
         self.assertEqual(len(self.vdata.ocb_mag), len(self.vargs[0]))
-        for i, self.out in enumerate(self.vdata.aacgm_mag):
+        for i, self.out in enumerate(self.vdata.vect_mag):
             self.assertAlmostEqual(self.out, self.aacgm_mag[i])
         return
 
@@ -1175,9 +1178,9 @@ class TestOCBScalingArrayMethods(unittest.TestCase):
         """Test VectorData set up with ocb and vector array components."""
         self.set_vector_ocb_ind()
         self.vdata = ocbpy.ocb_scaling.VectorData(*self.vargs, **self.vkwargs)
-        self.assertEqual(len(self.vdata.aacgm_mag), len(self.vargs[0]))
+        self.assertEqual(len(self.vdata.vect_mag), len(self.vargs[0]))
         self.assertEqual(len(self.vdata.ocb_mag), len(self.vargs[0]))
-        for i, self.out in enumerate(self.vdata.aacgm_mag):
+        for i, self.out in enumerate(self.vdata.vect_mag):
             self.assertAlmostEqual(self.out, self.aacgm_mag[i])
         return
 
@@ -1186,13 +1189,13 @@ class TestOCBScalingArrayMethods(unittest.TestCase):
         self.set_vector_ocb_ind()
         self.vargs[2] = self.vargs[2][0]
         self.vargs[3] = self.vargs[3][0]
-        self.vkwargs['aacgm_n'] = self.vkwargs['aacgm_n'][0]
-        self.vkwargs['aacgm_e'] = self.vkwargs['aacgm_e'][0]
-        self.vkwargs['aacgm_z'] = self.vkwargs['aacgm_z'][0]
+        self.vkwargs['vect_n'] = self.vkwargs['vect_n'][0]
+        self.vkwargs['vect_e'] = self.vkwargs['vect_e'][0]
+        self.vkwargs['vect_z'] = self.vkwargs['vect_z'][0]
 
         self.vdata = ocbpy.ocb_scaling.VectorData(*self.vargs, **self.vkwargs)
         self.assertEqual(len(self.vdata.ocb_mag), len(self.vargs[1]))
-        self.assertTrue(abs(self.vdata.aacgm_mag - self.aacgm_mag[0]).all()
+        self.assertTrue(abs(self.vdata.vect_mag - self.aacgm_mag[0]).all()
                         < 1.0e-7, msg="unexpected AACGM vector magnitude")
         return
 
@@ -1200,8 +1203,8 @@ class TestOCBScalingArrayMethods(unittest.TestCase):
         """Test the set up of the VectorData array input with magnitude."""
         self.vkwargs['aacgm_mag'] = self.aacgm_mag
         self.vdata = ocbpy.ocb_scaling.VectorData(*self.vargs, **self.vkwargs)
-        self.assertEqual(len(self.vdata.aacgm_mag), len(self.vargs[0]))
-        for i, self.out in enumerate(self.vdata.aacgm_mag):
+        self.assertEqual(len(self.vdata.vect_mag), len(self.vargs[0]))
+        for i, self.out in enumerate(self.vdata.vect_mag):
             self.assertAlmostEqual(self.out, self.aacgm_mag[i])
         return
 
@@ -1221,7 +1224,7 @@ class TestOCBScalingArrayMethods(unittest.TestCase):
         # Ensure that input is not overwritten
         for vkey in self.vkwargs.keys():
             self.out = getattr(self.vdata, vkey)
-            if vkey.find('aacgm_') == 0:
+            if vkey.find('vect_') == 0:
                 for i, val in enumerate(self.vkwargs[vkey]):
                     self.assertEqual(self.out[i], val)
             else:
@@ -1230,10 +1233,14 @@ class TestOCBScalingArrayMethods(unittest.TestCase):
 
     def test_vector_some_bad_lat(self):
         """Test the VectorData output with mixed hemisphere input."""
+        # Change the hemisphere of one of the latitudes
         self.vargs[2][0] *= -1.0
+
+        # Set and process vector data
         self.vdata = ocbpy.ocb_scaling.VectorData(*self.vargs, **self.vkwargs)
         self.vdata.set_ocb(self.ocb)
 
+        # Evaluate OCB vector locations
         self.assertTrue(len(self.vdata.ocb_lat), len(self.vargs[2]))
 
         # Ensure the wrong hemisphere is NaN
@@ -1246,14 +1253,14 @@ class TestOCBScalingArrayMethods(unittest.TestCase):
         # Ensure that input is not overwritten
         for vkey in self.vkwargs.keys():
             self.out = getattr(self.vdata, vkey)
-            if vkey.find('aacgm_') == 0:
+            if vkey.find('vect_') == 0:
                 for i, val in enumerate(self.vkwargs[vkey]):
                     self.assertEqual(self.out[i], val)
             else:
                 self.assertRegex(self.out, self.vkwargs[vkey])
 
         # Ensure the right hemisphere is good
-        self.assertAlmostEqual(self.vdata.aacgm_mag[1], self.aacgm_mag[1])
+        self.assertAlmostEqual(self.vdata.vect_mag[1], self.aacgm_mag[1])
         self.assertAlmostEqual(self.vdata.ocb_mag[1], self.aacgm_mag[1])
         return
 
@@ -1307,7 +1314,7 @@ class TestOCBScalingArrayMethods(unittest.TestCase):
 
     def test_one_undefinable_vec_quadrant(self):
         """Test VectorData array set up for a undefinable vec quadrant."""
-        self.vkwargs['aacgm_n'][1] = numpy.nan
+        self.vkwargs['vect_n'][1] = numpy.nan
         self.vdata = ocbpy.ocb_scaling.VectorData(*self.vargs, **self.vkwargs)
         self.vdata.set_ocb(self.ocb)
 
@@ -1331,32 +1338,36 @@ class TestOCBScalingArrayMethods(unittest.TestCase):
         """Test the calculation of the OCB vector sign with no pole angle."""
         self.vdata = ocbpy.ocb_scaling.VectorData(*self.vargs, **self.vkwargs)
         self.vdata.set_ocb(self.ocb)
-
+    
         # If the OCB pole is closer to the AACGM pole than the vector, set
         # the pole angle to zero deg. Otherwise, set it to 180.0 deg
         self.vdata.pole_angle = numpy.zeros(shape=self.vargs[2].shape)
         self.vdata.pole_angle[self.vdata.ocb_quad > 2] = 180.0
 
-        nscale = ocbpy.ocb_scaling.normal_evar(self.vdata.aacgm_n,
+        nscale = ocbpy.ocb_scaling.normal_evar(self.vdata.vect_n,
                                                self.vdata.unscaled_r,
                                                self.vdata.scaled_r)
-        escale = ocbpy.ocb_scaling.normal_evar(self.vdata.aacgm_e,
+        escale = ocbpy.ocb_scaling.normal_evar(self.vdata.vect_e,
                                                self.vdata.unscaled_r,
                                                self.vdata.scaled_r)
 
         # Cycle through all the possible options for a pole angle of zero/180
-        for tset in [('scale_func', None, self.vkwargs['aacgm_n'],
-                      self.vkwargs['aacgm_e']),
+        for tset in [('scale_func', None, self.vkwargs['vect_n'],
+                      self.vkwargs['vect_e']),
                      ('scale_func', ocbpy.ocb_scaling.normal_evar, nscale,
                       escale)]:
+            # Update the test attribute
+            self.hold_val = getattr(self.vdata, tset[0])
+            setattr(self.vdata, tset[0], tset[1])
+
+            # Run the scale_vector routine with the new attributes
+            self.vdata.scale_vector()
+
+            # Assess the ocb north and east components
             with self.subTest(tset=tset):
-                setattr(self.vdata, tset[0], tset[1])
-
-                # Run the scale_vector routine with the new attributes
-                self.vdata.scale_vector()
-
-                # Assess the ocb north and east components
                 self.assertTrue(numpy.all(self.vdata.ocb_n == tset[2]))
                 self.assertTrue(numpy.all(self.vdata.ocb_e == tset[3]))
 
+            # Reset the test attribute
+            setattr(self.vdata, tset[0], self.hold_val)
         return
