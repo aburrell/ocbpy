@@ -15,6 +15,9 @@ Summary of all changes made since the first stable release
 * ENH: Added AMPERE EABs, using the Heppner-Maynard boundary as a valid EAB
 * ENH: Changed default directory ID to use `pathlib`
 * ENH: Allow data padding in `pysat_instrument` functions
+* ENH: Created separate vector transformation functions to support multiple
+       coordinate systems
+* ENH: Updated VectorData to allow geographic vector inputs
 * BUG: Fixed a typo in the documentation's pysat example
 * BUG: Added an error catch for badly formatted SuperMAG file reading
 * TST: Added a new CI test for the Test PyPi Release Candidate
