@@ -25,6 +25,7 @@ from ocbpy import instruments  # noqa F401
 from ocbpy import ocb_correction  # noqa F401
 from ocbpy import ocb_scaling  # noqa F401
 from ocbpy import ocb_time  # noqa F401
+from ocbpy import vectors  # noqa F401
 
 from ocbpy._boundary import DualBoundary  # noqa F401
 from ocbpy._boundary import EABoundary  # noqa F401
