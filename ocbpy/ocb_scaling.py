@@ -13,9 +13,13 @@ References
 
 """
 
+import aacgmv2
 import numpy as np
+import warnings
 
 import ocbpy
+from ocbpy import ocb_time
+from ocbpy import vectors
 
 
 class VectorData(object):
@@ -28,23 +32,32 @@ class VectorData(object):
     ocb_ind : int or array-like
         OCBoundary or DualBoundary record index matched to this data index
         (zero offset)
-    aacgm_lat : float or array-like
-        Vector AACGM latitude (degrees)
-    aacgm_mlt : float or array-like
-        Vector AACGM MLT (hours)
+    lat : float or array-like
+        Vector latitude (degrees)
+    lt : float or array-like
+        Vector LT (hours)
+    height : float or array-like
+        Geocentric height above sea level (km) at which magnetic coordinates
+        will be calculated if conversion is needed (default=350.0)
+    loc_coord : str
+        Name of the coordinate system for `lat` and `lt`; one of 'magnetic',
+        'geocentric', or 'geodetic' (default='magnetic')
     ocb_lat : float or array-like
         Vector OCB latitude (degrees) (default=np.nan)
     ocb_mlt : float or array-like
         Vector OCB MLT (hours) (default=np.nan)
-    aacgm_n : float or array-like
-        AACGM North pointing vector (positive towards North) (default=0.0)
-    aacgm_e : float or array-like
-        AACGM East pointing vector (completes right-handed coordinate system
+    vect_n : float or array-like
+        Vector North-pointing component (positive towards North) (default=0.0)
+    vect_e : float or array-like
+        Vector East-pointing component (completes right-handed coordinate system
         (default = 0.0)
-    aacgm_z : float or array-like
-        AACGM Vertical pointing vector (positive down) (default=0.0)
-    aacgm_mag : float or array-like
+    vect_z : float or array-like
+        Vector vertical-pointing component (positive down) (default=0.0)
+    vect_mag : float or array-like
         Vector magnitude (default=np.nan)
+    vect_coord : str
+        Name of the coordinate system for `vect_n` and `vect_e`; one of
+        'magnetic', 'geocentric', or 'geodetic' (default='magnetic')
     dat_name : str
         Data name (default=None)
     dat_units : str
@@ -53,6 +66,9 @@ class VectorData(object):
         Function for scaling AACGM magnitude with arguements: [measurement
         value, mesurement AACGM latitude (degrees), mesurement OCB latitude
         (degrees)] (default=None)
+    **kwargs : dict
+        Accepts deprecated parameters: `aacgm_lat`, `aacgm_mlt`, `aacgm_n`,
+        `aacgm_e`, `aacgm_z`, and `aacgm_mag`.
 
     Attributes
     ----------
@@ -78,7 +94,8 @@ class VectorData(object):
         Angle at vector location appended by AACGM and OCB poles in degrees
         (default=np.nan)
     aacgm_naz : float or array-like
-        AACGM north azimuth of data vector in degrees (default=np.nan)
+        AACGM north azimuth of data vector in degrees; deprecated
+        (default=np.nan)
     ocb_aacgm_lat : float or array-like
         AACGM latitude of OCB pole in degrees (default=np.nan)
     ocb_aacgm_mlt : float or array-like
@@ -88,12 +105,21 @@ class VectorData(object):
     -----
     May only handle one data type, so scale_func cannot be an array
 
+    Warnings
+    --------
+    DeprecationWarning
+        Several kwargs/attributes and method have been changed to reflect new
+        allowed input types (data in geodetic or geographic coordinates).
+        Support for the old parameters and methods will be removed in
+        version 0.4.1+.
+
     """
 
-    def __init__(self, dat_ind, ocb_ind, aacgm_lat, aacgm_mlt, ocb_lat=np.nan,
-                 ocb_mlt=np.nan, r_corr=np.nan, aacgm_n=0.0, aacgm_e=0.0,
-                 aacgm_z=0.0, aacgm_mag=np.nan, dat_name=None, dat_units=None,
-                 scale_func=None):
+    def __init__(self, dat_ind, ocb_ind, lat, lt, height=350.0,
+                 loc_coord='magnetic', ocb_lat=np.nan, ocb_mlt=np.nan,
+                 r_corr=np.nan, vect_n=0.0, vect_e=0.0, vect_z=0.0,
+                 vect_mag=np.nan, vect_coord='magnetic', dat_name=None,
+                 dat_units=None, scale_func=None, **kwargs):
 
         # Assign the vector data name and units
         self.dat_name = dat_name
@@ -103,18 +129,57 @@ class VectorData(object):
         self.dat_ind = dat_ind
         self.ocb_ind = ocb_ind
 
-        # Assign the AACGM vector values and location
-        self.aacgm_n = aacgm_n
-        self.aacgm_e = aacgm_e
-        self.aacgm_z = aacgm_z
-        self.aacgm_lat = aacgm_lat
-        self.aacgm_mlt = aacgm_mlt
+        # Assign the AACGM vector values, coordinates, and location
+        self.vect_n = vect_n
+        self.vect_e = vect_e
+        self.vect_z = vect_z
+        self.lat = lat
+        self.lt = lt
+        self.height = height
+        self.loc_coord = loc_coord.lower()
+        self.vect_coord = vect_coord.lower()
+
+        # Check for deprecated values
+        set_mag = True
+        if len(kwargs.keys()) > 0:
+            used_dep = list()
+            dep_pairs = {'aacgm_n': 'vect_n', 'aacgm_e': 'vect_e',
+                         'aacgm_lat': 'lat', 'aacgm_mlt': 'lt',
+                         'aacgm_z': 'vect_z', 'aacgm_mag': 'vect_mag'}
+            for dep_key in dep_pairs.keys():
+                if dep_key in kwargs.keys():
+                    # Save the deprecated kwarg to raise a single warning later
+                    used_dep.append(dep_key)
+
+                    # Update the new attribute
+                    setattr(self, dep_pairs[dep_key], kwargs[dep_key])
+
+                    if dep_key == 'aacgm_mag':
+                        set_mag = False
+
+            # Raise a warning
+            if len(used_dep) == 0:
+                ocbpy.logger.warning('unknown kwargs, ignored: {:}'.format(
+                    kwargs))
+            else:
+                new_kwargs = [dep_pairs[dep_key] for dep_key in used_dep]
+                warnings.warn("".join(['kwargs have been replaced with new ',
+                                       'names, that reflect their new ',
+                                       'flexibility. Old kwargs will be ',
+                                       'removed in version 0.4.1+. Old kwargs ',
+                                       'used: ', repr(used_dep), '; replace ',
+                                       'with: ', repr(new_kwargs)]),
+                              DeprecationWarning, stacklevel=2)
+
+        if set_mag:
+            # Set the magnitude if the deprecated kwarg was not supplied
+            self.vect_mag = vect_mag
+                
+        # Test the coordinate systems for valid options
+        self._test_coords()
 
         # Test the initalization shape and update the vector shapes if needed
         self._test_update_vector_shape()
-
-        # Assign the vector magnitude(s)
-        self.aacgm_mag = aacgm_mag
 
         # Assign the OCB vector default values
         self.ocb_lat = ocb_lat
@@ -143,13 +208,15 @@ class VectorData(object):
 
         # Format the base output
         out = "".join(["ocbpy.ocb_scaling.VectorData(", repr(self.dat_ind),
-                       ", ", repr(self.ocb_ind), ", ", repr(self.aacgm_lat),
-                       ", ", repr(self.aacgm_mlt), ", ocb_lat=",
+                       ", ", repr(self.ocb_ind), ", ", repr(self.lat),
+                       ", ", repr(self.lt), ", height=", repr(self.height),
+                       ", loc_coord=", repr(self.loc_coord), ", ocb_lat=",
                        repr(self.ocb_lat), ", ocb_mlt=", repr(self.ocb_mlt),
-                       ", r_corr=", repr(self.r_corr), ", aacgm_n=",
-                       repr(self.aacgm_n), ", aacgm_e=", repr(self.aacgm_e),
-                       ", aacgm_z=", repr(self.aacgm_z), ", aacgm_mag=",
-                       repr(self.aacgm_mag), ", dat_name=",
+                       ", r_corr=", repr(self.r_corr), ", vect_n=",
+                       repr(self.vect_n), ", vect_e=", repr(self.vect_e),
+                       ", vect_z=", repr(self.vect_z), ", vect_mag=",
+                       repr(self.vect_mag), ", vect_coord=",
+                       repr(self.vect_coord), ", dat_name=",
                        repr(self.dat_name), ", dat_units=",
                        repr(self.dat_units), ", scale_func=", repr_func, ")"])
 
@@ -161,81 +228,93 @@ class VectorData(object):
     def __str__(self):
         """Provide user readable representation of the VectorData object."""
 
-        out = "Vector data:"
-        if self.dat_name is not None:
-            out += " {:s}".format(self.dat_name)
-        if self.dat_units is not None:
-            out += " ({:s})".format(self.dat_units)
+        out = "".join([
+            "Vector data:",
+            "" if self.dat_name is None else " {:s}".format(self.dat_name),
+            "" if self.dat_units is None else " ({:s})".format(self.dat_units),
+            "\nData Index {:}\tBoundary Index ".format(self.dat_ind),
+            "{:}\n-------------------------------------------".format(
+                self.ocb_ind)])
 
-        out += "\nData Index {:}\tBoundary Index {:}\n".format(self.dat_ind,
-                                                               self.ocb_ind)
-        out += "-------------------------------------------\n"
-
-        # Print AACGM vector location(s)
+        # Print vector location(s)
         if self.dat_ind.shape == () and self.ocb_ind.shape == ():
-            out += "Locations: [Mag. Lat. (degrees), MLT (hours)]\n"
-            out += "    AACGM: [{:.3f}, {:.3f}]\n".format(self.aacgm_lat,
-                                                          self.aacgm_mlt)
-            out += "      OCB: [{:.3f}, {:.3f}]\n".format(self.ocb_lat,
-                                                          self.ocb_mlt)
+            out = "\n".join([
+                out, "Locations: [Lat. (degrees), LT (hours), Alt (km)]",
+                "{:s}: [{:.3f}, {:.3f}, {:.1f}]".format(
+                    self.loc_coord.rjust(9), self.lat, self.lt, self.height),
+                "      OCB: [{:.3f}, {:.3f}, N/A]".format(self.ocb_lat,
+                                                          self.ocb_mlt)])
         else:
-            out += "Locations: [Mag. Lat. (degrees), MLT (hours), Index]\n"
-            if self.dat_ind.shape == self.ocb_ind.shape:
+            out = '\n'.join([
+                out,
+                "Locations: [Lat. (degrees), LT (hours), Alt (km), Index]"])
+
+            if self.dat_ind.shape == self.ocb_ind.shape or len(
+                    self.ocb_ind.shape) == 0:
                 for i, dind in enumerate(self.dat_ind):
-                    out += "    AACGM: [{:.3f}, {:.3f}, {:d}]\n".format(
-                        self.aacgm_lat[i], self.aacgm_mlt[i], dind)
-                    out += "      OCB: [{:.3f}, {:.3f}, {:d}]\n".format(
-                        self.ocb_lat[i], self.ocb_mlt[i], self.ocb_ind[i])
-            elif self.ocb_ind.shape == ():
-                for i, dind in enumerate(self.dat_ind):
-                    out += "    AACGM: [{:.3f}, {:.3f}, {:d}]\n".format(
-                        self.aacgm_lat[i], self.aacgm_mlt[i], dind)
-                    if self.ocb_lat.shape == () and np.isnan(self.ocb_lat):
-                        out += "      OCB: [nan, nan, {:d}]\n".format(
+                    if len(self.ocb_lat.shape) == 0 and np.isnan(self.ocb_lat):
+                        ocb_line = "      OCB: [nan, nan, N/A, {:d}]".format(
                             self.ocb_ind)
                     else:
-                        out += "      OCB: [{:.3f}, {:.3f}, {:d}]\n".format(
-                            self.ocb_lat[i], self.ocb_mlt[i], self.ocb_ind)
+                        ocb_line = "".join([
+                            "      OCB: [{:.3f}, ".format(self.ocb_lat[i]),
+                            "{:.3f}, ".format(self.ocb_mlt[i]),
+                            "N/A, {:d}]".format(
+                                self.ocb_ind if len(self.ocb_ind.shape) == 0
+                                else self.ocb_ind[i])])
+                    out = '\n'.join([
+                        out, "{:s}: [{:.3f}, {:.3f}, {:.1f}, {:d}]".format(
+                            self.loc_coord.rjust(9), self.lat[i], self.lt[i],
+                            self.height[i], dind), ocb_line])
             else:
-                out += "    AACGM: [{:.3f}, {:.3f}, {:d}]\n".format(
-                    self.aacgm_lat, self.aacgm_mlt, self.dat_ind)
+                out = '\n'.join([
+                    out, "{:s}: [{:.3f}, {:.3f}, {:.1f}, {:d}]".format(
+                        self.loc_coord.rjust(9), self.lat, self.lt,
+                        self.height, self.dat_ind)])
                 for i, oind in enumerate(self.ocb_ind):
-                    out += "      OCB: [{:.3f}, {:.3f}, {:d}]\n".format(
-                        self.ocb_lat[i], self.ocb_mlt[i], oind)
+                    out = '\n'.join([
+                        out, "      OCB: [{:.3f}, {:.3f}, N/A, {:d}]\n".format(
+                            self.ocb_lat[i], self.ocb_mlt[i], oind)])
 
-        out += "\n-------------------------------------------\n"
-        if self.aacgm_mag.shape == () and self.ocb_mag.shape == ():
-            out += "Value: Magnitude [N, E, Z]\n"
-            out += "AACGM: {:.3g} [{:.3g}".format(self.aacgm_mag, self.aacgm_n)
-            out += ", {:.3g}, {:.3g}]\n".format(self.aacgm_e, self.aacgm_z)
+        out = "\n".join([out, "-------------------------------------------"])
+        if self.vect_mag.shape == () and self.ocb_mag.shape == ():
+            out = '\n'.join([out, "    Value: Mag. [N, E, Z]",
+                             "{:s}: {:.3g} [{:.3g}, {:.3g}, {:.3g}]".format(
+                                 self.vect_coord, self.vect_mag, self.vect_n,
+                                 self.vect_e, self.vect_z)])
             if not np.isnan(self.ocb_mag):
-                out += "  OCB: {:.3g} [{:.3g}".format(self.ocb_mag, self.ocb_n)
-                out += ", {:.3g}, {:.3g}]\n".format(self.ocb_e, self.ocb_z)
+                out = '\n'.join([
+                    out, "  OCB: {:.3g} [{:.3g}, {:.3g}, {:.3g}]".format(
+                        self.ocb_mag, self.ocb_n, self.ocb_e, self.ocb_z)])
         else:
-            out += "Value: Magnitude [N, E, Z] Index\n"
+            out = '\n'.join([out, "   Value: Mag. [N, E, Z] Index"])
             for i, mag in enumerate(self.ocb_mag):
-                if self.aacgm_mag.shape == () and i == 0:
-                    out += "AACGM: {:.3g} [".format(self.aacgm_mag)
-                    out += "{:.3g}, {:.3g}, {:.3g}] {:d}\n".format(
-                        self.aacgm_n, self.aacgm_e, self.aacgm_z, self.dat_ind)
-                elif self.aacgm_mag.shape != ():
-                    out += "AACGM: {:.3g} [".format(self.aacgm_mag[i])
-                    out += "{:.3g}, {:.3g}, {:.3g}] ".format(
-                        self.aacgm_n[i], self.aacgm_e[i], self.aacgm_z[i])
-                    out += "{:d}\n".format(self.dat_ind[i])
-
+                if self.vect_mag.shape == () and i == 0:
+                    vec_line = ''.join([
+                        self.vect_coord, ": {:.3g}".format(self.vect_mag),
+                        " [{:.3g}, {:.3g}, ".format(self.vect_n, self.vect_e),
+                        "{:.3g}] {:d}".format(self.vect_z, self.dat_ind)])
+                elif self.vect_mag.shape != ():
+                    vec_line = ''.join([
+                        self.vect_coord, ": {:.3g} [".format(self.vect_mag[i]),
+                        "{:.3g}, {:.3g}".format(self.vect_n[i], self.vect_e[i]),
+                        ", {:.3g}] {:d}".format(self.vect_z[i],
+                                                  self.dat_ind[i])])
                 if not np.isnan(mag):
-                    out += "  OCB: {:.3g} [{:.3g}, ".format(mag, self.ocb_n[i])
-                    out += "{:.3g}, ".format(self.ocb_e[i])
-                    out += "{:.3g}] {:d}\n".format(
-                        self.ocb_z[i], self.ocb_ind if self.ocb_ind.shape == ()
-                        else self.ocb_ind[i])
+                    vec_line = "".join([
+                        vec_line, "\n     OCB: {:.3g} [".format(mag),
+                        "{:.3g}, {:.3g}, ".format(self.ocb_n[i], self.ocb_e[i]),
+                        "{:.3g}] {:d}".format(
+                            self.ocb_z[i], self.ocb_ind
+                            if self.ocb_ind.shape == () else self.ocb_ind[i])])
+                out = '\n'.join([out, vec_line])
 
-        out += "\n-------------------------------------------\n"
-        if self.scale_func is None:
-            out += "No magnitude scaling function provided\n"
-        else:
-            out += "Scaling function: {:s}\n".format(self.scale_func.__name__)
+        # Print the scaling information
+        out = "\n".join([out, "-------------------------------------------",
+                         "No magnitude scaling function provided"
+                         if self.scale_func is None else
+                         "Scaling function: {:s}\n".format(
+                             self.scale_func.__name__)])
 
         return out
 
@@ -257,6 +336,17 @@ class VectorData(object):
         if type_str.find('int') < 0 and type_str.find('float') < 0:
             out_val = value
 
+        # TODO(#133): remove after old attributes are deprecated
+        dep_pairs = {'aacgm_n': 'vect_n', 'aacgm_e': 'vect_e',
+                     'aacgm_lat': 'lat', 'aacgm_mlt': 'lt',
+                     'aacgm_z': 'vect_z', 'aacgm_mag': 'vect_mag'}
+        if name in dep_pairs.keys():
+            warnings.warn("".join([name, ' has been replaced with ',
+                                   dep_pairs[name], '. Old attribute will be ',
+                                   'removed in version 0.4.1+.']),
+                          DeprecationWarning, stacklevel=2)
+            name = dep_pairs[name]
+
         # Use Object to avoid recursion
         super(VectorData, self).__setattr__(name, out_val)
         return
@@ -268,8 +358,8 @@ class VectorData(object):
         ----------
         ocb_name : str
             OCB attribute name
-        value
-            Value (any type) to be assigned to attribute specified by name
+        ocb_val : any
+            Value to be assigned to attribute specified by name
 
         """
         # Ensure the shape is correct
@@ -277,6 +367,52 @@ class VectorData(object):
             ocb_val = np.full(shape=self.ocb_ind.shape, fill_value=ocb_val)
 
         self.__setattr__(ocb_name, ocb_val)
+        return
+
+    def _dat_attr_setter(self, dat_name, dat_val):
+        """Set data attributes.
+
+        Parameters
+        ----------
+        dat_name : str
+            OCB attribute name
+        dat_val : any
+            Value to be assigned to attribute specified by name
+
+        """
+        # Ensure the shape is correct
+        if np.asarray(dat_val).shape == () and self.dat_ind.shape != ():
+            dat_val = np.full(shape=self.dat_ind.shape, fill_value=dat_val)
+
+        self.__setattr__(dat_name, dat_val)
+        return
+
+    def _test_coords(self):
+        """Test the location and vector coordinate specifications.
+
+        Raises
+        ------
+        ValueError
+            If an unknown coordinate system is supplied or a mix of gedetic
+            and geocentric is supplied
+
+        """
+        good_coords = ['magnetic', 'geocentric', 'geodetic']
+
+        if self.loc_coord not in good_coords:
+            raise ValueError(''.join(['unknown location coordinate: ',
+                                      repr(self.loc_coord), ', expects one of ',
+                                      repr(good_coords)]))
+
+        if self.vect_coord not in good_coords:
+            raise ValueError(''.join(['unknown vector coordinate: ',
+                                      repr(self.vect_coord),
+                                      ', expects one of ', repr(good_coords)]))
+
+        if self.vect_coord != self.loc_coord and 'magnetic' not in [
+                self.vect_coord, self.loc_coord]:
+            raise ValueError('incompatible vector and location coordinates')
+
         return
 
     def _test_update_vector_shape(self):
@@ -289,16 +425,15 @@ class VectorData(object):
 
         Notes
         -----
-        Sets the `vshape` attribute and updates the shape of `aacgm_n`,
-        `aacgm_e`, and `aacgm_z` if needed
+        Sets the `vshape` attribute and updates the shape of `vect_n`,
+        `vect_e`, and `vect_z` if needed
 
         """
 
         # Get the required input shapes
         vshapes = list()
-        for vshape in [self.aacgm_lat.shape, self.aacgm_mlt.shape,
-                       self.dat_ind.shape, self.aacgm_n.shape,
-                       self.aacgm_e.shape, self.aacgm_z.shape]:
+        for vshape in [self.lat.shape, self.lt.shape, self.dat_ind.shape,
+                       self.vect_n.shape, self.vect_e.shape, self.vect_z.shape]:
             if vshape not in vshapes:
                 vshapes.append(vshape)
 
@@ -314,15 +449,12 @@ class VectorData(object):
                 raise ValueError('data index shape must match vector shape')
 
             # Vector input needs to be the same length
-            if self.aacgm_n.shape == ():
-                self.aacgm_n = np.full(shape=self.vshape,
-                                       fill_value=self.aacgm_n)
-            if self.aacgm_e.shape == ():
-                self.aacgm_e = np.full(shape=self.vshape,
-                                       fill_value=self.aacgm_e)
-            if self.aacgm_z.shape == ():
-                self.aacgm_z = np.full(shape=self.vshape,
-                                       fill_value=self.aacgm_z)
+            if self.vect_n.shape == ():
+                self.vect_n = np.full(shape=self.vshape, fill_value=self.vect_n)
+            if self.vect_e.shape == ():
+                self.vect_e = np.full(shape=self.vshape, fill_value=self.vect_e)
+            if self.vect_z.shape == ():
+                self.vect_z = np.full(shape=self.vshape, fill_value=self.vect_z)
         return
 
     def _test_update_bound_shape(self):
@@ -332,10 +464,6 @@ class VectorData(object):
         ------
         ValueError
             If mismatches in the attribute shapes are encountered
-
-        Notes
-        -----
-        Updates the shape of `aacgm_n`, `aacgm_e`, and `aacgm_z` if needed
 
         """
         # Test the OCB input shape
@@ -363,28 +491,51 @@ class VectorData(object):
                 raise ValueError('Mismatched OCB and Vector input shapes')
         return
 
-    @property
-    def aacgm_mag(self):
-        """Magntiude of the AACGM vector(s)."""
-        return self._aacgm_mag
+    def _assign_normal_coord_output(self, out_coord, ind=None):
+        """Get and assign OCB coordinates.
 
-    @aacgm_mag.setter
-    def aacgm_mag(self, aacgm_mag):
-        # Assign the vector magnitude(s)
-        aacgm_sqrt = np.sqrt(self.aacgm_n**2 + self.aacgm_e**2
-                             + self.aacgm_z**2)
+        Parameters
+        ----------
+        out_coord : tuple
+            Tuple of outputs from `normal_coord` method
+        ind : int or NoneType
+            Index for assigning data to the local OCB attributes
 
-        if np.all(np.isnan(aacgm_mag)):
-            self._aacgm_mag = aacgm_sqrt
+        """
+        # OCBoundary and EABoundary have thre outputs, DualBoundary has four
+        if len(out_coord) == 3:
+            if ind is None:
+                (self.ocb_lat, self.ocb_mlt, self.r_corr) = out_coord
+            else:
+                (self.ocb_lat[ind], self.ocb_mlt[ind],
+                 self.r_corr[ind]) = out_coord
         else:
-            if np.any(np.greater(abs(aacgm_mag - aacgm_sqrt), 1.0e-3,
-                                 where=~np.isnan(aacgm_mag))):
-                ocbpy.logger.warning("".join(["inconsistent AACGM components ",
-                                              "with a maximum difference of ",
-                                              "{:} > 1.0e-3".format(
-                                                  abs(aacgm_mag
-                                                      - aacgm_sqrt).max())]))
-            self._aacgm_mag = aacgm_mag
+            if ind is None:
+                (self.ocb_lat, self.ocb_mlt, _, self.r_corr) = out_coord
+            else:
+                (self.ocb_lat[ind], self.ocb_mlt[ind], _,
+                 self.r_corr[ind]) = out_coord
+        return
+
+    @property
+    def vect_mag(self):
+        """Magntiude of the vector(s)."""
+        return self._vect_mag
+
+    @vect_mag.setter
+    def vect_mag(self, vect_mag):
+        # Assign the vector magnitude(s)
+        vect_sqrt = np.sqrt(self.vect_n**2 + self.vect_e**2 + self.vect_z**2)
+
+        if np.all(np.isnan(vect_mag)):
+            self._vect_mag = vect_sqrt
+        else:
+            if np.any(np.greater(abs(vect_mag - vect_sqrt), 1.0e-3,
+                                 where=~np.isnan(vect_mag))):
+                ocbpy.logger.warning("".join([
+                    "inconsistent vector components with a maximum difference ",
+                    "of {:} > 1.0e-3".format(abs(vect_mag - vect_sqrt).max())]))
+            self._vect_mag = vect_mag
         return
 
     @property
@@ -409,8 +560,8 @@ class VectorData(object):
             # Reset the calculated boundary data
             self.clear_data()
 
-            # Re-calculate the AACGM magnitude
-            self.aacgm_mag = np.nan
+            # Re-calculate the vector magnitude
+            self.vect_mag = np.nan
         return
 
     @property
@@ -483,6 +634,39 @@ class VectorData(object):
         self._ocb_attr_setter('_r_corr', r_corr)
         return
 
+    @property
+    def lat(self):
+        """Vector latitude in degrees."""
+        return self._lat
+
+    @lat.setter
+    def lat(self, lat):
+        # Set the boundary latitude value and ensure the shape is correct
+        self._dat_attr_setter('_lat', lat)
+        return
+
+    @property
+    def lt(self):
+        """Vector local time in hours."""
+        return self._lt
+
+    @lt.setter
+    def lt(self, lt):
+        # Set the vector LT value and ensure the shape is correct
+        self._dat_attr_setter('_lt', lt)
+        return
+
+    @property
+    def height(self):
+        """Vector in km."""
+        return self._height
+
+    @height.setter
+    def height(self, height):
+        # Set the vector height value and ensure the shape is correct
+        self._dat_attr_setter('_height', height)
+        return
+
     def clear_data(self):
         """Clear or initialize the output data attributes."""
 
@@ -496,6 +680,7 @@ class VectorData(object):
         self.ocb_quad = np.zeros(shape=self.vshape)
         self.vec_quad = np.zeros(shape=self.vshape)
         self.pole_angle = np.full(shape=self.vshape, fill_value=np.nan)
+        # TODO(#133): remove `aacgm_naz`
         self.aacgm_naz = np.full(shape=self.vshape, fill_value=np.nan)
         self.ocb_aacgm_lat = np.full(shape=self.vshape, fill_value=np.nan)
         self.ocb_aacgm_mlt = np.full(shape=self.vshape, fill_value=np.nan)
@@ -509,48 +694,46 @@ class VectorData(object):
         ocb : ocbpy.OCBoundary or ocbpy.DualBoundary
             OCB, EAB, or Dual boundary object
         scale_func : function
-            Function for scaling AACGM magnitude with arguments:
-            [measurement value, mesurement AACGM latitude (degrees),
-            mesurement OCB latitude (degrees)]
-            Not necessary if defined earlier or no scaling is needed.
-            (default=None)
+            Function for scaling the vector magnitude with arguments:
+            measurement value, measurement latitude (degrees), and measurement
+            boundary-adjusted latitude (degrees). Not necessary if defined
+            earlier or no scaling is needed. (default=None)
 
         """
+        # Update the data values to be in magnetic coordinates
+        dtime = ocb.dtime[ocb.rec_ind] if self.ocb_ind.shape == () else [
+            ocb.dtime[ind] for ind in self.ocb_ind]
+        self.update_vect_coords_to_mag(dtime, ocb.hemisphere)
 
         # If the OCB vector coordinates weren't included in the initial info,
         # update them here
         if(np.all(np.isnan(self.ocb_lat)) or np.all(np.isnan(self.ocb_mlt))
            or np.all(np.isnan(self.r_corr))):
-            # Because the OCB and AACGM magnetic field are both time dependent,
-            # can't call this function with multiple OCBs
+            # Because the boundary locations and magnetic field are both time
+            # dependent, we can't call this function with multiple OCB/EABs
             if self.ocb_ind.shape == ():
-                # Initialise the OCB index
+                # Initialise the boundary index
                 ocb.rec_ind = self.ocb_ind
 
                 # Calculate the coordinates and save the output
-                out_coord = ocb.normal_coord(self.aacgm_lat, self.aacgm_mlt)
-
-                if len(out_coord) == 3:
-                    (self.ocb_lat, self.ocb_mlt, self.r_corr) = out_coord
-                else:
-                    (self.ocb_lat, self.ocb_mlt, _, self.r_corr) = out_coord
+                out_coord = ocb.normal_coord(self.lat, self.lt,
+                                             coords=self.loc_coord,
+                                             height=self.height)
+                self._assign_normal_coord_output(out_coord)
             else:
-                # Cycle through the OCB indices
+                # Cycle through the boundary indices
                 for i, ocb.rec_ind in enumerate(self.ocb_ind):
-                    # Calcualte the coordinates and save the output
+                    # Handle time different, depending on the OCB and
+                    # data shapes. Calcualte the coordinates and save the output
                     if self.ocb_ind.shape == self.dat_ind.shape:
-                        out_coord = ocb.normal_coord(self.aacgm_lat[i],
-                                                     self.aacgm_mlt[i])
+                        out_coord = ocb.normal_coord(self.lat[i], self.lt[i],
+                                                     coords=self.loc_coord,
+                                                     height=self.height[i])
                     else:
-                        out_coord = ocb.normal_coord(self.aacgm_lat,
-                                                     self.aacgm_mlt)
-
-                    if len(out_coord) == 3:
-                        (self.ocb_lat[i], self.ocb_mlt[i],
-                         self.r_corr[i]) = out_coord
-                    else:
-                        (self.ocb_lat[i], self.ocb_mlt[i], _,
-                         self.r_corr[i]) = out_coord
+                        out_coord = ocb.normal_coord(self.lat, self.lt,
+                                                     coords=self.loc_coord,
+                                                     height=self.height)
+                    self._assign_normal_coord_output(out_coord, i)
 
         # Exit if the OCB coordinates can't be calculated at this location
         if(np.all(np.isnan(self.ocb_lat)) or np.all(np.isnan(self.ocb_mlt))
@@ -564,16 +747,14 @@ class VectorData(object):
             self.scaled_r = np.full(
                 shape=self.unscaled_r.shape,
                 fill_value=(90.0 - abs(ocb.ocb.boundary_lat)))
-            self.ocb_aacgm_mlt = ocbpy.ocb_time.deg2hr(
-                ocb.ocb.phi_cent[iocb])
-            self.ocb_aacgm_lat = 90.0 - ocb.ocb.r_cent[iocb]
+            self.ocb_aacgm_mlt, self.ocb_aacgm_lat = vectors.get_pole_loc(
+                ocb.ocb.phi_cent[iocb], ocb.ocb.r_cent[iocb])
         else:
             self.unscaled_r = ocb.r[self.ocb_ind] + self.r_corr
             self.scaled_r = np.full(shape=self.unscaled_r.shape,
                                     fill_value=(90.0 - abs(ocb.boundary_lat)))
-            self.ocb_aacgm_mlt = ocbpy.ocb_time.deg2hr(
-                ocb.phi_cent[self.ocb_ind])
-            self.ocb_aacgm_lat = 90.0 - ocb.r_cent[self.ocb_ind]
+            self.ocb_aacgm_mlt, self.ocb_aacgm_lat = vectors.get_pole_loc(
+                ocb.phi_cent[self.ocb_ind], ocb.r_cent[self.ocb_ind])
 
         # Get the angle at the data vector appended by the AACGM and OCB poles
         self.calc_vec_pole_angle()
@@ -606,111 +787,37 @@ class VectorData(object):
         the data vector location, assuming vertical is positive downwards
         Quadrants: 1 [N, E]; 2 [N, W]; 3 [S, W]; 4 [S, E]
 
-        Requires `ocb_aacgm_mlt`, `aacgm_mlt`, and `pole_angle`.
-        Updates `ocb_quad` and `vec_quad`
+        Requires `ocb_aacgm_mlt`, `lt`, `pole_angle`, `vect_n`, and `vect_e`.
+        Both `loc_coord` and `vect_coord` must be 'magnetic'. Updates `ocb_quad`
+        and `vec_quad`
 
         Raises
         ------
         ValueError
-            If the required input is undefined
+            If the required input is undefined or incorrect
 
         """
+        # When defining quadrants, we will need the vector information in
+        # magnetic coordinates
+        if self.loc_coord != "magnetic" or self.vect_coord != "magnetic":
+            raise ValueError('need magnetic coordinates to define quadrants')
 
-        # Cast the input as arrays
-        self.ocb_aacgm_mlt = np.asarray(self.ocb_aacgm_mlt)
-        self.aacgm_mlt = np.asarray(self.aacgm_mlt)
-        self.pole_angle = np.asarray(self.pole_angle)
-
-        # Test input
+        # Test input, where it is allowable to have empty vector input
         if np.all(np.isnan(self.ocb_aacgm_mlt)):
             raise ValueError("OCB pole location required")
 
-        if np.all(np.isnan(self.aacgm_mlt)):
-            raise ValueError("Vector AACGM location required")
+        if np.all(np.isnan(self.lt)):
+            raise ValueError("Vector location required")
 
         if np.all(np.isnan(self.pole_angle)):
             raise ValueError("vector angle in poles-vector triangle required")
 
         # Determine where the OCB pole is relative to the data vector
-        ocb_adj_mlt = self.ocb_aacgm_mlt - self.aacgm_mlt
-
-        neg_mask = (np.less(ocb_adj_mlt, 0.0, where=~np.isnan(ocb_adj_mlt))
-                    & ~np.isnan(ocb_adj_mlt))
-        while np.any(neg_mask):
-            if ocb_adj_mlt.shape == ():
-                ocb_adj_mlt += 24.0
-                neg_mask = [False]
-            else:
-                ocb_adj_mlt[neg_mask] += 24.0
-                neg_mask = (np.less(ocb_adj_mlt, 0.0,
-                                    where=~np.isnan(ocb_adj_mlt))
-                            & ~np.isnan(ocb_adj_mlt))
-
-        large_mask = (np.greater_equal(abs(ocb_adj_mlt), 24.0,
-                                       where=~np.isnan(ocb_adj_mlt))
-                      & ~np.isnan(ocb_adj_mlt))
-        if np.any(large_mask):
-            if ocb_adj_mlt.shape == ():
-                ocb_adj_mlt -= 24.0 * np.sign(ocb_adj_mlt)
-            else:
-                ocb_adj_mlt[large_mask] -= 24.0 * np.sign(
-                    ocb_adj_mlt[large_mask])
-
-        # Find the quadrant in which the OCB pole lies
-        nan_mask = (~np.isnan(self.pole_angle) & ~np.isnan(ocb_adj_mlt))
-        quad1_mask = (np.less(self.pole_angle, 90.0, where=nan_mask)
-                      & np.less(ocb_adj_mlt, 12.0, where=nan_mask) & nan_mask)
-        quad2_mask = (np.less(self.pole_angle, 90.0, where=nan_mask)
-                      & np.greater_equal(ocb_adj_mlt, 12.0, where=nan_mask)
-                      & nan_mask)
-        quad3_mask = (np.greater_equal(self.pole_angle, 90.0, where=nan_mask)
-                      & np.greater_equal(ocb_adj_mlt, 12.0, where=nan_mask)
-                      & nan_mask)
-        quad4_mask = (np.greater_equal(self.pole_angle, 90.0, where=nan_mask)
-                      & np.less(ocb_adj_mlt, 12.0, where=nan_mask) & nan_mask)
-
-        if self.ocb_quad.shape == ():
-            if np.all(quad1_mask):
-                self.ocb_quad = np.asarray(1)
-            elif np.all(quad2_mask):
-                self.ocb_quad = np.asarray(2)
-            elif np.all(quad3_mask):
-                self.ocb_quad = np.asarray(3)
-            elif np.all(quad4_mask):
-                self.ocb_quad = np.asarray(4)
-        else:
-            self.ocb_quad[quad1_mask] = 1
-            self.ocb_quad[quad2_mask] = 2
-            self.ocb_quad[quad3_mask] = 3
-            self.ocb_quad[quad4_mask] = 4
+        self.ocb_quad = vectors.define_pole_quadrants(
+            self.lt, self.ocb_aacgm_mlt, self.pole_angle)
 
         # Now determine which quadrant the vector is pointed into
-        nan_mask = (~np.isnan(self.aacgm_n) & ~np.isnan(self.aacgm_e))
-        quad1_mask = (np.greater_equal(self.aacgm_n, 0.0, where=nan_mask)
-                      & np.greater_equal(self.aacgm_e, 0.0, where=nan_mask)
-                      & nan_mask)
-        quad2_mask = (np.greater_equal(self.aacgm_n, 0.0, where=nan_mask)
-                      & np.less(self.aacgm_e, 0.0, where=nan_mask) & nan_mask)
-        quad3_mask = (np.less(self.aacgm_n, 0.0, where=nan_mask)
-                      & np.less(self.aacgm_e, 0.0, where=nan_mask) & nan_mask)
-        quad4_mask = (np.less(self.aacgm_n, 0.0, where=nan_mask)
-                      & np.greater_equal(self.aacgm_e, 0.0, where=nan_mask)
-                      & nan_mask)
-
-        if self.vec_quad.shape == ():
-            if np.all(quad1_mask):
-                self.vec_quad = np.asarray(1)
-            elif np.all(quad2_mask):
-                self.vec_quad = np.asarray(2)
-            elif np.all(quad3_mask):
-                self.vec_quad = np.asarray(3)
-            elif np.all(quad4_mask):
-                self.vec_quad = np.asarray(4)
-        else:
-            self.vec_quad[quad1_mask] = 1
-            self.vec_quad[quad2_mask] = 2
-            self.vec_quad[quad3_mask] = 3
-            self.vec_quad[quad4_mask] = 4
+        self.vec_quad = vectors.define_vect_quadrants(self.vect_n, self.vect_e)
 
         return
 
@@ -724,25 +831,15 @@ class VectorData(object):
 
         Notes
         -----
-        Requires `ocb_lat`, `ocb_mlt`, `ocb_aacgm_mlt`, and `pole_angle`.
-        Updates `ocb_n`, `ocb_e`, `ocb_z`, and `ocb_mag`
+        Requires `lat`, `lt`, `ocb_aacgm_mlt`, `ocb_aacgm_lat`, and
+        `pole_angle`. Updates `ocb_n`, `ocb_e`, `ocb_z`, and `ocb_mag`.
+        Temporarily updates `aacgm_naz`, which has been deprecated and will
+        be removed in version 0.4.1+.
 
         """
-
-        # Ensure the input is array-like
-        self.ocb_lat = np.asarray(self.ocb_lat)
-        self.ocb_mlt = np.asarray(self.ocb_mlt)
-        self.ocb_aacgm_mlt = np.asarray(self.ocb_aacgm_mlt)
-        self.pole_angle = np.asarray(self.pole_angle)
-        self.aacgm_n = np.asarray(self.aacgm_n)
-        self.aacgm_e = np.asarray(self.aacgm_e)
-        self.aacgm_z = np.asarray(self.aacgm_z)
-        self.ocb_quad = np.asarray(self.ocb_quad)
-        self.vec_quad = np.asarray(self.vec_quad)
-
         # Test input
-        if np.all(np.isnan(self.ocb_lat)) or np.all(np.isnan(self.ocb_mlt)):
-            raise ValueError("OCB coordinates required")
+        if np.all(np.isnan(self.lat)) or np.all(np.isnan(self.lt)):
+            raise ValueError("Vector locations required")
 
         if np.all(np.isnan(self.ocb_aacgm_mlt)):
             raise ValueError("OCB pole location required")
@@ -750,154 +847,45 @@ class VectorData(object):
         if np.all(np.isnan(self.pole_angle)):
             raise ValueError("vector angle in poles-vector triangle required")
 
-        # Determine the special case assignments
-        zero_mask = ((self.aacgm_n == 0.0) & (self.aacgm_e == 0.0))
-        ns_mask = ((self.pole_angle == 0.0) | (self.pole_angle == 180.0))
-        norm_mask = ~(zero_mask + ns_mask)
+        # Adjust the vector to OCB coordinates without scaling
+        self.ocb_n, self.ocb_e, self.ocb_z = vectors.adjust_vector(
+            self.lt, self.lat, self.vect_n, self.vect_e, self.vect_z,
+            self.vec_quad, self.ocb_aacgm_mlt, self.ocb_aacgm_lat,
+            self.pole_angle, self.ocb_quad)
 
-        # There's no magnitude, so nothing to adjust
-        if np.any(zero_mask):
-            if self.aacgm_n.shape == ():
-                self.ocb_n = np.zeros(shape=self.ocb_n.shape)
-                self.ocb_e = np.zeros(shape=self.ocb_e.shape)
-                self.ocb_z = np.zeros(shape=self.ocb_z.shape)
+        # TODO(#133): remove `aacgm_naz`
+        vmag = np.sqrt(self.vect_n**2 + self.vect_e**2)
+        if len(vmag.shape) == 0:
+            self.aacgm_naz = np.degrees(np.arccos(self.vect_n / vmag))
+        else:
+            zero_mask = ((self.vect_n == 0.0) & (self.vect_e == 0.0))
+            ns_mask = ((self.pole_angle == 0.0) | (self.pole_angle == 180.0))
+            norm_mask = ~(zero_mask + ns_mask)
+            self.aacgm_naz[norm_mask] = np.degrees(np.arccos(
+                self.vect_n[norm_mask] / vmag[norm_mask]))
+
+        # Scale the outputs, if desired
+        if self.scale_func is not None:
+            if len(self.ocb_n.shape) == 0:
+                self.ocb_n = np.full(
+                    shape=self.ocb_n.shape, fill_value=self.scale_func(
+                        self.vect_n, self.unscaled_r, self.scaled_r))
+                self.ocb_e = np.full(
+                    shape=self.ocb_e.shape, fill_value=self.scale_func(
+                        self.vect_e, self.unscaled_r, self.scaled_r))
+                self.ocb_z = np.full(
+                    shape=self.ocb_z.shape, fill_value=self.scale_func(
+                        self.vect_z, self.unscaled_r, self.scaled_r))
             else:
-                self.ocb_n[zero_mask] = 0.0
-                self.ocb_e[zero_mask] = 0.0
-                self.ocb_z[zero_mask] = 0.0
-
-        # The measurement is aligned with the AACGM and OCB poles
-        if np.any(ns_mask):
-            if self.scale_func is None:
-                if self.aacgm_n.shape == ():
-                    self.ocb_n = np.full(shape=self.ocb_n.shape,
-                                         fill_value=self.aacgm_n)
-                    self.ocb_e = np.full(shape=self.ocb_e.shape,
-                                         fill_value=self.aacgm_e)
-                    self.ocb_z = np.full(shape=self.ocb_z.shape,
-                                         fill_value=self.aacgm_z)
-                else:
-                    self.ocb_n[ns_mask] = self.aacgm_n[ns_mask]
-                    self.ocb_e[ns_mask] = self.aacgm_e[ns_mask]
-                    self.ocb_z[ns_mask] = self.aacgm_z[ns_mask]
-            else:
-                if self.aacgm_n.shape == ():
-                    self.ocb_n = np.full(shape=self.ocb_n.shape,
-                                         fill_value=self.scale_func(
-                                             self.aacgm_n, self.unscaled_r,
-                                             self.scaled_r))
-                    self.ocb_e = np.full(shape=self.ocb_e.shape,
-                                         fill_value=self.scale_func(
-                                             self.aacgm_e, self.unscaled_r,
-                                             self.scaled_r))
-                    self.ocb_z = np.full(shape=self.ocb_z.shape,
-                                         fill_value=self.scale_func(
-                                             self.aacgm_z, self.unscaled_r,
-                                             self.scaled_r))
-                else:
-                    self.ocb_n[ns_mask] = self.scale_func(
-                        self.aacgm_n[ns_mask], self.unscaled_r[ns_mask],
-                        self.scaled_r[ns_mask])
-                    self.ocb_e[ns_mask] = self.scale_func(
-                        self.aacgm_e[ns_mask], self.unscaled_r[ns_mask],
-                        self.scaled_r[ns_mask])
-                    self.ocb_z[ns_mask] = self.scale_func(
-                        self.aacgm_z[ns_mask], self.unscaled_r[ns_mask],
-                        self.scaled_r[ns_mask])
-
-            # Determine if the measurement is on or between the poles
-            # This does not affect the vertical direction
-            sign_mask = ((self.pole_angle == 0.0)
-                         & np.greater_equal(self.aacgm_lat, self.ocb_aacgm_lat,
-                                            where=~np.isnan(self.aacgm_lat))
-                         & ~np.isnan(self.aacgm_lat))
-            if np.any(sign_mask):
-                if self.ocb_n.shape == ():
-                    self.ocb_n *= -1.0
-                    self.ocb_e *= -1.0
-                else:
-                    self.ocb_n[sign_mask] *= -1.0
-                    self.ocb_e[sign_mask] *= -1.0
-
-        # If there are still undefined vectors, assign them using the
-        # typical case
-        if np.any(norm_mask):
-            # If not defined, get the OCB and vector quadrants
-            if(np.any(self.ocb_quad[norm_mask] == 0)
-               or np.any(self.vec_quad[norm_mask] == 0)):
-                self.define_quadrants()
-
-            # Get the unscaled 2D vector magnitude and
-            # calculate the AACGM north azimuth in degrees
-            if self.aacgm_n.shape == ():
-                vmag = np.sqrt(self.aacgm_n**2 + self.aacgm_e**2)
-                self.aacgm_naz = np.degrees(np.arccos(self.aacgm_n / vmag))
-            else:
-                vmag = np.sqrt(self.aacgm_n[norm_mask]**2
-                               + self.aacgm_e[norm_mask]**2)
-                self.aacgm_naz[norm_mask] = np.degrees(
-                    np.arccos(self.aacgm_n[norm_mask] / vmag))
-
-            # Get the OCB north azimuth in radians
-            ocb_angle = np.radians(self.calc_ocb_polar_angle())
-
-            # Get the sign of the North and East components
-            vsigns = self.calc_ocb_vec_sign(north=True, east=True)
-
-            # Scale the vector along the OCB north and account for
-            # any changes associated with adjusting the size of the polar cap
-            if self.scale_func is not None:
-                if self.unscaled_r.shape == ():
-                    un_r = self.unscaled_r
-                    sc_r = self.scaled_r
-                else:
-                    un_r = self.unscaled_r[norm_mask]
-                    sc_r = self.scaled_r[norm_mask]
-
-                if self.aacgm_z.shape == ():
-                    a_z = self.aacgm_z
-                else:
-                    a_z = self.aacgm_z[norm_mask]
-
-                vmag = self.scale_func(vmag, un_r, sc_r)
-                vz = self.scale_func(a_z, un_r, sc_r)
-            else:
-                if self.aacgm_z.shape == ():
-                    vz = self.aacgm_z
-                else:
-                    vz = self.aacgm_z[norm_mask]
-                    nan_mask = (np.isnan(vmag)
-                                | (np.isnan(ocb_angle) if ocb_angle.shape == ()
-                                   else np.isnan(ocb_angle[norm_mask])))
-                    vz[nan_mask] = np.nan
-
-            # Restrict the OCB angle to result in positive sines and cosines
-            lmask = ocb_angle > np.pi / 2.0
-            if np.any(lmask):
-                if ocb_angle.shape == ():
-                    ocb_angle = np.pi - ocb_angle
-                else:
-                    ocb_angle[lmask] = np.pi - ocb_angle[lmask]
-
-            # Calculate the vector components
-            if vmag.shape == ():
-                self.ocb_n = np.full(shape=self.ocb_n.shape,
-                                     fill_value=(vsigns['north'] * vmag
-                                                 * np.cos(ocb_angle)))
-                self.ocb_e = np.full(shape=self.ocb_e.shape,
-                                     fill_value=(vsigns['east'] * vmag
-                                                 * np.sin(ocb_angle)))
-                self.ocb_z = np.full(shape=self.ocb_z.shape, fill_value=vz)
-            else:
-                self.ocb_n[norm_mask] = (vsigns['north'][norm_mask] * vmag
-                                         * np.cos(ocb_angle[norm_mask]))
-                self.ocb_e[norm_mask] = (vsigns['east'][norm_mask] * vmag
-                                         * np.sin(ocb_angle[norm_mask]))
-                self.ocb_z[norm_mask] = vz
+                self.ocb_n = self.scale_func(self.vect_n, self.unscaled_r,
+                                             self.scaled_r)
+                self.ocb_e = self.scale_func(self.vect_e, self.unscaled_r,
+                                             self.scaled_r)
+                self.ocb_z = self.scale_func(self.vect_z, self.unscaled_r,
+                                             self.scaled_r)
 
         # Calculate the scaled OCB vector magnitude
-        self.ocb_mag = np.sqrt(self.ocb_n**2 + self.ocb_e**2
-                               + self.ocb_z**2)
+        self.ocb_mag = np.sqrt(self.ocb_n**2 + self.ocb_e**2 + self.ocb_z**2)
 
         return
 
@@ -919,82 +907,26 @@ class VectorData(object):
         Requires `ocb_quad`, `vec_quad`, `aacgm_naz`, and `pole_angle`
 
         """
-
-        quad_range = np.arange(1, 5)
-
+        # TODO(#133): deprecation warning, method is no longer needed here
+        warnings.warn("".join(["`calc_ocb_polar_angle` method deprecated, and",
+                               " will be removed in version 0.4.1+. Instead, ",
+                               "use `ocbpy.vectors.calc_dest_polar_angle`."]),
+                      DeprecationWarning, stacklevel=2)
+        
         # Test input
-        if not np.any(np.isin(self.ocb_quad, quad_range)):
-            raise ValueError("OCB quadrant undefined")
-
-        if not np.any(np.isin(self.vec_quad, quad_range)):
-            raise ValueError("Vector quadrant undefined")
-
         if np.all(np.isnan(self.aacgm_naz)):
-            raise ValueError("AACGM polar angle undefined")
+            raise ValueError("AACGM North polar angle undefined")
 
         if np.all(np.isnan(self.pole_angle)):
             raise ValueError("Vector angle undefined")
 
-        # Initialise the output and set the quadrant dictionary
-        nan_mask = (~np.isnan(self.aacgm_naz) & ~np.isnan(self.pole_angle))
-        ocb_naz = np.full(shape=(self.aacgm_naz + self.pole_angle).shape,
-                          fill_value=np.nan)
-        quads = {oquad: {vquad: (self.ocb_quad == oquad)
-                         & (self.vec_quad == vquad) & nan_mask
-                         for vquad in quad_range} for oquad in quad_range}
-
-        # Create masks for the different quadrant combinations
-        abs_mask = (quads[1][1] | quads[2][2] | quads[3][3] | quads[4][4])
-        add_mask = (quads[1][2] | quads[1][3] | quads[2][1] | quads[2][4]
-                    | quads[3][1] | quads[4][2])
-        mpa_mask = (quads[1][4] | quads[2][3])
-        maa_mask = (quads[3][2] | quads[4][1])
-        cir_mask = (quads[3][4] | quads[4][3])
-
-        # Calculate OCB polar angle based on the quadrants and other angles
-        if np.any(abs_mask):
-            if ocb_naz.shape == ():
-                ocb_naz = abs(self.aacgm_naz - self.pole_angle)
-            else:
-                ocb_naz[abs_mask] = abs(self.aacgm_naz
-                                        - self.pole_angle)[abs_mask]
-
-        if np.any(add_mask):
-            if ocb_naz.shape == ():
-                ocb_naz = self.pole_angle + self.aacgm_naz
-                if ocb_naz > 180.0:
-                    ocb_naz = 360.0 - ocb_naz
-            else:
-                ocb_naz[add_mask] = (self.pole_angle
-                                     + self.aacgm_naz)[add_mask]
-                lmask = (ocb_naz > 180.0) & add_mask
-                if np.any(lmask):
-                    ocb_naz[lmask] = 360.0 - ocb_naz[lmask]
-
-        if np.any(mpa_mask):
-            if ocb_naz.shape == ():
-                ocb_naz = self.aacgm_naz - self.pole_angle
-            else:
-                ocb_naz[mpa_mask] = (self.aacgm_naz
-                                     - self.pole_angle)[mpa_mask]
-
-        if np.any(maa_mask):
-            if ocb_naz.shape == ():
-                ocb_naz = self.pole_angle - self.aacgm_naz
-            else:
-                ocb_naz[maa_mask] = (self.pole_angle
-                                     - self.aacgm_naz)[maa_mask]
-
-        if np.any(cir_mask):
-            if ocb_naz.shape == ():
-                ocb_naz = 360.0 - self.aacgm_naz - self.pole_angle
-            else:
-                ocb_naz[cir_mask] = (360.0 - self.aacgm_naz
-                                     - self.pole_angle)[cir_mask]
+        # Calcuate the North azimuth angle for the OCB pole
+        ocb_naz = vectors.calc_dest_polar_angle(
+            self.ocb_quad, self.vec_quad, self.aacgm_naz, self.pole_angle)
 
         return ocb_naz
 
-    def calc_ocb_vec_sign(self, north=False, east=False, quads=dict()):
+    def calc_ocb_vec_sign(self, north=False, east=False, quads=None):
         """Calculate the sign of the North and East components.
 
         Parameters
@@ -1003,9 +935,9 @@ class VectorData(object):
             Get the sign of the north component(s) (default=False)
         east : bool
             Get the sign of the east component(s) (default=False)
-        quads : dict
+        quads : dict or NoneType
             Dictionary of boolean values or arrays of boolean values for OCB
-            and Vector quadrants. (default=dict())
+            and Vector quadrants. (default=None)
 
         Returns
         -------
@@ -1020,27 +952,19 @@ class VectorData(object):
 
         Notes
         -----
-        Requires `ocb_quad`, `vec_quad`, `aacgm_naz`, and `pole_angle`
+        Requires `ocb_quad`, `vec_quad`, `aacgm_naz`, and `pole_angle`.
+        Method is deprecated and will be removed in version 0.4.1+.
 
         """
-
-        quad_range = np.arange(1, 5)
-
-        # Ensure the required input is array-like
-        self.ocb_quad = np.asarray(self.ocb_quad)
-        self.vec_quad = np.asarray(self.vec_quad)
-        self.aacgm_naz = np.asarray(self.aacgm_naz)
-        self.pole_angle = np.asarray(self.pole_angle)
+        # TODO(#133): deprecation warning, method is no longer needed here
+        warnings.warn("".join(["`calc_ocb_vec_sign` method deprecated, and",
+                               " will be removed in version 0.4.1+. Instead, ",
+                               "use `ocbpy.vectors.calc_dest_vec_sign`."]),
+                      DeprecationWarning, stacklevel=2)
 
         # Test input
         if not np.any([north, east]):
             raise ValueError("must set at least one direction")
-
-        if not np.any(np.isin(self.ocb_quad, quad_range)):
-            raise ValueError("OCB quadrant undefined")
-
-        if not np.any(np.isin(self.vec_quad, quad_range)):
-            raise ValueError("Vector quadrant undefined")
 
         if np.all(np.isnan(self.aacgm_naz)):
             raise ValueError("AACGM polar angle undefined")
@@ -1048,76 +972,10 @@ class VectorData(object):
         if np.all(np.isnan(self.pole_angle)):
             raise ValueError("Vector angle undefined")
 
-        # If necessary, initialise quadrant dictionary
-        nan_mask = (~np.isnan(self.aacgm_naz) & ~np.isnan(self.pole_angle))
-        if not np.all([kk in quads.keys() for kk in quad_range]):
-            quads = {o: {v: (self.ocb_quad == o) & (self.vec_quad == v)
-                         & nan_mask for v in quad_range} for o in quad_range}
-
-        # Initialise output
-        vsigns = {"north": np.zeros(shape=quads[1][1].shape),
-                  "east": np.zeros(shape=quads[1][1].shape)}
-
-        # Determine the desired vector signs
-        if north:
-            pole_minus = self.pole_angle - 90.0
-            minus_pole = 90.0 - self.pole_angle
-            pole_plus = self.pole_angle + 90.0
-
-            pmask = (quads[1][1] | quads[2][2] | quads[3][3] | quads[4][4]
-                     | ((quads[1][4] | quads[2][3])
-                        & np.less_equal(self.aacgm_naz, pole_plus,
-                                        where=nan_mask))
-                     | ((quads[1][2] | quads[2][1])
-                        & np.less_equal(self.aacgm_naz, minus_pole,
-                                        where=nan_mask))
-                     | ((quads[3][4] | quads[4][3])
-                        & np.greater_equal(self.aacgm_naz, 180.0 - pole_minus,
-                                           where=nan_mask))
-                     | ((quads[3][2] | quads[4][1])
-                        & np.greater_equal(self.aacgm_naz, pole_minus,
-                                           where=nan_mask)))
-
-            if np.any(pmask):
-                if vsigns["north"].shape == ():
-                    vsigns["north"] = 1
-                else:
-                    vsigns["north"][pmask] = 1
-
-            if np.any(~pmask):
-                if vsigns["north"].shape == ():
-                    vsigns["north"] = -1
-                else:
-                    vsigns["north"][~pmask] = -1
-
-        if east:
-            minus_pole = 180.0 - self.pole_angle
-
-            pmask = (quads[1][4] | quads[2][1] | quads[3][2] | quads[4][3]
-                     | ((quads[1][1] | quads[4][4])
-                        & np.greater_equal(self.aacgm_naz, self.pole_angle,
-                                           where=nan_mask))
-                     | ((quads[3][1] | quads[2][4])
-                        & np.less_equal(self.aacgm_naz, minus_pole,
-                                        where=nan_mask))
-                     | ((quads[4][2] | quads[1][3])
-                        & np.greater_equal(self.aacgm_naz, minus_pole,
-                                           where=nan_mask))
-                     | ((quads[2][2] | quads[3][3])
-                        & np.less_equal(self.aacgm_naz, self.pole_angle,
-                                        where=nan_mask)))
-
-            if np.any(pmask):
-                if vsigns["east"].shape == ():
-                    vsigns["east"] = 1
-                else:
-                    vsigns["east"][pmask] = 1
-
-            if np.any(~pmask):
-                if vsigns["east"].shape == ():
-                    vsigns["east"] = -1
-                else:
-                    vsigns["east"][~pmask] = -1
+        # Calcualte the sign of the North and East vector components
+        vsigns = vectors.calc_dest_vec_sign(
+            self.ocb_quad, self.vec_quad, self.aacgm_naz, self.pole_angle,
+            north=north, east=east, quads=quads)
 
         return vsigns
 
@@ -1127,27 +985,32 @@ class VectorData(object):
         Raises
         ------
         ValueError
-            If the input is undefined or inappropriately sized arrays
+            If the input is undefined or inappropriate
 
         Notes
         -----
-        Requires `aacgm_mlt`, `aacgm_lat`, `ocb_aacgm_mlt`, and `ocb_aacgm_lat`.
-        Updates `pole_angle` using spherical trigonometry.
+        Requires `lt` and `lat` in magnetic coordinates, as well as
+        defined `ocb_aacgm_mlt` and `ocb_aacgm_lat` attributes. Updates
+        `pole_angle` using spherical trigonometry.
 
         """
+        # When defining vector-pole angles, we will need the vector location in
+        # magnetic coordinates
+        if self.loc_coord != "magnetic":
+            raise ValueError('need magnetic coordinates to define quadrants')
 
         # Cast inputs as arrays
-        self.aacgm_mlt = np.asarray(self.aacgm_mlt)
-        self.aacgm_lat = np.asarray(self.aacgm_lat)
+        self.lt = np.asarray(self.lt)
+        self.lat = np.asarray(self.lat)
         self.ocb_aacgm_mlt = np.asarray(self.ocb_aacgm_mlt)
         self.ocb_aacgm_lat = np.asarray(self.ocb_aacgm_lat)
 
         # Test input
-        if np.all(np.isnan(self.aacgm_mlt)):
-            raise ValueError("AACGM MLT of Vector(s) undefinded")
+        if np.all(np.isnan(self.lt)):
+            raise ValueError("Vector local time is undefined")
 
-        if np.all(np.isnan(self.aacgm_lat)):
-            raise ValueError("AACGM latitude of Vector(s) undefined")
+        if np.all(np.isnan(self.lat)):
+            raise ValueError("Vector latitude is undefined")
 
         if np.all(np.isnan(self.ocb_aacgm_mlt)):
             raise ValueError("AACGM MLT of OCB pole(s) undefined")
@@ -1155,78 +1018,242 @@ class VectorData(object):
         if np.all(np.isnan(self.ocb_aacgm_lat)):
             raise ValueError("AACGM latitude of OCB pole(s) undefined")
 
-        # Convert the AACGM MLT of the observation and OCB pole to radians,
-        # then calculate the difference between them.
-        del_long = ocbpy.ocb_time.hr2rad(self.ocb_aacgm_mlt - self.aacgm_mlt)
+        # Find the angle between the AACGM pole, the vector location in AACGM
+        # coordinates, and the high-latitude boundary pole
+        self.pole_angle = vectors.calc_vec_pole_angle(
+            self.lt, self.lat, self.ocb_aacgm_mlt, self.ocb_aacgm_lat)
 
-        if del_long.shape == ():
-            if del_long < -np.pi:
-                del_long += 2.0 * np.pi
-        else:
-            del_long[del_long < -np.pi] += 2.0 * np.pi
+        return
 
-        # Initalize the output
-        self.pole_angle = np.full(shape=del_long.shape, fill_value=np.nan)
+    def update_loc_coords(self, dtimes, coord='magnetic'):
+        """Update location coordiantes to the desired system.
 
-        # Assign the extreme values
-        if del_long.shape == ():
-            if del_long in [-np.pi, 0.0, np.pi]:
-                if abs(self.aacgm_lat) > abs(self.ocb_aacgm_lat):
-                    self.pole_angle = 180.0
+        Parameters
+        ----------
+        dtimes : dt.datetime or list-like
+            Datetime or list of datetimes for conversion
+        coord : str
+            Desired coordinate system, accepts 'magnetic', 'geodetic', and
+            'geocentric' (default='magnetic')
+
+        Raises
+        ------
+        ValueError
+            If the time and location inputs are mismatched.
+
+        Notes
+        -----
+        Updates `lat`, `lt`, and `loc_coord` attributes.
+
+        """
+        dtime = None
+
+        if coord.lower() != self.loc_coord:
+            # Ensure the data is shaped correctly
+            if len(self.lt.shape) == 0 and len(self.lat.shape) == 0:
+                if hasattr(dtimes, 'year'):
+                    # There is only one time and one location
+                    dtime = dtimes
                 else:
-                    self.pole_angle = 0.0
+                    # There are multiple times and one location
+                    self.lt = np.full(shape=len(dtimes), fill_value=self.lt)
+                    self.lat = np.full(shape=len(dtimes), fill_value=self.lat)
+            else:
+                if hasattr(dtimes, 'year'):
+                    # There is one time and multiple locations
+                    dtime = dtimes
+                else:
+                    # There are multiple times and locations, the length must
+                    # be the same
+                    if len(dtimes) != len(self.lt) or len(dtimes) != len(
+                            self.lat):
+                        raise ValueError('mismatched time and location inputs')
+
+            # Initalize the AACGM method using the recommending tracing
+            methods = ["ALLOWTRACE"]
+
+            # Handle the conversion to/from magnetic coordinates separately
+            if coord.lower() == "magnetic":
+                # Update the method
+                if self.loc_coord == "geocentric":
+                    methods.append(self.loc_coord.upper())
+                methods.append("G2A")
+
+                if dtime is None:
+                    new_lat = list()
+                    new_lt = list()
+                    method = "|".join(methods)
+                    for i, val in enumerate(dtimes):
+                        # Get the longitude for this time
+                        lon = ocb_time.slt2glon(self.lt[i], val)
+
+                        # Convert to magnetic coordinates
+                        out = aacgmv2.get_aacgm_coord_arr(
+                            self.lat[i], lon, self.height[i], val, method)
+
+                        # Save the output
+                        new_lat.append(out[0])
+                        new_lat.append(out[2])
+                else:
+                    # Get the longitude
+                    lon = ocb_time.slt2glon(self.lt, dtime)
+
+                    # Convert to magnetic coordinates
+                    new_lat, _, new_lt = aacgmv2.get_aacgm_coord_arr(
+                        self.lat, lon, self.height, dtime, "|".join(methods))
+            else:
+                # Update the method
+                if coord.lower() == "geocentric":
+                    methods.append(coord.upper())
+                methods.append("A2G")
+
+                if dtime is None:
+                    new_lat = list()
+                    new_lt = list()
+                    method = "|".join(methods)
+                    for i, val in enumerate(dtimes):
+                        # Get the longitude for this time
+                        lon = aacgmv2.convert_mlt(self.lt[i], val, m2a=True)
+
+                        # Convert latitude and longitude
+                        out = aacgmv2.convert_latlon_arr(
+                            self.lat[i], lon, self.height[i], val, method)
+
+                        # Convert to SLT and save the latitude
+                        new_lt.append(ocb_time.glon2slt(out[1], val))
+                        new_lat.append(out[0])
+                else:
+                    # Get the longitude
+                    lon = aacgmv2.convert_mlt(self.lt, dtime, m2a=True)
+
+                    # Convert latitude and longitude
+                    new_lat, new_lon, _ = aacgmv2.convert_latlon_arr(
+                        self.lat, lon, self.height, dtime, "|".join(methods))
+
+                    # Convert to SLT
+                    new_lt = ocb_time.glon2slt(new_lon, dtime)
+
+            # Update the location attributes
+            self.lat = np.asarray(new_lat)
+            self.lt = np.asarray(new_lt)
+            self.loc_coord = coord
+
+        return
+
+    def update_vect_coords_to_mag(self, dtimes, hemisphere):
+        """Convert geographic vector components into AAGGMV2 coordinates.
+
+        Parameters
+        ----------
+        dtimes : dt.datetime or list-like
+            Datetime or list of datetimes for conversion
+        hemisphere : int
+            -1 for Southern, 1 for Northern
+
+        Notes
+        -----
+        This follows the procedure in `set_ocb`, and is complicated to reverse.
+
+        """
+        dtime = None
+
+        if self.vect_coord != "magnetic":
+            # Need the geographic and magnetic locations
+            if self.loc_coord == 'magnetic':
+                # Assign the magnetic location
+                mag_lt = np.asarray(self.lt)
+                mag_lat = np.asarray(self.lat)
+
+                # Calculate the geographic location
+                self.update_loc_coords(dtimes, coord=self.vect_coord)
+                geo_lt = np.asarray(self.lt)
+                geo_lat = np.asarray(self.lat)
+
+                # Re-assign the location values
+                self.lt = np.asarray(mag_lt)
+                self.lat = np.asarray(mag_lat)
+                self.loc_coord = 'magnetic'
+            else:
+                # Assign the geographic location
+                geo_lt = np.asarray(self.lt)
+                geo_lat = np.asarray(self.lat)
+
+                # Update the location coordiantes to be magnetic
+                self.update_loc_coords(dtimes)
+                mag_lt = np.asarray(self.lt)
+                mag_lat = np.asarray(self.lat)
+
+            # Exit if the magnetic coordinates can't be calculated
+            if np.all(np.isnan(mag_lat)) or np.all(np.isnan(mag_lt)):
                 return
-        else:
-            zero_mask = (((del_long == 0) | (abs(del_long) == np.pi))
-                         & np.greater(abs(self.aacgm_lat),
-                                      abs(self.ocb_aacgm_lat),
-                                      where=~np.isnan(del_long)))
-            flat_mask = (((del_long == 0) | (abs(del_long) == np.pi))
-                         & np.less_equal(abs(self.aacgm_lat),
-                                         abs(self.ocb_aacgm_lat),
-                                         where=~np.isnan(del_long)))
 
-            self.pole_angle[flat_mask] = 180.0
-            self.pole_angle[zero_mask] = 0.0
-            update_mask = (~zero_mask & ~flat_mask)
+            # Ensure the geographic and magnetic coordinates are the same shape
+            if geo_lt.shape != mag_lt.shape:
+                if len(geo_lt.shape) == 0:
+                    # The geographic values are singlular, expand them
+                    geo_lt = np.full(shape=mag_lt.shape, fill_value=geo_lt)
+                    geo_lat = np.full(shape=mag_lt.shape, fill_value=geo_lat)
+                elif len(mag_lt.shape) == 0:
+                    # The magnetic values are singular, expend them
+                    mag_lt = np.full(shape=geo_lt.shape, fill_value=mag_lt)
+                    mag_lat = np.full(shape=geo_lt.shape, fill_value=mag_lat)
 
-            if not np.any(update_mask):
-                return
+            # Determine if the time input is list-like
+            if hasattr(dtimes, 'year'):
+                dtime = dtimes
 
-        # Find the distance in radians between the two poles
-        hemisphere = np.sign(self.ocb_aacgm_lat)
-        rad_pole = hemisphere * np.pi * 0.5
-        del_pole = hemisphere * (rad_pole - np.radians(self.ocb_aacgm_lat))
+            # Set the AACGM coordinates of the geographic pole
+            methods = ["ALLOWTRACE"]
+            if self.vect_coord == "geocentric":
+                methods.append(self.vect_coord.upper())
+            methods.append("A2G")
 
-        # Get the distance in radians between the AACGM pole and the data point
-        del_vect = hemisphere * (rad_pole - np.radians(self.aacgm_lat))
+            if dtime is None:
+                mag_pole_glat = list()
+                mag_pole_slt = list()
+                method = '|'.join(methods)
+                for i, val in enumerate(dtimes):
+                    # Get the geographic pole lat and lon
+                    out = aacgmv2.convert_latlon(
+                        hemisphere * 90.0, 0.0, self.height[i], val, method)
 
-        # Use the Vincenty formula for a sphere
-        del_ocb = np.arctan2(np.sqrt((np.cos(np.radians(self.ocb_aacgm_lat))
-                                      * np.sin(del_long))**2
-                                     + (np.cos(np.radians(self.aacgm_lat))
-                                        * np.sin(
-                                            np.radians(self.ocb_aacgm_lat))
-                                        - np.sin(np.radians(self.aacgm_lat))
-                                        * np.cos(
-                                            np.radians(self.ocb_aacgm_lat))
-                                        * np.cos(del_long))**2),
-                             np.sin(np.radians(self.aacgm_lat))
-                             * np.sin(np.radians(self.ocb_aacgm_lat))
-                             + np.cos(np.radians(self.aacgm_lat))
-                             * np.cos(np.radians(self.ocb_aacgm_lat))
-                             * np.cos(del_long))
+                    # Save the SLT and latitude
+                    mag_pole_slt.append(ocb_time.glon2slt(out[1], val))
+                    mag_pole_glat.append(out[0])
+            else:
+                mag_pole_glat, mag_pole_lon = aacgmv2.convert_latlon(
+                    hemisphere * 90.0, 0.0, self.height, dtime,
+                    method_code='|'.join(methods))
+                mag_pole_slt = ocb_time.glon2slt(mag_pole_lon, dtime)
 
-        # Use the half-angle formula to get the pole angle
-        sum_sides = 0.5 * (del_vect + del_ocb + del_pole)
-        half_angle = np.sqrt(np.sin(sum_sides) * np.sin(sum_sides - del_pole)
-                             / (np.sin(del_vect) * np.sin(del_ocb)))
+            mag_pole_glat = np.asarray(mag_pole_glat)
+            mag_pole_slt = np.asarray(mag_pole_slt)
 
-        if self.pole_angle.shape == ():
-            self.pole_angle = np.degrees(2.0 * np.arccos(half_angle))
-        else:
-            self.pole_angle[update_mask] = np.degrees(
-                2.0 * np.arccos(half_angle[update_mask]))
+            # Get the angle at the data vector appended by the AACGM and
+            # geographic poles
+            pole_angle = vectors.calc_vec_pole_angle(
+                geo_lt, geo_lat, mag_pole_slt, mag_pole_glat)
+
+            # Set the pole and vector quadrants
+            if np.any(~np.isnan(pole_angle)):
+                pole_quad = vectors.define_pole_quadrants(geo_lt, mag_pole_slt,
+                                                          pole_angle)
+                vect_quad = vectors.define_vect_quadrants(self.vect_n,
+                                                          self.vect_e)
+
+            # Adjust the geographic vector to AACGM coordinates
+            mag_n, mag_e, mag_z = vectors.adjust_vector(
+                mag_lt, mag_lat, self.vect_n, self.vect_e, self.vect_z,
+                vect_quad, mag_pole_slt, mag_pole_glat, pole_angle, pole_quad)
+
+            # Assign the new vector data and coordinate specification
+            self.vect_n = np.asarray(mag_n)
+            self.vect_e = np.asarray(mag_e)
+            self.vect_z = np.asarray(mag_z)
+            self.vect_coord = "magnetic"
+
+            # Re-calculate the vector magnitude
+            self.vect_mag = np.nan
 
         return
 
