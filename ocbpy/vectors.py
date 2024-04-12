@@ -10,7 +10,7 @@ from ocbpy import ocb_time
 
 
 def get_pole_loc(phi_cent, r_cent):
-    """Get the location of a pole of one coordinate system in another one.
+    """Convert a second coordinate system's pole location to lt/lat.
 
     Parameters
     ----------
