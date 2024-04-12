@@ -215,16 +215,22 @@ def deg2hr(lon):
     lon = np.asarray(lon)
     lt = lon / 15.0  # 12 hr/180 deg = 1/15 hr/deg
 
+    # Ensure the local time range is realistic
+    lt = fix_range(lt, 0.0, 24.0)
+
     return lt
 
 
-def hr2deg(lt):
+def hr2deg(lt, max_deg=360.0):
     """Convert from degrees to hours.
 
     Parameters
     ----------
     lt : float or array-like
         Local time-like value in hours
+    max_deg : float
+        Maximum number of degrees in desired range, e.g. 360 for 0-360 or
+        180 for +/-180 (default=360.0)
 
     Returns
     -------
@@ -236,16 +242,22 @@ def hr2deg(lt):
     lt = np.asarray(lt)
     lon = lt * 15.0  # 180 deg/12 hr = 15 deg/hr
 
+    # Ensure the local time range is realistic
+    lon = fix_range(lon, max_deg - 360.0, max_deg)
+
     return lon
 
 
-def hr2rad(lt):
+def hr2rad(lt, max_range=2.0 * np.pi):
     """Convert from hours to radians.
 
     Parameters
     ----------
     lt : float or array-like
         Local time-like value in hours
+    max_range : float
+        Maximum radians in desired range, e.g. 2pi for 0-2pi or pi for +/-pi
+        (default=2.0 * np.pi)
 
     Returns
     -------
@@ -256,6 +268,9 @@ def hr2rad(lt):
 
     lt = np.asarray(lt)
     lon = lt * np.pi / 12.0
+
+    # Ensure the longitude range is realistic
+    lon = fix_range(lon, max_range - (2.0 * np.pi), max_range)
 
     return lon
 
@@ -277,6 +292,9 @@ def rad2hr(lon):
 
     lon = np.asarray(lon)
     lt = lon * 12.0 / np.pi
+
+    # Ensure the local time range is realistic
+    lt = fix_range(lt, 0.0, 24.0)
 
     return lt
 
