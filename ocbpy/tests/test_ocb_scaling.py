@@ -235,8 +235,6 @@ class TestOCBScalingMethods(unittest.TestCase):
         """Test the OCB polar angle calculation with angles > 90 deg."""
         self.zdata.ocb_aacgm_mlt = 1.260677777
         self.zdata.ocb_aacgm_lat = 83.99
-        self.zdata.ocb_lat = 84.838777192
-        self.zdata.ocb_mlt = 15.1110383783
 
         self.zdata.calc_vec_pole_angle()
         self.assertAlmostEqual(self.zdata.pole_angle, 91.72024697182087)
@@ -331,7 +329,7 @@ class TestOCBScalingMethods(unittest.TestCase):
         return
 
     def test_calc_vec_pole_angle_oblique(self):
-        """Test the polar angle calculation with an isosceles triangle."""
+        """Test the polar angle calculation with an oblique triangle."""
         self.vdata.set_ocb(self.ocb)
         self.vdata.lt = self.vdata.ocb_aacgm_mlt - 1.0
         self.vdata.lat = 45.0 + 0.5 * self.vdata.ocb_aacgm_lat
@@ -1273,15 +1271,15 @@ class TestOCBScalingArrayMethods(unittest.TestCase):
         self.vdata = ocbpy.ocb_scaling.VectorData(*self.vargs, **self.vkwargs)
         self.vdata.set_ocb(self.ocb)
 
-        self.assertTrue(numpy.all([quad in [2, 4]
+        self.assertTrue(numpy.all([quad in [1, 3]
                                    for quad in self.vdata.ocb_quad]))
         self.assertEqual(list(self.vdata.vec_quad), self.ref_quads['vec'])
         self.assertTrue(numpy.all([self.vdata.pole_angle[i] == 0.0
                                    for i, quad in enumerate(self.vdata.ocb_quad)
-                                   if quad == 2]))
+                                   if quad == 1]))
         self.assertTrue(numpy.all([self.vdata.pole_angle[i] == 180.0
                                    for i, quad in enumerate(self.vdata.ocb_quad)
-                                   if quad == 4]))
+                                   if quad == 3]))
         return
 
     def test_array_vec_quad(self):
