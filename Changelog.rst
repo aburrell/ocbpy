@@ -20,6 +20,7 @@ Summary of all changes made since the first stable release
 * ENH: Updated VectorData to allow geographic vector inputs
 * BUG: Fixed a typo in the documentation's pysat example
 * BUG: Added an error catch for badly formatted SuperMAG file reading
+* BUG: Fixed the flat/zero masking for vector pole angles with array input
 * TST: Added a new CI test for the Test PyPi Release Candidate
 * TST: Reduced duplication by creating a common test class and test variable
 * TST: Added a ReadTheDocs yaml
