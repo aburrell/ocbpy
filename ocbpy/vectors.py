@@ -83,6 +83,10 @@ def calc_vec_pole_angle(data_lt, data_lat, pole_lt, pole_lat):
     # Initalize the output
     pole_angle = np.full(shape=del_long.shape, fill_value=np.nan)
 
+    # Ensure the latitudes are array-like
+    data_lat = np.asarray(data_lat)
+    pole_lat = np.asarray(pole_lat)
+
     # Assign the extreme values
     if len(del_long.shape) == 0:
         if del_long in [-np.pi, 0.0, np.pi]:
@@ -92,10 +96,10 @@ def calc_vec_pole_angle(data_lt, data_lat, pole_lt, pole_lat):
                 pole_angle = 0.0
             return pole_angle
     else:
-        zero_mask = (((del_long == 0) | (abs(del_long) == np.pi))
+        flat_mask = (((del_long == 0) | (abs(del_long) == np.pi))
                      & np.greater(abs(data_lat), abs(pole_lat),
                                   where=~np.isnan(del_long)))
-        flat_mask = (((del_long == 0) | (abs(del_long) == np.pi))
+        zero_mask = (((del_long == 0) | (abs(del_long) == np.pi))
                      & np.less_equal(abs(data_lat), abs(pole_lat),
                                      where=~np.isnan(del_long)))
 
