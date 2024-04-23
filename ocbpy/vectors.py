@@ -169,17 +169,18 @@ def define_pole_quadrants(data_lt, pole_lt, pole_angle):
     downwards. Quadrants: 1 [N, E]; 2 [N, W]; 3 [S, W]; 4 [S, E]; 0 [undefined]
 
     """
-    # Initalize the output
-    pole_quad = np.zeros(shape=np.asarray(pole_angle).shape)
-
     # Determine where the destination pole is relative to the data vector
     del_lt = np.asarray(pole_lt) - np.asarray(data_lt)
 
+    # Initalize the output
+    pole_quad = np.zeros(shape=np.asarray(del_lt).shape)
+
+    # Determine which differences need to be
     neg_mask = np.less(del_lt, 0.0, where=~np.isnan(del_lt)) & ~np.isnan(del_lt)
     while np.any(neg_mask):
         if len(del_lt.shape) == 0:
             del_lt += 24.0
-            neg_mask = [False]
+            neg_mask = np.less(del_lt, 0.0)  # Has one finite value
         else:
             del_lt[neg_mask] += 24.0
             neg_mask = np.less(del_lt, 0.0,
@@ -187,11 +188,15 @@ def define_pole_quadrants(data_lt, pole_lt, pole_angle):
 
     large_mask = np.greater_equal(abs(del_lt), 24.0,
                                   where=~np.isnan(del_lt)) & ~np.isnan(del_lt)
-    if np.any(large_mask):
+    while np.any(large_mask):
         if len(del_lt.shape) == 0:
             del_lt -= 24.0 * np.sign(del_lt)
+            large_mask = np.greater_equal(abs(del_lt), 24.0)  # One finite value
         else:
             del_lt[large_mask] -= 24.0 * np.sign(del_lt[large_mask])
+            large_mask = np.greater_equal(abs(del_lt), 24.0,
+                                          where=~np.isnan(del_lt)) & ~np.isnan(
+                                              del_lt)
 
     # Find the quadrant in which the OCB pole lies
     nan_mask = ~np.isnan(pole_angle) & ~np.isnan(del_lt)
