@@ -292,5 +292,106 @@ class TestOCBVectors(unittest.TestCase):
                 self.assertTrue(np.all(self.out == self.comp),
                                 msg="{:} != {:}".format(self.out, self.comp))
         return
-                
+
+    def test_calc_dest_polar_angle_float(self):
+        """Test the north azimuth angle calculation for float inputs."""
+        # Set the expected pole quadrant output
+        self.comp = {1: {1: 138.11957692472973, 2: 148.11957692472973,
+                         3: 148.11957692472973, 4: -138.11957692472973},
+                     2: {1: 148.11957692472973, 2: 138.11957692472973,
+                         3: -138.11957692472973, 4: 148.11957692472973},
+                     3: {1: 148.11957692472973, 2: 138.11957692472973,
+                         3: 138.11957692472973, 4: 211.88042307527027},
+                     4: {1: 138.11957692472973, 2: 148.11957692472973,
+                         3: 211.88042307527027, 4: 138.11957692472973}}
+
+        # Cycle through each of the pole quadrants
+        for pole_quad in np.arange(1, 5, 1):
+            # Cycle through each of the vector quadrants
+            for vect_quad in np.arange(1, 5, 1):
+                with self.subTest(pole_quad=pole_quad, vect_quad=vect_quad):
+                    # Get the output
+                    self.out = vectors.calc_dest_polar_angle(
+                        pole_quad, vect_quad, 5.0, self.pole_ang[-1])
+
+                    # Test the integer quadrant assignment
+                    self.assertEqual(self.out, self.comp[pole_quad][vect_quad])
+        return
+
+    def test_calc_dest_polar_angle_array(self):
+        """Test the north azimuth angle calculation for array-like inputs."""
+        # Set the expected inputs and outputs
+        self.lt = [1, 1, 1, 1, 2, 2, 2, 2, 3, 3, 3, 3, 4, 4, 4, 4]
+        self.lat = [1, 2, 3, 4, 1, 2, 3, 4, 1, 2, 3, 4, 1, 2, 3, 4]
+        self.pole_lt = list(np.linspace(0.0, 360.0, num=len(self.lt)))
+        self.pole_ang = list(self.pole_ang) + list(self.pole_ang)
+        self.comp = np.array([0.0, 24.0, 48.0, -19.72024697, 104.67527923, 60.0,
+                              98.96674909, 48.88042308, 168.0, -216.0, 240.0,
+                              4.27975303, -279.32472077, -132.0, -21.03325091,
+                              216.88042308])
+
+        # Cycle through list-like or array-like inputs
+        for is_array in [True, False]:
+            # Set the function arguements
+            args = [self.lt, self.lat, self.pole_lt, self.pole_ang]
+
+            if is_array:
+                for i, arg in enumerate(args):
+                    args[i] = np.asarray(arg)
+
+            with self.subTest(is_array=is_array):
+                # Get the output
+                self.out = vectors.calc_dest_polar_angle(*args)
+
+                # Test the integer quadrant assignment
+                self.assertTupleEqual(self.out.shape, self.comp.shape)
+                self.assertTrue(np.all(abs(self.out - self.comp) < 1.0e-5),
+                                msg="{:} != {:}".format(self.out, self.comp))
+        return
+
+    def test_calc_dest_polar_angle_mixed(self):
+        """Test the north azimuth angle calculation for mixed inputs."""
+        self.lt = [1, 1, 1, 1, 2, 2, 2, 2, 3, 3, 3, 3, 4, 4, 4, 4]
+        self.lat = [1, 2, 3, 4, 1, 2, 3, 4, 1, 2, 3, 4, 1, 2, 3, 4]
+        self.pole_lt = list(np.linspace(0.0, 360.0, num=len(self.lt)))
+        self.pole_ang = list(self.pole_ang) + list(self.pole_ang)
+        self.comp = np.array([0.0, 24.0, 48.0, -19.72024697, 104.67527923, 60.0,
+                              98.96674909, 48.88042308, 168.0, -216.0, 240.0,
+                              4.27975303, -279.32472077, -132.0, -21.03325091,
+                              216.88042308])
+
+        # Cycle through the mixed inputs
+        for args, self.comp in [([1, [2, 3], [0.0, 24.0], 0.0],
+                                 np.array([0.0, 24.0])),
+                                ([[1, 4], 4, [72, 360], [91.720246, 143.11957]],
+                                 np.array([-19.720246, 216.88043])),
+                                ([[1, 2], [3, 4], 5.0, [91.720246, 143.11957]],
+                                 np.array([96.720246, 148.11957])),
+                                ([[3, 4], [2, 1], [0.0, 90.0], 10.0],
+                                 np.array([10.0, -80.0]))]:
+            with self.subTest(args=args):
+                # Get the output
+                self.out = vectors.calc_dest_polar_angle(*args)
+
+                # Test the integer quadrant assignment
+                self.assertTupleEqual(self.out.shape, self.comp.shape)
+                self.assertTrue(np.all(abs(self.out - self.comp) < 1.0e-5),
+                                msg="{:} != {:}".format(self.out, self.comp))
+        return
+
+    def test_calc_dest_polar_angle_bad_pole_quad(self):
+        """Test the north azimuth angle calculation with undefined pole quad."""
+
+        self.comp = "destination coordinate pole quadrant is undefined"
+        with self.assertRaisesRegex(ValueError, self.comp):
+            ocbpy.vectors.calc_dest_polar_angle(0, 1, 5.0, 5.0)
+        return
+
+    def test_calc_dest_polar_angle_bad_vect_quad(self):
+        """Test the north azimuth angle calculation with undefined vect quad."""
+
+        self.comp = "data vector quadrant is undefined"
+        with self.assertRaisesRegex(ValueError, self.comp):
+            ocbpy.vectors.calc_dest_polar_angle(1, 0, 5.0, 5.0)
+        return
         
