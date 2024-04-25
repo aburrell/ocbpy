@@ -351,6 +351,35 @@ class VectorData(object):
         super(VectorData, self).__setattr__(name, out_val)
         return
 
+    # TODO(#133): remove after old attributes are deprecated
+    def __getattr__(self, name, **kwargs):
+        """Get attributes, allowing access to deprecated names.
+
+        Parameters
+        ----------
+        name : str
+            Attribute name to be accessed from VectorData
+
+        Returns
+        -------
+        value : any
+            Value assigned to the attribute
+
+        """
+        # Define the deprecated attributes that are not properties
+        dep_pairs = {'aacgm_n': 'vect_n', 'aacgm_e': 'vect_e',
+                     'aacgm_z': 'vect_z'}
+        if name in dep_pairs.keys():
+            warnings.warn("".join([name, ' has been replaced with ',
+                                   dep_pairs[name], '. Old attribute will be ',
+                                   'removed in version 0.4.1+.']),
+                          DeprecationWarning, stacklevel=2)
+            name = dep_pairs[name]
+
+        # Use Object to avoid recursion
+        value = super(VectorData, self).__getattribute__(name)
+        return value
+
     def _ocb_attr_setter(self, ocb_name, ocb_val):
         """Set OCB attributes.
 
@@ -539,6 +568,15 @@ class VectorData(object):
         return
 
     @property
+    def aacgm_mag(self):
+        """Deprecated magnitude of the vector(s)."""
+        # TODO(#133): remove after old attributes are deprecated
+        warnings.warn("".join(['`aacgm_mag` has been replaced with `vect_mag`,',
+                               ' and will be removed in version 0.4.1+.']),
+                          DeprecationWarning, stacklevel=2)
+        return self.vect_mag
+
+    @property
     def dat_ind(self):
         """Data index(es)."""
         return self._dat_ind
@@ -646,6 +684,15 @@ class VectorData(object):
         return
 
     @property
+    def aacgm_lat(self):
+        """Deprecated magnitude of the vector(s)."""
+        # TODO(#133): remove after old attributes are deprecated
+        warnings.warn("".join(['`aacgm_lat` has been replaced with `lat`, and ',
+                               'will be removed in version 0.4.1+.']),
+                          DeprecationWarning, stacklevel=2)
+        return self.lat
+
+    @property
     def lt(self):
         """Vector local time in hours."""
         return self._lt
@@ -655,6 +702,15 @@ class VectorData(object):
         # Set the vector LT value and ensure the shape is correct
         self._dat_attr_setter('_lt', lt)
         return
+
+    @property
+    def aacgm_mlt(self):
+        """Deprecated magnitude of the vector(s)."""
+        # TODO(#133): remove after old attributes are deprecated
+        warnings.warn("".join(['`aacgm_mlt` has been replaced with `lt`, and ',
+                               'will be removed in version 0.4.1+.']),
+                          DeprecationWarning, stacklevel=2)
+        return self.lt
 
     @property
     def height(self):
