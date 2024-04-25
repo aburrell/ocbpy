@@ -554,7 +554,7 @@ def adjust_vector(vect_lt, vect_lat, vect_n, vect_e, vect_z, vect_quad,
     pole_lat = np.asarray(pole_lat)
     pole_angle = np.asarray(pole_angle)
     pole_quad = np.asarray(pole_quad)
-    
+
     # Initialize the output, ensuring it is the same shape
     out_shape = (vect_lt + vect_lat + vect_n + vect_e + vect_z + vect_quad
                  + pole_lt + pole_lat + pole_angle + pole_quad).shape

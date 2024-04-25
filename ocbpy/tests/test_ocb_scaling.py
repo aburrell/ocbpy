@@ -1336,7 +1336,7 @@ class TestOCBScalingArrayMethods(unittest.TestCase):
         """Test the calculation of the OCB vector sign with no pole angle."""
         self.vdata = ocbpy.ocb_scaling.VectorData(*self.vargs, **self.vkwargs)
         self.vdata.set_ocb(self.ocb)
-    
+
         # If the OCB pole is closer to the AACGM pole than the vector, set
         # the pole angle to zero deg. Otherwise, set it to 180.0 deg
         self.vdata.pole_angle = numpy.zeros(shape=self.vargs[2].shape)

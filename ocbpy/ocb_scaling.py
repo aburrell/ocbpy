@@ -174,7 +174,7 @@ class VectorData(object):
         if set_mag:
             # Set the magnitude if the deprecated kwarg was not supplied
             self.vect_mag = vect_mag
-                
+
         # Test the coordinate systems for valid options
         self._test_coords()
 
@@ -299,7 +299,7 @@ class VectorData(object):
                         self.vect_coord, ": {:.3g} [".format(self.vect_mag[i]),
                         "{:.3g}, {:.3g}".format(self.vect_n[i], self.vect_e[i]),
                         ", {:.3g}] {:d}".format(self.vect_z[i],
-                                                  self.dat_ind[i])])
+                                                self.dat_ind[i])])
                 if not np.isnan(mag):
                     vec_line = "".join([
                         vec_line, "\n     OCB: {:.3g} [".format(mag),
@@ -912,7 +912,7 @@ class VectorData(object):
                                " will be removed in version 0.4.1+. Instead, ",
                                "use `ocbpy.vectors.calc_dest_polar_angle`."]),
                       DeprecationWarning, stacklevel=2)
-        
+
         # Test input
         if np.all(np.isnan(self.aacgm_naz)):
             raise ValueError("AACGM North polar angle undefined")
