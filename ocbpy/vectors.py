@@ -323,11 +323,14 @@ def calc_dest_polar_angle(pole_quad, vect_quad, base_naz_angle, pole_angle):
     if not np.isin(vect_quad, quad_range).any():
         raise ValueError("data vector quadrant is undefined")
 
+    # Cast the necessary variables
+    base_naz_angle = np.asarray(base_naz_angle)
+    pole_angle = np.asarray(pole_angle)
+
     # Initialise the output and set the quadrant dictionary
     nan_mask = ~np.isnan(base_naz_angle) & ~np.isnan(pole_angle)
-    dest_naz_angle = np.full(
-        shape=(np.asarray(base_naz_angle) + np.asarray(pole_angle)).shape,
-        fill_value=np.nan)
+    dest_naz_angle = np.full(shape=(base_naz_angle + pole_angle).shape,
+                             fill_value=np.nan)
     quads = {oquad: {vquad:
                      (pole_quad == oquad) & (vect_quad == vquad) & nan_mask
                      for vquad in quad_range} for oquad in quad_range}
@@ -343,11 +346,10 @@ def calc_dest_polar_angle(pole_quad, vect_quad, base_naz_angle, pole_angle):
     # Calculate OCB polar angle based on the quadrants and other angles
     if np.any(abs_mask):
         if len(dest_naz_angle.shape) == 0:
-            dest_naz_angle = abs(np.asarray(base_naz_angle)
-                                 - np.asarray(pole_angle))
+            dest_naz_angle = abs(base_naz_angle - pole_angle)
         else:
-            dest_naz_angle[abs_mask] = abs(np.asarray(base_naz_angle)
-                                           - np.asarray(pole_angle))[abs_mask]
+            dest_naz_angle[abs_mask] = abs(base_naz_angle
+                                           - pole_angle)[abs_mask]
 
     if np.any(add_mask):
         if len(dest_naz_angle.shape) == 0:
@@ -355,33 +357,29 @@ def calc_dest_polar_angle(pole_quad, vect_quad, base_naz_angle, pole_angle):
             if dest_naz_angle > 180.0:
                 dest_naz_angle = 360.0 - dest_naz_angle
         else:
-            dest_naz_angle[add_mask] = (
-                np.asarray(pole_angle) + np.asarray(base_naz_angle))[add_mask]
+            dest_naz_angle[add_mask] = (pole_angle + base_naz_angle)[add_mask]
             lmask = (dest_naz_angle > 180.0) & add_mask
             if np.any(lmask):
                 dest_naz_angle[lmask] = 360.0 - dest_naz_angle[lmask]
 
     if np.any(mpa_mask):
         if len(dest_naz_angle.shape) == 0:
-            dest_naz_angle = np.asarray(base_naz_angle) - np.asarray(pole_angle)
+            dest_naz_angle = base_naz_angle - pole_angle
         else:
-            dest_naz_angle[mpa_mask] = (
-                np.asarray(base_naz_angle) - np.asarray(pole_angle))[mpa_mask]
+            dest_naz_angle[mpa_mask] = (base_naz_angle - pole_angle)[mpa_mask]
 
     if np.any(maa_mask):
         if len(dest_naz_angle.shape) == 0:
-            dest_naz_angle = np.asarray(pole_angle) - np.asarray(base_naz_angle)
+            dest_naz_angle = pole_angle - base_naz_angle
         else:
-            dest_naz_angle[maa_mask] = (
-                np.asarray(pole_angle) - np.asarray(base_naz_angle))[maa_mask]
+            dest_naz_angle[maa_mask] = (pole_angle - base_naz_angle)[maa_mask]
 
     if np.any(cir_mask):
         if len(dest_naz_angle.shape) == 0:
-            dest_naz_angle = 360.0 - np.asarray(base_naz_angle) - np.asarray(
-                pole_angle)
+            dest_naz_angle = 360.0 - base_naz_angle - pole_angle
         else:
-            dest_naz_angle[cir_mask] = (360.0 - np.asarray(
-                base_naz_angle) - np.asarray(pole_angle))[cir_mask]
+            dest_naz_angle[cir_mask] = (360.0 - base_naz_angle
+                                        - pole_angle)[cir_mask]
 
     return dest_naz_angle
 
@@ -423,6 +421,10 @@ def calc_dest_vec_sign(pole_quad, vect_quad, base_naz_angle, pole_angle,
 
     """
     quad_range = np.arange(1, 5)
+
+    # Cast the input
+    base_naz_angle = np.asarray(base_naz_angle)
+    pole_angle = np.asarray(pole_angle)
 
     # Test input
     if not np.any(np.isin(pole_quad, quad_range)):
@@ -541,10 +543,24 @@ def adjust_vector(vect_lt, vect_lat, vect_n, vect_e, vect_z, vect_quad,
         latitude
 
     """
-    # Initialize the output
-    dest_n = np.full(shape=np.asarray(vect_n).shape, fill_value=np.nan)
-    dest_e = np.full(shape=np.asarray(vect_e).shape, fill_value=np.nan)
-    dest_z = np.full(shape=np.asarray(vect_z).shape, fill_value=np.nan)
+    # Ensure the input is array-like
+    vect_lt = np.asarray(vect_lt)
+    vect_lat = np.asarray(vect_lat)
+    vect_n = np.asarray(vect_n)
+    vect_e = np.asarray(vect_e)
+    vect_z = np.asarray(vect_z)
+    vect_quad = np.asarray(vect_quad)
+    pole_lt = np.asarray(pole_lt)
+    pole_lat = np.asarray(pole_lat)
+    pole_angle = np.asarray(pole_angle)
+    pole_quad = np.asarray(pole_quad)
+    
+    # Initialize the output, ensuring it is the same shape
+    out_shape = (vect_lt + vect_lat + vect_n + vect_e + vect_z + vect_quad
+                 + pole_lt + pole_lat + pole_angle + pole_quad).shape
+    dest_n = np.full(shape=out_shape, fill_value=np.nan)
+    dest_e = np.full(shape=out_shape, fill_value=np.nan)
+    dest_z = np.full(shape=out_shape, fill_value=np.nan)
 
     # Determine the special case assignments
     zero_mask = (vect_n == 0.0) & (vect_e == 0.0)
@@ -553,10 +569,10 @@ def adjust_vector(vect_lt, vect_lat, vect_n, vect_e, vect_z, vect_quad,
 
     # There's nothing to adjust if there is no magnitude
     if np.any(zero_mask):
-        if len(zero_mask.shape) == 0:
-            dest_n = np.zeros(shape=dest_n.shape)
-            dest_e = np.zeros(shape=dest_e.shape)
-            dest_z = np.zeros(shape=dest_z.shape)
+        if len(out_shape) == 0:
+            dest_n = 0.0
+            dest_e = 0.0
+            dest_z = 0.0
         else:
             dest_n[zero_mask] = 0.0
             dest_e[zero_mask] = 0.0
@@ -564,14 +580,25 @@ def adjust_vector(vect_lt, vect_lat, vect_n, vect_e, vect_z, vect_quad,
 
     # The measurement is aligned with the base and destination poles
     if np.any(ns_mask):
-        if len(vect_n.shape) == 0:
-            dest_n = np.full(shape=dest_n.shape, fill_value=vect_n)
-            dest_e = np.full(shape=dest_e.shape, fill_value=vect_e)
-            dest_z = np.full(shape=dest_z.shape, fill_value=vect_z)
+        if len(out_shape) == 0:
+            dest_n = float(vect_n)
+            dest_e = float(vect_e)
+            dest_z = float(vect_z)
         else:
-            dest_n[ns_mask] = vect_n[ns_mask]
-            dest_e[ns_mask] = vect_e[ns_mask]
-            dest_z[ns_mask] = vect_z[ns_mask]
+            if len(vect_n.shape) == 0:
+                dest_n[ns_mask] = vect_n
+            else:
+                dest_n[ns_mask] = vect_n[ns_mask]
+
+            if len(vect_e.shape) == 0:
+                dest_e[ns_mask] = vect_e
+            else:
+                dest_e[ns_mask] = vect_e[ns_mask]
+
+            if len(vect_z.shape) == 0:
+                dest_z[ns_mask] = vect_z
+            else:
+                dest_z[ns_mask] = vect_z[ns_mask]
 
         # Determine if the measurement is on or between the poles. This does
         # not affect the vertical direction
@@ -579,7 +606,7 @@ def adjust_vector(vect_lt, vect_lat, vect_n, vect_e, vect_z, vect_quad,
             vect_lat, pole_lat, where=~np.isnan(vect_lat)) & ~np.isnan(vect_lat)
 
         if np.any(sign_mask):
-            if dest_n.shape == ():
+            if len(out_shape) == 0:
                 dest_n *= -1.0
                 dest_e *= -1.0
             else:
@@ -599,14 +626,22 @@ def adjust_vector(vect_lt, vect_lat, vect_n, vect_e, vect_z, vect_quad,
 
         # Get the unscaled 2D vector magnitude and calculate the AACGM north
         # azimuth in degrees
-        if len(vect_n.shape) == 0:
+        if len(vect_n.shape) == 0 and len(vect_e.shape) == 0:
             vmag = np.sqrt(vect_n**2 + vect_e**2)
             base_naz_angle = np.degrees(np.arccos(vect_n / vmag))
         else:
-            vmag = np.sqrt(vect_n[norm_mask]**2 + vect_e[norm_mask]**2)
             base_naz_angle = np.full(shape=norm_mask.shape, fill_value=np.nan)
-            base_naz_angle[norm_mask] = np.degrees(np.arccos(vect_n[norm_mask]
-                                                             / vmag))
+
+            if len(vect_n.shape) == 0:
+                vmag = np.sqrt(vect_n**2 + vect_e[norm_mask]**2)
+                base_naz_angle[norm_mask] = np.degrees(np.arccos(vect_n / vmag))
+            else:
+                if len(vect_e.shape) == 0:
+                    vmag = np.sqrt(vect_n[norm_mask]**2 + vect_e**2)
+                else:
+                    vmag = np.sqrt(vect_n[norm_mask]**2 + vect_e[norm_mask]**2)
+                base_naz_angle[norm_mask] = np.degrees(
+                    np.arccos(vect_n[norm_mask] / vmag))
 
         # Get the destination coordinate system north azimuth in radians
         dest_naz_angle = np.radians(calc_dest_polar_angle(
@@ -637,11 +672,11 @@ def adjust_vector(vect_lt, vect_lat, vect_n, vect_e, vect_z, vect_quad,
         # Calculate the vector components
         if len(vmag.shape) == 0:
             if len(dest_naz_angle.shape) == 0:
-                dest_n = np.full(shape=dest_n.shape, fill_value=(
+                dest_n = np.full(shape=out_shape, fill_value=(
                     vsigns['north'] * vmag * np.cos(dest_naz_angle)))
-                dest_e = np.full(shape=dest_e.shape, fill_value=(
+                dest_e = np.full(shape=out_shape, fill_value=(
                     vsigns['east'] * vmag * np.sin(dest_naz_angle)))
-                dest_z = np.full(shape=dest_z.shape, fill_value=vz)
+                dest_z = np.full(shape=out_shape, fill_value=vz)
             else:
                 nval = vsigns['north'][norm_mask] * vmag * np.cos(
                     dest_naz_angle)[norm_mask]
