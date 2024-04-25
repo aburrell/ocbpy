@@ -230,5 +230,67 @@ class TestOCBVectors(unittest.TestCase):
                 self.assertTrue(np.all(self.out == self.comp),
                                 msg="{:} != {:}".format(self.out, self.comp))
         return
+
+    def test_define_vect_quadrants_float(self):
+        """Test the vector direction quadrant ID for floats."""
+        # Set the expected pole quadrant output
+        self.comp = {1: {1: 1, -1: 2}, -1: {1: 4, -1: 3}}
+
+        # Cycle through each of the North directions
+        for vect_n in [1.0, 0.0, -1.0]:
+            nkey = 1 if vect_n >= 0.0 else -1
+
+            # Cycle through each of the East directions
+            for vect_e in [1.0, 0.0, -1.0]:
+                ekey = 1 if vect_e >= 0 else -1
+
+                with self.subTest(vect_n=vect_n, vect_e=vect_e):
+                    # Get the output
+                    self.out = vectors.define_vect_quadrants(vect_n, vect_e)
+
+                    # Test the integer quadrant assignment
+                    self.assertEqual(self.out, self.comp[nkey][ekey])
+        return
+
+    def test_define_vect_quadrants_array(self):
+        """Test the vector direction quadrant ID for array-like input."""
+        # Set the vector input and expected output
+        self.lt = [2.0, 0.0, -1.0, 3.0, -4.5, 0.0]  # North vect component
+        self.lat = [3.0, 1.0, 3.5, -1.0, -2.0, 0.0]  # East vect component
+        self.comp = np.array([1, 1, 4, 2, 3, 1])
+
+        # Cycle through list-like or array-like inputs
+        for is_array in [True, False]:
+            # Set the function arguements
+            args = [self.lt, self.lat]
+
+            if is_array:
+                for i, arg in enumerate(args):
+                    args[i] = np.asarray(arg)
+
+            with self.subTest(is_array=is_array):
+                # Get the output
+                self.out = vectors.define_vect_quadrants(*args)
+
+                # Test the integer quadrant assignment
+                self.assertTupleEqual(self.out.shape, self.comp.shape)
+                self.assertTrue(np.all(self.out == self.comp),
+                                msg="{:} != {:}".format(self.out, self.comp))
+        return
+
+    def test_define_vect_quadrants_mixed(self):
+        """Test the vector direction quadrant ID for mixed input."""
+        # Cycle through the mixed inputs
+        for args, self.comp in [([6.0, [3.0, -3.5]], np.array([1, 2])),
+                                ([[1.0, -1.0], 0.0], np.array([1, 4]))]:
+            with self.subTest(args=args):
+                # Get the output
+                self.out = vectors.define_vect_quadrants(*args)
+
+                # Test the integer quadrant assignment
+                self.assertTupleEqual(self.out.shape, self.comp.shape)
+                self.assertTrue(np.all(self.out == self.comp),
+                                msg="{:} != {:}".format(self.out, self.comp))
+        return
                 
         
