@@ -10,12 +10,12 @@ import numpy
 from numpy import nan  # noqa F401
 from os import path
 import unittest
-import warnings
 
 import ocbpy
 import ocbpy.tests.class_common as cc
 
 
+# TODO(#133): delete after deprecated elements are removed
 class TestOCBScalingDepWarning(unittest.TestCase):
     """Unit tests for Deprecation Warnings in the VectorData class."""
 
@@ -80,23 +80,6 @@ class TestOCBScalingDepWarning(unittest.TestCase):
         # Capture and evaluate the warning message
         with self.assertWarnsRegex(DeprecationWarning, self.warn_msg):
             ocbpy.ocb_scaling.VectorData(*self.vdata_args, **self.vdata_kwargs)
-        return
-
-    def test_get_dep_attr(self):
-        """Test the retrieval of deprecated attributes from VectorData."""
-        # Set the vector data
-        vdata = ocbpy.ocb_scaling.VectorData(*self.vdata_args,
-                                             **self.vdata_kwargs)
-
-        # Set the warning message
-        self.warn_msg = "has been replaced"
-
-        # Cycle through the deprecated attributes
-        for attr in self.dep_attrs.keys():
-            with self.subTest(dep_attr=attr):
-                # Capture and evaluate the warning message
-                with self.assertWarnsRegex(DeprecationWarning, self.warn_msg):
-                    getattr(vdata, attr)
         return
 
     def test_get_dep_attr(self):
@@ -267,7 +250,7 @@ class TestOCBScalingLogFailure(cc.TestLogWarnings):
                                                   dat_name="Test",
                                                   dat_units="$m s^{-1}$")
 
-        # Test logging error message for each bad initialization
+        # Test logging error message for the bad initialization
         self.eval_logging_message()
         return
 
