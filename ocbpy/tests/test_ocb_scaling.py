@@ -10,9 +10,211 @@ import numpy
 from numpy import nan  # noqa F401
 from os import path
 import unittest
+import warnings
 
 import ocbpy
 import ocbpy.tests.class_common as cc
+
+
+class TestOCBScalingDepWarning(unittest.TestCase):
+    """Unit tests for Deprecation Warnings in the VectorData class."""
+
+    def setUp(self):
+        """Initialize the OCBoundary and VectorData objects."""
+
+        self.dep_attrs = {'aacgm_lat': 'lat', 'aacgm_mlt': 'lt',
+                          'aacgm_n': 'vect_n', 'aacgm_e': 'vect_e',
+                          'aacgm_z': 'vect_z', 'aacgm_mag': 'vect_mag'}
+        self.vdata_args = [0, 27, 80.0, 5.5]
+        self.vdata_kwargs = {'vect_n': 1.0, 'vect_e': 0.0, 'vect_z': 0.0,
+                             'vect_mag': 1.0}
+        self.warn_msg = ''
+        return
+
+    def tearDown(self):
+        """Tear down the test environment."""
+        del self.dep_attrs, self.vdata_args, self.vdata_kwargs, self.warn_msg
+        return
+
+    def test_init_dep_attr(self):
+        """Test the set up of the VectorData object with a deprecated attr."""
+
+        # Cycle through the deprecated inputs
+        for attr in self.dep_attrs.keys():
+            # Set the input
+            kwargs = {key: self.vdata_kwargs[key]
+                      for key in self.vdata_kwargs.keys()
+                      if key != self.dep_attrs[attr]}
+
+            if self.dep_attrs[attr] in self.vdata_kwargs.keys():
+                kwargs[attr] = self.vdata_kwargs[self.dep_attrs[attr]]
+            else:
+                kwargs[attr] = self.vdata_args[-1] if attr.find(
+                    'lt') > 0 else self.vdata_args[-2]
+
+            # Set the warning message
+            self.warn_msg = attr
+
+            with self.subTest(kwargs=kwargs):
+                # Capture and evaluate the warning message
+                with self.assertWarnsRegex(DeprecationWarning, self.warn_msg):
+                    ocbpy.ocb_scaling.VectorData(*self.vdata_args, **kwargs)
+        return
+
+    def test_init_dep_attrs(self):
+        """Test the set up of the VectorData object with deprecated attrs."""
+
+        # Set the deprecated inputs
+        for attr in self.dep_attrs:
+            if self.dep_attrs[attr] in self.vdata_kwargs.keys():
+                self.vdata_kwargs[attr] = self.vdata_kwargs[
+                    self.dep_attrs[attr]]
+                del self.vdata_kwargs[self.dep_attrs[attr]]
+            else:
+                self.vdata_kwargs[attr] = self.vdata_args[-1] if attr.find(
+                    'lt') > 0 else self.vdata_args[-2]
+
+        # Set the warning message
+        self.warn_msg = 'Old kwargs will be removed in version 0.4.1+.'
+
+        # Capture and evaluate the warning message
+        with self.assertWarnsRegex(DeprecationWarning, self.warn_msg):
+            ocbpy.ocb_scaling.VectorData(*self.vdata_args, **self.vdata_kwargs)
+        return
+
+    def test_get_dep_attr(self):
+        """Test the retrieval of deprecated attributes from VectorData."""
+        # Set the vector data
+        vdata = ocbpy.ocb_scaling.VectorData(*self.vdata_args,
+                                             **self.vdata_kwargs)
+
+        # Set the warning message
+        self.warn_msg = "has been replaced"
+
+        # Cycle through the deprecated attributes
+        for attr in self.dep_attrs.keys():
+            with self.subTest(dep_attr=attr):
+                # Capture and evaluate the warning message
+                with self.assertWarnsRegex(DeprecationWarning, self.warn_msg):
+                    getattr(vdata, attr)
+        return
+
+    def test_get_dep_attr(self):
+        """Test the retrieval of deprecated attributes from VectorData."""
+        # Set the vector data
+        vdata = ocbpy.ocb_scaling.VectorData(*self.vdata_args,
+                                             **self.vdata_kwargs)
+
+        # Set the warning message
+        self.warn_msg = "has been replaced"
+
+        # Cycle through the deprecated attributes
+        for attr in self.dep_attrs.keys():
+            with self.subTest(dep_attr=attr):
+                # Capture and evaluate the warning message
+                with self.assertWarnsRegex(DeprecationWarning, self.warn_msg):
+                    getattr(vdata, attr)
+        return
+
+    def test_set_dep_attr(self):
+        """Test setting deprecated attributes from VectorData."""
+        # Set the warning message
+        self.warn_msg = "has been replaced"
+
+        # Cycle through the deprecated attributes
+        for attr in self.dep_attrs.keys():
+            # Set the vector data object
+            vdata = ocbpy.ocb_scaling.VectorData(*self.vdata_args,
+                                                 **self.vdata_kwargs)
+
+            # Get the initial value for the object
+            comp_val = getattr(vdata, self.dep_attrs[attr])
+
+            with self.subTest(dep_attr=attr):
+                # Capture and evaluate the warning message
+                with self.assertWarnsRegex(DeprecationWarning, self.warn_msg):
+                    setattr(vdata, attr, comp_val + 1.0)
+
+                self.assertEqual(getattr(vdata, self.dep_attrs[attr]),
+                                 comp_val + 1.0, msg="{:} not updated".format(
+                                     self.dep_attrs[attr]))
+        return
+
+    def test_dep_aacgm_mag(self):
+        """Test VectorData property `aacgm_mag` is deprecated."""
+        # Set the vector data
+        vdata = ocbpy.ocb_scaling.VectorData(*self.vdata_args,
+                                             **self.vdata_kwargs)
+        # Set the warning message
+        self.warn_msg = "has been replaced with `vect_mag`, and will be removed"
+
+        # Capture and evaluate the warning message
+        with self.assertWarnsRegex(DeprecationWarning, self.warn_msg):
+            self.assertEqual(vdata.aacgm_mag, vdata.vect_mag)
+        return
+
+    def test_dep_aacgm_lat(self):
+        """Test VectorData property `aacgm_lat` is deprecated."""
+        # Set the vector data
+        vdata = ocbpy.ocb_scaling.VectorData(*self.vdata_args,
+                                             **self.vdata_kwargs)
+        # Set the warning message
+        self.warn_msg = "has been replaced with `lat`, and will be removed"
+
+        # Capture and evaluate the warning message
+        with self.assertWarnsRegex(DeprecationWarning, self.warn_msg):
+            self.assertEqual(vdata.aacgm_lat, vdata.lat)
+        return
+
+    def test_dep_aacgm_mlt(self):
+        """Test VectorData property `aacgm_mlt` is deprecated."""
+        # Set the vector data
+        vdata = ocbpy.ocb_scaling.VectorData(*self.vdata_args,
+                                             **self.vdata_kwargs)
+        # Set the warning message
+        self.warn_msg = "has been replaced with `lt`, and will be removed"
+
+        # Capture and evaluate the warning message
+        with self.assertWarnsRegex(DeprecationWarning, self.warn_msg):
+            self.assertEqual(vdata.aacgm_mlt, vdata.lt)
+        return
+
+    def test_dep_calc_ocb_polar_angle(self):
+        """Test VectorData method `calc_ocb_polar_angle` is deprecated."""
+        # Set the vector data
+        vdata = ocbpy.ocb_scaling.VectorData(*self.vdata_args,
+                                             **self.vdata_kwargs)
+        vdata.ocb_quad = 1
+        vdata.vec_quad = 1
+        vdata.aacgm_naz = 5.0
+        vdata.pole_angle = 3.0
+
+        # Set the warning message
+        self.warn_msg = "Instead, use `ocbpy.vectors.calc_dest_polar_angle`"
+
+        # Capture and evaluate the warning message
+        with self.assertWarnsRegex(DeprecationWarning, self.warn_msg):
+            self.assertEqual(vdata.calc_ocb_polar_angle(), 2.0)
+        return
+
+    def test_dep_calc_ocb_vec_sign(self):
+        """Test VectorData method `calc_ocb_vec_sign` is deprecated."""
+        # Set the vector data
+        vdata = ocbpy.ocb_scaling.VectorData(*self.vdata_args,
+                                             **self.vdata_kwargs)
+        vdata.ocb_quad = 1
+        vdata.vec_quad = 1
+        vdata.aacgm_naz = 5.0
+        vdata.pole_angle = 3.0
+
+        # Set the warning message
+        self.warn_msg = "Instead, use `ocbpy.vectors.calc_dest_vec_sign`"
+
+        # Capture and evaluate the warning message
+        with self.assertWarnsRegex(DeprecationWarning, self.warn_msg):
+            self.assertDictEqual(vdata.calc_ocb_vec_sign(north=True, east=True),
+                                 {'north': 1, 'east': 1})
+        return
 
 
 class TestOCBScalingLogFailure(cc.TestLogWarnings):
