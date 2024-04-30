@@ -10,6 +10,23 @@ import numpy as np
 import unittest
 
 from ocbpy import ocb_time
+import ocbpy.tests.class_common as cc
+
+
+class TestOCBTimeLogOutput(cc.TestLogWarnings):
+    """Unit tests for logging messages in the ocb_time module."""
+
+    def test_hr2deg_range_warning(self):
+        """Test the log warning raised for bad input degree range."""
+        # Set the expected output
+        self.lwarn = u"adjusting range to be realistic"
+
+        # Use a range that's too small
+        self.assertEqual(ocb_time.hr2deg(-24.0, min_deg=180, max_deg=360), 0.0)
+
+        # Test logging error message for the bad range
+        self.eval_logging_message()
+        return
 
 
 class TestOCBTimeMethods(unittest.TestCase):
