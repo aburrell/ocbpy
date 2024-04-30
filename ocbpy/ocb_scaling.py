@@ -164,11 +164,11 @@ class VectorData(object):
             else:
                 new_kwargs = [dep_pairs[dep_key] for dep_key in used_dep]
                 warnings.warn("".join(['kwargs have been replaced with new ',
-                                       'names, that reflect their new ',
-                                       'flexibility. Old kwargs will be ',
-                                       'removed in version 0.4.1+. Old kwargs ',
-                                       'used: ', repr(used_dep), '; replace ',
-                                       'with: ', repr(new_kwargs)]),
+                                       'names that reflect their new scope. ',
+                                       'Old kwargs will be removed in version ',
+                                       '0.4.1+. Old kwargs used: ',
+                                       repr(used_dep), '; replace with: ',
+                                       repr(new_kwargs)]),
                               DeprecationWarning, stacklevel=2)
 
         if set_mag:
