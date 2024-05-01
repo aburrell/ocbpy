@@ -728,6 +728,7 @@ class VectorData(object):
 
     def clear_data(self):
         """Clear or initialize the output data attributes."""
+        warnings.simplefilter("ignore")
 
         # Assign the OCB vector default values and location
         self.ocb_n = np.full(shape=self.vshape, fill_value=np.nan)
@@ -743,6 +744,8 @@ class VectorData(object):
         self.aacgm_naz = np.full(shape=self.vshape, fill_value=np.nan)
         self.ocb_aacgm_lat = np.full(shape=self.vshape, fill_value=np.nan)
         self.ocb_aacgm_mlt = np.full(shape=self.vshape, fill_value=np.nan)
+
+        warnings.resetwarnings()
         return
 
     def set_ocb(self, ocb, scale_func=None):
@@ -896,6 +899,8 @@ class VectorData(object):
         be removed in version 0.4.1+.
 
         """
+        warnings.simplefilter("ignore")
+
         # Test input
         if np.all(np.isnan(self.lat)) or np.all(np.isnan(self.lt)):
             raise ValueError("Vector locations required")
@@ -946,6 +951,7 @@ class VectorData(object):
         # Calculate the scaled OCB vector magnitude
         self.ocb_mag = np.sqrt(self.ocb_n**2 + self.ocb_e**2 + self.ocb_z**2)
 
+        warnings.resetwarnings()
         return
 
     def calc_ocb_polar_angle(self):
@@ -973,6 +979,7 @@ class VectorData(object):
                       DeprecationWarning, stacklevel=2)
 
         # Test input
+        warnings.simplefilter("ignore")
         if np.all(np.isnan(self.aacgm_naz)):
             raise ValueError("AACGM North polar angle undefined")
 
@@ -983,6 +990,7 @@ class VectorData(object):
         ocb_naz = vectors.calc_dest_polar_angle(
             self.ocb_quad, self.vec_quad, self.aacgm_naz, self.pole_angle)
 
+        warnings.resetwarnings()
         return ocb_naz
 
     def calc_ocb_vec_sign(self, north=False, east=False, quads=None):
@@ -1022,6 +1030,7 @@ class VectorData(object):
                       DeprecationWarning, stacklevel=2)
 
         # Test input
+        warnings.simplefilter("ignore")
         if not np.any([north, east]):
             raise ValueError("must set at least one direction")
 
@@ -1036,6 +1045,7 @@ class VectorData(object):
             self.ocb_quad, self.vec_quad, self.aacgm_naz, self.pole_angle,
             north=north, east=east, quads=quads)
 
+        warnings.resetwarnings()
         return vsigns
 
     def calc_vec_pole_angle(self):
