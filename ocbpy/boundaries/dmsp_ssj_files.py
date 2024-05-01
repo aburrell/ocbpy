@@ -25,18 +25,30 @@ import sys
 import warnings
 import zipfile
 
+import aacgmv2
+
 import ocbpy
 
-err = ''.join(['unable to load the DMSP SSJ module; ssj_auroral_boundary ',
-               'is available at: ',
-               'https://github.com/lkilcommons/ssj_auroral_boundary'])
 try:
     from spacepy import pycdf
-    import aacgmv2
     import ssj_auroral_boundary as ssj
+    err = ''
+except ImportError as ierr:
+    ssj = None
+    err = ''.join(['unable to load the DMSP SSJ module; ssj_auroral_boundary ',
+                   'is available at: ',
+                   'https://github.com/lkilcommons/ssj_auroral_boundary\n',
+                   str(ierr)])
+
+try:
     import zenodo_get
 except ImportError as ierr:
-    raise ImportError("{:s}\n{:}".format(err, ierr))
+    zenodo_get = None
+    err = ''.join([err, '\nunable to load `zenodo_get` module; avalable ',
+                   'from PyPi.\n', str(ierr)])
+
+if ssj is None and zenodo_get is None:
+    raise ImportError(err)
 
 
 def fetch_ssj_files(stime, etime, out_dir=None, sat_nums=None):
@@ -77,6 +89,11 @@ def fetch_ssj_files(stime, etime, out_dir=None, sat_nums=None):
         ssj_auroral_boundaries package is no longer supported; use
         `fetch_ssj_boundary_files`
 
+    Raises
+    ------
+    ImportError
+        If called and ssj_auroral_boundaries is not available
+
     See Also
     ---------
     requests.exceptions.ProxyError
@@ -87,6 +104,10 @@ def fetch_ssj_files(stime, etime, out_dir=None, sat_nums=None):
                            "access the boundary Zenodo archive. This function",
                            " will be removed in version 0.4.1+."]),
                   DeprecationWarning, stacklevel=2)
+
+    if ssj is None:
+        raise ImportError(
+            'depends on uninstalled package ssj_auroral_boundaries')
 
     # Get and test the output directory
     if out_dir is None:
@@ -135,8 +156,8 @@ def fetch_ssj_files(stime, etime, out_dir=None, sat_nums=None):
                 try:
                     ssj.files.download_cdf_from_noaa(remote, local)
                     out_files.append(local)
-                except RuntimeError as err:
-                    ocbpy.logger.info(err)
+                except RuntimeError as rerr:
+                    ocbpy.logger.info(rerr)
 
             # Cycle by one day
             ctime += dt.timedelta(days=1)
@@ -175,6 +196,8 @@ def create_ssj_boundary_files(cdf_files, out_dir=None,
     ------
     ValueError
         If incorrect input is provided
+    ImportError
+        If called and ssj_auroral_boundaries is not available
 
     Warnings
     --------
@@ -188,6 +211,10 @@ def create_ssj_boundary_files(cdf_files, out_dir=None,
                            "access the boundary Zenodo archive. This function",
                            " will be removed in version 0.4.1+."]),
                   DeprecationWarning, stacklevel=2)
+
+    if ssj is None:
+        raise ImportError(
+            'depends on uninstalled package ssj_auroral_boundaries')
 
     # Test the directory inputs
     if out_dir is None:
@@ -225,8 +252,8 @@ def create_ssj_boundary_files(cdf_files, out_dir=None,
                                                  make_plot=make_plots,
                                                  csvvars=out_cols)
                     out_files.append(absd.csv.csvfn)
-            except pycdf.CDFError as err:
-                ocbpy.logger.warning("{:}".format(err))
+            except pycdf.CDFError as cerr:
+                ocbpy.logger.warning("{:}".format(cerr))
             except Warning as war:
                 ocbpy.logger.warning("{:}".format(war))
         else:
@@ -268,6 +295,8 @@ def fetch_ssj_boundary_files(stime=None, etime=None, out_dir=None,
         If an unknown satellite ID is provided.
     IOError
         If unable to donwload the target archive and identify the zip file
+    ImportError
+        If called and zenodo_get is not available
 
     Notes
     -----
@@ -275,6 +304,8 @@ def fetch_ssj_boundary_files(stime=None, etime=None, out_dir=None,
     without downloading it again.
 
     """
+    if zenodo_get is None:
+        raise ImportError('depends on uninstalled package zenodo_get')
 
     # Test the requested satellite outputs. SSJ5 was carried on F16 onwards.
     # F19 was short lived, F20 was not launched. Ref:
