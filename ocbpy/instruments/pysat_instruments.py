@@ -24,10 +24,11 @@ import ocbpy
 import ocbpy.ocb_scaling as ocbscal
 
 
-def add_ocb_to_data(pysat_inst, mlat_name='', mlt_name='', evar_names=None,
-                    curl_evar_names=None, vector_names=None, hemisphere=0,
-                    ocb=None, ocbfile='default', instrument='', max_sdiff=60,
-                    min_merit=None, max_merit=None, **kwargs):
+def add_ocb_to_data(pysat_inst, mlat_name='', mlt_name='', height_name='',
+                    evar_names=None, curl_evar_names=None, vector_names=None,
+                    height=350.0, hemisphere=0, ocb=None, ocbfile='default',
+                    instrument='', max_sdiff=60, min_merit=None, max_merit=None,
+                    loc_coord='magnetic', vect_coord='magnetic', **kwargs):
     """Covert the location of pysat data into OCB, EAB, or Dual coordinates.
 
     Parameters
@@ -35,9 +36,11 @@ def add_ocb_to_data(pysat_inst, mlat_name='', mlt_name='', evar_names=None,
     pysat_inst : pysat.Instrument
         pysat.Instrument class object containing magnetic coordinates
     mlat_name : str
-        Instrument data key or column for magnetic latitudes (default='')
+        Instrument data key or column for latitudes (default='')
     mlt_name : str
-        Instrument data key or column for magnetic local times (default='')
+        Instrument data key or column for local times (default='')
+    height_name : str
+        Instrument data key or column for altitude (default='')
     evar_names : list or NoneType
         List of Instrument data keys or columns pointing to measurements that
         are proportional to the electric field (E); e.g. ion drift
@@ -53,6 +56,9 @@ def add_ocb_to_data(pysat_inst, mlat_name='', mlt_name='', evar_names=None,
         provided.  The value corresponding to each key must be a dict that
         indicates the names holding data needed to initialise the
         ocbpy.ocb_scaling.VectorData object (default=None)
+    height : float or array-like
+        Altitude value(s) to use if no height variable is provided by
+        `height_name` (default=350.0)
     hemisphere : int
         Hemisphere to process (can only do one at a time).  1=Northern,
         -1=Southern, 0=Determine from data (default=0)
@@ -74,6 +80,16 @@ def add_ocb_to_data(pysat_inst, mlat_name='', mlt_name='', evar_names=None,
     max_merit : float or NoneTye
         Maximum value for the default figure of merit or None to not apply a
         custom maximum (default=None)
+    loc_coord : str
+        Name of the coordinate system for `mlat_name` and `mlt_name`; one of
+        'magnetic', 'geocentric', or 'geodetic'. If not 'magnetic',
+        `height_name` or `height` will be used to convert the data to magnetic
+        coordinates. (default='magnetic')
+    vect_coord : str
+        Name of the coordinate system for `vect_n` and `vect_e`; one of
+        'magnetic', 'geocentric', or 'geodetic'. If not 'magnetic',
+        `height_name` or `height` will be used to convert the data to magnetic
+        coordinates. (default='magnetic')
     kwargs : dict
         Dict with optional selection criteria.  The key should correspond to a
         data attribute and the value must be a tuple with the first value
@@ -96,9 +112,9 @@ def add_ocb_to_data(pysat_inst, mlat_name='', mlt_name='', evar_names=None,
     ::
 
        # Example vector name input looks like:
-       vector_names={'vel': {'aacgm_n': 'vel_n', 'aacgm_e': 'vel_e',
+       vector_names={'vel': {'vect_n': 'vel_n', 'vect_e': 'vel_e',
                              'dat_name': 'velocity', 'dat_units': 'm/s'},
-                      'dat': {'aacgm_n': 'dat_n', 'aacgm_e': 'dat_e',
+                      'dat': {'vect_n': 'dat_n', 'vect_e': 'dat_e',
                               'scale_func': local_scale_func}}
 
     """
@@ -162,7 +178,7 @@ def add_ocb_to_data(pysat_inst, mlat_name='', mlt_name='', evar_names=None,
     nvect = len(vector_names.keys())
     vector_attrs = dict()
     if nvect > 0:
-        vector_reqs = ["aacgm_n", "aacgm_e", "aacgm_z"]
+        vector_reqs = ["vect_n", "vect_e", "vect_z"]
 
         for eattr in vector_names.keys():
             vdim = 0
@@ -210,10 +226,16 @@ def add_ocb_to_data(pysat_inst, mlat_name='', mlt_name='', evar_names=None,
     for eattr in curl_evar_names:
         ocb_names.append("{:s}_ocb".format(eattr))
 
-    # Extract the magnetic locations as numpy arrays
-    aacgm_lat = np.array(pysat_inst[mlat_name])
-    aacgm_mlt = np.array(pysat_inst[mlt_name])
-    ndat = len(aacgm_lat)
+    # Extract the locations as numpy arrays
+    lat = np.array(pysat_inst[mlat_name])
+    lt = np.array(pysat_inst[mlt_name])
+    ndat = len(lat)
+
+    # Extract the height, if possible
+    if height_name in pysat_inst.variables:
+        height = np.array(pysat_inst[height_name])
+    else:
+        height = np.asarray(height)
 
     # Load the OCB data for the data period, if desired
     if ocb is None or (not isinstance(ocb, ocbpy.OCBoundary)
@@ -223,12 +245,12 @@ def add_ocb_to_data(pysat_inst, mlat_name='', mlt_name='', evar_names=None,
 
         # If hemisphere isn't specified, set it here
         if hemisphere == 0:
-            hemisphere = np.sign(np.nanmax(aacgm_lat))
+            hemisphere = np.sign(np.nanmax(lat))
 
             # Ensure that all data is in the same hemisphere
             if hemisphere == 0:
-                hemisphere = np.sign(np.nanmin(aacgm_lat))
-            elif hemisphere != np.sign(np.nanmin(aacgm_lat)):
+                hemisphere = np.sign(np.nanmin(lat))
+            elif hemisphere != np.sign(np.nanmin(lat)):
                 raise ValueError("".join(["cannot process observations from "
                                           "both hemispheres at the same time;"
                                           "set hemisphere=+/-1 to choose."]))
@@ -243,7 +265,7 @@ def add_ocb_to_data(pysat_inst, mlat_name='', mlt_name='', evar_names=None,
 
     # Ensure all data is from one hemisphere and is finite
     if pysat_inst.pandas_format:
-        finite_mask = ((np.sign(aacgm_lat) == hemisphere)
+        finite_mask = ((np.sign(lat) == hemisphere)
                        & np.isfinite(pysat_inst[:, pysat_names].max(axis=1)))
         dat_coords = [pysat_inst.index.name]
         combo_shape = [pysat_inst.index.shape[0]]
@@ -260,40 +282,47 @@ def add_ocb_to_data(pysat_inst, mlat_name='', mlt_name='', evar_names=None,
         ocbpy.logger.error("no data in Boundary file(s)")
         return
 
-    # Ensure the MLT and MLat data are the same shape
-    if(aacgm_lat.shape != aacgm_mlt.shape
-       or aacgm_lat.shape[0] != pysat_inst.index.shape[0]):
-        ocb_coords = [mlt_coord for mlt_coord
+    # Ensure the LT, Lat, and Height data are the same shape
+    if lat.shape != lt.shape or lat.shape[0] != pysat_inst.index.shape[
+            0] or (height.shape != lat.shape and len(height.shape) > 0):
+        ocb_coords = [lt_coord for lt_coord
                       in pysat_inst[mlt_name].coords.keys()]
         if pysat_inst.index.name in ocb_coords:
-            combo_shape = list(aacgm_mlt.shape)
+            combo_shape = list(lt.shape)
         else:
-            # Ensure MLT has time dependence
+            # Ensure Local Time has universal time dependence
             ocb_coords.insert(0, pysat_inst.index.name)
             combo_shape = [pysat_inst.index.shape[0]]
-            combo_shape.extend(list(aacgm_mlt.shape))
-            out_mlt, _ = np.meshgrid(aacgm_mlt, pysat_inst.index)
+            combo_shape.extend(list(lt.shape))
+            out_lt, _ = np.meshgrid(lt, pysat_inst.index)
 
-            if out_mlt.shape != combo_shape:
-                aacgm_mlt = out_mlt.reshape(combo_shape)
+            if out_lt.shape != combo_shape:
+                lt = out_lt.reshape(combo_shape)
 
-        # Expand the coordinates if the MLat coordinates are not the
-        # same as the MLT coordinates
+        # Expand the coordinates if the lat coordinates are not the
+        # same as the LT coordinates or height coordinatess
         for lat_coord in pysat_inst[mlat_name].coords:
             if lat_coord not in pysat_inst[mlt_name].coords:
                 combo_shape.append(pysat_inst[lat_coord].shape[0])
                 ocb_coords.append(lat_coord)
 
+        if height_name in pysat_inst.variables:
+            for alt_coord in pysat_inst[height_name].coords:
+                if alt_coord not in pysat_inst[mlt_name].coords:
+                    combo_shape.append(pysat_inst[alt_coord].shape[0])
+                    ocb_coords.append(alt_coord)
+
         # Reshape the data
-        out_lat, out_mlt = np.meshgrid(aacgm_lat, aacgm_mlt)
-        aacgm_lat = out_lat.reshape(combo_shape)
-        aacgm_mlt = out_mlt.reshape(combo_shape)
+        out_lat, out_lt, out_height = np.meshgrid(lat, lt, height)
+        lat = out_lat.reshape(combo_shape)
+        lt = out_lt.reshape(combo_shape)
+        height = out_height.reshape(combo_shape)
     else:
         ocb_coords = [pysat_inst.index.name]
 
     # See if the data has more dimensions than the OCB coordinates
     if len(dat_coords) > len(ocb_coords):
-        combo_shape = list(aacgm_lat.shape)
+        combo_shape = list(lat.shape)
         for dcoord in dat_coords:
             if dcoord not in ocb_coords:
                 ocb_coords.append(dcoord)
@@ -301,10 +330,12 @@ def add_ocb_to_data(pysat_inst, mlat_name='', mlt_name='', evar_names=None,
 
         # Reverse and transpose the arrays
         combo_shape.reverse()
-        out_lat = np.full(shape=combo_shape, fill_value=aacgm_lat.transpose())
-        out_mlt = np.full(shape=combo_shape, fill_value=aacgm_mlt.transpose())
-        aacgm_lat = out_lat.transpose()
-        aacgm_mlt = out_mlt.transpose()
+        out_lat = np.full(shape=combo_shape, fill_value=lat.transpose())
+        out_lt = np.full(shape=combo_shape, fill_value=lt.transpose())
+        out_height = np.full(shape=combo_shape, fill_value=height.transpose())
+        lat = out_lat.transpose()
+        lt = out_lt.transpose()
+        height = out_height.transpose()
 
     # Initialise the OCB output
     ocb_output = dict()
@@ -314,10 +345,9 @@ def add_ocb_to_data(pysat_inst, mlat_name='', mlt_name='', evar_names=None,
             for vattr in ocb_vect_attrs:
                 ovattr = '_'.join([oattr, vattr])
                 ovattr = ovattr.replace('ocb_ocb_', 'ocb_')
-                ocb_output[ovattr] = np.full(aacgm_lat.shape, np.nan,
-                                             dtype=float)
+                ocb_output[ovattr] = np.full(lat.shape, np.nan, dtype=float)
         else:
-            ocb_output[oattr] = np.full(aacgm_lat.shape, np.nan, dtype=float)
+            ocb_output[oattr] = np.full(lat.shape, np.nan, dtype=float)
 
     # Cycle through the data, matching data and OCB records
     idat = 0
@@ -356,7 +386,8 @@ def add_ocb_to_data(pysat_inst, mlat_name='', mlt_name='', evar_names=None,
                 time_mask = None
 
             # Get the OCB coordinates
-            nout = ocb.normal_coord(aacgm_lat[iout], aacgm_mlt[iout])
+            nout = ocb.normal_coord(lat[iout], lt[iout], coords=loc_coord,
+                                    height=height[iout])
 
             if len(nout) == 3:
                 ocb_output[olat_name][iout] = nout[0]
@@ -367,16 +398,18 @@ def add_ocb_to_data(pysat_inst, mlat_name='', mlt_name='', evar_names=None,
                 ocb_output[omlt_name][iout] = nout[1]
                 ocb_output[ocor_name][iout] = nout[3]
 
-            # Scale and orient the vector values
+            # Scale and orient the vector data
             if nvect > 0:
-                # Set this value's AACGM vector values
+                # Set this value's vector data
                 vector_default = {"ocb_lat": ocb_output[olat_name][iout],
                                   "ocb_mlt": ocb_output[omlt_name][iout],
                                   "r_corr": ocb_output[ocor_name][iout],
-                                  "aacgm_n": 0.0, "aacgm_e": 0.0,
-                                  "aacgm_z": 0.0, "aacgm_mag": np.nan,
-                                  "dat_name": None, "dat_units": None,
-                                  "scale_func": None}
+                                  "vect_n": 0.0, "vect_e": 0.0, "vect_z": 0.0,
+                                  "vect_mag": np.nan, "dat_name": None,
+                                  "dat_units": None, "scale_func": None,
+                                  "loc_coord": loc_coord,
+                                  "vect_coord": vect_coord,
+                                  "height": height[iout]}
                 vector_init = dict(vector_default)
                 vshape = list()
 
@@ -404,10 +437,8 @@ def add_ocb_to_data(pysat_inst, mlat_name='', mlt_name='', evar_names=None,
                             'vector variables must all have the same shape')
 
                     # Perform the vector scaling
-                    vout = ocbscal.VectorData(vind, ocb.rec_ind,
-                                              aacgm_lat[iout],
-                                              aacgm_mlt[iout],
-                                              **vector_init)
+                    vout = ocbscal.VectorData(vind, ocb.rec_ind, lat[iout],
+                                              lt[iout], **vector_init)
                     vout.set_ocb(ocb)
 
                     # Assign the vector attributes to the output
