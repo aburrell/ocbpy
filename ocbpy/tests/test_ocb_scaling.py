@@ -230,8 +230,8 @@ class TestOCBScalingLogFailure(cc.TestLogWarnings):
         self.ocb = ocbpy.OCBoundary(filename=test_file, instrument='image')
         self.ocb.rec_ind = 27
         self.vdata = ocbpy.ocb_scaling.VectorData(0, self.ocb.rec_ind, 75.0,
-                                                  22.0, aacgm_n=50.0,
-                                                  aacgm_e=86.5, aacgm_z=5.0,
+                                                  22.0, vect_n=50.0,
+                                                  vect_e=86.5, vect_z=5.0,
                                                   dat_name="Test",
                                                   dat_units="$m s^{-1}$")
         return
@@ -261,7 +261,7 @@ class TestOCBScalingLogFailure(cc.TestLogWarnings):
         # Initalize the VectorData class with inconsistent vector magnitudes
         self.vdata = ocbpy.ocb_scaling.VectorData(0, self.ocb.rec_ind,
                                                   75.0, 22.0,
-                                                  aacgm_mag=100.0,
+                                                  vect_mag=100.0,
                                                   dat_name="Test",
                                                   dat_units="$m s^{-1}$")
 
@@ -284,19 +284,19 @@ class TestOCBScalingMethods(unittest.TestCase):
                           'ocb_z']
 
         self.vdata = ocbpy.ocb_scaling.VectorData(0, self.ocb.rec_ind, 75.0,
-                                                  22.0, aacgm_n=50.0,
-                                                  aacgm_e=86.5, aacgm_z=5.0,
+                                                  22.0, vect_n=50.0,
+                                                  vect_e=86.5, vect_z=5.0,
                                                   dat_name="Test",
                                                   dat_units="$m s^{-1}$")
         self.wdata = ocbpy.ocb_scaling.VectorData(0, self.ocb.rec_ind, 75.0,
-                                                  22.0, aacgm_n=50.0,
-                                                  aacgm_e=86.5, aacgm_z=5.0,
-                                                  aacgm_mag=100.036243432,
+                                                  22.0, vect_n=50.0,
+                                                  vect_e=86.5, vect_z=5.0,
+                                                  vect_mag=100.036243432,
                                                   dat_name="Test",
                                                   dat_units="$m s^{-1}$")
         self.zdata = ocbpy.ocb_scaling.VectorData(0, self.ocb.rec_ind, 87.2,
-                                                  21.22, aacgm_n=0.0,
-                                                  aacgm_e=0.0,
+                                                  21.22, vect_n=0.0,
+                                                  vect_e=0.0,
                                                   dat_name="Test Zero",
                                                   dat_units="$m s^{-1}$")
         return
@@ -700,7 +700,7 @@ class TestOCBScalingMethods(unittest.TestCase):
         return
 
     def test_scale_vec_z_zero(self):
-        """Test the calc of the OCB vector sign with no vertical aacgm_z."""
+        """Test the calc of the OCB vector sign with no vertical vect_z."""
         # Re-assing the necessary variable
         self.vdata.vect_z = 0.0
 
@@ -811,19 +811,19 @@ class TestDualScalingMethods(TestOCBScalingMethods):
                           'ocb_z']
 
         self.vdata = ocbpy.ocb_scaling.VectorData(0, self.ocb.rec_ind,
-                                                  75.0, 22.0, aacgm_n=50.0,
-                                                  aacgm_e=86.5, aacgm_z=5.0,
+                                                  75.0, 22.0, vect_n=50.0,
+                                                  vect_e=86.5, vect_z=5.0,
                                                   dat_name="Test",
                                                   dat_units="$m s^{-1}$")
         self.wdata = ocbpy.ocb_scaling.VectorData(0, self.ocb.rec_ind,
-                                                  75.0, 22.0, aacgm_n=50.0,
-                                                  aacgm_e=86.5, aacgm_z=5.0,
-                                                  aacgm_mag=100.036243432,
+                                                  75.0, 22.0, vect_n=50.0,
+                                                  vect_e=86.5, vect_z=5.0,
+                                                  vect_mag=100.036243432,
                                                   dat_name="Test",
                                                   dat_units="$m s^{-1}$")
         self.zdata = ocbpy.ocb_scaling.VectorData(0, self.ocb.rec_ind,
-                                                  87.2, 21.22, aacgm_n=0.0,
-                                                  aacgm_e=0.0,
+                                                  87.2, 21.22, vect_n=0.0,
+                                                  vect_e=0.0,
                                                   dat_name="Test Zero",
                                                   dat_units="$m s^{-1}$")
         return
@@ -938,8 +938,8 @@ class TestVectorDataRaises(unittest.TestCase):
         self.ocb = ocbpy.OCBoundary(filename=test_file, instrument='image')
         self.ocb.rec_ind = 27
         self.vdata = ocbpy.ocb_scaling.VectorData(0, self.ocb.rec_ind, 75.0,
-                                                  22.0, aacgm_n=50.0,
-                                                  aacgm_e=86.5, aacgm_z=5.0,
+                                                  22.0, vect_n=50.0,
+                                                  vect_e=86.5, vect_z=5.0,
                                                   dat_name="Test",
                                                   dat_units="$m s^{-1}$")
         self.input_attrs = list()
@@ -957,8 +957,8 @@ class TestVectorDataRaises(unittest.TestCase):
     def test_init_ocb_array_failure(self):
         """Test init failure with mismatched OCB and input array input."""
         self.input_attrs = [0, [27, 31], 75.0, 22.0]
-        self.bad_input = {'aacgm_n': 100.0, 'aacgm_e': 100.0,
-                          'aacgm_z': 10.0, 'ocb_lat': 81.0,
+        self.bad_input = {'vect_n': 100.0, 'vect_e': 100.0,
+                          'vect_z': 10.0, 'ocb_lat': 81.0,
                           'ocb_mlt': [2.0, 5.8, 22.5]}
 
         with self.assertRaisesRegex(ValueError, "OCB index and input shapes"):
@@ -970,9 +970,9 @@ class TestVectorDataRaises(unittest.TestCase):
         """Test init failure with mismatched OCB and data array input."""
         self.input_attrs = [[3, 6, 0], [27, 31], [75.0, 87.2, 65.0],
                             [22.0, 21, 22]]
-        self.bad_input = {'aacgm_n': [100.0, 110.0, 30.0],
-                          'aacgm_e': [100.0, 110.0, 30.0],
-                          'aacgm_z': [10.0, 10.0, 3.0]}
+        self.bad_input = {'vect_n': [100.0, 110.0, 30.0],
+                          'vect_e': [100.0, 110.0, 30.0],
+                          'vect_z': [10.0, 10.0, 3.0]}
 
         with self.assertRaisesRegex(ValueError,
                                     "Mismatched OCB and Vector input shapes"):
@@ -995,9 +995,9 @@ class TestVectorDataRaises(unittest.TestCase):
                             [[0, 1], self.ocb.rec_ind, [75.0, 70.0], 22.0],
                             [[0, 1], self.ocb.rec_ind, [75.0, 70.0],
                              [22.0, 20.0, 23.0]]]
-        self.bad_input = [{'aacgm_n': 10.0},
-                          {'aacgm_n': [100.0, 110.0, 30.0]},
-                          {'aacgm_n': [100.0, 110.0, 30.0]}]
+        self.bad_input = [{'vect_n': 10.0},
+                          {'vect_n': [100.0, 110.0, 30.0]},
+                          {'vect_n': [100.0, 110.0, 30.0]}]
         self.raise_out = ['data index shape must match vector shape',
                           'mismatched dimensions for VectorData inputs',
                           'mismatched dimensions for VectorData inputs']
@@ -1303,15 +1303,15 @@ class TestOCBScalingArrayMethods(unittest.TestCase):
         self.vdata = None
         self.out = None
 
-        self.aacgm_mag = numpy.full(shape=(17,), fill_value=10.44030650891055)
-        self.aacgm_mag[0] = 11.575836902790225
-        self.aacgm_mag[-1] = 0.0
+        self.vect_mag = numpy.full(shape=(17,), fill_value=10.44030650891055)
+        self.vect_mag[0] = 11.575836902790225
+        self.vect_mag[-1] = 0.0
         return
 
     def tearDown(self):
         """Tear down the test environment."""
         del self.ocb, self.vargs, self.vkwargs, self.out, self.vdata
-        del self.aacgm_mag, self.ref_quads
+        del self.vect_mag, self.ref_quads
         return
 
     def set_vector_ocb_ind(self):
@@ -1369,7 +1369,7 @@ class TestOCBScalingArrayMethods(unittest.TestCase):
         self.assertEqual(len(self.vdata.vect_mag), len(self.vargs[0]))
         self.assertEqual(len(self.vdata.ocb_mag), len(self.vargs[0]))
         for i, self.out in enumerate(self.vdata.vect_mag):
-            self.assertAlmostEqual(self.out, self.aacgm_mag[i])
+            self.assertAlmostEqual(self.out, self.vect_mag[i])
         return
 
     def test_init_nez_ocb_vec_array(self):
@@ -1379,7 +1379,7 @@ class TestOCBScalingArrayMethods(unittest.TestCase):
         self.assertEqual(len(self.vdata.vect_mag), len(self.vargs[0]))
         self.assertEqual(len(self.vdata.ocb_mag), len(self.vargs[0]))
         for i, self.out in enumerate(self.vdata.vect_mag):
-            self.assertAlmostEqual(self.out, self.aacgm_mag[i])
+            self.assertAlmostEqual(self.out, self.vect_mag[i])
         return
 
     def test_init_nez_ocb_array(self):
@@ -1393,17 +1393,17 @@ class TestOCBScalingArrayMethods(unittest.TestCase):
 
         self.vdata = ocbpy.ocb_scaling.VectorData(*self.vargs, **self.vkwargs)
         self.assertEqual(len(self.vdata.ocb_mag), len(self.vargs[1]))
-        self.assertTrue(abs(self.vdata.vect_mag - self.aacgm_mag[0]).all()
+        self.assertTrue(abs(self.vdata.vect_mag - self.vect_mag[0]).all()
                         < 1.0e-7, msg="unexpected AACGM vector magnitude")
         return
 
     def test_init_mag(self):
         """Test the set up of the VectorData array input with magnitude."""
-        self.vkwargs['aacgm_mag'] = self.aacgm_mag
+        self.vkwargs['vect_mag'] = self.vect_mag
         self.vdata = ocbpy.ocb_scaling.VectorData(*self.vargs, **self.vkwargs)
         self.assertEqual(len(self.vdata.vect_mag), len(self.vargs[0]))
         for i, self.out in enumerate(self.vdata.vect_mag):
-            self.assertAlmostEqual(self.out, self.aacgm_mag[i])
+            self.assertAlmostEqual(self.out, self.vect_mag[i])
         return
 
     def test_vector_all_bad_lat(self):
@@ -1458,8 +1458,8 @@ class TestOCBScalingArrayMethods(unittest.TestCase):
                 self.assertRegex(self.out, self.vkwargs[vkey])
 
         # Ensure the right hemisphere is good
-        self.assertAlmostEqual(self.vdata.vect_mag[1], self.aacgm_mag[1])
-        self.assertAlmostEqual(self.vdata.ocb_mag[1], self.aacgm_mag[1])
+        self.assertAlmostEqual(self.vdata.vect_mag[1], self.vect_mag[1])
+        self.assertAlmostEqual(self.vdata.ocb_mag[1], self.vect_mag[1])
         return
 
     def test_calc_vec_pole_angle_flat(self):
