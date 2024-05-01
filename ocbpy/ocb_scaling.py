@@ -352,7 +352,7 @@ class VectorData(object):
         return
 
     # TODO(#133): remove after old attributes are deprecated
-    def __getattr__(self, name, **kwargs):
+    def __getattribute__(self, name, **kwargs):
         """Get attributes, allowing access to deprecated names.
 
         Parameters
@@ -375,6 +375,9 @@ class VectorData(object):
                                    'removed in version 0.4.1+.']),
                           DeprecationWarning, stacklevel=2)
             name = dep_pairs[name]
+        elif name == "aacgm_naz":
+            warnings.warn('`aacgm_naz` will be removed in version 0.4.1+.',
+                          DeprecationWarning, stacklevel=2)
 
         # Use Object to avoid recursion
         value = super(VectorData, self).__getattribute__(name)
