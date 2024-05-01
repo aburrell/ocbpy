@@ -576,7 +576,7 @@ class VectorData(object):
         # TODO(#133): remove after old attributes are deprecated
         warnings.warn("".join(['`aacgm_mag` has been replaced with `vect_mag`,',
                                ' and will be removed in version 0.4.1+.']),
-                          DeprecationWarning, stacklevel=2)
+                      DeprecationWarning, stacklevel=2)
         return self.vect_mag
 
     @property
@@ -692,7 +692,7 @@ class VectorData(object):
         # TODO(#133): remove after old attributes are deprecated
         warnings.warn("".join(['`aacgm_lat` has been replaced with `lat`, and ',
                                'will be removed in version 0.4.1+.']),
-                          DeprecationWarning, stacklevel=2)
+                      DeprecationWarning, stacklevel=2)
         return self.lat
 
     @property
@@ -712,7 +712,7 @@ class VectorData(object):
         # TODO(#133): remove after old attributes are deprecated
         warnings.warn("".join(['`aacgm_mlt` has been replaced with `lt`, and ',
                                'will be removed in version 0.4.1+.']),
-                          DeprecationWarning, stacklevel=2)
+                      DeprecationWarning, stacklevel=2)
         return self.lt
 
     @property
