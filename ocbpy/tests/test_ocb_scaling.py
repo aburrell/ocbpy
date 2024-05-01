@@ -123,6 +123,21 @@ class TestOCBScalingDepWarning(unittest.TestCase):
                                      self.dep_attrs[attr]))
         return
 
+    def test_get_aacgm_naz(self):
+        """Test retrieval of deprecated `aacgm_naz` from VectorData."""
+        # Set the warning message
+        self.warn_msg = "will be removed in version 0.4.1+."
+
+        # Set the vector data object
+        vdata = ocbpy.ocb_scaling.VectorData(*self.vdata_args,
+                                             **self.vdata_kwargs)
+
+        # Capture and evaluate the warning message
+        with self.assertWarnsRegex(DeprecationWarning, self.warn_msg):
+            self.assertTrue(numpy.isnan(vdata.aacgm_naz))
+
+        return
+
     def test_dep_aacgm_mag(self):
         """Test VectorData property `aacgm_mag` is deprecated."""
         # Set the vector data
