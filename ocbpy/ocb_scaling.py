@@ -936,11 +936,11 @@ class VectorData(object):
                     shape=self.ocb_z.shape, fill_value=self.scale_func(
                         self.vect_z, self.unscaled_r, self.scaled_r))
             else:
-                self.ocb_n = self.scale_func(self.vect_n, self.unscaled_r,
+                self.ocb_n = self.scale_func(self.ocb_n, self.unscaled_r,
                                              self.scaled_r)
-                self.ocb_e = self.scale_func(self.vect_e, self.unscaled_r,
+                self.ocb_e = self.scale_func(self.ocb_e, self.unscaled_r,
                                              self.scaled_r)
-                self.ocb_z = self.scale_func(self.vect_z, self.unscaled_r,
+                self.ocb_z = self.scale_func(self.ocb_z, self.unscaled_r,
                                              self.scaled_r)
 
         # Calculate the scaled OCB vector magnitude
