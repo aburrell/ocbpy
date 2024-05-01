@@ -46,6 +46,7 @@ class TestPysatUtils(unittest.TestCase):
         self.ocb_key = 'ocb_test'
         self.pysat_key = 'dummy1'
         self.pysat_lat = 'latitude'
+        self.pysat_alt = 'altitude'
         self.notes = None
         self.test_inst = None
         self.ocb = None
@@ -58,7 +59,7 @@ class TestPysatUtils(unittest.TestCase):
         """Tear down the testing environment."""
         del self.ocb_key, self.pysat_key, self.notes, self.del_time
         del self.test_inst, self.ocb, self.added_keys, self.pysat_keys
-        del self.pysat_lat
+        del self.pysat_lat, self.pysat_alt
         return
 
     def eval_ocb_metadata(self):
@@ -212,15 +213,20 @@ class TestPysatStructure(unittest.TestCase):
         """Test the add_ocb_to_data function defaults."""
         defaults = ocb_pysat.add_ocb_to_data.__defaults__
 
-        for i in [0, 1, 8]:
-            self.assertEqual(len(defaults[i]), 0)
+        for i in [0, 1, 2, 10]:
+            self.assertEqual(len(defaults[i]), 0,
+                             msg="Default {:d} value {:} != 0".format(
+                                 i, defaults[i]))
 
-        for i in [2, 3, 4, 6, 10, 11]:
+        for i in [3, 4, 5, 8, 12, 13]:
             self.assertIsNone(defaults[i])
 
-        self.assertEqual(defaults[5], 0)
-        self.assertRegex(defaults[7], 'default')
-        self.assertEqual(defaults[9], 60)
+        self.assertEqual(defaults[6], 350)
+        self.assertEqual(defaults[7], 0)
+        self.assertRegex(defaults[9], 'default')
+        self.assertEqual(defaults[11], 60)
+        self.assertRegex(defaults[14], 'magnetic')
+        self.assertRegex(defaults[15], 'magnetic')
         return
 
     def test_add_ocb_to_metadata_defaults(self):
@@ -365,7 +371,8 @@ class TestPysatMethods(TestPysatUtils, cc.TestLogWarnings):
 
         # Test adding OCBs
         ocb_pysat.add_ocb_to_data(self.test_inst, self.pysat_lat, "mlt",
-                                  ocb=self.ocb, max_sdiff=self.del_time)
+                                  height_name=self.pysat_alt, ocb=self.ocb,
+                                  max_sdiff=self.del_time)
 
         self.added_keys = [kk for kk in self.test_inst.meta.keys()
                            if kk.find('_ocb') > 0]
@@ -389,6 +396,7 @@ class TestPysatMethods(TestPysatUtils, cc.TestLogWarnings):
         # Test adding OCBs using filename instead of OCB object
         self.ocb_kw['ocbfile'] = self.ocb_kw['filename']
         ocb_pysat.add_ocb_to_data(self.test_inst, self.pysat_lat, "mlt",
+                                  height_name=self.pysat_alt,
                                   max_sdiff=self.del_time, **self.ocb_kw)
 
         self.added_keys = [kk for kk in self.test_inst.meta.keys()
@@ -425,6 +433,7 @@ class TestPysatMethods(TestPysatUtils, cc.TestLogWarnings):
 
         # Add the OCB data to the Instrument and evaluate the output
         ocb_pysat.add_ocb_to_data(self.test_inst, self.pysat_lat, "mlt",
+                                  height_name=self.pysat_alt,
                                   max_sdiff=self.del_time, **self.ocb_kw)
         self.test_ocb_added()
         return
@@ -436,6 +445,7 @@ class TestPysatMethods(TestPysatUtils, cc.TestLogWarnings):
 
         # Add the OCB with electrically scaled variables
         ocb_pysat.add_ocb_to_data(self.test_inst, self.pysat_lat, "mlt",
+                                  height_name=self.pysat_alt,
                                   evar_names=[self.pysat_key],
                                   ocb=self.ocb, max_sdiff=self.del_time)
 
@@ -455,6 +465,7 @@ class TestPysatMethods(TestPysatUtils, cc.TestLogWarnings):
 
         # Add the OCB with curl-scaled variables
         ocb_pysat.add_ocb_to_data(self.test_inst, self.pysat_lat, "mlt",
+                                  height_name=self.pysat_alt,
                                   curl_evar_names=[self.pysat_var2],
                                   ocb=self.ocb, max_sdiff=self.del_time)
 
@@ -474,11 +485,12 @@ class TestPysatMethods(TestPysatUtils, cc.TestLogWarnings):
 
         # Add the OCB with electrically scaled vectors
         ocb_pysat.add_ocb_to_data(self.test_inst, self.pysat_lat, "mlt",
+                                  height_name=self.pysat_alt,
                                   evar_names=['vect_evar'],
                                   vector_names={
                                       'vect_evar':
-                                      {'aacgm_n': self.pysat_key,
-                                       'aacgm_e': self.pysat_var2,
+                                      {'vect_n': self.pysat_key,
+                                       'vect_e': self.pysat_var2,
                                        'dat_name': 'vect',
                                        'dat_units': 'm/s'}},
                                   ocb=self.ocb, max_sdiff=self.del_time)
@@ -504,11 +516,12 @@ class TestPysatMethods(TestPysatUtils, cc.TestLogWarnings):
 
         # Add the OCB with curl-scaled vectors
         ocb_pysat.add_ocb_to_data(self.test_inst, self.pysat_lat, "mlt",
+                                  height_name=self.pysat_alt,
                                   curl_evar_names=['vect_cevar'],
                                   vector_names={
                                       'vect_cevar':
-                                      {'aacgm_n': self.pysat_key,
-                                       'aacgm_e': self.pysat_var2,
+                                      {'vect_n': self.pysat_key,
+                                       'vect_e': self.pysat_var2,
                                        'dat_name': 'vect',
                                        'dat_units': 'm/s'}},
                                   ocb=self.ocb, max_sdiff=self.del_time)
@@ -534,10 +547,10 @@ class TestPysatMethods(TestPysatUtils, cc.TestLogWarnings):
 
         # Add the OCB with a custom scaling function
         ocb_pysat.add_ocb_to_data(self.test_inst, self.pysat_lat, "mlt",
-                                  vector_names={
+                                  height_name=self.pysat_alt, vector_names={
                                       'vect_cust':
-                                      {'aacgm_n': self.pysat_key,
-                                       'aacgm_e': self.pysat_var2,
+                                      {'vect_n': self.pysat_key,
+                                       'vect_e': self.pysat_var2,
                                        'dat_name': 'vect',
                                        'dat_units': 'm/s',
                                        'scale_func': None}},
@@ -563,12 +576,13 @@ class TestPysatMethods(TestPysatUtils, cc.TestLogWarnings):
 
         # Add the OCB with multiple inputs
         ocb_pysat.add_ocb_to_data(self.test_inst, self.pysat_lat, "mlt",
+                                  height_name=self.pysat_alt,
                                   evar_names=[self.pysat_key],
                                   curl_evar_names=[self.pysat_var2],
                                   vector_names={
                                       'vect_cust':
-                                      {'aacgm_n': self.pysat_key,
-                                       'aacgm_e': self.pysat_var2,
+                                      {'vect_n': self.pysat_key,
+                                       'vect_e': self.pysat_var2,
                                        'dat_name': 'vect',
                                        'dat_units': 'm/s',
                                        'scale_func': None}},
@@ -596,7 +610,8 @@ class TestPysatMethods(TestPysatUtils, cc.TestLogWarnings):
         # Add the OCB without a filename
         self.ocb_kw['ocbfile'] = None
         ocb_pysat.add_ocb_to_data(self.test_inst, self.pysat_lat, "mlt",
-                                  **self.ocb_kw, max_sdiff=self.del_time)
+                                  height_name=self.pysat_alt, **self.ocb_kw,
+                                  max_sdiff=self.del_time)
 
         self.lwarn = u"no data in Boundary file"
         self.eval_logging_message()
@@ -612,7 +627,7 @@ class TestPysatMethods(TestPysatUtils, cc.TestLogWarnings):
         with self.assertRaisesRegex(
                 ValueError, 'cannot process observations from both '):
             ocb_pysat.add_ocb_to_data(self.test_inst, self.pysat_lat, "mlt",
-                                      **self.ocb_kw)
+                                      height_name=self.pysat_alt, **self.ocb_kw)
         return
 
     def test_bad_pysat_inst(self):
@@ -684,8 +699,8 @@ class TestPysatMethods(TestPysatUtils, cc.TestLogWarnings):
         with self.assertRaisesRegex(ValueError,
                                     'missing scaling function for bad'):
             ocb_pysat.add_ocb_to_data(self.test_inst, self.pysat_lat, "mlt",
-                                      vector_names={'bad': {'aacgm_n': 'bad_n',
-                                                            'aacgm_e': 'bad_e',
+                                      vector_names={'bad': {'vect_n': 'bad_n',
+                                                            'vect_e': 'bad_e',
                                                             'dat_name': 'bad',
                                                             'dat_units': ''}},
                                       ocb=self.ocb)
@@ -699,11 +714,12 @@ class TestPysatMethods(TestPysatUtils, cc.TestLogWarnings):
         with self.assertRaisesRegex(ValueError,
                                     'unknown vector name bad_n'):
             ocb_pysat.add_ocb_to_data(self.test_inst, self.pysat_lat, "mlt",
+                                      height_name=self.pysat_alt,
                                       evar_names=['bad'],
                                       vector_names={
                                           'bad':
-                                          {'aacgm_n': 'bad_n',
-                                           'aacgm_e': self.pysat_key,
+                                          {'vect_n': 'bad_n',
+                                           'vect_e': self.pysat_key,
                                            'dat_name': 'bad',
                                            'dat_units': ''}},
                                       ocb=self.ocb)
@@ -779,6 +795,7 @@ class TestPysatMethodsModel(TestPysatMethods):
 
         # Update the method default
         self.test_module = pysat.instruments.pysat_testmodel
+        self.pysat_alt = ''
         return
 
     def test_mismatched_vector_data(self):
@@ -789,11 +806,12 @@ class TestPysatMethodsModel(TestPysatMethods):
         with self.assertRaisesRegex(ValueError,
                                     'vector variables must all have the same'):
             ocb_pysat.add_ocb_to_data(self.test_inst, self.pysat_lat, "mlt",
+                                      height_name=self.pysat_alt,
                                       evar_names=['vect_evar'],
                                       vector_names={
                                           'vect_evar':
-                                          {'aacgm_n': self.pysat_key,
-                                           'aacgm_e': self.pysat_lat,
+                                          {'vect_n': self.pysat_key,
+                                           'vect_e': self.pysat_lat,
                                            'dat_name': 'vect',
                                            'dat_units': 'm/s'}},
                                       ocb=self.ocb, max_sdiff=self.del_time)
@@ -824,6 +842,7 @@ class TestPysatCustMethods(TestPysatUtils, cc.TestLogWarnings):
         self.test_module = pysat.instruments.pysat_testing
         self.pysat_var2 = 'dummy2'
         self.cust_kwargs = {'mlat_name': self.pysat_lat, 'mlt_name': 'mlt',
+                            'height_name': self.pysat_alt,
                             'max_sdiff': self.del_time}
         self.pysat_kw = {}
 
@@ -934,25 +953,25 @@ class TestPysatCustMethods(TestPysatUtils, cc.TestLogWarnings):
         # Cycle through the different custom inputs
         for kw, val in [(['evar_names', 'vector_names'],
                          [['vect_evar'],
-                          {'vect_evar': {'aacgm_n': self.pysat_var2,
-                                         'aacgm_e': self.pysat_var2,
+                          {'vect_evar': {'vect_n': self.pysat_var2,
+                                         'vect_e': self.pysat_var2,
                                          'dat_name': 'vect',
                                          'dat_units': 'm/s'}}]),
                         (['curl_evar_names', 'vector_names'],
                          [['vect_cevar'],
-                          {'vect_cevar': {'aacgm_n': self.pysat_var2,
-                                          'aacgm_e': self.pysat_key,
+                          {'vect_cevar': {'vect_n': self.pysat_var2,
+                                          'vect_e': self.pysat_key,
                                           'dat_name': 'vect',
                                           'dat_units': 'm/s'}}]),
                         (['vector_names'],
-                         [{'vect_cust': {'aacgm_n': self.pysat_key,
-                                         'aacgm_e': self.pysat_var2,
+                         [{'vect_cust': {'vect_n': self.pysat_key,
+                                         'vect_e': self.pysat_var2,
                                          'dat_name': 'vect', 'dat_units': 'm/s',
                                          'scale_func': None}}]),
                         (['evar_names', 'curl_evar_names', 'vector_names'],
                          [[self.pysat_var2], [self.pysat_key],
-                          {'vect_cust': {'aacgm_n': self.pysat_key,
-                                         'aacgm_e': self.pysat_key,
+                          {'vect_cust': {'vect_n': self.pysat_key,
+                                         'vect_e': self.pysat_key,
                                          'dat_name': 'vect', 'dat_units': 'm/s',
                                          'scale_func': None}}])]:
             # Ensure the record index is correct
@@ -1022,8 +1041,8 @@ class TestPysatCustMethods(TestPysatUtils, cc.TestLogWarnings):
 
     def test_cust_add_ocb_to_data_bad_vector_scale(self):
         """Test failure of missing scaling function in custom func."""
-        self.cust_kwargs['vector_names'] = {'bad': {'aacgm_n': 'bad_n',
-                                                    'aacgm_e': 'bad_e',
+        self.cust_kwargs['vector_names'] = {'bad': {'vect_n': 'bad_n',
+                                                    'vect_e': 'bad_e',
                                                     'dat_name': 'bad',
                                                     'dat_units': ''}}
         self.pysat_kw['custom'] = [{'function': ocb_pysat.add_ocb_to_data,
@@ -1038,8 +1057,8 @@ class TestPysatCustMethods(TestPysatUtils, cc.TestLogWarnings):
         """Test failure of missing scaling function in custom func."""
         self.cust_kwargs['evar_names'] = ['bad']
         self.cust_kwargs['vector_names'] = {'bad':
-                                            {'aacgm_n': 'bad_n',
-                                             'aacgm_e': self.pysat_key,
+                                            {'vect_n': 'bad_n',
+                                             'vect_e': self.pysat_key,
                                              'dat_name': 'bad',
                                              'dat_units': ''}}
         self.pysat_kw['custom'] = [{'function': ocb_pysat.add_ocb_to_data,
@@ -1117,4 +1136,6 @@ class TestPysatCustMethodsModel(TestPysatCustMethods):
 
         # Update the class defaults
         self.test_module = pysat.instruments.pysat_testmodel
+        self.pysat_alt = ''
+        self.cust_kwargs['height_name'] = self.pysat_alt
         return
