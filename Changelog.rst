@@ -17,7 +17,7 @@ Summary of all changes made since the first stable release
 * ENH: Allow data padding in `pysat_instrument` functions
 * ENH: Created separate vector transformation functions to support multiple
        coordinate systems
-* ENH: Updated VectorData to allow geographic vector inputs
+* ENH: Updated VectorData and pysat_instruments to allow geographic inputs
 * BUG: Fixed a typo in the documentation's pysat example
 * BUG: Added an error catch for badly formatted SuperMAG file reading
 * BUG: Fixed the flat/zero masking for vector pole angles with array input
@@ -25,6 +25,7 @@ Summary of all changes made since the first stable release
 * TST: Reduced duplication by creating a common test class and test variable
 * TST: Added a ReadTheDocs yaml
 * DOC: Improved docstring style compliance and correctness
+* DOC: Updated pysat example to use geodetic inputs and improve the EAB plot
 
 0.3.0 (10-21-2022)
 ------------------
