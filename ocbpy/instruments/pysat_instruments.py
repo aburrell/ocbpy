@@ -152,10 +152,37 @@ def add_ocb_to_data(pysat_inst, mlat_name='', mlt_name='', height_name='',
     # Ensure the correct data format
     max_sdiff = int(max_sdiff)
 
+    # Load the OCB data for the data period, if desired
+    if ocb is None or (not isinstance(ocb, ocbpy.OCBoundary)
+                       and not isinstance(ocb, ocbpy.DualBoundary)):
+        dstart = pysat_inst.index[0] - dt.timedelta(seconds=max_sdiff + 1)
+        dend = pysat_inst.index[-1] + dt.timedelta(seconds=max_sdiff + 1)
+
+        # If hemisphere isn't specified, set it here
+        if hemisphere == 0:
+            hemisphere = np.sign(np.nanmax(lat))
+
+            # Ensure that all data is in the same hemisphere
+            if hemisphere == 0:
+                hemisphere = np.sign(np.nanmin(lat))
+            elif hemisphere != np.sign(np.nanmin(lat)):
+                raise ValueError("".join(["cannot process observations from "
+                                          "both hemispheres at the same time;"
+                                          "set hemisphere=+/-1 to choose."]))
+
+        # Initialize the OCBoundary object
+        ocb = ocbpy.OCBoundary(ocbfile, stime=dstart, etime=dend,
+                               instrument=instrument, hemisphere=hemisphere)
+    elif hemisphere == 0:
+        # If the OCBoundary object is specified and hemisphere isn't use
+        # the OCBoundary object to specify the hemisphere
+        hemisphere = ocb.hemisphere
+
     # Format the new data column names
-    olat_name = "{:s}_ocb".format(mlat_name)
-    omlt_name = "{:s}_ocb".format(mlt_name)
-    ocor_name = "r_corr_ocb"
+    bname = ocb.__class__.__name__.split('oundary')[0].lower()
+    olat_name = "_".join([mlat_name, bname])
+    omlt_name = "_".join([mlt_name, bname])
+    ocor_name = "_".join(["r", "corr", bname])
     ocb_names = [olat_name, omlt_name, ocor_name]
     ocb_vect_attrs = ['ocb_n', 'ocb_e', 'ocb_z', 'ocb_mag', 'unscaled_r',
                       'scaled_r']
@@ -194,7 +221,7 @@ def add_ocb_to_data(pysat_inst, mlat_name='', mlt_name='', height_name='',
                     raise ValueError('missing scaling function for {:}'.format(
                         eattr))
 
-            oattr = "{:s}_ocb".format(eattr)
+            oattr = "{:s}_{:s}".format(eattr, bname)
             if oattr not in ocb_names:
                 ocb_names.append(oattr)
 
@@ -236,32 +263,6 @@ def add_ocb_to_data(pysat_inst, mlat_name='', mlt_name='', height_name='',
         height = np.array(pysat_inst[height_name])
     else:
         height = np.asarray(height)
-
-    # Load the OCB data for the data period, if desired
-    if ocb is None or (not isinstance(ocb, ocbpy.OCBoundary)
-                       and not isinstance(ocb, ocbpy.DualBoundary)):
-        dstart = pysat_inst.index[0] - dt.timedelta(seconds=max_sdiff + 1)
-        dend = pysat_inst.index[-1] + dt.timedelta(seconds=max_sdiff + 1)
-
-        # If hemisphere isn't specified, set it here
-        if hemisphere == 0:
-            hemisphere = np.sign(np.nanmax(lat))
-
-            # Ensure that all data is in the same hemisphere
-            if hemisphere == 0:
-                hemisphere = np.sign(np.nanmin(lat))
-            elif hemisphere != np.sign(np.nanmin(lat)):
-                raise ValueError("".join(["cannot process observations from "
-                                          "both hemispheres at the same time;"
-                                          "set hemisphere=+/-1 to choose."]))
-
-        # Initialize the OCBoundary object
-        ocb = ocbpy.OCBoundary(ocbfile, stime=dstart, etime=dend,
-                               instrument=instrument, hemisphere=hemisphere)
-    elif hemisphere == 0:
-        # If the OCBoundary object is specified and hemisphere isn't use
-        # the OCBoundary object to specify the hemisphere
-        hemisphere = ocb.hemisphere
 
     # Ensure all data is from one hemisphere and is finite
     if pysat_inst.pandas_format:
@@ -306,17 +307,37 @@ def add_ocb_to_data(pysat_inst, mlat_name='', mlt_name='', height_name='',
                 combo_shape.append(pysat_inst[lat_coord].shape[0])
                 ocb_coords.append(lat_coord)
 
-        if height_name in pysat_inst.variables:
-            for alt_coord in pysat_inst[height_name].coords:
-                if alt_coord not in pysat_inst[mlt_name].coords:
-                    combo_shape.append(pysat_inst[alt_coord].shape[0])
-                    ocb_coords.append(alt_coord)
-
-        # Reshape the data
-        out_lat, out_lt, out_height = np.meshgrid(lat, lt, height)
+        # Reshape the latitude and local time data
+        out_lat, out_lt = np.meshgrid(lat, lt)
         lat = out_lat.reshape(combo_shape)
         lt = out_lt.reshape(combo_shape)
-        height = out_height.reshape(combo_shape)
+
+        # Determine if reshaping for altitude is necessary
+        if len(height.shape) == 0:
+            height = np.full(shape=lat.shape, fill_value=height)
+        elif height.shape != lat.shape:
+            if height_name in pysat_inst.variables:
+                new_coords = False
+                for alt_coord in pysat_inst[height_name].coords:
+                    if alt_coord not in ocb_coords:
+                        combo_shape.append(pysat_inst[alt_coord].shape[0])
+                        ocb_coords.append(alt_coord)
+                        new_coords = True
+
+                # Reshape the data
+                if new_coords:
+                    out_lat, out_lt, out_height = np.meshgrid(lat, lt, height)
+                    lat = out_lat.reshape(combo_shape)
+                    lt = out_lt.reshape(combo_shape)
+                    height = out_height.reshape(combo_shape)
+                else:
+                    height = height.reshape(combo_shape)
+            elif len(height.shape) == len(lat.shape):
+                # Try and reshape the height
+                height = height.reshape(combo_shape)
+            else:
+                # Can't reshape the height
+                raise ValueError('unexpected height shape')
     else:
         ocb_coords = [pysat_inst.index.name]
 
@@ -344,7 +365,7 @@ def add_ocb_to_data(pysat_inst, mlat_name='', mlt_name='', height_name='',
         if eattr in vector_names.keys():
             for vattr in ocb_vect_attrs:
                 ovattr = '_'.join([oattr, vattr])
-                ovattr = ovattr.replace('ocb_ocb_', 'ocb_')
+                ovattr = ovattr.replace('_ocb_', '_')
                 ocb_output[ovattr] = np.full(lat.shape, np.nan, dtype=float)
         else:
             ocb_output[oattr] = np.full(lat.shape, np.nan, dtype=float)
@@ -414,7 +435,7 @@ def add_ocb_to_data(pysat_inst, mlat_name='', mlt_name='', height_name='',
                 vshape = list()
 
                 for eattr in vector_names.keys():
-                    oattr = "{:s}_ocb".format(eattr)
+                    oattr = "{:s}_{:s}".format(eattr, bname)
                     for ikey in vector_names[eattr].keys():
                         # Not all vector names are DataFrame names
                         vname = vector_names[eattr][ikey]
@@ -444,7 +465,7 @@ def add_ocb_to_data(pysat_inst, mlat_name='', mlt_name='', height_name='',
                     # Assign the vector attributes to the output
                     for vattr in ocb_vect_attrs:
                         ovattr = '_'.join([oattr, vattr])
-                        ovattr = ovattr.replace('ocb_ocb_', 'ocb_')
+                        ovattr = ovattr.replace('_ocb_', '_')
                         ocb_output[ovattr][iout] = getattr(vout, vattr)
 
             if hasattr(ocb, "ocb"):
@@ -459,7 +480,7 @@ def add_ocb_to_data(pysat_inst, mlat_name='', mlt_name='', height_name='',
                     (evar_names, ocbscal.normal_evar),
                     (curl_evar_names, ocbscal.normal_curl_evar)]:
                 for eattr in scale_names:
-                    oattr = "{:s}_ocb".format(eattr)
+                    oattr = "{:s}_{:s}".format(eattr, bname)
                     if time_mask is None:
                         evar = pysat_inst[eattr][iout]
                     else:
@@ -486,7 +507,7 @@ def add_ocb_to_data(pysat_inst, mlat_name='', mlt_name='', height_name='',
         # Update the pysat Metadata
         eattr = oattr.split('_ocb')[0]
         if hasattr(ocb, "instrument"):
-            notes = "".join(["OCB obtained from ", ocb.instrument,
+            notes = "".join(["Boundary obtained from ", ocb.instrument,
                              " data in file ", ocb.filename,
                              "using a boundary latitude of ",
                              "{:.2f}".format(ocb.boundary_lat)])
