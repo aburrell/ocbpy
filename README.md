@@ -45,7 +45,7 @@ These routines may be used as a guide to write routines for other datasets.
 
 # Python versions
 
-This module currently supports Python version 3.7 - 3.10.
+This module currently supports Python version 3.9 - 3.12.
 
 # Dependencies
 
