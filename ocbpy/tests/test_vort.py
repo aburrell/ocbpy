@@ -25,7 +25,7 @@ class TestVortLogWarnings(cc.TestLogWarnings):
         super().setUp()
 
         self.test_file = os.path.join(cc.test_dir, "test_vort")
-        self.test_ocb = os.path.join(cc.test_dir, "test_north_circle")
+        self.test_ocb = os.path.join(cc.test_dir, "test_north_ocb")
         self.temp_output = os.path.join(cc.test_dir, "temp_vort")
         self.assertTrue(os.path.isfile(self.test_file),
                         msg="'{:}' is not a file".format(self.test_file))
@@ -88,7 +88,7 @@ class TestVort2AsciiMethods(unittest.TestCase):
     def setUp(self):
         """Initialize the testing set up."""
 
-        self.test_ocb = os.path.join(cc.test_dir, "test_north_circle")
+        self.test_ocb = os.path.join(cc.test_dir, "test_north_ocb")
         self.test_eab = os.path.join(cc.test_dir, "test_north_eab")
         self.test_file = os.path.join(cc.test_dir, "test_hemi_vort")
         self.test_eq_file = os.path.join(cc.test_dir, "test_eq_hemi_vort")
@@ -248,7 +248,7 @@ class TestVortLoadMethods(unittest.TestCase):
 
         self.ocb_dir = os.path.dirname(ocbpy.__file__)
         self.test_ocb = os.path.join(self.ocb_dir, "tests", "test_data",
-                                     "test_north_circle")
+                                     "test_north_ocb")
         self.test_file = os.path.join(self.ocb_dir, "tests", "test_data",
                                       "test_vort")
         self.bad_file = os.path.join(self.ocb_dir, "test", "test_data",

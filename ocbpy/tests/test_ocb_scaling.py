@@ -225,7 +225,7 @@ class TestOCBScalingLogFailure(cc.TestLogWarnings):
         ocbpy.logger.setLevel(logging.INFO)
 
         # Initialize the testing variables
-        test_file = path.join(cc.test_dir, "test_north_circle")
+        test_file = path.join(cc.test_dir, "test_north_ocb")
         self.assertTrue(path.isfile(test_file))
         self.ocb = ocbpy.OCBoundary(filename=test_file, instrument='image')
         self.ocb.rec_ind = 27
@@ -276,7 +276,7 @@ class TestOCBScalingMethods(unittest.TestCase):
     def setUp(self):
         """Initialize the OCBoundary and VectorData objects."""
 
-        test_file = path.join(cc.test_dir, "test_north_circle")
+        test_file = path.join(cc.test_dir, "test_north_ocb")
         self.assertTrue(path.isfile(test_file))
         self.ocb = ocbpy.OCBoundary(filename=test_file, instrument='image')
         self.ocb.rec_ind = 27
@@ -806,7 +806,7 @@ class TestDualScalingMethods(TestOCBScalingMethods):
         self.ocb = ocbpy.DualBoundary(
             eab_filename=path.join(cc.test_dir, "test_north_eab"),
             eab_instrument='image', ocb_instrument='image', hemisphere=1,
-            ocb_filename=path.join(cc.test_dir, "test_north_circle"))
+            ocb_filename=path.join(cc.test_dir, "test_north_ocb"))
         self.ocb_attrs = ['ocb_lat', 'ocb_mlt', 'r_corr', 'ocb_n', 'ocb_e',
                           'ocb_z']
 
@@ -933,7 +933,7 @@ class TestVectorDataRaises(unittest.TestCase):
 
     def setUp(self):
         """Initialize the tests for calc_vec_pole_angle."""
-        test_file = path.join(cc.test_dir, "test_north_circle")
+        test_file = path.join(cc.test_dir, "test_north_ocb")
         self.assertTrue(path.isfile(test_file))
         self.ocb = ocbpy.OCBoundary(filename=test_file, instrument='image')
         self.ocb.rec_ind = 27
@@ -1272,7 +1272,7 @@ class TestOCBScalingArrayMethods(unittest.TestCase):
 
     def setUp(self):
         """Set up the test environment."""
-        test_file = path.join(cc.test_dir, "test_north_circle")
+        test_file = path.join(cc.test_dir, "test_north_ocb")
         self.ocb = ocbpy.OCBoundary(filename=test_file, instrument='image')
 
         # Construct a set of test vectors that have all the different OCB

@@ -21,7 +21,7 @@ class TestCycleMatchData(cc.TestLogWarnings):
     def setUp(self):
         """Initialize the test environment."""
         self.ocb = ocbpy.OCBoundary(filename=path.join(cc.test_dir,
-                                                       "test_north_circle"),
+                                                       "test_north_ocb"),
                                     instrument="image", hemisphere=1)
         self.ocb.rec_ind = -1
         self.idat = 0
@@ -237,7 +237,7 @@ class TestCycleMatchDualData(TestCycleMatchData):
 
         # Alter the test environment
         self.ocb = ocbpy.DualBoundary(
-            ocb_filename=path.join(cc.test_dir, "test_north_circle"),
+            ocb_filename=path.join(cc.test_dir, "test_north_ocb"),
             ocb_instrument="image", eab_instrument='image', hemisphere=1,
             eab_filename=path.join(cc.test_dir, "test_north_eab"))
         self.ocb.rec_ind = -1
@@ -252,7 +252,7 @@ class TestCycleGoodIndices(unittest.TestCase):
     def setUp(self):
         """Initialize the test environment."""
         self.ocb = ocbpy.OCBoundary(
-            filename=path.join(cc.test_dir, "test_north_circle"),
+            filename=path.join(cc.test_dir, "test_north_ocb"),
             instrument="image", hemisphere=1)
         self.ocb.rec_ind = -1
         self.test_func = ocbpy.cycle_boundary.retrieve_all_good_indices

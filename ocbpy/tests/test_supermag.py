@@ -21,7 +21,7 @@ class TestSuperMAG2AsciiMethods(unittest.TestCase):
     def setUp(self):
         """Initialize the setup for SuperMAG processing unit tests."""
 
-        self.test_ocb = os.path.join(cc.test_dir, "test_north_circle")
+        self.test_ocb = os.path.join(cc.test_dir, "test_north_ocb")
         self.test_eab = os.path.join(cc.test_dir, "test_north_eab")
         self.test_file = os.path.join(cc.test_dir, "test_hemi_smag")
         self.test_eq_file = os.path.join(cc.test_dir, "test_eq_smag")

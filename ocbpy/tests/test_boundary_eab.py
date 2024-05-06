@@ -24,7 +24,7 @@ class TestEABoundaryLogFailure(test_ocb.TestOCBoundaryLogFailure):
         self.test_class = ocbpy.EABoundary
         self.inst_init = {"instrument": "image", "hemisphere": 1,
                           "filename": path.join(cc.test_dir,
-                                                "test_north_circle")}
+                                                "test_north_ocb")}
         return
 
 
@@ -47,7 +47,7 @@ class TestEABoundaryInstruments(test_ocb.TestOCBoundaryInstruments):
                                        "r_err"]}
         self.inst_init = [{"instrument": "image", "hemisphere": 1,
                            "filename": path.join(cc.test_dir,
-                                                 "test_north_circle")},
+                                                 "test_north_ocb")},
                           {"instrument": "dmsp-ssj", "hemisphere": 1,
                            "filename": path.join(cc.test_dir,
                                                  "dmsp-ssj_north_out.eab")},

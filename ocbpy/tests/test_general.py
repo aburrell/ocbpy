@@ -19,7 +19,7 @@ class TestGeneralFileTestFunctions(cc.TestLogWarnings):
         """Set up the test environment."""
         super().setUp()
 
-        self.test_file = os.path.join(cc.test_dir, "test_north_circle")
+        self.test_file = os.path.join(cc.test_dir, "test_north_ocb")
         self.temp_output = os.path.join(cc.test_dir, "temp_gen")
         self.rstat = None
         return
@@ -83,7 +83,7 @@ class TestGeneralLoadFunctions(cc.TestLogWarnings):
         """Set up a clean test environment."""
         super().setUp()
 
-        self.test_file_soy = os.path.join(cc.test_dir, "test_north_circle")
+        self.test_file_soy = os.path.join(cc.test_dir, "test_north_ocb")
         self.test_file_dt = os.path.join(cc.test_dir, "dmsp-ssj_north_out.ocb")
         self.test_file_sod = os.path.join(cc.test_dir, "test_sod")
         self.headers = {self.test_file_soy:

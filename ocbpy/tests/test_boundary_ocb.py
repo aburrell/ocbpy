@@ -23,7 +23,7 @@ class TestOCBoundaryLogFailure(cc.TestLogWarnings):
         self.test_class = ocbpy.OCBoundary
         self.inst_init = {"instrument": "image", "hemisphere": 1,
                           "filename": path.join(cc.test_dir,
-                                                "test_north_circle")}
+                                                "test_north_ocb")}
 
         return
 
@@ -101,7 +101,7 @@ class TestOCBoundaryLogFailure(cc.TestLogWarnings):
 
         # Set the filename
         ocb.filename = path.join(path.dirname(ocbpy.__file__), "tests",
-                                 "test_data", "test_north_circle")
+                                 "test_data", "test_north_ocb")
         self.assertTrue(path.isfile(ocb.filename))
 
         # Load the data, skipping the year
@@ -133,7 +133,7 @@ class TestOCBoundaryInstruments(unittest.TestCase):
                                        "r_err"]}
         self.inst_init = [{"instrument": "image", "hemisphere": 1,
                            "filename": path.join(cc.test_dir,
-                                                 "test_north_circle")},
+                                                 "test_north_ocb")},
                           {"instrument": "dmsp-ssj", "hemisphere": 1,
                            "filename": path.join(cc.test_dir,
                                                  "dmsp-ssj_north_out.ocb")},
@@ -142,7 +142,7 @@ class TestOCBoundaryInstruments(unittest.TestCase):
                                                  "dmsp-ssj_south_out.ocb")},
                           {"instrument": "ampere", "hemisphere": -1,
                            "filename": path.join(cc.test_dir,
-                                                 "test_south_circle")}]
+                                                 "test_south_ocb")}]
         self.ocb = None
         return
 
@@ -191,7 +191,7 @@ class TestOCBoundaryMethodsGeneral(unittest.TestCase):
         self.set_empty = {"filename": path.join(cc.test_dir, "test_empty"),
                           "instrument": "image"}
         self.set_default = {"filename": path.join(cc.test_dir,
-                                                  "test_north_circle"),
+                                                  "test_north_ocb"),
                             "instrument": "image"}
         self.ocb = None
         return
@@ -346,7 +346,7 @@ class TestOCBoundaryMethodsNorth(cc.TestLogWarnings):
         self.test_class = ocbpy.OCBoundary
         self.ref_boundary = 74.0
         self.set_north = {'filename': path.join(cc.test_dir,
-                                                "test_north_circle"),
+                                                "test_north_ocb"),
                           'instrument': 'image'}
 
         self.mlt = numpy.linspace(0.0, 24.0, num=6)
@@ -766,7 +766,7 @@ class TestOCBoundaryMethodsSouth(unittest.TestCase):
         self.test_class = ocbpy.OCBoundary
         self.ref_boundary = -74.0
         self.set_south = {"filename": path.join(cc.test_dir,
-                                                "test_south_circle"),
+                                                "test_south_ocb"),
                           "instrument": "ampere",
                           "hemisphere": -1,
                           "rfunc": ocbpy.ocb_correction.circular}
@@ -1116,7 +1116,7 @@ class TestOCBoundaryFailure(unittest.TestCase):
         """Test failure when bad instrument value is input."""
 
         test_north = path.join(path.dirname(ocbpy.__file__), "tests",
-                               "test_data", "test_north_circle")
+                               "test_data", "test_north_ocb")
         self.assertTrue(path.isfile(test_north))
         with self.assertRaisesRegex(ValueError, "unknown instrument"):
             self.test_class(instrument="hi", filename=test_north)
