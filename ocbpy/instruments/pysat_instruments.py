@@ -11,7 +11,9 @@ pysat is available at: http://github.com/pysat/pysat or pypi
 """
 
 import datetime as dt
+import inspect
 import numpy as np
+import os
 
 try:
     import pysat
@@ -26,7 +28,7 @@ import ocbpy.ocb_scaling as ocbscal
 
 def add_ocb_to_data(pysat_inst, mlat_name='', mlt_name='', height_name='',
                     evar_names=None, curl_evar_names=None, vector_names=None,
-                    height=350.0, hemisphere=0, ocb=None, ocbfile='default',
+                    height=350.0, hemisphere=0, ocb=None, ocbfile='ocb',
                     instrument='', max_sdiff=60, min_merit=None, max_merit=None,
                     loc_coord='magnetic', vect_coord='magnetic', **kwargs):
     """Covert the location of pysat data into OCB, EAB, or Dual coordinates.
@@ -67,7 +69,9 @@ def add_ocb_to_data(pysat_inst, mlat_name='', mlt_name='', height_name='',
         looks to `ocbfile` and creates an OCBoundary object. (default=None)
     ocbfile : str
         file containing the required OC boundary data sorted by time, ignorned
-        if OCBoundary object supplied (default='default')
+        if OCBoundary object supplied. To use the default for a boundary type,
+        supply the desired boundary type; 'eab', 'ocb', or 'dual'.
+        (default='ocb')
     instrument : str
         Instrument providing the OCBoundaries.  Requires 'image' or 'ampere'
         if a file is provided.  If using filename='default', also accepts
@@ -91,10 +95,12 @@ def add_ocb_to_data(pysat_inst, mlat_name='', mlt_name='', height_name='',
         `height_name` or `height` will be used to convert the data to magnetic
         coordinates. (default='magnetic')
     kwargs : dict
-        Dict with optional selection criteria.  The key should correspond to a
-        data attribute and the value must be a tuple with the first value
-        specifying 'max', 'min', 'maxeq', 'mineq', or 'equal' and the second
-        value specifying the value to use in the comparison.
+        Dict with optional selection criteria or criteria for initializing a
+        DualBoundary class object (in combination with `ocb=None` and
+        `ocbfile='dual'`).  For the optional selection criteria, the key should
+        correspond to a data attribute and the value must be a tuple with the
+        first value specifying 'max', 'min', 'maxeq', 'mineq', or 'equal' and
+        the second value specifying the value to use in the comparison.
 
     Raises
     ------
@@ -152,8 +158,14 @@ def add_ocb_to_data(pysat_inst, mlat_name='', mlt_name='', height_name='',
     # Ensure the correct data format
     max_sdiff = int(max_sdiff)
 
+    # Extract the locations as numpy arrays
+    lat = np.array(pysat_inst[mlat_name])
+    lt = np.array(pysat_inst[mlt_name])
+    ndat = len(lat)
+
     # Load the OCB data for the data period, if desired
     if ocb is None or (not isinstance(ocb, ocbpy.OCBoundary)
+                       and not isinstance(ocb, ocbpy.EABoundary)
                        and not isinstance(ocb, ocbpy.DualBoundary)):
         dstart = pysat_inst.index[0] - dt.timedelta(seconds=max_sdiff + 1)
         dend = pysat_inst.index[-1] + dt.timedelta(seconds=max_sdiff + 1)
@@ -170,9 +182,52 @@ def add_ocb_to_data(pysat_inst, mlat_name='', mlt_name='', height_name='',
                                           "both hemispheres at the same time;"
                                           "set hemisphere=+/-1 to choose."]))
 
-        # Initialize the OCBoundary object
-        ocb = ocbpy.OCBoundary(ocbfile, stime=dstart, etime=dend,
-                               instrument=instrument, hemisphere=hemisphere)
+        # Determine the boundary type by filename, if possible
+        if ocbfile is None:
+            fileroot = ""
+        else:
+            fileroot = os.path.split(ocbfile)[-1].lower()
+
+            if ocbfile.lower() in ['eab', 'ocb', 'dual']:
+                ocbfile = "default"
+
+        if fileroot.find("ocb") > 0 and fileroot.find("eab") < 0:
+            # Initialize the OCBoundary object
+            ocb = ocbpy.OCBoundary(ocbfile, stime=dstart, etime=dend,
+                                   instrument=instrument, hemisphere=hemisphere)
+        elif fileroot.find("ocb") < 0 and fileroot.find("eab") > 0:
+            # Initialize the EABoundary object
+            ocb = ocbpy.EABoundary(ocbfile, stime=dstart, etime=dend,
+                                   instrument=instrument, hemisphere=hemisphere)
+        elif fileroot == 'dual':
+            # This works by assigning default to both, or allowing additional
+            # inputs through `kwargs`
+            init_keys = {'hemisphere': hemisphere, 'stime': dstart,
+                         'etime': dend}
+            if len(kwargs.keys()) > 0:
+                sig = inspect.getfullargspec(ocbpy.DualBoundary.__init__)
+                for key in kwargs.keys():
+                    if key in sig.args:
+                        init_keys[key] = kwargs[key]
+
+                # Clean DualBoundary kwargs from kwarg input
+                for key in init_keys:
+                    if key in kwargs.keys():
+                        del kwargs[key]
+
+            if 'ocb_instrument' not in init_keys.keys():
+                init_keys['ocb_instrument'] = instrument
+
+            if 'eab_instrument' not in init_keys.keys():
+                init_keys['eab_instrument'] = instrument
+
+            # Initialize the dual-boundary object
+            ocb = ocbpy.DualBoundary(**init_keys)
+        else:
+            # Can't determine desired boundary type
+            raise ValueError("".join(["can't determine desired boundary type ",
+                                      "from filename: ", repr(ocbfile)]))
+
     elif hemisphere == 0:
         # If the OCBoundary object is specified and hemisphere isn't use
         # the OCBoundary object to specify the hemisphere
@@ -248,15 +303,10 @@ def add_ocb_to_data(pysat_inst, mlat_name='', mlt_name='', height_name='',
 
     # Append the remaining OCB output names
     for eattr in evar_names:
-        ocb_names.append("{:s}_ocb".format(eattr))
+        ocb_names.append("{:s}_{:s}".format(eattr, bname))
 
     for eattr in curl_evar_names:
-        ocb_names.append("{:s}_ocb".format(eattr))
-
-    # Extract the locations as numpy arrays
-    lat = np.array(pysat_inst[mlat_name])
-    lt = np.array(pysat_inst[mlt_name])
-    ndat = len(lat)
+        ocb_names.append("{:s}_{:s}".format(eattr, bname))
 
     # Extract the height, if possible
     if height_name in pysat_inst.variables:
@@ -361,11 +411,13 @@ def add_ocb_to_data(pysat_inst, mlat_name='', mlt_name='', height_name='',
     # Initialise the OCB output
     ocb_output = dict()
     for oattr in ocb_names:
-        eattr = oattr[:-4]
+        eattr = oattr[:-1 * len(bname) - 1]
         if eattr in vector_names.keys():
             for vattr in ocb_vect_attrs:
                 ovattr = '_'.join([oattr, vattr])
                 ovattr = ovattr.replace('_ocb_', '_')
+                if bname != "ocb":
+                    ovattr = ovattr.replace("ocb", bname)
                 ocb_output[ovattr] = np.full(lat.shape, np.nan, dtype=float)
         else:
             ocb_output[oattr] = np.full(lat.shape, np.nan, dtype=float)
@@ -505,7 +557,7 @@ def add_ocb_to_data(pysat_inst, mlat_name='', mlt_name='', height_name='',
             pysat_inst.data = pysat_inst.data.assign(set_data)
 
         # Update the pysat Metadata
-        eattr = oattr.split('_ocb')[0]
+        eattr = oattr.split('_{:s}'.format(bname))[0]
         if hasattr(ocb, "instrument"):
             notes = "".join(["Boundary obtained from ", ocb.instrument,
                              " data in file ", ocb.filename,
@@ -527,7 +579,7 @@ def add_ocb_to_data(pysat_inst, mlat_name='', mlt_name='', height_name='',
             else:
                 func_name = vector_names[eattr]['scale_func'].__name__
             notes += " and was scaled using {:}".format(func_name)
-            eattr = vector_attrs['_'.join([eattr, 'ocb'])][0]
+            eattr = vector_attrs['_'.join([eattr, bname])][0]
             isvector = True
         else:
             isvector = False
@@ -587,13 +639,13 @@ def add_ocb_to_metadata(pysat_inst, ocb_name, pysat_name, overwrite=False,
     pysat_inst : pysat.Instrument
         pysat.Instrument class object containing magnetic coordinates
     ocb_name : str
-        Data column name for OCB data
+        Data column name for boundary data
     pysat_name : str
-        Data column name for non-OCB version of this data
+        Data column name for non-adaptive boundary version of this data
     overwrite : bool
         Overwrite existing metadata, if present (default=False)
     notes : str)
-        Notes about this OCB data (default='')
+        Notes about this boundary data (default='')
     isvector : bool
         Is this vector data or not (default=False)
 
@@ -603,30 +655,42 @@ def add_ocb_to_metadata(pysat_inst, ocb_name, pysat_name, overwrite=False,
         If input pysat Instrument object is the wrong class
 
     """
+    bound_desc = {"ocb": "Open Closed field-line Boundary",
+                  "eab": "Equatorward Auroral Boundary",
+                  "dualb": "Dual Boundary", "": ""}
+
+    bname = ""
+    for bkey in ocb_name.split("_"):
+        if len(bkey) > 0 and bkey in bound_desc.keys():
+            bname = bkey
+            break
+
+    bextra = "" if len(bname) == 0 else "{:s}_".format(bname.upper())
 
     # Test the input
     if not isinstance(pysat_inst, pysat.Instrument):
         raise ValueError('unknown class, expected pysat.Instrument')
 
     if not overwrite and ocb_name in pysat_inst.meta.data.index:
-        ocbpy.logger.warning("OCB data already has metadata")
+        ocbpy.logger.warning("Boundary data already has metadata")
 
     else:
         if pysat_name not in pysat_inst.meta.data.index:
-            name = ("OCB_" + ocb_name.split("_ocb")[0]).replace("_", " ")
+            name = (bextra + ocb_name.split("_{:s}".format(bname))[0]).replace(
+                "_", " ")
             new_meta = {pysat_inst.meta.labels.fill_val: np.nan,
                         pysat_inst.meta.labels.name: name,
                         pysat_inst.meta.labels.desc: name.replace(
-                            "OCB", "Open Closed field-line Boundary"),
+                            bname.upper(), bound_desc[bname]),
                         pysat_inst.meta.labels.min_val: -np.inf,
                         pysat_inst.meta.labels.max_val: np.inf}
         elif isvector:
-            name = ("OCB_" + ocb_name.split("_ocb")[0]).replace("_", " ")
+            name = (bextra + ocb_name.split("_{:s}".format(bname))[0]).replace(
+                "_", " ")
             new_meta = {pysat_inst.meta.labels.fill_val: np.nan,
                         pysat_inst.meta.labels.name: name,
                         pysat_inst.meta.labels.desc: "".join([
-                            "Open Closed field-line Boundary vector ",
-                            pysat_inst.meta[pysat_name][
+                            bound_desc[bname], pysat_inst.meta[pysat_name][
                                 pysat_inst.meta.labels.desc]]),
                         pysat_inst.meta.labels.units: pysat_inst.meta[
                             pysat_name][pysat_inst.meta.labels.units],
@@ -642,10 +706,9 @@ def add_ocb_to_metadata(pysat_inst, ocb_name, pysat_name, overwrite=False,
             # Update certain categories with OCB information
             new_meta[pysat_inst.meta.labels.fill_val] = np.nan
             new_meta[pysat_inst.meta.labels.name] = "".join([
-                "OCB ", new_meta[pysat_inst.meta.labels.name]])
+                bname.upper(), " ", new_meta[pysat_inst.meta.labels.name]])
             new_meta[pysat_inst.meta.labels.desc] = "".join([
-                "Open Closed field-line Boundary ",
-                new_meta[pysat_inst.meta.labels.desc]])
+                bound_desc[bname], new_meta[pysat_inst.meta.labels.desc]])
 
         # Set the notes
         new_meta[pysat_inst.meta.labels.notes] = notes
