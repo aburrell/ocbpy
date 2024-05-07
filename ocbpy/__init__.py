@@ -6,11 +6,7 @@
 """Auroral oval and polar cap normalised location calculation tools."""
 
 import logging
-
-try:
-    from importlib import metadata
-except ImportError:
-    import importlib_metadata as metadata
+from importlib import metadata
 
 # Define a logger object to allow easier log handling
 logging.raiseExceptions = False

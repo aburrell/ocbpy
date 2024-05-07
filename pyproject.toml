@@ -13,7 +13,7 @@ description = 'Location relative to open/closed field line boundary'
 maintainers = [
     {name = "Angeline G. Burrell", email = "angeline.g.burrell.civ@us.navy.mil"},
 ]
-requires-python = ">=3.7"
+requires-python = ">=3.9"
 dependencies = [
     "aacgmv2",
     "numpy",
