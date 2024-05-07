@@ -944,6 +944,35 @@ class TestOCBScalingMethods(unittest.TestCase):
                 self.assertRegex(self.vdata.loc_coord, coord)
         return
 
+    def test_update_vect_coords_missing_data(self):
+        """Test no vector update if no magnetic location available."""
+        # Ensure data is missing
+        self.vdata.lat = numpy.nan
+
+        # Save the expected output
+        self.wdata.vect_n = self.vdata.vect_n
+        self.wdata.vect_e = self.vdata.vect_e
+        self.wdata.vect_z = self.vdata.vect_z
+
+        # Cycle through the coordinate options
+        for coord in ["geocentric", "geodetic"]:
+            for loc_coord in ['magnetic', coord]:
+                self.vdata.vect_coord = coord
+                self.vdata.loc_coord = loc_coord
+
+                with self.subTest(vect_coord=coord, loc_coord=loc_coord):
+                    # Convert the location
+                    self.vdata.update_vect_coords_to_mag(
+                        self.ocb.dtime[self.vdata.ocb_ind],
+                        hemisphere=self.ocb.hemisphere)
+
+                    # Test the vector output is unchanged
+                    self.assertRegex(self.vdata.vect_coord, coord)
+                    self.assertAlmostEqual(self.wdata.vect_n, self.vdata.vect_n)
+                    self.assertAlmostEqual(self.wdata.vect_e, self.vdata.vect_e)
+                    self.assertAlmostEqual(self.wdata.vect_z, self.vdata.vect_z)
+        return
+
     def test_update_vect_and_loc_coords_float(self):
         """Test the vector and location coordinate conversion for floats."""
         mag_out = {"geocentric": {"lat": 69.6782, "lt": 21.41886,
@@ -1566,6 +1595,20 @@ class TestVectorDataRaises(unittest.TestCase):
 
         with self.assertRaisesRegex(ValueError, "need magnetic coordinates"):
             self.vdata.calc_vec_pole_angle()
+        return
+
+    def test_bad_loc_coord_inputs(self):
+        """Test failure to convert location with mismatched dimensions."""
+        self.vdata = ocbpy.ocb_scaling.VectorData([0, 1, 2], self.ocb.rec_ind,
+                                                  [75.0, 74.0, 73.0],
+                                                  [22.0, 2.0, 1.0], vect_n=50.0,
+                                                  vect_e=86.5, vect_z=5.0,
+                                                  dat_name="Test",
+                                                  dat_units="$m s^{-1}$",
+                                                  loc_coord='geodetic')
+
+        with self.assertRaisesRegex(ValueError, "mismatched time and location"):
+            self.vdata.update_loc_coords(self.ocb.dtime[:2])
         return
 
 
