@@ -904,7 +904,10 @@ class TestOCBScalingMethods(unittest.TestCase):
 
         # Set multiple boundary indices
         rec_inds = [self.ocb.rec_ind]
-        self.ocb.get_next_good_ocb_ind()
+        if hasattr(self.ocb, "get_next_good_ocb_ind"):
+            self.ocb.get_next_good_ocb_ind()
+        else:
+            self.ocb.rec_ind += 1
         rec_inds.append(self.ocb.rec_ind)
         self.vdata.ocb_ind = rec_inds
 
@@ -939,6 +942,185 @@ class TestOCBScalingMethods(unittest.TestCase):
                     self.assertAlmostEqual(self.vdata.lt[i], 22.0, places=1,
                                            msg="unexpected SLT")
                 self.assertRegex(self.vdata.loc_coord, coord)
+        return
+
+    def test_update_vect_and_loc_coords_float(self):
+        """Test the vector and location coordinate conversion for floats."""
+        mag_out = {"geocentric": {"lat": 69.6782, "lt": 21.41886,
+                                  "geocentric": {"vect_n": 64.00367,
+                                                 "vect_e": 76.71884,
+                                                 "vect_z": 5.0},
+                                  "magnetic": {"vect_n": 78.60399,
+                                               "vect_e": 61.67384,
+                                               "vect_z": 5.0}},
+                   "geodetic": {"lat": 69.58256, "lt": 21.422598,
+                                "magnetic": {"vect_n": 78.6003,
+                                             "vect_e": 61.6786,
+                                             "vect_z": 5.0},
+                                "geodetic": {"vect_n": 63.9483,
+                                             "vect_e": 76.76498,
+                                             "vect_z": 5.0}}}
+
+        for coord in mag_out.keys():
+            for loc_coord in ['magnetic', coord]:
+                # Ensure the location is reset
+                self.vdata.lat = 75.0
+                self.vdata.lt = 22.0
+                self.vdata.vect_n = 50.0
+                self.vdata.vect_e = 86.5
+                self.vdata.vect_z = 5.0
+
+                # Set the coordinates
+                self.vdata.vect_coord = coord
+                self.vdata.loc_coord = loc_coord
+
+                with self.subTest(vect_coord=coord, loc_coord=loc_coord):
+                    # Convert the location
+                    self.vdata.update_vect_coords_to_mag(
+                        self.ocb.dtime[self.vdata.ocb_ind],
+                        hemisphere=self.ocb.hemisphere)
+
+                    # Evaluate the output
+                    self.assertAlmostEqual(
+                        float(self.vdata.vect_n),
+                        mag_out[coord][loc_coord]['vect_n'],
+                        places=4, msg="unexpected north component")
+                    self.assertAlmostEqual(
+                        float(self.vdata.vect_e),
+                        mag_out[coord][loc_coord]['vect_e'],
+                        places=4, msg="unexpected east component")
+                    self.assertAlmostEqual(
+                        float(self.vdata.vect_z),
+                        mag_out[coord][loc_coord]['vect_z'],
+                        places=4, msg="unexpected vertical component")
+                    self.assertRegex(self.vdata.vect_coord, "magnetic")
+                    self.assertRegex(self.vdata.loc_coord, "magnetic")
+
+                    if loc_coord in mag_out.keys():
+                        self.assertAlmostEqual(
+                            float(self.vdata.lat), mag_out[loc_coord]['lat'],
+                            places=4, msg="unexpected magnetic latitude")
+                        self.assertAlmostEqual(
+                            float(self.vdata.lt), mag_out[loc_coord]['lt'],
+                            places=4, msg="unexpected MLT")
+        return
+
+    def test_update_vect_and_loc_coords_array(self):
+        """Test the vector and location coordinate conversion for arrays."""
+        mag_out = {"geocentric": {"lat": 69.6782, "lt": 21.41886,
+                                  "geocentric": {"vect_n": 64.00367,
+                                                 "vect_e": 76.71884,
+                                                 "vect_z": 5.0},
+                                  "magnetic": {"vect_n": 78.60399,
+                                               "vect_e": 61.67384,
+                                               "vect_z": 5.0}},
+                   "geodetic": {"lat": 69.58256, "lt": 21.422598,
+                                "magnetic": {"vect_n": 78.6003,
+                                             "vect_e": 61.6786,
+                                             "vect_z": 5.0},
+                                "geodetic": {"vect_n": 63.9483,
+                                             "vect_e": 76.76498,
+                                             "vect_z": 5.0}}}
+
+        for coord in mag_out.keys():
+            for loc_coord in ['magnetic', coord]:
+                for is_array in [True, False]:
+                    # Ensure the location is reset
+                    self.vdata.lat = [75.0, 75.0]
+                    self.vdata.lt = [22.0, 22.0]
+                    self.vdata.vect_n = [50.0, 50.0]
+                    self.vdata.vect_e = [86.5, 86.5]
+                    self.vdata.vect_z = [5.0, 5.0]
+
+                    # Set the coordinates
+                    self.vdata.vect_coord = coord
+                    self.vdata.loc_coord = loc_coord
+
+                    # Adjust if list-like input is not desired
+                    if is_array:
+                        self.vdata.lat = numpy.asarray(self.vdata.lat)
+                        self.vdata.lt = numpy.asarray(self.vdata.lt)
+                        self.vdata.vect_n = numpy.asarray(self.vdata.vect_n)
+                        self.vdata.vect_e = numpy.asarray(self.vdata.vect_e)
+                        self.vdata.vect_z = numpy.asarray(self.vdata.vect_z)
+
+                    with self.subTest(vect_coord=coord, loc_coord=loc_coord,
+                                      is_array=is_array):
+                        # Convert the location
+                        self.vdata.update_vect_coords_to_mag(
+                            self.ocb.dtime[self.vdata.ocb_ind],
+                            hemisphere=self.ocb.hemisphere)
+
+                        # Evaluate the output
+                        self.assertRegex(self.vdata.vect_coord, "magnetic")
+                        self.assertRegex(self.vdata.loc_coord, "magnetic")
+                        for i, lat in enumerate(self.vdata.lat):
+                            self.assertAlmostEqual(
+                                self.vdata.vect_n[i],
+                                mag_out[coord][loc_coord]['vect_n'],
+                                places=4, msg="unexpected north component")
+                            self.assertAlmostEqual(
+                                self.vdata.vect_e[i],
+                                mag_out[coord][loc_coord]['vect_e'],
+                                places=4, msg="unexpected east component")
+                            self.assertAlmostEqual(
+                                self.vdata.vect_z[i],
+                                mag_out[coord][loc_coord]['vect_z'],
+                                places=4, msg="unexpected vertical component")
+
+                            if loc_coord in mag_out.keys():
+                                self.assertAlmostEqual(
+                                    lat, mag_out[loc_coord]['lat'], places=4,
+                                    msg="unexpected magnetic latitude")
+                                self.assertAlmostEqual(
+                                    self.vdata.lt[i], mag_out[loc_coord]['lt'],
+                                    places=4, msg="unexpected MLT")
+        return
+
+    def test_update_vect_coords_mult_times(self):
+        """Test the vector coordinate conversion for multiple times."""
+        mag_out = {"geocentric": {"vect_n": [78.60399, 77.03392],
+                                  "vect_e": [61.67384, 63.624099],
+                                  "vect_z": [5.0, 5.0]},
+                   "geodetic": {"vect_n": [78.6003, 77.0303],
+                                "vect_e": [61.6786, 63.6284],
+                                "vect_z": [5.0, 5.0]}}
+
+        # Set multiple boundary indices
+        rec_inds = [self.ocb.rec_ind]
+        if hasattr(self.ocb, "get_next_good_ocb_ind"):
+            self.ocb.get_next_good_ocb_ind()
+        else:
+            self.ocb.rec_ind += 1
+        rec_inds.append(self.ocb.rec_ind)
+        self.vdata.ocb_ind = rec_inds
+
+        for coord in mag_out.keys():
+            self.vdata.vect_coord = coord
+
+            # Ensure the location is reset
+            self.vdata.vect_n = 50.0
+            self.vdata.vect_e = 86.5
+            self.vdata.vect_z = 5.0
+
+            with self.subTest(coord=coord):
+                # Convert the location
+                self.vdata.update_vect_coords_to_mag(
+                    self.ocb.dtime[self.vdata.ocb_ind],
+                    hemisphere=self.ocb.hemisphere)
+
+                # Evaluate the output
+                for i, north in enumerate(self.vdata.vect_n):
+                    self.assertAlmostEqual(
+                        north, mag_out[coord]['vect_n'][i], places=4,
+                        msg="unexpected north component")
+                    self.assertAlmostEqual(
+                        self.vdata.vect_e[i], mag_out[coord]['vect_e'][i],
+                        places=4, msg="unexpected east component")
+                    self.assertAlmostEqual(
+                        self.vdata.vect_z[i], mag_out[coord]['vect_z'][i],
+                        places=4, msg="unexpected vertical component")
+                self.assertRegex(self.vdata.vect_coord, "magnetic")
         return
 
 
