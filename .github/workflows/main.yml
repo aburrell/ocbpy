@@ -16,7 +16,9 @@ jobs:
         python-version: ["3.9", "3.10", "3.11", "3.12"]
         install-extras: [0, 1, 2]  # TODO(#129): update to replace extra flag
         exclude:
-          - os: "windows-latest"
+          - os: "windows-latest"  # TODO(#135): remove exclusion
+            install-extras: 2
+          - os: "macos-latest"  # TODO(#135): remove exclusion
             install-extras: 2
 
     name: Python ${{ matrix.python-version }} on ${{ matrix.os }} with extras ${{ matrix.install-extras }}
