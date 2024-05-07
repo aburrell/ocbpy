@@ -71,14 +71,10 @@ def calc_vec_pole_angle(data_lt, data_lat, pole_lt, pole_lat):
 
     """
     # Convert the local time values to radians, after calculating the
-    # difference between the destination pole and the data.
-    del_long = ocb_time.hr2rad(np.asarray(pole_lt) - np.asarray(data_lt))
-
-    if len(del_long.shape) == 0:
-        if del_long < -np.pi:
-            del_long += 2.0 * np.pi
-    else:
-        del_long[del_long < -np.pi] += 2.0 * np.pi
+    # difference between the destination pole and the data. Restrict data
+    # from -pi to pi
+    del_long = ocb_time.hr2rad(np.asarray(pole_lt) - np.asarray(data_lt),
+                               max_range=np.pi)
 
     # Initalize the output
     pole_angle = np.full(shape=del_long.shape, fill_value=np.nan)
@@ -327,10 +323,8 @@ def calc_dest_polar_angle(pole_quad, vect_quad, base_naz_angle, pole_angle):
     base_naz_angle = np.asarray(base_naz_angle)
     pole_angle = np.asarray(pole_angle)
 
-    # Initialise the output and set the quadrant dictionary
+    # Initialise the quadrant dictionary
     nan_mask = ~np.isnan(base_naz_angle) & ~np.isnan(pole_angle)
-    dest_naz_angle = np.full(shape=(base_naz_angle + pole_angle).shape,
-                             fill_value=np.nan)
     quads = {oquad: {vquad:
                      (pole_quad == oquad) & (vect_quad == vquad) & nan_mask
                      for vquad in quad_range} for oquad in quad_range}
@@ -343,10 +337,16 @@ def calc_dest_polar_angle(pole_quad, vect_quad, base_naz_angle, pole_angle):
     maa_mask = quads[3][2] | quads[4][1]
     cir_mask = quads[3][4] | quads[4][3]
 
+    # Initialise the output
+    dest_naz_angle = np.full(shape=(base_naz_angle + pole_angle
+                                    + abs_mask).shape, fill_value=np.nan)
+    
     # Calculate OCB polar angle based on the quadrants and other angles
     if np.any(abs_mask):
         if len(dest_naz_angle.shape) == 0:
             dest_naz_angle = abs(base_naz_angle - pole_angle)
+        elif len(nan_mask.shape) == 0:
+            dest_naz_angle[abs_mask] = abs(base_naz_angle - pole_angle)
         else:
             dest_naz_angle[abs_mask] = abs(base_naz_angle
                                            - pole_angle)[abs_mask]
@@ -356,6 +356,11 @@ def calc_dest_polar_angle(pole_quad, vect_quad, base_naz_angle, pole_angle):
             dest_naz_angle = pole_angle + base_naz_angle
             if dest_naz_angle > 180.0:
                 dest_naz_angle = 360.0 - dest_naz_angle
+        elif len(nan_mask.shape) == 0:
+            add_val = pole_angle + base_naz_angle
+            dest_naz_angle[add_mask] = add_val
+            if add_val > 180.0:
+                dest_naz_angle[add_mask] = 360.0 - add_val
         else:
             dest_naz_angle[add_mask] = (pole_angle + base_naz_angle)[add_mask]
             lmask = (dest_naz_angle > 180.0) & add_mask
@@ -365,18 +370,24 @@ def calc_dest_polar_angle(pole_quad, vect_quad, base_naz_angle, pole_angle):
     if np.any(mpa_mask):
         if len(dest_naz_angle.shape) == 0:
             dest_naz_angle = base_naz_angle - pole_angle
+        elif len(nan_mask.shape) == 0:
+            dest_naz_angle[mpa_mask] = (base_naz_angle - pole_angle)
         else:
             dest_naz_angle[mpa_mask] = (base_naz_angle - pole_angle)[mpa_mask]
 
     if np.any(maa_mask):
         if len(dest_naz_angle.shape) == 0:
             dest_naz_angle = pole_angle - base_naz_angle
+        elif len(nan_mask.shape) == 0:
+            dest_naz_angle[maa_mask] = (pole_angle - base_naz_angle)
         else:
             dest_naz_angle[maa_mask] = (pole_angle - base_naz_angle)[maa_mask]
 
     if np.any(cir_mask):
         if len(dest_naz_angle.shape) == 0:
             dest_naz_angle = 360.0 - base_naz_angle - pole_angle
+        elif len(nan_mask.shape) == 0:
+            dest_naz_angle[cir_mask] = 360.0 - base_naz_angle - pole_angle
         else:
             dest_naz_angle[cir_mask] = (360.0 - base_naz_angle
                                         - pole_angle)[cir_mask]
