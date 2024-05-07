@@ -298,26 +298,40 @@ class TestOCBVectors(unittest.TestCase):
     def test_calc_dest_polar_angle_float(self):
         """Test the north azimuth angle calculation for float inputs."""
         # Set the expected pole quadrant output
-        self.comp = {1: {1: 138.11957692472973, 2: 148.11957692472973,
-                         3: 148.11957692472973, 4: -138.11957692472973},
-                     2: {1: 148.11957692472973, 2: 138.11957692472973,
-                         3: -138.11957692472973, 4: 148.11957692472973},
-                     3: {1: 148.11957692472973, 2: 138.11957692472973,
-                         3: 138.11957692472973, 4: 211.88042307527027},
-                     4: {1: 138.11957692472973, 2: 148.11957692472973,
-                         3: 211.88042307527027, 4: 138.11957692472973}}
+        self.comp = {1: {1: [138.11957692472973, 132.0],
+                         2: [148.11957692472973, -132.0],
+                         3: [148.11957692472973, -132.0],
+                         4: [-138.11957692472973, -132.0]},
+                     2: {1: [148.11957692472973, -132.0],
+                         2: [138.11957692472973, 132.0],
+                         3: [-138.11957692472973, -132.0],
+                         4: [148.11957692472973, -132.0]},
+                     3: {1: [148.11957692472973, -132.0],
+                         2: [138.11957692472973, 132.0],
+                         3: [138.11957692472973, 132.0],
+                         4: [211.88042307527027, -132.0]},
+                     4: {1: [138.11957692472973, 132.0],
+                         2: [148.11957692472973, -132.0],
+                         3: [211.88042307527027, -132.0],
+                         4: [138.11957692472973, 132.0]}}
 
         # Cycle through each of the pole quadrants
         for pole_quad in np.arange(1, 5, 1):
             # Cycle through each of the vector quadrants
             for vect_quad in np.arange(1, 5, 1):
-                with self.subTest(pole_quad=pole_quad, vect_quad=vect_quad):
-                    # Get the output
-                    self.out = vectors.calc_dest_polar_angle(
-                        pole_quad, vect_quad, 5.0, self.pole_ang[-1])
+                # Cycle through small and big angles
+                for i, ang_args in enumerate([(5.0, self.pole_ang[-1]),
+                                              (180.0, 312.0)]):
+                    args = [pole_quad, vect_quad, ang_args[0], ang_args[1]]
+                    with self.subTest(args=args):
+                        # Get the output
+                        self.out = vectors.calc_dest_polar_angle(*args)
 
-                    # Test the integer quadrant assignment
-                    self.assertEqual(self.out, self.comp[pole_quad][vect_quad])
+                        # Test the integer quadrant assignment
+                        self.assertEqual(self.out,
+                                         self.comp[pole_quad][vect_quad][i],
+                                         msg="unexpected output: {:}".format(
+                                             self.out))
         return
 
     def test_calc_dest_polar_angle_array(self):
@@ -361,7 +375,9 @@ class TestOCBVectors(unittest.TestCase):
                                 ([[1, 2], [3, 4], 5.0, [91.720246, 143.11957]],
                                  np.array([96.720246, 148.11957])),
                                 ([[3, 4], [2, 1], [0.0, 90.0], 10.0],
-                                 np.array([10.0, -80.0]))]:
+                                 np.array([10.0, -80.0])),
+                                ([[1, 1, 2, 3, 4], [1, 2, 3, 4, 1], 180, 312],
+                                 np.array([132, -132, -132, -132, 132]))]:
             with self.subTest(args=args):
                 # Get the output
                 self.out = vectors.calc_dest_polar_angle(*args)
@@ -550,11 +566,14 @@ class TestOCBVectors(unittest.TestCase):
 
     def test_adjust_vector_array(self):
         """Test the vector adjustment with array-like inputs."""
-        self.comp = (np.array([2.0, 0.0, -1.0, -1.0896077, -4.75018438, 0.0,
+        self.comp = (np.array([-2.0, 0.0, -1.0, -1.0896077, -4.75018438, 0.0,
                                1.41421332, 0.19974281]),
-                     np.array([3.0, 1.0, 3.5, -2.96862848, -1.29836371, 0.0,
+                     np.array([-3.0, 1.0, 3.5, -2.96862848, -1.29836371, 0.0,
                                0.000820721509, -1.40003672]),
                      np.array([1, 1, 1, 1, 1, 1, 1, 1]))
+
+        # Adjust the inputs to cover all lines accessable by array-like input
+        self.lat[0] = self.pole_lat[0] + 30.0
 
         # Cycle through list-like or array-like inputs
         for is_array in [True, False]:
@@ -601,7 +620,7 @@ class TestOCBVectors(unittest.TestCase):
 
         # Cycle through compinations of float/array inputs
         for ipos, ival, islice in [(0, 0, [0, -1]), (1, 0, [0, 1, 2]),
-                                   (2, 1, [1, 5]), (3, 1, [1, -1]),
+                                   (2, 2, [2, 7]), (3, 1, [1, -1]),
                                    (4, 0, slice(None)), (5, 0, [0, 1, 5]),
                                    (6, 0, [0, 6]), (7, 5, [5, 6]),
                                    (8, 0, [0, 1, 2]), (9, 3, [3, 5])]:
