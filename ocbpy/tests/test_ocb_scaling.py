@@ -269,6 +269,21 @@ class TestOCBScalingLogFailure(cc.TestLogWarnings):
         self.eval_logging_message()
         return
 
+    def test_unknown_kwargs(self):
+        """Test warning raised with unknown kwargs."""
+        self.lwarn = u"unknown kwargs, ignored:"
+
+        # Initalize the VectorData class with deprecated and unknown kwargs
+        self.vdata = ocbpy.ocb_scaling.VectorData(0, self.ocb.rec_ind,
+                                                  75.0, 22.0, aacgm_n=1.0,
+                                                  vect_fun=100.0,
+                                                  dat_name="Test",
+                                                  dat_units="$m s^{-1}$")
+
+        # Test logging error message for the bad initialization
+        self.eval_logging_message()
+        return
+
 
 class TestOCBScalingMethods(unittest.TestCase):
     """Unit tests for the VectorData class."""
@@ -796,6 +811,136 @@ class TestOCBScalingMethods(unittest.TestCase):
         self.assertEqual(self.vdata.unscaled_r, 14.09)
         return
 
+    def test_update_loc_coords_float(self):
+        """Test the location coordinate conversion for floats."""
+        mag_out = {"geocentric": [69.6782, 21.41886],
+                   "geodetic": [69.58256, 21.422598]}
+
+        for coord in mag_out.keys():
+            self.vdata.loc_coord = coord
+
+            # Ensure the location is reset
+            self.vdata.lat = 75.0
+            self.vdata.lt = 22.0
+
+            with self.subTest(coord=coord):
+                # Convert the location
+                self.vdata.update_loc_coords(self.ocb.dtime[self.ocb.rec_ind])
+
+                # Evaluate the output
+                self.assertAlmostEqual(
+                    float(self.vdata.lat), mag_out[coord][0], places=4,
+                    msg="unexpected magnetic latitude")
+                self.assertAlmostEqual(
+                    float(self.vdata.lt), mag_out[coord][1], places=4,
+                    msg="unexpected MLT")
+                self.assertRegex(self.vdata.loc_coord, "magnetic")
+
+                # Convert back to geographic coordinates
+                self.vdata.update_loc_coords(self.ocb.dtime[self.ocb.rec_ind],
+                                             coord=coord)
+
+                # Evaluate the output; note the loss of precision
+                self.assertAlmostEqual(float(self.vdata.lat), 75.0, places=1,
+                                       msg="unexpected geographic latitude")
+                self.assertAlmostEqual(float(self.vdata.lt), 22.0, places=1,
+                                       msg="unexpected SLT")
+                self.assertRegex(self.vdata.loc_coord, coord)
+        return
+
+    def test_update_loc_coords_array(self):
+        """Test the location coordinate conversion for arrays."""
+        mag_out = {"geocentric": [69.6782, 21.41886],
+                   "geodetic": [69.58256, 21.422598]}
+
+        for coord in mag_out.keys():
+            self.vdata.loc_coord = coord
+
+            for is_array in [True, False]:
+                # Ensure the location is reset
+                self.vdata.lat = [75.0, 75.0]
+                self.vdata.lt = [22.0, 22.0]
+
+                # Adjust if list-like input is not desired
+                if is_array:
+                    self.vdata.lat = numpy.asarray(self.vdata.lat)
+                    self.vdata.lt = numpy.asarray(self.vdata.lt)
+
+                with self.subTest(coord=coord, is_array=is_array):
+                    # Convert the location
+                    self.vdata.update_loc_coords(
+                        self.ocb.dtime[self.ocb.rec_ind])
+
+                    # Evaluate the output
+                    self.assertTrue(
+                        (abs(self.vdata.lat
+                             - mag_out[coord][0]) < 1.0e-3).all(),
+                        msg="unexpected magnetic latitudes: {:} != {:}".format(
+                            self.vdata.lat, mag_out[coord][0]))
+                    self.assertTrue(
+                        (abs(self.vdata.lt - mag_out[coord][1]) < 1.0e-3).all(),
+                        msg="unexpected MLT: {:} != {:}".format(
+                            self.vdata.lt, mag_out[coord][1]))
+                    self.assertRegex(self.vdata.loc_coord, "magnetic")
+
+                    # Convert back to geographic coordinates
+                    self.vdata.update_loc_coords(
+                        self.ocb.dtime[self.ocb.rec_ind], coord=coord)
+
+                    # Evaluate the output; note the loss of precision
+                    self.assertTrue(
+                        (abs(self.vdata.lat - 75.0) < 0.1).all(),
+                        msg="unexpected geographic latitude")
+                    self.assertTrue(
+                        (abs(self.vdata.lt - 22.0) < 0.1).all(),
+                        msg="unexpected SLT")
+                    self.assertRegex(self.vdata.loc_coord, coord)
+        return
+
+    def test_update_loc_coords_mult_times(self):
+        """Test the location coordinate conversion for multiple times."""
+        mag_out = {"geocentric": [[69.6782, 69.6881], [21.41886, 21.43416]],
+                   "geodetic": [[69.58256, 69.59329], [21.422598, 21.43755]]}
+
+        # Set multiple boundary indices
+        rec_inds = [self.ocb.rec_ind]
+        self.ocb.get_next_good_ocb_ind()
+        rec_inds.append(self.ocb.rec_ind)
+        self.vdata.ocb_ind = rec_inds
+
+        for coord in mag_out.keys():
+            self.vdata.loc_coord = coord
+
+            # Ensure the location is reset
+            self.vdata.lat = 75.0
+            self.vdata.lt = 22.0
+
+            with self.subTest(coord=coord):
+                # Convert the location
+                self.vdata.update_loc_coords(self.ocb.dtime[self.vdata.ocb_ind])
+
+                # Evaluate the output
+                for i, lat in enumerate(self.vdata.lat):
+                    self.assertAlmostEqual(lat, mag_out[coord][0][i], places=4,
+                                           msg="unexpected magnetic latitude")
+                    self.assertAlmostEqual(
+                        self.vdata.lt[i], mag_out[coord][1][i], places=4,
+                        msg="unexpected MLT")
+                self.assertRegex(self.vdata.loc_coord, "magnetic")
+
+                # Convert back to geographic coordinates
+                self.vdata.update_loc_coords(
+                    self.ocb.dtime[self.vdata.ocb_ind], coord=coord)
+
+                # Evaluate the output; note the loss of precision
+                for i, lat in enumerate(self.vdata.lat):
+                    self.assertAlmostEqual(lat, 75.0, places=1,
+                                           msg="unexpected geographic latitude")
+                    self.assertAlmostEqual(self.vdata.lt[i], 22.0, places=1,
+                                           msg="unexpected SLT")
+                self.assertRegex(self.vdata.loc_coord, coord)
+        return
+
 
 class TestDualScalingMethods(TestOCBScalingMethods):
     """Unit tests for the VectorData class."""
@@ -1173,6 +1318,72 @@ class TestVectorDataRaises(unittest.TestCase):
         with self.assertRaisesRegex(
                 ValueError, "vector angle in poles-vector triangle required"):
             self.vdata.define_quadrants()
+        return
+
+    def test_init_with_bad_loc_coord(self):
+        """Test initialization fails with a bad location coordinate."""
+        self.input_attrs = [0, 27, 75.0, 22.0]
+        self.bad_input = {'vect_n': 100.0, 'vect_e': 100.0,
+                          'vect_z': 10.0, 'loc_coord': "bad_coords"}
+
+        with self.assertRaisesRegex(ValueError, "unknown location coordinate"):
+            self.vdata = ocbpy.ocb_scaling.VectorData(*self.input_attrs,
+                                                      **self.bad_input)
+        return
+
+    def test_init_with_bad_vect_coord(self):
+        """Test initialization fails with a bad vector coordinate."""
+        self.input_attrs = [0, 27, 75.0, 22.0]
+        self.bad_input = {'vect_n': 100.0, 'vect_e': 100.0,
+                          'vect_z': 10.0, 'vect_coord': "bad_coords"}
+
+        with self.assertRaisesRegex(ValueError, "unknown vector coordinate"):
+            self.vdata = ocbpy.ocb_scaling.VectorData(*self.input_attrs,
+                                                      **self.bad_input)
+        return
+
+    def test_init_with_incompatible_coord_combos(self):
+        """Test initialization fails with a bad coordinate combos."""
+        self.input_attrs = [0, 27, 75.0, 22.0]
+        self.bad_input = {'vect_n': 100.0, 'vect_e': 100.0,
+                          'vect_z': 10.0, 'vect_coord': "geocentric",
+                          'loc_coord': 'geodetic'}
+
+        with self.assertRaisesRegex(ValueError, "incompatible vector and loc"):
+            self.vdata = ocbpy.ocb_scaling.VectorData(*self.input_attrs,
+                                                      **self.bad_input)
+        return
+
+    def test_bad_loc_coord_for_quadrants(self):
+        """Test failure to calculate quadrants without magnetic locations."""
+        self.vdata.loc_coord = "geodetic"
+
+        with self.assertRaisesRegex(ValueError, "need magnetic coordinates"):
+            self.vdata.define_quadrants()
+        return
+
+    def test_bad_vect_coord_for_quadrants(self):
+        """Test failure to calculate quadrants without magnetic vectors."""
+        self.vdata.vect_coord = "geodetic"
+
+        with self.assertRaisesRegex(ValueError, "need magnetic coordinates"):
+            self.vdata.define_quadrants()
+        return
+
+    def test_bad_vector_scaling(self):
+        """Test failure to scale vectors without locations."""
+        self.vdata.lat = numpy.nan
+
+        with self.assertRaisesRegex(ValueError, "Vector locations required"):
+            self.vdata.scale_vector()
+        return
+
+    def test_bad_loc_coord_for_vec_pole_angle(self):
+        """Test failure to calculate vector pole angle without mag locations."""
+        self.vdata.loc_coord = "geodetic"
+
+        with self.assertRaisesRegex(ValueError, "need magnetic coordinates"):
+            self.vdata.calc_vec_pole_angle()
         return
 
 
