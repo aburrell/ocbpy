@@ -158,9 +158,9 @@ class VectorData(object):
                         set_mag = False
 
             # Raise a warning
-            if len(used_dep) == 0:
+            if len(used_dep) < len(kwargs.keys()):
                 ocbpy.logger.warning('unknown kwargs, ignored: {:}'.format(
-                    kwargs))
+                    [key for key in kwargs.keys() if key not in used_dep]))
             else:
                 new_kwargs = [dep_pairs[dep_key] for dep_key in used_dep]
                 warnings.warn("".join(['kwargs have been replaced with new ',
@@ -748,7 +748,7 @@ class VectorData(object):
         warnings.resetwarnings()
         return
 
-    def set_ocb(self, ocb, scale_func=None):
+    def set_ocb(self, ocb, scale_func=None, trace_method='ALLOWTRACE'):
         """Set the OCBoundary values for provided data (updates all attributes).
 
         Parameters
@@ -760,6 +760,8 @@ class VectorData(object):
             measurement value, measurement latitude (degrees), and measurement
             boundary-adjusted latitude (degrees). Not necessary if defined
             earlier or no scaling is needed. (default=None)
+        trace_method : str
+            Desired AAGCM tracing method (default='ALLOWTRACE')
 
         """
         # Update the data values to be in magnetic coordinates
@@ -780,7 +782,8 @@ class VectorData(object):
                 # Calculate the coordinates and save the output
                 out_coord = ocb.normal_coord(self.lat, self.lt,
                                              coords=self.loc_coord,
-                                             height=self.height)
+                                             height=self.height,
+                                             method=trace_method)
                 self._assign_normal_coord_output(out_coord)
             else:
                 # Cycle through the boundary indices
@@ -794,7 +797,8 @@ class VectorData(object):
                     else:
                         out_coord = ocb.normal_coord(self.lat, self.lt,
                                                      coords=self.loc_coord,
-                                                     height=self.height)
+                                                     height=self.height,
+                                                     method=trace_method)
                     self._assign_normal_coord_output(out_coord, i)
 
         # Exit if the OCB coordinates can't be calculated at this location
@@ -1066,7 +1070,8 @@ class VectorData(object):
         # When defining vector-pole angles, we will need the vector location in
         # magnetic coordinates
         if self.loc_coord != "magnetic":
-            raise ValueError('need magnetic coordinates to define quadrants')
+            raise ValueError(
+                'need magnetic coordinates to define vector-pole angles')
 
         # Cast inputs as arrays
         self.lt = np.asarray(self.lt)
@@ -1094,7 +1099,8 @@ class VectorData(object):
 
         return
 
-    def update_loc_coords(self, dtimes, coord='magnetic'):
+    def update_loc_coords(self, dtimes, coord='magnetic',
+                          trace_method='ALLOWTRACE'):
         """Update location coordiantes to the desired system.
 
         Parameters
@@ -1104,6 +1110,8 @@ class VectorData(object):
         coord : str
             Desired coordinate system, accepts 'magnetic', 'geodetic', and
             'geocentric' (default='magnetic')
+        trace_method : str
+            Desired AAGCM tracing method (default='ALLOWTRACE')
 
         Raises
         ------
@@ -1127,6 +1135,8 @@ class VectorData(object):
                     # There are multiple times and one location
                     self.lt = np.full(shape=len(dtimes), fill_value=self.lt)
                     self.lat = np.full(shape=len(dtimes), fill_value=self.lat)
+                    self.height = np.full(shape=len(dtimes),
+                                          fill_value=self.height)
             else:
                 if hasattr(dtimes, 'year'):
                     # There is one time and multiple locations
@@ -1139,7 +1149,7 @@ class VectorData(object):
                         raise ValueError('mismatched time and location inputs')
 
             # Initalize the AACGM method using the recommending tracing
-            methods = ["ALLOWTRACE"]
+            methods = [trace_method]
 
             # Handle the conversion to/from magnetic coordinates separately
             if coord.lower() == "magnetic":
@@ -1157,12 +1167,12 @@ class VectorData(object):
                         lon = ocb_time.slt2glon(self.lt[i], val)
 
                         # Convert to magnetic coordinates
-                        out = aacgmv2.get_aacgm_coord_arr(
+                        out = aacgmv2.get_aacgm_coord(
                             self.lat[i], lon, self.height[i], val, method)
 
                         # Save the output
                         new_lat.append(out[0])
-                        new_lat.append(out[2])
+                        new_lt.append(out[2])
                 else:
                     # Get the longitude
                     lon = ocb_time.slt2glon(self.lt, dtime)
@@ -1185,7 +1195,7 @@ class VectorData(object):
                         lon = aacgmv2.convert_mlt(self.lt[i], val, m2a=True)
 
                         # Convert latitude and longitude
-                        out = aacgmv2.convert_latlon_arr(
+                        out = aacgmv2.convert_latlon(
                             self.lat[i], lon, self.height[i], val, method)
 
                         # Convert to SLT and save the latitude
@@ -1209,7 +1219,8 @@ class VectorData(object):
 
         return
 
-    def update_vect_coords_to_mag(self, dtimes, hemisphere):
+    def update_vect_coords_to_mag(self, dtimes, hemisphere,
+                                  trace_method='ALLOWTRACE'):
         """Convert geographic vector components into AAGGMV2 coordinates.
 
         Parameters
@@ -1218,6 +1229,8 @@ class VectorData(object):
             Datetime or list of datetimes for conversion
         hemisphere : int
             -1 for Southern, 1 for Northern
+        trace_method : str
+            Desired AAGCM tracing method (default='ALLOWTRACE')
 
         Notes
         -----
@@ -1272,7 +1285,7 @@ class VectorData(object):
                 dtime = dtimes
 
             # Set the AACGM coordinates of the geographic pole
-            methods = ["ALLOWTRACE"]
+            methods = [trace_method]
             if self.vect_coord == "geocentric":
                 methods.append(self.vect_coord.upper())
             methods.append("A2G")
