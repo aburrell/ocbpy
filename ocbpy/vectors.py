@@ -340,7 +340,7 @@ def calc_dest_polar_angle(pole_quad, vect_quad, base_naz_angle, pole_angle):
     # Initialise the output
     dest_naz_angle = np.full(shape=(base_naz_angle + pole_angle
                                     + abs_mask).shape, fill_value=np.nan)
-    
+
     # Calculate OCB polar angle based on the quadrants and other angles
     if np.any(abs_mask):
         if len(dest_naz_angle.shape) == 0:
