@@ -1247,7 +1247,8 @@ class VectorData(object):
                 mag_lat = np.asarray(self.lat)
 
                 # Calculate the geographic location
-                self.update_loc_coords(dtimes, coord=self.vect_coord)
+                self.update_loc_coords(dtimes, coord=self.vect_coord,
+                                       trace_method=trace_method)
                 geo_lt = np.asarray(self.lt)
                 geo_lat = np.asarray(self.lat)
 
@@ -1261,7 +1262,7 @@ class VectorData(object):
                 geo_lat = np.asarray(self.lat)
 
                 # Update the location coordiantes to be magnetic
-                self.update_loc_coords(dtimes)
+                self.update_loc_coords(dtimes, trace_method=trace_method)
                 mag_lt = np.asarray(self.lt)
                 mag_lat = np.asarray(self.lat)
 
@@ -1303,7 +1304,7 @@ class VectorData(object):
                     mag_pole_slt.append(ocb_time.glon2slt(out[1], val))
                     mag_pole_glat.append(out[0])
             else:
-                mag_pole_glat, mag_pole_lon = aacgmv2.convert_latlon(
+                mag_pole_glat, mag_pole_lon, _ = aacgmv2.convert_latlon(
                     hemisphere * 90.0, 0.0, self.height, dtime,
                     method_code='|'.join(methods))
                 mag_pole_slt = ocb_time.glon2slt(mag_pole_lon, dtime)
