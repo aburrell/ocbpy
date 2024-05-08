@@ -1,6 +1,10 @@
 #!/usr/bin/env python
-# Copyright (C) 2017 AGB
-# Full license can be found in LICENSE.txt
+# -*- coding: utf-8 -*-
+# DOI: 10.5281/zenodo.1179230
+# Full license can be found in License.md
+#
+# DISTRIBUTION STATEMENT A: Approved for public release. Distribution is
+# unlimited.
 # ---------------------------------------------------------------------------
 """General loading routines for data files."""
 
