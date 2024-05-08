@@ -495,16 +495,10 @@ def add_ocb_to_data(pysat_inst, mlat_name='', mlt_name='', height_name='',
                                 vector_init[ikey] = reshape_pad_mask_flatten(
                                     pysat_inst[vname], time_mask)
 
-                            # Save the vector shapes for testing
                             if vector_init[ikey].shape not in vshape:
                                 vshape.append(vector_init[ikey].shape)
                         else:
                             vector_init[ikey] = vname
-
-                    # Evaluate the consistency of the vector inputs
-                    if len(vshape) > 1:
-                        raise ValueError(
-                            'vector variables must all have the same shape')
 
                     # Perform the vector scaling
                     vout = ocbscal.VectorData(vind, ocb.rec_ind, lat[iout],
@@ -604,24 +598,26 @@ def reshape_pad_mask_flatten(data, mask):
 
     """
     if np.all(mask.dims == data.dims):
-        flat = data.where(mask, drop=True).values.flatten()
+        if mask.shape == data.shape:
+            flat = data.where(mask, drop=True).values.flatten()
+        else:
+            raise ValueError('different shapes for the same dimesions')
     else:
         # Reshape this data variable for existing dims
         data_dims = [dim for dim in mask.dims if dim in data.dims]
-        flat = data.transpose(*data_dims).values
+        flat = data.transpose(*data_dims, ...).values
 
         # Pad by adding the additional dimensions if needed
         if len(data_dims) < len(mask.dims):
             try:
                 flat = np.full(shape=tuple(reversed(list(mask.shape))),
                                fill_value=flat.transpose()).transpose()
-            except Exception as aerr:
+            except Exception as xerr:
                 # Using Exception instead of AssertionError because the
                 # catch is not consistent
                 raise ValueError(''.join(['vector variables must all have the',
-                                          ' same shape, {:}'.format(aerr)]))
+                                          ' same shape, {:}'.format(xerr)]))
 
-        # Downselect and flatten the data
         flat = flat[mask.values].flatten()
 
     return flat
