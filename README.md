@@ -21,7 +21,7 @@ coordinate system is described in:
     Research: Space Physics,
     [doi:10.1002/2016JA023235.](https://doi.org/10.1002/2016JA023235)
 
-  * Full [documentation](http://ocbpy.rtfd.io/)
+  * Full [documentation](https://ocbpy.readthedocs.io/en/latest/)
 
 Boundaries must be obtained from observations or models for this coordinate
 transformation. Several boundary data sets are included within this package.
@@ -33,7 +33,7 @@ locations from DMSP.
   * Burrell, A. G. et al. (2020): AMPERE Polar Cap Boundaries, Ann. Geophys.,
     38, 481-490,
     [doi:10.5194/angeo-38-481-2020](https://doi.org/10.5194/angeo-38-481-2020)
-  * [ssj_auroral_boundary](https://github.com/lkilcommons/ssj_auroral_boundary)
+  * [DMSP SSJ Boundaries](https://zenodo.org/records/3373812)
 
 Currently, support is included for files from the following datasets:
 
@@ -53,10 +53,12 @@ The listed dependecies were tested with the following versions:
   * numpy
   * aacgmv2
   * pysat (3.0.1+)
-  * ssj_auroral_boundary
+  * ssj_auroral_boundary (deprecated)
+  * zenodo_get
 
 Testing is performed using the python module, unittest.  To limit dependency
-issues, pysat (>=3.0.1) and ssj_auroral_boundary are optional dependencies.
+issues, the pysat, ssj_auroral_boundary, and zenodo_get dependencies are
+optional.
 
 # Installation
 
@@ -73,11 +75,12 @@ You may also checkout the repository and install it yourself:
 ```
 
 Change directories into the repository folder and run the setup.py file.  For
-a local install use the "--user" flag after "install".
+a local install use the "--user" flag after "install". For development, add
+the "-e" flag.
 
 ```
     $ cd ocbpy/
-    $ python setup.py install
+    $ pip install .
 ```
 
 To run the unit tests,
