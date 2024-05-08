@@ -475,7 +475,7 @@ class OCBoundary(object):
 
         AMPERE/DMSP-SSJ and new IMAGE FUV checks that:
         - the Figure of Merit is greater than or equal to the specified minimum
-          (`min_fom`) or less than or equal to the specified maximum (`max_fom`)
+        (`min_fom`) or less than or equal to the specified maximum (`max_fom`)
 
         """
 
