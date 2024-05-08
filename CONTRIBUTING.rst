@@ -9,7 +9,8 @@ to respond in a timely manner.
 Short version
 =============
 
-* Submit bug reports and feature requests at `GitHub <https://github.com/aburrell/ocbpy/issues>`_
+* Submit bug reports and feature requests at
+  `GitHub <https://github.com/aburrell/ocbpy/issues>`_
 * Make pull requests to the ``develop`` branch
 
 Bug reports
@@ -82,8 +83,8 @@ Tips
 
 To run a subset of tests from the test directory for a specific environment::
 
-    python test_name.py
+    python -m unittest test_name.py
 
 To run all the tests for a specific environment::
 
-    python setup.py test
+    python -m unittest discover
