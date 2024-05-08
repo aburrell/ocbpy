@@ -346,6 +346,26 @@ class TestPysatMethods(cc.TestLogWarnings, PysatBase):
         PysatBase.tearDown(self)
         return
 
+    def test_empty_ocb_warning(self):
+        """Test log error raised if OCB has no records."""
+        # Load the boundaries and instrument
+        self.load_instrument()
+
+        # Reload the boundary without records
+        self.ocb_kw['stime'] = self.test_module._test_dates['']['']
+        self.ocb_kw['etime'] = self.ocb_kw['stime']
+        self.load_boundaries()
+
+        # Test adding OCBs
+        ocb_pysat.add_ocb_to_data(self.test_inst, self.pysat_lat, "mlt",
+                                  height_name=self.pysat_alt, ocb=self.ocb,
+                                  max_sdiff=self.del_time)
+
+        # Check for the logging error
+        self.lwarn = u"no data in Boundary file"
+        self.eval_logging_message()
+        return
+
     def test_add_ocb_to_metadata(self):
         """Test the metadata adding routine."""
         # Load the data and boundaries
@@ -722,6 +742,22 @@ class TestPysatMethods(cc.TestLogWarnings, PysatBase):
                                       ocb=self.ocb)
         return
 
+    def test_bad_height_array(self):
+        """Test failure with a badly shaped height input."""
+        # Load the data and boundaries
+        self.load_instrument()
+
+        # Define an array height input
+        height = np.full(shape=(self.test_inst[self.pysat_lat].values.shape[0],
+                                3), fill_value=200.0)
+
+        # Raise the desired error
+        with self.assertRaisesRegex(ValueError, 'unexpected height shape'):
+            ocb_pysat.add_ocb_to_data(self.test_inst, self.pysat_lat, "mlt",
+                                      height=height, ocb=self.ocb,
+                                      max_sdiff=self.del_time)
+        return
+
 
 @unittest.skipIf(no_pysat, "pysat not installed, cannot test routines")
 class TestPysatMethodsEAB(TestPysatMethods):
@@ -796,6 +832,71 @@ class TestPysatMethodsModel(TestPysatMethods):
         # Update the method default
         self.test_module = pysat.instruments.pysat_testmodel
         self.pysat_alt = ''
+        return
+
+    def test_add_ocb_to_data_evar_with_alt_coord(self):
+        """Test adding ocb to pysat with altitude coordinate."""
+        # Load the data and boundaries
+        self.load_instrument()
+
+        # Add the OCB with E-scaled variables and the height variable
+        ocb_pysat.add_ocb_to_data(self.test_inst, self.pysat_lat, "mlt",
+                                  height_name='altitude',
+                                  evar_names=[self.pysat_var2],
+                                  ocb=self.ocb, max_sdiff=self.del_time)
+
+        self.set_new_keys(exclude_r_corr=False)
+        self.assertIn('r_corr', self.pysat_keys)
+        self.pysat_keys[self.pysat_keys.index("r_corr")] = None
+
+        self.test_ocb_added()
+        return
+
+    def test_add_ocb_to_data_evar_with_alt_array(self):
+        """Test adding ocb to pysat with array altitude input."""
+        # Load the data and boundaries
+        self.load_instrument()
+
+        # Define an array height input
+        height = np.full(shape=self.test_inst[self.pysat_key].values.shape,
+                         fill_value=200.0)
+
+        # Add the OCB with E-scaled variables
+        ocb_pysat.add_ocb_to_data(self.test_inst, self.pysat_lat, "mlt",
+                                  height=height, evar_names=[self.pysat_key],
+                                  ocb=self.ocb, max_sdiff=self.del_time)
+
+        self.set_new_keys(exclude_r_corr=False)
+        self.assertIn('r_corr', self.pysat_keys)
+        self.pysat_keys[self.pysat_keys.index("r_corr")] = None
+
+        self.test_ocb_added()
+        return
+
+    def test_add_ocb_to_data_evar_with_alt_value(self):
+        """Test adding ocb to pysat with array altitude input."""
+        # Load the data and boundaries
+        self.load_instrument()
+
+        # Define a non-coordinate height
+        dims = list(self.test_inst[self.pysat_key].dims)
+        dims.reverse()
+        shape = list(self.test_inst[self.pysat_key].values.shape)
+        shape.reverse()
+        self.test_inst.data = self.test_inst.data.assign(
+            {'dummy1_alt': (dims, np.full(shape=shape, fill_value=200.0))})
+
+        # Add the OCB with E-scaled variables
+        ocb_pysat.add_ocb_to_data(self.test_inst, self.pysat_lat, "mlt",
+                                  height_name="dummy1_alt",
+                                  evar_names=[self.pysat_key],
+                                  ocb=self.ocb, max_sdiff=self.del_time)
+
+        self.set_new_keys(exclude_r_corr=False)
+        self.assertIn('r_corr', self.pysat_keys)
+        self.pysat_keys[self.pysat_keys.index("r_corr")] = None
+
+        self.test_ocb_added()
         return
 
     def test_mismatched_vector_data(self):
