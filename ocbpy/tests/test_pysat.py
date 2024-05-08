@@ -18,6 +18,7 @@ try:
     import pysat
     import ocbpy.instruments.pysat_instruments as ocb_pysat
     import pandas as pds
+    import xarray as xr
     no_pysat = False
 except ImportError:
     no_pysat = True
@@ -819,6 +820,26 @@ class TestPysatMethodsXarray(TestPysatMethods):
 
         return
 
+    def test_bad_vector_shape(self):
+        """Test failure with badly shaped vector data."""
+        # Load the data and boundaries
+        self.load_instrument()
+
+        # Raise the desired value error
+        with self.assertRaisesRegex(ValueError,
+                                    'mismatched dimensions for VectorData'):
+            ocb_pysat.add_ocb_to_data(self.test_inst, self.pysat_lat, "mlt",
+                                      height_name=self.pysat_alt, ocb=self.ocb,
+                                      vector_names={
+                                          'profile':
+                                          {'vect_n': 'profiles',
+                                           'vect_e': 'variable_profiles',
+                                           'dat_name': 'profile',
+                                           'dat_units': 'unit',
+                                           'scale_func': None}},
+                                      max_sdiff=self.del_time)
+        return
+
 
 @unittest.skipIf(no_pysat, "pysat not installed")
 class TestPysatMethodsModel(TestPysatMethods):
@@ -1198,4 +1219,55 @@ class TestPysatCustMethodsModel(TestPysatCustMethods):
         self.test_module = pysat.instruments.pysat_testmodel
         self.pysat_alt = ''
         self.cust_kwargs['height_name'] = self.pysat_alt
+        return
+
+
+@unittest.skipIf(no_pysat, "pysat not installed")
+class TestPysatReshape(unittest.TestCase):
+    """Unit tests for the `reshape_pad_mask_flatten` function."""
+
+    def setUp(self):
+        """Set up the test environment."""
+        self.shape = [4, 5]
+        self.data = xr.DataArray(data=np.ones(shape=self.shape),
+                                 dims=['x', 'y'])
+        self.flat = None
+        return
+
+    def tearDown(self):
+        """Clean up the test environment."""
+        del self.shape, self.data, self.flat
+        return
+
+    def test_reshape_pad_mask_flatten(self):
+        """Test successful data padding, masking, and flattening."""
+
+        for mask_shape, dims in [(self.shape, ['x', 'y']),
+                                 (tuple(reversed(self.shape)), ['y', 'x']),
+                                 (self.shape + [3], ['x', 'y', 'z'])]:
+            mask = xr.DataArray(data=np.ones(shape=mask_shape, dtype=bool),
+                                dims=dims)
+            with self.subTest(mask_dims=dims):
+                self.flat = ocb_pysat.reshape_pad_mask_flatten(
+                    self.data, mask)
+
+                self.assertEqual(self.flat.shape, np.prod(mask_shape))
+                self.assertGreaterEqual(self.flat.shape, np.prod(self.shape))
+        return
+
+    def test_bad_reshape_pad_mask_flatten(self):
+        """Test data padding, masking, and flattening failure."""
+        # Change the mask shape, and add one extra dimension
+        self.shape[0] += 2
+
+        for mask_shape, dims, verr in [
+                (self.shape, ['x', 'y'], "different shapes for the same dim"),
+                (self.shape + [3], ['x', 'y', 'z'], "vector variables must "),
+                (self.shape, ['z', 'y'], "vector variables must all have")]:
+            mask = xr.DataArray(data=np.ones(shape=mask_shape, dtype=bool),
+                                dims=dims)
+
+            with self.subTest(mask_shape=mask_shape, dims=dims):
+                with self.assertRaisesRegex(ValueError, verr):
+                    ocb_pysat.reshape_pad_mask_flatten(self.data, mask)
         return
