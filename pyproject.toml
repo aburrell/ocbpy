@@ -1,13 +1,10 @@
 [build-system]
-requires = [
-    "oldest-supported-numpy",
-    "setuptools",
-    "wheel",
-]
+requires = ["oldest-supported-numpy", "setuptools >= 38.6", "pip >= 10"]
+build-backend = "setuptools.build_meta"
 
 [project]
 name = "ocbpy"
-
+version = "0.4.0"
 license = {file = "LICENSE"}
 description = 'Location relative to open/closed field line boundary'
 maintainers = [
@@ -18,7 +15,7 @@ dependencies = [
     "aacgmv2",
     "numpy",
 ]
-readme = "README.rst"
+readme = "README.md"
 keywords = [
     "coordinates",
     "field-line boundary",
@@ -55,7 +52,6 @@ classifiers = [
     'Operating System :: MacOS :: MacOS X',
     'Operating System :: Microsoft :: Windows',
 ]
-dynamic = ['version']
 
 [project.optional-dependencies]
 pysat_instruments = [ "pysat>=3.0.1" ]
