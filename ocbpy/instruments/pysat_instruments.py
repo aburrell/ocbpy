@@ -336,19 +336,14 @@ def add_ocb_to_data(pysat_inst, mlat_name='', mlt_name='', height_name='',
     # Ensure the LT, Lat, and Height data are the same shape
     if lat.shape != lt.shape or lat.shape[0] != pysat_inst.index.shape[
             0] or (height.shape != lat.shape and len(height.shape) > 0):
+        if pysat_inst.pandas_format:
+            raise ValueError('unexpected height shape or bad lat/lt data')
+
+        # Use local time to set the initial coordinates, since it will have
+        # UT dependence and latitude may not
         ocb_coords = [lt_coord for lt_coord
                       in pysat_inst[mlt_name].coords.keys()]
-        if pysat_inst.index.name in ocb_coords:
-            combo_shape = list(lt.shape)
-        else:
-            # Ensure Local Time has universal time dependence
-            ocb_coords.insert(0, pysat_inst.index.name)
-            combo_shape = [pysat_inst.index.shape[0]]
-            combo_shape.extend(list(lt.shape))
-            out_lt, _ = np.meshgrid(lt, pysat_inst.index)
-
-            if out_lt.shape != combo_shape:
-                lt = out_lt.reshape(combo_shape)
+        combo_shape = list(lt.shape)
 
         # Expand the coordinates if the lat coordinates are not the
         # same as the LT coordinates or height coordinatess
@@ -357,10 +352,11 @@ def add_ocb_to_data(pysat_inst, mlat_name='', mlt_name='', height_name='',
                 combo_shape.append(pysat_inst[lat_coord].shape[0])
                 ocb_coords.append(lat_coord)
 
-        # Reshape the latitude and local time data
-        out_lat, out_lt = np.meshgrid(lat, lt)
-        lat = out_lat.reshape(combo_shape)
-        lt = out_lt.reshape(combo_shape)
+        # Reshape the latitude and local time data if necessary
+        if lat.shape != tuple(combo_shape) or lt.shape != tuple(combo_shape):
+            out_lat, out_lt = np.meshgrid(lat, lt)
+            lat = out_lat.reshape(combo_shape)
+            lt = out_lt.reshape(combo_shape)
 
         # Determine if reshaping for altitude is necessary
         if len(height.shape) == 0:
@@ -376,10 +372,11 @@ def add_ocb_to_data(pysat_inst, mlat_name='', mlt_name='', height_name='',
 
                 # Reshape the data
                 if new_coords:
-                    out_lat, out_lt, out_height = np.meshgrid(lat, lt, height)
+                    out_lat, out_height = np.meshgrid(lat, height)
+                    out_lt, _ = np.meshgrid(lt, height)
                     lat = out_lat.reshape(combo_shape)
-                    lt = out_lt.reshape(combo_shape)
                     height = out_height.reshape(combo_shape)
+                    lt = out_lt.reshape(combo_shape)
                 else:
                     height = height.reshape(combo_shape)
             elif len(height.shape) == len(lat.shape):
