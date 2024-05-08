@@ -861,7 +861,7 @@ class OCBoundary(object):
             self.rfunc = np.full(shape=self.records,
                                  fill_value=ocbcor.elliptical)
         else:
-            raise ValueError("unknown instrument")
+            raise ValueError("unknown instrument: {:}".format(self.instrument))
 
         return
 

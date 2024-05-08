@@ -10,6 +10,23 @@ import numpy as np
 import unittest
 
 from ocbpy import ocb_time
+import ocbpy.tests.class_common as cc
+
+
+class TestOCBTimeLogOutput(cc.TestLogWarnings):
+    """Unit tests for logging messages in the ocb_time module."""
+
+    def test_hr2deg_range_warning(self):
+        """Test the log warning raised for bad input degree range."""
+        # Set the expected output
+        self.lwarn = u"adjusting range to be realistic"
+
+        # Use a range that's too small
+        self.assertEqual(ocb_time.hr2deg(-24.0, min_deg=180, max_deg=360), 0.0)
+
+        # Test logging error message for the bad range
+        self.eval_logging_message()
+        return
 
 
 class TestOCBTimeMethods(unittest.TestCase):
@@ -190,61 +207,89 @@ class TestOCBTimeUnits(unittest.TestCase):
 
     def test_deg2hr_array(self):
         """Test degree to hour conversion for an array."""
+        # Adjust the expected output
+        self.lt[-1] = self.lt[0]
+
+        # Run the test function
         self.out = ocb_time.deg2hr(self.lon)
 
+        # Evaluate the output
         for i, val in enumerate(self.lt):
             self.assertAlmostEqual(self.out[i], val)
         return
 
     def test_deg2hr_value(self):
         """Test degree to hour conversion for a single value."""
+        # Run the test function
         self.out = ocb_time.deg2hr(self.lon[0])
 
+        # Evaluate the output
         self.assertAlmostEqual(self.out, self.lt[0])
         return
 
     def test_hr2deg_array(self):
         """Test hour to degree conversion for an array."""
+        # Adjust the expected output
+        self.lon[-1] = self.lon[0]
+
+        # Run the test function
         self.out = ocb_time.hr2deg(self.lt)
 
+        # Evaluate the output
         for i, val in enumerate(self.lon):
             self.assertAlmostEqual(self.out[i], val)
         return
 
     def test_hr2deg_value(self):
         """Test hour to degree conversion for a single value."""
+        # Run the test function
         self.out = ocb_time.deg2hr(self.lt[0])
 
+        # Evaluate the output
         self.assertAlmostEqual(self.out, self.lon[0])
         return
 
     def test_hr2rad_array(self):
         """Test hour to radian conversion for an array."""
+        # Adjust the expected output
+        self.lon[-1] = self.lon[0]
+
+        # Run the test function
         self.out = ocb_time.hr2rad(self.lt)
 
+        # Evaluate the output
         for i, val in enumerate(np.radians(self.lon)):
             self.assertAlmostEqual(self.out[i], val)
         return
 
     def test_hr2rad_value(self):
         """Test hour to radian conversion for a single value."""
+        # Run the test function
         self.out = ocb_time.hr2rad(self.lt[0])
 
+        # Evaluate the output
         self.assertAlmostEqual(self.out, np.radians(self.lon[0]))
         return
 
     def test_rad2hr_array(self):
         """Test radian to hour conversion for an array."""
+        # Adjust the expected output
+        self.lt[-1] = self.lt[0]
+
+        # Run the test function
         self.out = list(ocb_time.rad2hr(np.radians(self.lon)))
 
+        # Evaluate the output
         for i, val in enumerate(self.out):
             self.assertAlmostEqual(val, self.lt[i])
         return
 
     def test_rad2hr_value(self):
         """Test radian to hour conversion for a single value."""
+        # Run the test function
         self.out = ocb_time.rad2hr(np.radians(self.lon[0]))
 
+        # Evaluate the output
         self.assertAlmostEqual(self.out, self.lt[0])
         return
 

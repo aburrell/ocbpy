@@ -8,6 +8,8 @@
 import datetime as dt
 import numpy as np
 
+import ocbpy
+
 
 def get_datetime_fmt_len(datetime_fmt):
     """Get the lenght of a string line needed for a specific datetime format.
@@ -215,37 +217,64 @@ def deg2hr(lon):
     lon = np.asarray(lon)
     lt = lon / 15.0  # 12 hr/180 deg = 1/15 hr/deg
 
+    # Ensure the local time range is realistic
+    lt = fix_range(lt, 0.0, 24.0)
+
     return lt
 
 
-def hr2deg(lt):
+def hr2deg(lt, min_deg=-180.0, max_deg=360.0):
     """Convert from degrees to hours.
 
     Parameters
     ----------
     lt : float or array-like
         Local time-like value in hours
+    min_deg : float
+        Minimum number of degrees in desired range, e.g. 0 for 0-360 or
+        180 for +/-180 (default=-180.0)
+    max_deg : float
+        Maximum number of degrees in desired range, e.g. 360 for 0-360 or
+        180 for +/-180. (default=360.0)
 
     Returns
     -------
     lon : float or array-like
         Longitude-like value in degrees
 
+    Notes
+    -----
+    If `min_deg` and `max_deg` specify a range less than 360 degrees, `max_deg`
+    will be used to identify the desired range.  Ranges greater than 360 degrees
+    (e.g., -180 to 360) are allowed.
+
     """
 
     lt = np.asarray(lt)
     lon = lt * 15.0  # 180 deg/12 hr = 15 deg/hr
 
+    # Ensure the local time range is realistic
+    if max_deg - min_deg < 360.0:
+        min_deg = max_deg - 360.0
+        ocbpy.logger.warning(
+            "adjusting range to be realistic: {:.1f} - {:.1f} deg".format(
+                min_deg, max_deg))
+
+    lon = fix_range(lon, min_deg, max_deg, 360)
+
     return lon
 
 
-def hr2rad(lt):
+def hr2rad(lt, max_range=2.0 * np.pi):
     """Convert from hours to radians.
 
     Parameters
     ----------
     lt : float or array-like
         Local time-like value in hours
+    max_range : float
+        Maximum radians in desired range, e.g. 2pi for 0-2pi or pi for +/-pi
+        (default=2.0 * np.pi)
 
     Returns
     -------
@@ -256,6 +285,9 @@ def hr2rad(lt):
 
     lt = np.asarray(lt)
     lon = lt * np.pi / 12.0
+
+    # Ensure the longitude range is realistic
+    lon = fix_range(lon, max_range - (2.0 * np.pi), max_range)
 
     return lon
 
@@ -277,6 +309,9 @@ def rad2hr(lon):
 
     lon = np.asarray(lon)
     lt = lon * 12.0 / np.pi
+
+    # Ensure the local time range is realistic
+    lt = fix_range(lt, 0.0, 24.0)
 
     return lt
 
@@ -315,7 +350,7 @@ def slt2glon(slt, dtime):
     Returns
     -------
     glon : float or array-like
-        Geographic longitude in degrees
+        Geographic longitude in degrees, ranging from -180 to 360
 
     """
 
@@ -345,7 +380,7 @@ def glon2slt(glon, dtime):
     Returns
     -------
     slt : float or array-like
-        Solar local time in hours
+        Solar local time in hours, ranging from 0 up to 24 hours
 
     """
 

@@ -89,7 +89,7 @@ class TestDualBoundaryInstruments(test_ocb.TestOCBoundaryInstruments):
                                                      "dmsp-ssj_north_out.eab"),
                            "ocb_instrument": "image",
                            "ocb_filename": path.join(cc.test_dir,
-                                                     "test_north_circle")},
+                                                     "test_north_ocb")},
                           {"eab_instrument": "dmsp-ssj", "hemisphere": 1,
                            "eab_filename": path.join(cc.test_dir,
                                                      "dmsp-ssj_north_out.eab"),
@@ -101,7 +101,7 @@ class TestDualBoundaryInstruments(test_ocb.TestOCBoundaryInstruments):
                                                      "dmsp-ssj_south_out.eab"),
                            "ocb_instrument": "ampere",
                            "ocb_filename": path.join(cc.test_dir,
-                                                     "test_south_circle")}]
+                                                     "test_south_ocb")}]
         return
 
 

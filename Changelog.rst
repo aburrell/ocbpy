@@ -7,6 +7,7 @@ Summary of all changes made since the first stable release
 ------------------
 * DEP: Deprecated functions that depend on ssj_auroral_boundary_package
 * DEP: Removed classes and kwargs deprecated in v0.3.0
+* MAINT: Cycled supported Python versions
 * MAINT: Added a pyproject.toml file and removed setup.py
 * MAINT: Updated numpy logic to address DeprecationWarnings
 * MAINT: Updated GitHub Action yamls to use pyproject.toml and cycle versions
@@ -15,12 +16,17 @@ Summary of all changes made since the first stable release
 * ENH: Added AMPERE EABs, using the Heppner-Maynard boundary as a valid EAB
 * ENH: Changed default directory ID to use `pathlib`
 * ENH: Allow data padding in `pysat_instrument` functions
+* ENH: Created separate vector transformation functions to support multiple
+       coordinate systems
+* ENH: Updated VectorData and pysat_instruments to allow geographic inputs
 * BUG: Fixed a typo in the documentation's pysat example
 * BUG: Added an error catch for badly formatted SuperMAG file reading
+* BUG: Fixed the flat/zero masking for vector pole angles with array input
 * TST: Added a new CI test for the Test PyPi Release Candidate
 * TST: Reduced duplication by creating a common test class and test variable
 * TST: Added a ReadTheDocs yaml
 * DOC: Improved docstring style compliance and correctness
+* DOC: Updated pysat example to use geodetic inputs and improve the EAB plot
 
 0.3.0 (10-21-2022)
 ------------------

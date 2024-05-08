@@ -157,8 +157,8 @@ def supermag2ascii_ocb(smagfile, outfile, hemisphere=0, ocb=None,
                 # Set this value's AACGM vector values
                 vdata = ocbscal.VectorData(
                     itime[0], ocb.rec_ind, mdata['MLAT'][itime],
-                    mdata['MLT'][itime], aacgm_n=mdata['BN'][itime],
-                    aacgm_e=mdata['BE'][itime], aacgm_z=mdata['BZ'][itime],
+                    mdata['MLT'][itime], vect_n=mdata['BN'][itime],
+                    vect_e=mdata['BE'][itime], vect_z=mdata['BZ'][itime],
                     scale_func=scale_func)
 
                 vdata.set_ocb(ocb)
@@ -183,11 +183,11 @@ def supermag2ascii_ocb(smagfile, outfile, hemisphere=0, ocb=None,
                                                          mdata[okey][jmag])
 
                     outline = "".join([
-                        outline, "{:.2f} ".format(vdata.aacgm_lat[tind]),
+                        outline, "{:.2f} ".format(vdata.lat[tind]),
                         "{:.2f} {:.2f} {:.2f} {:.2f} {:.2f} {:.2f} ".format(
-                            vdata.aacgm_mlt[tind], vdata.aacgm_mag[tind],
-                            vdata.aacgm_n[tind], vdata.aacgm_e[tind],
-                            vdata.aacgm_z[tind], vdata.ocb_lat[tind]),
+                            vdata.lt[tind], vdata.vect_mag[tind],
+                            vdata.vect_n[tind], vdata.vect_e[tind],
+                            vdata.vect_z[tind], vdata.ocb_lat[tind]),
                         "{:.2f} {:.2f} {:.2f} {:.2f} {:.2f}\n".format(
                             vdata.ocb_mlt[tind], vdata.ocb_mag[tind],
                             vdata.ocb_n[tind], vdata.ocb_e[tind],
