@@ -22,7 +22,6 @@ process and provides examples for usage.
    contributing.rst
 
 
-
 Indices and tables
 ==================
 
