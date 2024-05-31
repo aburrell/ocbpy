@@ -91,6 +91,11 @@ The DMSP SSJ boundaries are retrieved using
 Please follow the citation guidelines on their page.  The general reference
 for the DMSP SSJ boundary data set is provided below.
 
+* **SSJ Auroral Boundaries**: Kilcommons, L. M., R. J. Redmon, and D. J. Knipp
+  (2017), A new DMSP magnetometer and auroral boundary data set and estimates
+  of field-aligned currents in dynamic auroral boundary coordinates, J. Geophys.
+  Res. Space Physics, 122, 9068–9079, doi:10.1002/2016JA023342.
+
 * **SSJ Auroral Boundaries (2010-2014)**: Kilcommons, L., et al. (2019).
   Defense Meteorology Satellite Program (DMSP) Electron Precipitation (SSJ)
   Auroral Boundaries, 2010-2014 (Version 1.0.0) [Data set]. Zenodo.

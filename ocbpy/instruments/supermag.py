@@ -1,6 +1,10 @@
+#!/usr/bin/env python
 # -*- coding: utf-8 -*-
-# Copyright (C) 2017 AGB
-# Full license can be found in LICENSE.txt
+# DOI: 10.5281/zenodo.1179230
+# Full license can be found in License.md
+#
+# DISTRIBUTION STATEMENT A: Approved for public release. Distribution is
+# unlimited.
 # ---------------------------------------------------------------------------
 """Perform OCB gridding for SuperMAG data.
 

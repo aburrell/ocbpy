@@ -90,8 +90,8 @@ prodedures while loading the desired data.  The
 be applied using the :py:mod:`pysat` `custom interface
 <https://pysat.readthedocs.io/en/latest/tutorial/tutorial_custom.html>`_.  The
 EAB conversion can handle magnetic, geodetic, or geocentric coordinates for
-scalar or vector data types using the :py:var:`loc_coord` and
-:py:var:`vect_coord` keyword arguments, respectively. We do need to calculate
+scalar or vector data types using the :py:attr:`loc_coord` and
+:py:attr:`vect_coord` keyword arguments, respectively. We do need to calculate
 local time before calculating the EAB coordinates, though.
 
 ::

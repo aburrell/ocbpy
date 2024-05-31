@@ -9,3 +9,9 @@ Contributors
 ------------
 
 * Dominic Jodoin - https://github.com/cotsog
+
+Acknowledgements
+----------------
+ * Angeline G. Burrell is supported by the Office of Naval Research
+   (2018-Present)
+ 

@@ -1,7 +1,10 @@
 #!/usr/bin/env python
 # -*- coding: utf-8 -*-
-# Copyright (C) 2019, AGB & GC
+# DOI: 10.5281/zenodo.1179230
 # Full license can be found in License.md
+#
+# DISTRIBUTION STATEMENT A: Approved for public release. Distribution is
+# unlimited.
 # -----------------------------------------------------------------------------
 """Download and format DMSP SSJ boundary files.
 
@@ -14,6 +17,10 @@ References
    boundary data set and estimates of field-aligned currents in dynamic auroral
    boundary coordinates, J. Geophys. Res.: Space Phys., 122, pp 9068-9079,
    doi:10.1002/2016ja023342.
+
+.. [7] Kilcommons, L., Redmon, R., & Knipp, D. (2019). Defense Meteorology
+   Satellite Program (DMSP) Electron Precipitation (SSJ) Auroral Boundaries,
+   2010-2014 (1.0.0) [Data set]. Zenodo. https://doi.org/10.5281/zenodo.3373812
 
 """
 
@@ -279,7 +286,7 @@ def fetch_ssj_boundary_files(stime=None, etime=None, out_dir=None,
     sat_nums : list or NoneType
         Satellite numbers or None for all satellites (default=None)
     doi : str
-        DOI for the DMSP SSJ boundary file Zenodo archive
+        DOI for the DMSP SSJ boundary file Zenodo archive [7]_
         (default='10.5281/zenodo.3373811')
     rm_temp : bool
         Remove all files that are not the final boundary files (default=True)
@@ -492,7 +499,7 @@ def format_ssj_boundary_files(csv_files, ref_alt=830.0,
     times, a circle that intersects the two boundary pass points is defined and
     the boundary location saved.  The DMSP SSJ boundary correction function
     will use this information to only return values within a small distance of
-    the boundary locations [5]_.
+    the boundary locations [5]_, [7]_.
 
     Separate files are created for each boundary and hemisphere, dates and
     spacecraft are combined.

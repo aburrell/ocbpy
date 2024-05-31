@@ -21,6 +21,7 @@
 import datetime as dt
 import json
 import os
+from pyproject_parser import PyProject
 import sys
 
 sys.path.insert(0, os.path.abspath('.'))
@@ -61,20 +62,21 @@ source_suffix = '.rst'
 master_doc = 'index'
 
 # General information about the project.
+info = PyProject.load("../pyproject.toml")
 zenodo = json.loads(open('../.zenodo.json').read())
 project = 'ocbpy'
 author = '; '.join([auth['name'] for auth in zenodo['creators']])
 copyright = '{:d}, {:s}'.format(dt.datetime.utcnow().year, author)
 title = 'ocbpy Documentation'
-desc = ''.join(['Coordinate transformation to and from an open-closed ',
-                'field line boundary system'])
+desc = ''.join(['Coordinate transformation to and from high-latitude ',
+                'boundary systems'])
 
 # The version info for the project you're documenting, acts as replacement for
 # |version| and |release|, also used in various other places throughout the
 # built documents.
 #
 # The short X.Y version.
-version = '0.3.0'
+version = info.project['version'].base_version
 # The full version, including alpha/beta/rc tags.
 release = '{:s}-beta'.format(version)
 
@@ -180,4 +182,4 @@ epub_copyright = copyright
 epub_exclude_files = ['search.html']
 
 # Example configuration for intersphinx: refer to the Python standard library.
-intersphinx_mapping = {'https://docs.python.org/3': None}
+intersphinx_mapping = {'<name>': ('https://docs.python.org/3', None)}

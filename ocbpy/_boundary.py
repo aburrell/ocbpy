@@ -1,6 +1,10 @@
 #!/usr/bin/env python
 # -*- coding: utf-8 -*-
+# DOI: 10.5281/zenodo.1179230
 # Full license can be found in License.md
+#
+# DISTRIBUTION STATEMENT A: Approved for public release. Distribution is
+# unlimited.
 # ----------------------------------------------------------------------------
 """Hold, manipulate, and load the OCB and EAB data.
 
@@ -471,7 +475,7 @@ class OCBoundary(object):
 
         AMPERE/DMSP-SSJ and new IMAGE FUV checks that:
         - the Figure of Merit is greater than or equal to the specified minimum
-          (`min_fom`) or less than or equal to the specified maximum (`max_fom`)
+        (`min_fom`) or less than or equal to the specified maximum (`max_fom`)
 
         """
 
