@@ -1,6 +1,10 @@
+#!/usr/bin/env python
 # -*- coding: utf-8 -*-
-# Copyright (C) 2017 AGB
-# Full license can be found in LICENSE.txt
+# DOI: 10.5281/zenodo.1179230
+# Full license can be found in License.md
+#
+# DISTRIBUTION STATEMENT A: Approved for public release. Distribution is
+# unlimited.
 # ---------------------------------------------------------------------------
 """Perform OCB gridding for SuperMAG data.
 
@@ -12,7 +16,6 @@ SuperMAG data available at: http://supermag.jhuapl.edu/
 
 import datetime as dt
 import numpy as np
-import warnings
 
 import ocbpy
 import ocbpy.ocb_scaling as ocbscal
@@ -52,26 +55,14 @@ def supermag2ascii_ocb(smagfile, outfile, hemisphere=0, ocb=None,
     max_merit : float or NoneTye
         Maximum value for the default figure of merit or None to not apply a
         custom maximum (default=None)
+    scale_func : function or NoneType
+        Scale the magnetic field observations unless None
+        (default=ocbpy.ocb_scale.normal_curl_evar)
     kwargs : dict
         Dict with optional selection criteria.  The key should correspond to a
         data attribute and the value must be a tuple with the first value
         specifying 'max', 'min', 'maxeq', 'mineq', or 'equal' and the second
         value specifying the value to use in the comparison.
-    min_sectors : int
-        Minimum number of MLT sectors required for good OCB. Deprecated, will
-        be removed in version 0.3.1+ (default=7).
-    rcent_dev : float
-        Maximum number of degrees between the new centre and the AACGM pole.
-        Deprecated, will be removed in version 0.3.1+ (default=8.0)
-    max_r : float
-        Maximum radius for open-closed field line boundary in degrees/
-        Deprecated, will be removed in version 0.3.1+ (default=23.0)
-    min_r : float
-        Minimum radius for open-closed field line boundary in degrees.
-        Deprecated, will be removed in version 0.3.1+ (default=10.0)
-    scale_func : function or NoneType
-        Scale the magnetic field observations unless None
-        (default=ocbpy.ocb_scale.normal_curl_evar)
 
     Raises
     ------
@@ -130,25 +121,6 @@ def supermag2ascii_ocb(smagfile, outfile, hemisphere=0, ocb=None,
         ocbpy.logger.error("no data in the Boundary file(s)")
         return
 
-    # Add check for deprecated and custom kwargs
-    dep_comp = {'min_sectors': ['num_sectors', ('mineq', 7)],
-                'rcent_dev': ['r_cent', ('maxeq', 8.0)],
-                'max_r': ['r', ('maxeq', 23.0)],
-                'min_r': ['r', ('mineq', 10.0)]}
-    cust_keys = list(kwargs.keys())
-
-    for ckey in cust_keys:
-        if ckey in dep_comp.keys():
-            warnings.warn("".join(["Deprecated kwarg will be removed in ",
-                                   "version 0.3.1+. To replecate behaviour",
-                                   ", use {", dep_comp[ckey][0], ": ",
-                                   repr(dep_comp[ckey][1]), "}"]),
-                          DeprecationWarning, stacklevel=2)
-            del kwargs[ckey]
-
-            if hasattr(ocb, dep_comp[ckey][0]):
-                kwargs[dep_comp[ckey][0]] = dep_comp[ckey][1]
-
     # Remove the data with NaNs/Inf and from the opposite hemisphere/equator
     igood = np.where((np.isfinite(mdata['MLT'])) & (np.isfinite(mdata['MLAT']))
                      & (np.isfinite(mdata['BE'])) & (np.isfinite(mdata['BN']))
@@ -189,8 +161,8 @@ def supermag2ascii_ocb(smagfile, outfile, hemisphere=0, ocb=None,
                 # Set this value's AACGM vector values
                 vdata = ocbscal.VectorData(
                     itime[0], ocb.rec_ind, mdata['MLAT'][itime],
-                    mdata['MLT'][itime], aacgm_n=mdata['BN'][itime],
-                    aacgm_e=mdata['BE'][itime], aacgm_z=mdata['BZ'][itime],
+                    mdata['MLT'][itime], vect_n=mdata['BN'][itime],
+                    vect_e=mdata['BE'][itime], vect_z=mdata['BZ'][itime],
                     scale_func=scale_func)
 
                 vdata.set_ocb(ocb)
@@ -215,11 +187,11 @@ def supermag2ascii_ocb(smagfile, outfile, hemisphere=0, ocb=None,
                                                          mdata[okey][jmag])
 
                     outline = "".join([
-                        outline, "{:.2f} ".format(vdata.aacgm_lat[tind]),
+                        outline, "{:.2f} ".format(vdata.lat[tind]),
                         "{:.2f} {:.2f} {:.2f} {:.2f} {:.2f} {:.2f} ".format(
-                            vdata.aacgm_mlt[tind], vdata.aacgm_mag[tind],
-                            vdata.aacgm_n[tind], vdata.aacgm_e[tind],
-                            vdata.aacgm_z[tind], vdata.ocb_lat[tind]),
+                            vdata.lt[tind], vdata.vect_mag[tind],
+                            vdata.vect_n[tind], vdata.vect_e[tind],
+                            vdata.vect_z[tind], vdata.ocb_lat[tind]),
                         "{:.2f} {:.2f} {:.2f} {:.2f} {:.2f}\n".format(
                             vdata.ocb_mlt[tind], vdata.ocb_mag[tind],
                             vdata.ocb_n[tind], vdata.ocb_e[tind],
@@ -242,6 +214,8 @@ def load_supermag_ascii_data(filename):
 
     Returns
     -------
+    header : list
+        List of strings containing the header
     out : dict
         The dict keys are specified by the header data line, the data
         for each key are stored in the numpy array
@@ -313,6 +287,13 @@ def load_supermag_ascii_data(filename):
                         if n == snum:
                             n = -1
                             ind = {"SMU": fill_val, "SML": fill_val}
+
+    # If no data was found, this may not be the correct type of file
+    if hflag:
+        ocbpy.logger.error(
+            "no data in the SuperMAG file '{:}', check format.".format(
+                filename))
+        return header, dict()
 
     # Recast data as numpy arrays and replace fill value with np.nan
     for k in out:

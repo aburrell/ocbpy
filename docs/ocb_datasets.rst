@@ -46,13 +46,27 @@ AMPERE
 
 OCB data sets can also be obtained from AMPERE (Active Magnetosphere and
 Planetary Electrodynamics Response Experiment) R1/R2 Field-Aligned Current (FAC)
-boundary data.  This data is provided for both hemispheres between 2010-2016,
+boundary data.  This data is provided for both hemispheres between 2010-2021,
 inclusive. Because there is an offset between the R1/R2 FAC boundary and the
 OCB, a correction is required.  This correction can be implemented using the
-routines in :py:mod:`ocbpy.ocb_correction`.  More information about the method
-behind the identification of these boundaries and their offset can be found in
-the articles listed in :ref:`cite-ampere`. Recommended selection criteria are
-included as defaults in the :py:class:`~ocbpy.OCBoundary` class.
+routines in :py:mod:`ocbpy.ocb_correction`.
+
+In the most recent version
+(`V2 <https://figshare.le.ac.uk/articles/dataset/AMPERE_R1_R2_FAC_radii_v2/22241338/1>`_)
+of these AMPERE boundary fits, which uses the newly-processed AMPERE data, a fit
+for the Heppner-Maynard Boundary (HMB) were also made available. The HMB has
+been shown to be related to the equatorward boundary of the auroral oval near
+magnetic midnight, and so is provided as an EAB. This may or may not be an
+appropriate boundary for your auroral gridding purposes. As the HMB has not
+been related to the equatorward particle precipitation boundary, there is no
+correction function needed.
+
+More information about the method behind the identification of these boundaries
+and their offset can be found in the articles listed in :ref:`cite-ampere`.
+Recommended selection criteria are included as defaults in the
+:py:class:`~ocbpy.OCBoundary` and :py:class:`~ocbpy.EABoundary` classes. We
+gratefully acknowledge the use of AMPERE data provided by JHU/APL, PIs Brian
+Anderson / Sarah Vines. This analysis uses the newly-processed AMPERE data.
 
 
 .. _bound-data-dmsp-ssj:

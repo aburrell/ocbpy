@@ -1,13 +1,17 @@
 #!/usr/bin/env python
 # -*- coding: utf-8 -*-
-# Copyright (C) 2019, AGB & GC
+# DOI: 10.5281/zenodo.1179230
 # Full license can be found in License.md
+#
+# DISTRIBUTION STATEMENT A: Approved for public release. Distribution is
+# unlimited.
 # ----------------------------------------------------------------------------
 """Functions that support boundary file selection."""
 
 import datetime as dt
 import itertools
 import os
+import pathlib
 
 import ocbpy
 
@@ -22,9 +26,11 @@ def get_boundary_directory():
 
     """
 
-    boundary_dir = os.path.join(os.path.dirname(ocbpy.__file__), "boundaries")
+    boundary_dir = os.path.join(str(pathlib.Path(
+        ocbpy.boundaries.__file__).resolve().parent))
 
-    if not os.path.isdir(boundary_dir):
+    if not os.path.isdir(boundary_dir) or boundary_dir.find(
+            "ocbpy") < 0 or boundary_dir.find("boundaries") < 0:
         raise OSError("can't find the OCBpy boundary file directory")
 
     return boundary_dir
@@ -61,7 +67,7 @@ def get_boundary_files(bound='ocb'):
              "wic": dt.datetime(2000, 5, 4),
              "image": dt.datetime(2000, 5, 3),
              "dmsp-ssj": dt.datetime(2010, 1, 1)}
-    etime = {"amp": dt.datetime(2017, 1, 1),
+    etime = {"amp": dt.datetime(2022, 1, 1),
              "si12": dt.datetime(2002, 11, 1),
              "si13": dt.datetime(2002, 11, 1),
              "wic": dt.datetime(2002, 11, 1),

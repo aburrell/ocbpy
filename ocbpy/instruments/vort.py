@@ -1,6 +1,10 @@
+#!/usr/bin/env python
 # -*- coding: utf-8 -*-
-# Copyright (C) 2017 AGB
-# Full license can be found in LICENSE.txt
+# DOI: 10.5281/zenodo.1179230
+# Full license can be found in License.md
+#
+# DISTRIBUTION STATEMENT A: Approved for public release. Distribution is
+# unlimited.
 # ---------------------------------------------------------------------------
 """Perform OCB gridding for SuperDARN vorticity data.
 
@@ -11,7 +15,6 @@ Specialised SuperDARN data product, available from: gchi@bas.ac.uk
 """
 import datetime as dt
 import numpy as np
-import warnings
 
 import ocbpy
 import ocbpy.ocb_scaling as ocbscal
@@ -54,26 +57,15 @@ def vort2ascii_ocb(vortfile, outfile, hemisphere=0, ocb=None,
     max_merit : float or NoneTye
         Maximum value for the default figure of merit or None to not apply a
         custom maximum (default=None)
-    kwargs : dict
-        Dict with optional selection criteria.  The key should correspond to a
-        data attribute and the value must be a tuple with the first value
-        specifying 'max', 'min', 'maxeq', 'mineq', or 'equal' and the second
-        value specifying the value to use in the comparison.
-    min_sectors : int
-        Minimum number of MLT sectors required for good OCB. Deprecated, will
-        be removed in version 0.3.1+ (default=7)
-    rcent_dev : float
-        Maximum number of degrees between the new centre and the AACGM pole.
-        Deprecated, will be removed in version 0.3.1+ (default=8.0)
-    max_r : float
-        Maximum radius for open-closed field line boundary in degrees.
-        Deprecated, will be removed in version 0.3.1+ (default=23.0)
-    min_r : float
-        Minimum radius for open-closed field line boundary in degrees.
-        Deprecated, will be removed in version 0.3.1+ (default=10.0)
     scale_func : function or NoneType
         Scaling function for Vorticity data or None to not scale
         (default=ocbpy.ocb_scale.normal_curl_evar)
+    kwargs : dict
+        Dict with optional selection criteria for quality boundaries. The key
+        should correspond to a data attribute and the value must be a tuple
+        with the first value specifying 'max', 'min', 'maxeq', 'mineq', or
+        'equal' and the second value specifying the value to use in the
+        comparison.
 
     Raises
     ------
@@ -134,25 +126,6 @@ def vort2ascii_ocb(vortfile, outfile, hemisphere=0, ocb=None,
     if ocb.records == 0:
         ocbpy.logger.error("no data in Boundary file(s)")
         return
-
-    # Add check for deprecated and custom kwargs
-    dep_comp = {'min_sectors': ['num_sectors', ('mineq', 7)],
-                'rcent_dev': ['r_cent', ('maxeq', 8.0)],
-                'max_r': ['r', ('maxeq', 23.0)],
-                'min_r': ['r', ('mineq', 10.0)]}
-    cust_keys = list(kwargs.keys())
-
-    for ckey in cust_keys:
-        if ckey in dep_comp.keys():
-            warnings.warn("".join(["Deprecated kwarg will be removed in ",
-                                   "version 0.3.1+. To replecate behaviour",
-                                   ", use {", dep_comp[ckey][0], ": ",
-                                   repr(dep_comp[ckey][1]), "}"]),
-                          DeprecationWarning, stacklevel=2)
-            del kwargs[ckey]
-
-            if hasattr(ocb, dep_comp[ckey][0]):
-                kwargs[dep_comp[ckey][0]] = dep_comp[ckey][1]
 
     # Remove the data from the opposite hemisphere
     igood = np.where(np.sign(vdata['CENTRE_MLAT']) == hemisphere)[0]

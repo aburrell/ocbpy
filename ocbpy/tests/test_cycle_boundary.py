@@ -1,30 +1,31 @@
 #!/usr/bin/env python
 # -*- coding: utf-8 -*-
-# Copyright (C) 2017, AGB & GC
+# DOI: 10.5281/zenodo.1179230
 # Full license can be found in License.md
+#
+# DISTRIBUTION STATEMENT A: Approved for public release. Distribution is
+# unlimited.
 # -----------------------------------------------------------------------------
 """Test the cycle_boundary sub-module functions."""
 
 import datetime as dt
-from io import StringIO
 import logging
 import numpy as np
 from os import path
 import unittest
 
 import ocbpy
+import ocbpy.tests.class_common as cc
 
 
-class TestCycleMatchData(unittest.TestCase):
+class TestCycleMatchData(cc.TestLogWarnings):
     """Unit tests for the `match_data_ocb` function."""
 
     def setUp(self):
         """Initialize the test environment."""
-        set_north = {"filename": path.join(path.dirname(ocbpy.__file__),
-                                           "tests", "test_data",
-                                           "test_north_circle"),
-                     "instrument": "image"}
-        self.ocb = ocbpy.OCBoundary(**set_north)
+        self.ocb = ocbpy.OCBoundary(filename=path.join(cc.test_dir,
+                                                       "test_north_ocb"),
+                                    instrument="image", hemisphere=1)
         self.ocb.rec_ind = -1
         self.idat = 0
         self.test_func = ocbpy.cycle_boundary.match_data_ocb
@@ -35,39 +36,14 @@ class TestCycleMatchData(unittest.TestCase):
             seconds=self.del_time + 1)
 
         # Initialize logging
-        self.lwarn = u""
-        self.lout = u""
-        self.log_capture = StringIO()
-        ocbpy.logger.addHandler(logging.StreamHandler(self.log_capture))
-        ocbpy.logger.setLevel(logging.WARNING)
-        del set_north
+        super().setUp()
         return
 
     def tearDown(self):
         """Clean up the test environment."""
-        del self.ocb, self.lwarn, self.lout, self.log_capture, self.idat
-        del self.test_func, self.rec_ind, self.rec_ind2, self.del_time
-        del self.bad_time
-        return
-
-    def test_deprecated_kwargs(self):
-        """Test warnings for deprecated kwargs in `get_next_good_ocb_ind`."""
-        # Set the deprecated keyword arguments with standard values
-        dep_inputs = {"min_sectors": 7, "rcent_dev": 8.0, "max_r": 23.0,
-                      "min_r": 10.0}
-        del_ind = self.rec_ind2 - self.rec_ind
-        test_times = np.arange(
-            self.ocb.dtime[self.ocb.rec_ind],
-            self.ocb.dtime[self.ocb.rec_ind + del_ind],
-            dt.timedelta(seconds=self.del_time)).astype(dt.datetime)
-
-        # Cycle through the keyword arguments that should raise a warning
-        for dkey in dep_inputs.keys():
-            kwargs = {dkey: dep_inputs[dkey]}
-            with self.subTest(kwargs=kwargs):
-                with self.assertWarnsRegex(DeprecationWarning,
-                                           "Deprecated kwarg will be removed"):
-                    self.test_func(self.ocb, test_times, idat=1, **kwargs)
+        del self.ocb, self.idat, self.bad_time, self.del_time
+        del self.test_func, self.rec_ind, self.rec_ind2
+        super().tearDown()
         return
 
     def test_bad_class_cycling_method(self):
@@ -143,13 +119,14 @@ class TestCycleMatchData(unittest.TestCase):
         # Because the array starts at the first good OCB, will return zero
         self.idat = self.test_func(self.ocb, [self.ocb.dtime[self.rec_ind]],
                                    idat=self.idat)
+
+        # Test the output
         self.assertEqual(self.idat, 0)
         self.assertEqual(self.ocb.rec_ind, self.rec_ind)
 
         # The first match will be announced in the log
         self.lwarn = "found first good OCB record at"
-        self.lout = self.log_capture.getvalue()
-        self.assertRegex(self.lout, self.lwarn)
+        self.eval_logging_message()
         return
 
     def test_bad_first_match(self):
@@ -163,8 +140,7 @@ class TestCycleMatchData(unittest.TestCase):
 
         # The first match will be announced in the log
         self.lwarn = "unable to find a good OCB record"
-        self.lout = self.log_capture.getvalue()
-        self.assertRegex(self.lout, self.lwarn)
+        self.eval_logging_message()
         return
 
     def test_bad_ocb_ind(self):
@@ -211,8 +187,7 @@ class TestCycleMatchData(unittest.TestCase):
 
         # Check the log output
         self.lwarn = "no input data close enough to the first record"
-        self.lout = self.log_capture.getvalue()
-        self.assertRegex(self.lout, self.lwarn)
+        self.eval_logging_message()
         return
 
     def test_late_data_time_alignment(self):
@@ -229,8 +204,8 @@ class TestCycleMatchData(unittest.TestCase):
 
         # Check the log output
         self.lwarn = "no OCB data available within"
-        self.lout = self.log_capture.getvalue()
-        self.assertRegex(self.lout, self.lwarn)
+        self.eval_logging_message()
+
         self.lwarn = "of first measurement"
         self.assertRegex(self.lout, self.lwarn)
         return
@@ -248,8 +223,8 @@ class TestCycleMatchData(unittest.TestCase):
 
         # Check the log output
         self.lwarn = "no OCB data available within"
-        self.lout = self.log_capture.getvalue()
-        self.assertRegex(self.lout, self.lwarn)
+        self.eval_logging_message()
+
         self.lwarn = "of input measurement"
         self.assertRegex(self.lout, self.lwarn)
         return
@@ -260,38 +235,17 @@ class TestCycleMatchDualData(TestCycleMatchData):
 
     def setUp(self):
         """Initialize the test environment."""
-        set_dual = {"ocb_filename": path.join(path.dirname(ocbpy.__file__),
-                                              "tests", "test_data",
-                                              "test_north_circle"),
-                    "ocb_instrument": "image", 'eab_instrument': 'image',
-                    'eab_filename': path.join(path.dirname(ocbpy.__file__),
-                                              "tests", "test_data",
-                                              "test_north_eab")}
-        self.ocb = ocbpy.DualBoundary(**set_dual)
+        # Initalize the default test environment
+        super().setUp()
+
+        # Alter the test environment
+        self.ocb = ocbpy.DualBoundary(
+            ocb_filename=path.join(cc.test_dir, "test_north_ocb"),
+            ocb_instrument="image", eab_instrument='image', hemisphere=1,
+            eab_filename=path.join(cc.test_dir, "test_north_eab"))
         self.ocb.rec_ind = -1
-        self.idat = 0
-        self.test_func = ocbpy.cycle_boundary.match_data_ocb
         self.rec_ind = 0
         self.rec_ind2 = 1
-        self.del_time = 60
-        self.bad_time = self.ocb.ocb.dtime[37] - dt.timedelta(
-            seconds=self.del_time + 1)
-
-        # Initialize logging
-        self.lwarn = u""
-        self.lout = u""
-        self.log_capture = StringIO()
-        ocbpy.logger.addHandler(logging.StreamHandler(self.log_capture))
-        ocbpy.logger.setLevel(logging.WARNING)
-        del set_dual
-
-        return
-
-    def tearDown(self):
-        """Clean up the test environment."""
-        del self.ocb, self.lwarn, self.lout, self.log_capture, self.idat
-        del self.test_func, self.rec_ind, self.rec_ind2, self.del_time
-        del self.bad_time
         return
 
 
@@ -300,17 +254,13 @@ class TestCycleGoodIndices(unittest.TestCase):
 
     def setUp(self):
         """Initialize the test environment."""
-        set_north = {"filename": path.join(path.dirname(ocbpy.__file__),
-                                           "tests", "test_data",
-                                           "test_north_circle"),
-                     "instrument": "image"}
-        self.ocb = ocbpy.OCBoundary(**set_north)
+        self.ocb = ocbpy.OCBoundary(
+            filename=path.join(cc.test_dir, "test_north_ocb"),
+            instrument="image", hemisphere=1)
         self.ocb.rec_ind = -1
         self.test_func = ocbpy.cycle_boundary.retrieve_all_good_indices
         self.rec_ind = 27
         self.rec_ind2 = 31
-
-        del set_north
         return
 
     def tearDown(self):
@@ -352,12 +302,9 @@ class TestGeneralSatelliteFunctions(unittest.TestCase):
 
     def setUp(self):
         """Set up the test environment."""
-        self.test_dir = path.join(path.dirname(ocbpy.__file__), "tests",
-                                  "test_data")
-        self.ocb = ocbpy.OCBoundary(instrument="dmsp-ssj", hemisphere=1,
-                                    filename=path.join(
-                                        self.test_dir,
-                                        "dmsp-ssj_north_out.ocb"))
+        self.ocb = ocbpy.OCBoundary(
+            instrument="dmsp-ssj", hemisphere=1,
+            filename=path.join(cc.test_dir, "dmsp-ssj_north_out.ocb"))
 
         self.mlt = np.arange(0, 24, 0.5)
         self.lat = np.full(shape=self.mlt.shape, fill_value=75.0)
@@ -371,7 +318,7 @@ class TestGeneralSatelliteFunctions(unittest.TestCase):
 
     def tearDown(self):
         """Clean up the test environment."""
-        del self.test_dir, self.ocb, self.mlt, self.lat, self.good
+        del self.ocb, self.mlt, self.lat, self.good
         return
 
     def test_satellite_track_defaults(self):

@@ -74,8 +74,8 @@ using the following commands.
 
    # Replace `user` with a string holding your name and `password` with your
    # email.  Madrigal uses these to demonstrate their utility to funders.
-   tec = pysat.Instrumet(inst_module=py_mad.instruments.gnss_tec, tag='vtec',
-                         user=user, password=password)
+   tec = pysat.Instrument(inst_module=py_mad.instruments.gnss_tec, tag='vtec',
+                          user=user, password=password)
    tec.download(start=eab.dtime[eab.rec_ind])
    print(tec.files.files)
 
@@ -88,96 +88,81 @@ using the following commands.
 prodedures while loading the desired data.  The
 :py:mod:`ocbpy.instrument.pysat_instrument` module contains functions that may
 be applied using the :py:mod:`pysat` `custom interface
-<https://pysat.readthedocs.io/en/latest/tutorial/tutorial_custom.html>`_.
-However, before this can be done the magnetic locations need to be calculated.
-This can be done by writing an appropriate function that takes the
-:py:class:`pysat.Instrument` object as input and updates it within the function.
-
+<https://pysat.readthedocs.io/en/latest/tutorial/tutorial_custom.html>`_.  The
+EAB conversion can handle magnetic, geodetic, or geocentric coordinates for
+scalar or vector data types using the :py:attr:`loc_coord` and
+:py:attr:`vect_coord` keyword arguments, respectively. We do need to calculate
+local time before calculating the EAB coordinates, though.
 
 ::
 
-   import aacgmv2
-   import numpy as np
-
-   def add_mag_coords(inst, lat='gdlat', lon='glon', alt='gdalt'):
-       """Add AACGMV2 magnetic coordinates.
+   def add_slt(inst, lon='glon', slt='slt'):
+       """Add solar local time.
 
        Parameters
        ----------
        inst : pysat.Instrument
            Data object
-       lat : str
-           Geodetic latitude key (default='gdlat')
        lon : str
            Geographic longitude key (default='glon')
-       alt : str
-           Geodetic altitude key (default='gdalt')
+       slt : str
+           Key for new solar local tim data (default='slt')
+
        """
        # Initalize the data arrays
-       mlat = np.full(shape=tuple(tec.data.dims[kk]
-                                  for kk in ['time', lat, lon]),
-                      fill_value=np.nan)
-       mlt = np.full(shape=mlat.shape, fill_value=np.nan)
+       lt = [ocbpy.ocb_time.glon2slt(inst[lon], dtime) for dtime in inst.index]
 
-       # Cycle through all times, calculating magnetic locations
-       for i, dtime in enumerate(inst.index):
-           for j, gdlat in enumerate(inst[lat].values):
-               height = inst[alt][i, j].values
-               if not np.isnan(height).all():
-                   mlat[i, j], mlon, r = aacgmv2.convert_latlon_arr(
-                       gdlat, inst[lon].values, height, dtime)
-                   mlt[i, j] = aacgmv2.convert_mlt(mlon, dtime)
-
-       # Assign the magnetic data to the input Instrument
-       inst.data = inst.data.assign({"mlat": (("time", lat, lon), mlat),
-                                     "mlt": (("time", lat, lon), mlt)})
+       # Assign the SLT data to the input Instrument
+       inst.data = inst.data.assign({slt: (("time", lon), lt)})
        return
 
     
-Assign this function and the ocbpy function in the desired order of operations.
+Assign this function and the :py:mod:`ocbpy` function in the desired order of
+operations. When calculating magnetic coordinates, it is important to specify
+the height, which can be a single value or specified for each observation.
 
 ::
 
-   
-   tec.custom_attach(add_mag_coords)
+   tec.custom_attach(add_slt, kwargs={'lon': 'glon'})
    tec.custom_attach(ocbpy.instruments.pysat_instruments.add_ocb_to_data,
-                     kwargs={'ocb': eab, 'mlat_name': 'mlat',
-                     'mlt_name': 'mlt', 'max_sdiff': 150})
+                     kwargs={'ocb': eab, 'mlat_name': 'gdlat',
+                     'mlt_name': 'slt', 'height_name': 'gdalt',
+                     'loc_coord': 'geodetic', 'max_sdiff': 150})
    tec.load(date=eab.dtime[eab.rec_ind])
    print(tec.variables)
 
-   ['time', 'gdlat', 'glon', 'dtec', 'gdalt', 'tec', 'mlat', 'mlt', 'mlat_ocb',
-    'mlt_ocb', 'r_corr_ocb']
+   ['time', 'gdlat', 'glon', 'dtec', 'gdalt', 'tec', 'gdlat_eab',
+    'slt_eab', 'r_corr_eab']
 
 Now we have the EAB coordinates for each location in the Northern Hemisphere
 where a good EAB was found within 2.5 minutes of the data record.  This time
 difference was chosen because the VTEC data has a 5 minute resolution.
 
-Now, let's plot the average of the VTEC poleward of the EAB. To do this we will
-first need to calculate these averages.
+Now, let's plot the average of the VTEC equatorward of the EAB. To do this we
+will first need to calculate these averages.
 
 ::
 
    del_lat = 2.0
    del_mlt = 2.0
-   ave_lat = np.arange(eab.boundary_lat, 90, del_lat)
+   ave_lat = np.arange(45, eab.boundary_lat, del_lat)
    ave_mlt = np.arange(0, 24, del_mlt)
    ave_tec = np.full(shape=tec['tec'].shape, fill_value=np.nan)
 
    for lat in ave_lat:
        for mlt in ave_mlt:
            # We are not overlapping bins, so don't need to worry about MLT
-	   # rollover from 0-24
+           # rollover from 0-24
            sel_tec = tec['tec'].where(
-               (tec['mlat_ocb'] > lat) & (tec['mlat_ocb'] <= lat + del_lat)
-               & (tec['mlt_ocb'] >= mlt) & (tec['mlt_ocb'] < mlt + del_mlt))
+               (tec['gdlat_eab'] > lat) & (tec['gdlat_eab'] <= lat + del_lat)
+               & (tec['slt_eab'] >= mlt) & (tec['slt_eab'] < mlt + del_mlt))
            inds = np.where(~np.isnan(sel_tec.values))
            if len(inds[0]) > 0:
                ave_tec[inds] = np.nanmean(sel_tec.values)
 
 Now let us plot these averages at the EAB location of each measurement.  This
 will provide us with knowledge of the coverage as well as knowledge of the
-average behaviour.
+average behaviour of the sub-auroral VTEC on this day.
 
 ::
 
@@ -200,11 +185,12 @@ average behaviour.
    ax.plot(lon, lat, "m-", linewidth=2, label="EAB")
 
    # Plot the VTEC data
-   tec_lon = tec['mlt_ocb'].values * np.pi / 12.0
-   tec_lat = 90.0 - tec['mlat_ocb'].values
+   tec_lon = (tec['slt_eab'].values * np.pi / 12.0)
+   tec_lat = (90.0 - tec['gdlat_eab'].values)
    tec_max = np.ceil(np.nanmax(ave_tec))
-   con = ax.scatter(tec_lon, tec_lat, c=ave_tec, marker="s",
-                    cmap=mpl.cm.get_cmap("viridis"), s=5, vmin=0, vmax=tec_max)
+   con = ax.scatter(tec_lon, tec_lat, c=ave_tec.transpose([0, 2, 1]),
+                    marker="s", cmap=mpl.colormaps["viridis"], s=5,
+                    vmin=0, vmax=tec_max)
 
    # Add a colourbar and labels
    tticks = np.linspace(0, tec_max, 6, endpoint=True)

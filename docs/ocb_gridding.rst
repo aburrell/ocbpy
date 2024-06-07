@@ -33,6 +33,7 @@ the :py:mod:`ocbpy.ocb_scaling` module.
 Boundary Classes
 ----------------
 .. automodule:: ocbpy._boundary
+    :noindex:
     :members:
 
 
@@ -50,3 +51,12 @@ OCB Scaling Module
 ------------------
 .. automodule:: ocbpy.ocb_scaling
     :members:
+
+
+.. _ocbgrid-vector:
+
+Vector Functions
+----------------
+.. automodule:: ocbpy.vectors
+    :members:
+

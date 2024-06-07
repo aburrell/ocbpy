@@ -1,3 +1,9 @@
+# DOI: 10.5281/zenodo.1179230
+# Full license can be found in License.md
+#
+# DISTRIBUTION STATEMENT A: Approved for public release. Distribution is
+# unlimited.
+# ----------------------------------------------------------------------------
 This directory contains files with Open Closed field line Boundaries obtained
 from different instruments
 
@@ -32,7 +38,7 @@ DATE, TIME, RADIUS, X, Y, J_MAG
 
 DATE   : 4-digit year, 2-digit month, and 2-digit day of month (YYYYMMDD)
 TIME   : 2-digit hours of day and 2-digit minutes of hour, separated by a colon
-RADIUS : Radius of the R1/R2 boundary circle in degrees
+RADIUS : Radius of the R1/R2 (OCB) or Heppner-Maynard (EAB) boundary in degrees
 X      : Location of the R1/R2 boundary circle centre in degrees along the
          dawn/dusk axis
 Y      : Location of the R1/R2 boundary circle centre in degrees along the
@@ -43,16 +49,18 @@ J_MAG  : Largest positive-to-negative changed in the summed currents (micro amps
 There are certain ranges for J_MAG that shouldn't be trusted.  This limitation
 is explained in Milan et al. (2015), doi:10.1002/2015JA021680.  This range is
 the default in OCBoundary.get_next_good_ocb_ind.  When using these boundaries,
-remember to cite Milan et al. (2015).  If the OCB correction was applied, also
-remember to cite Burrell at al. (2019).
+remember to cite Milan et al. (2015) and acknowledge the AMPERE team and the use
+of AMPERE data when using these fits.  If the OCB correction was applied, also
+remember to cite Burrell at al. (2019).  AMPERE data rules of the road and
+other information can be found at http://ampere.jhuapl.edu/
 
 Files
 -----
-amp_north_radii.txt    : Active Magnetosphere and Planetary Electrodynamics
+amp_north_radii.xxx    : Active Magnetosphere and Planetary Electrodynamics
                          Response Experiment
 		         [Waters, et al. (2001), Geophys. Res. Lett., 28,
 		          2165-2168]
-amp_south_radii.txt    : Active Magnetosphere and Planetary Electrodynamics
+amp_south_radii.xxx    : Active Magnetosphere and Planetary Electrodynamics
                          Response Experiment
 		         [Waters, et al. (2001), Geophys. Res. Lett., 28,
 		          2165-2168]

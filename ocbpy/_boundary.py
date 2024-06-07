@@ -1,6 +1,10 @@
 #!/usr/bin/env python
 # -*- coding: utf-8 -*-
+# DOI: 10.5281/zenodo.1179230
 # Full license can be found in License.md
+#
+# DISTRIBUTION STATEMENT A: Approved for public release. Distribution is
+# unlimited.
 # ----------------------------------------------------------------------------
 """Hold, manipulate, and load the OCB and EAB data.
 
@@ -16,10 +20,8 @@ References
 
 """
 
-import datetime as dt
 import numpy as np
 import types
-import warnings
 
 import aacgmv2
 
@@ -305,7 +307,7 @@ class OCBoundary(object):
             hlines = 0
             ocb_cols = "year soy num_sectors phi_cent r_cent r a r_err fom"
             datetime_fmt = ""
-            self.max_fom = 5.0  # From Chisham et al. (in prep)
+            self.max_fom = 5.0  # From Chisham et al. (2022)
         elif self.instrument == "ampere":
             hlines = 0
             ocb_cols = "date time r x y fom"
@@ -459,18 +461,6 @@ class OCBoundary(object):
         max_merit : float or NoneTye
             Maximum value for the default figure of merit or None to not apply
             a custom maximum (default=None)
-        min_sectors : int
-            Minimum number of MLT sectors required for good OCB. Deprecated,
-            will be removed in version 0.3.1+ (default=7)
-        rcent_dev : float
-            Maximum number of degrees between the new centre and the AACGM pole
-             Deprecated, will be removed in version 0.3.1+ (default=8.0)
-        max_r : float
-            Maximum radius for open-closed field line boundary in degrees.
-            Deprecated, will be removed in version 0.3.1+ (default=23.0)
-        min_r : float
-            Minimum radius for open-closed field line boundary in degrees
-            Deprecated, will be removed in version 0.3.1+ (default=10.0)
         kwargs : dict
             Dict with optional selection criteria.  The key should correspond
             to a data attribute and the value must be a tuple with the first
@@ -483,39 +473,20 @@ class OCBoundary(object):
         greater than self.records if there aren't any more good records
         available after the starting point
 
-        Deprecated IMAGE FUV checks that:
-        - more than 6 MLT boundary values have contributed to OCB circle
-        - the OCB 'pole' is with 8 degrees of the AACGM pole
-        - the OCB 'radius' is greater than 10 and less than 23 degrees
         AMPERE/DMSP-SSJ and new IMAGE FUV checks that:
         - the Figure of Merit is greater than or equal to the specified minimum
-          (`min_fom`) or less than or equal to the specified maximum (`max_fom`)
+        (`min_fom`) or less than or equal to the specified maximum (`max_fom`)
 
         """
 
-        # Add check for deprecated and custom kwargs
-        dep_comp = {'min_sectors': ['num_sectors', ('mineq', 7)],
-                    'rcent_dev': ['r_cent', ('maxeq', 8.0)],
-                    'max_r': ['r', ('maxeq', 23.0)],
-                    'min_r': ['r', ('mineq', 10.0)]}
+        # Check the custom kwargs
         cust_keys = list(kwargs.keys())
 
         for ckey in cust_keys:
-            if ckey in dep_comp.keys():
-                warnings.warn("".join(["Deprecated kwarg will be removed in ",
-                                       "version 0.3.1+. To replecate behaviour",
-                                       ", use {", dep_comp[ckey][0], ": ",
-                                       repr(dep_comp[ckey][1]), "}"]),
-                              DeprecationWarning, stacklevel=2)
+            if not hasattr(self, ckey):
+                logger.warning(
+                    "Removing unknown selection attribute {:}".format(ckey))
                 del kwargs[ckey]
-
-                if hasattr(self, dep_comp[ckey][0]):
-                    kwargs[dep_comp[ckey][0]] = dep_comp[ckey][1]
-            else:
-                if not hasattr(self, ckey):
-                    logger.warning(
-                        "Removing unknown selection attribute {:}".format(ckey))
-                    del kwargs[ckey]
 
         # Adjust the FoM determination for custom inputs
         if min_merit is None:
@@ -894,7 +865,7 @@ class OCBoundary(object):
             self.rfunc = np.full(shape=self.records,
                                  fill_value=ocbcor.elliptical)
         else:
-            raise ValueError("unknown instrument")
+            raise ValueError("unknown instrument: {:}".format(self.instrument))
 
         return
 
@@ -988,7 +959,7 @@ class EABoundary(OCBoundary):
 
         """
 
-        if input_instrument in ["", "default", "image", "dmsp-ssj"]:
+        if input_instrument in ["", "default", "image", "dmsp-ssj", "ampere"]:
             self.rfunc = ocbcor.circular
         elif not hasattr(input_instrument, "lower"):
             # Allow an empty class object to be initialised
@@ -1014,11 +985,11 @@ class DualBoundary(object):
         by time.  If NoneType, no file is loaded.  If 'default',
         `ocbpy.boundaries.files.get_default_file` is called. (default='default')
     eab_instrument : str
-        Instrument providing the EABoundaries.  Requires 'image' or 'dmsp-ssj'
-        if a file is provided.  If using filename='default', also accepts
-        'si12', 'si13', 'wic', and ''.  (default='')
+        Instrument providing the EABoundaries.  Requires 'image', 'ampere', or
+        'dmsp-ssj' if a file is provided.  If using filename='default', also
+        accepts 'si12', 'si13', 'wic', and ''.  (default='')
     ocb_instrument : str
-        Instrument providing the OCBoundaries.  Requires 'image', 'ampere, or
+        Instrument providing the OCBoundaries.  Requires 'image', 'ampere', or
         'dmsp-ssj' if a file is provided.  If using filename='default', also
         accepts 'si12', 'si13', 'wic', and ''.  (default='')
     hemisphere : int

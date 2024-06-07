@@ -1,16 +1,19 @@
 #!/usr/bin/env python
 # -*- coding: utf-8 -*-
-# Copyright (C) 2017, AGB & GC
+# DOI: 10.5281/zenodo.1179230
 # Full license can be found in License.md
+#
+# DISTRIBUTION STATEMENT A: Approved for public release. Distribution is
+# unlimited.
 # ----------------------------------------------------------------------------
-""" Functions that specify the boundary location as a function of MLT
+"""Functions that specify the boundary location as a function of MLT.
 
 References
 ----------
 .. [4] Burrell, A. G. et al.: AMPERE Polar Cap Boundaries, Ann. Geophys., 38,
    481-490, doi:10.5194/angeo-38-481-2020, 2020.
-.. [6] Chisham, G. et al.: Ionospheric Boundaries Derived from Auroral Images,
-    in prep, 2022.
+.. [6] Chisham, G. et al. (2022) Ionospheric Boundaries Derived from Auroral
+   Images. JGR Space Physics, 127, 7, e2022JA030622, doi:10.1029/2022JA030622.
 
 """
 

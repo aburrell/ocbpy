@@ -51,17 +51,13 @@ boundary retrieval method.
   http://doi.org/10.1023/A:1005227915363.
 * **OCB**: Chisham, G. (2017) A new methodology for the development of
   high‐latitude ionospheric climatologies and empirical models,
-  J. Geophys. Res. Space Physics, 122, 932–947,
-  http://doi.org/10.1002/2016JA023235.
+  J. Geophys. Res. Space Physics, 122, 932–947, doi:10.1002/2016JA023235.
 * **OCB**: Chisham, G. et al. (2022) Ionospheric Boundaries Derived from Auroral
-  Images. In Prep.
-* **OCB**: Chisham, G. (2017) Auroral Boundary Derived from IMAGE Satellite
-  Mission Data (May 2000 - Oct 2002), Version 1.1, Polar Data Centre, Natural
-  Environment Research Council, UK.
-  http://doi.org/10.5285/75aa66c1-47b4-4344-ab5d-52ff2913a61e.
-* **OCB**: Chisham, G., et al. (2022) Ionospheric boundaries derived from
-  auroral images. Journal of Geophysical Research: Space Physics, 127,
-  e2022JA030622. https://doi.org/10.1029/2022JA030622.
+  Images. JGR Space Physics, 127, 7, e2022JA030622, doi:10.1029/2022JA030622.
+* **OCB**: Chisham, G. (2022). Ionospheric boundaries derived from IMAGE
+  satellite mission data (May 2000-October 2002), version 2.0. [Dataset]. NERC
+  EDS UK Polar Data Centre.
+  https://doi.org/10.5285/fa592594-93e0-4ee1-8268-b031ce21c3ca
 
 
 .. _cite-ampere:
@@ -70,11 +66,17 @@ AMPERE Boundaries
 -----------------
 
 Please follow the AMPERE data usage requirements provided by
-`APL <https://ampere.jhuapl.edu/info/?page=infoRulesTab>`_ and cite the R1/R2
-FAC boundary retrieval method and the OCB correction method.
+`APL <https://ampere.jhuapl.edu/info/?page=infoRulesTab>`_, acknowledge the
+AMPERE team and the use of AMPERE data, cite the boundary retrieval method, and
+(if using the OCB, not the EAB/HMB) the OCB correction method. The V2 data set
+also includes fits to the R1 and R2 peaks, for those interested.
 
-* **FAC**: Milan, S. E. (2019): AMPERE R1/R2 FAC radii. figshare. Dataset.
-  https://doi.org/10.25392/leicester.data.11294861.v1
+* **FAC**: Milan, S. E., et al. (2015): Principal Component Analysis of
+  Birkeland currents determined by the Active Magnetosphere and Planetary
+  Electrodynamics Response Experiment, J. Geophys. Res. Space Physics, 120,
+  doi:10.1002/2015JA021680
+* **FAC**: Milan, Stephen (2023): AMPERE R1/R2 FAC radii v2. University of
+  Leicester. Dataset. https://doi.org/10.25392/leicester.data.22241338.v1
 * **OCB**: Burrell, A. G., et al. (2020): AMPERE Polar Cap Boundaries,
   Ann. Geophys., 38, 481-490, http://doi.org/10.5194/angeo-38-481-2020
 
@@ -88,6 +90,11 @@ The DMSP SSJ boundaries are retrieved using
 `ssj_auroral_boundary <https://github.com/lkilcommons/ssj_auroral_boundary>`_.
 Please follow the citation guidelines on their page.  The general reference
 for the DMSP SSJ boundary data set is provided below.
+
+* **SSJ Auroral Boundaries**: Kilcommons, L. M., R. J. Redmon, and D. J. Knipp
+  (2017), A new DMSP magnetometer and auroral boundary data set and estimates
+  of field-aligned currents in dynamic auroral boundary coordinates, J. Geophys.
+  Res. Space Physics, 122, 9068–9079, doi:10.1002/2016JA023342.
 
 * **SSJ Auroral Boundaries (2010-2014)**: Kilcommons, L., et al. (2019).
   Defense Meteorology Satellite Program (DMSP) Electron Precipitation (SSJ)

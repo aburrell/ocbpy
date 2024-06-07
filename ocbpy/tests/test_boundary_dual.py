@@ -1,40 +1,27 @@
 #!/usr/bin/env python
 # -*- coding: utf-8 -*-
-# Copyright (C) 2017, AGB & GC
+# DOI: 10.5281/zenodo.1179230
 # Full license can be found in License.md
+#
+# DISTRIBUTION STATEMENT A: Approved for public release. Distribution is
+# unlimited.
 # -----------------------------------------------------------------------------
 """Tests the boundary DualBoundary class."""
 
-import datetime
-from io import StringIO
-import logging
 import numpy
 from os import path
 import sys
 import unittest
 
 import ocbpy
-from . import test_boundary_ocb as test_ocb
+import ocbpy.tests.class_common as cc
+import ocbpy.tests.test_boundary_ocb as test_ocb
 
 win_list = ['windows', 'win32', 'win64', 'cygwin']
 
 
-class TestDualBoundaryLogFailure(unittest.TestCase):
+class TestDualBoundaryLogFailure(cc.TestLogWarnings):
     """Test the logging messages raised by the DualBoundary class."""
-
-    def setUp(self):
-        """Initialize the test class."""
-        self.lwarn = ""
-        self.lout = ""
-        self.log_capture = StringIO()
-        ocbpy.logger.addHandler(logging.StreamHandler(self.log_capture))
-        ocbpy.logger.setLevel(logging.WARNING)
-        return
-
-    def tearDown(self):
-        """Tear down the test case."""
-        del self.lwarn, self.lout, self.log_capture
-        return
 
     def test_bad_instrument_name(self):
         """Test OCB initialization with bad instrument name."""
@@ -54,15 +41,13 @@ class TestDualBoundaryLogFailure(unittest.TestCase):
                     self.assertIsNone(subclass.filename)
                     self.assertIsNone(subclass.instrument)
 
-                    self.lout = self.log_capture.getvalue()
-
                     # Test logging error message for each bad initialization
-                    self.assertRegex(self.lout, self.lwarn)
+                    self.eval_logging_message()
         return
 
     def test_bad_filename(self):
         """Test initialization with a bad default file/instrument pairing."""
-        self.lwarn = "name provided is not a file\ncannot open OCB file [hi]"
+        self.lwarn = "name provided is not a file\ncannot open OCB file "
 
         # Try to load data with a non-existant file name
         for btype in ["eab", "ocb"]:
@@ -76,14 +61,8 @@ class TestDualBoundaryLogFailure(unittest.TestCase):
                 # Test the values for the sub-class
                 self.assertIsNone(subclass.filename)
 
-                self.lout = self.log_capture.getvalue()
-
                 # Test logging error message for each bad initialization
-                self.assertTrue(
-                    self.lout.find(self.lwarn) >= 0,
-                    msg="logging output {:} != expected output {:}".format(
-                        repr(self.lout), repr(self.lwarn)))
-
+                self.eval_logging_message()
         return
 
 
@@ -92,9 +71,10 @@ class TestDualBoundaryInstruments(test_ocb.TestOCBoundaryInstruments):
 
     def setUp(self):
         """Initialize the instrument information."""
+        super().setUp()
+
+        # Update the test attributes
         self.test_class = ocbpy.DualBoundary
-        self.test_dir = path.join(path.dirname(ocbpy.__file__), "tests",
-                                  "test_data")
         self.inst_attrs = {"image": ["year", "soy", "num_sectors", "a",
                                      "r_err", "fom"],
                            "ampere": ["date", "time", "x", "y", "fom"],
@@ -108,30 +88,23 @@ class TestDualBoundaryInstruments(test_ocb.TestOCBoundaryInstruments):
                           "dmsp-ssj": ["year", "soy", "num_sectors", "a",
                                        "r_err"]}
         self.inst_init = [{"eab_instrument": "dmsp-ssj", "hemisphere": 1,
-                           "eab_filename": path.join(self.test_dir,
+                           "eab_filename": path.join(cc.test_dir,
                                                      "dmsp-ssj_north_out.eab"),
                            "ocb_instrument": "image",
-                           "ocb_filename": path.join(self.test_dir,
-                                                     "test_north_circle")},
+                           "ocb_filename": path.join(cc.test_dir,
+                                                     "test_north_ocb")},
                           {"eab_instrument": "dmsp-ssj", "hemisphere": 1,
-                           "eab_filename": path.join(self.test_dir,
+                           "eab_filename": path.join(cc.test_dir,
                                                      "dmsp-ssj_north_out.eab"),
                            "ocb_instrument": "dmsp-ssj",
-                           "ocb_filename": path.join(self.test_dir,
+                           "ocb_filename": path.join(cc.test_dir,
                                                      "dmsp-ssj_north_out.ocb")},
                           {"eab_instrument": "dmsp-ssj", "hemisphere": -1,
-                           "eab_filename": path.join(self.test_dir,
+                           "eab_filename": path.join(cc.test_dir,
                                                      "dmsp-ssj_south_out.eab"),
                            "ocb_instrument": "ampere",
-                           "ocb_filename": path.join(self.test_dir,
-                                                     "test_south_circle")}]
-        self.ocb = None
-        return
-
-    def tearDown(self):
-        """Clean up the test environment."""
-        del self.test_dir, self.inst_attrs, self.inst_init, self.ocb
-        del self.test_class
+                           "ocb_filename": path.join(cc.test_dir,
+                                                     "test_south_ocb")}]
         return
 
 
@@ -140,25 +113,21 @@ class TestDualBoundaryMethodsGeneral(test_ocb.TestOCBoundaryMethodsGeneral):
 
     def setUp(self):
         """Initialize the test environment."""
+        super().setUp()
+
+        # Update the class attributes
         self.test_class = ocbpy.DualBoundary
-        test_dir = path.join(path.dirname(ocbpy.__file__), "tests", "test_data")
-        self.set_empty = {"ocb_filename": path.join(test_dir, "test_empty"),
-                          "eab_filename": path.join(test_dir, "test_empty"),
+        self.set_empty = {"ocb_filename": path.join(cc.test_dir, "test_empty"),
+                          "eab_filename": path.join(cc.test_dir, "test_empty"),
                           "ocb_instrument": "image", "eab_instrument": "image",
                           "hemisphere": 1}
         self.set_default = {"ocb_filename":
-                            path.join(test_dir, "dmsp-ssj_north_out.ocb"),
+                            path.join(cc.test_dir, "dmsp-ssj_north_out.ocb"),
                             "eab_filename":
-                            path.join(test_dir, "dmsp-ssj_north_out.eab"),
+                            path.join(cc.test_dir, "dmsp-ssj_north_out.eab"),
                             "ocb_instrument": "dmsp-ssj",
                             "eab_instrument": "dmsp-ssj", "hemisphere": 1,
                             "max_delta": 600}
-        self.ocb = None
-        return
-
-    def tearDown(self):
-        """Clean up the test environment."""
-        del self.set_empty, self.set_default, self.ocb
         return
 
     def test_repr_string(self):
@@ -356,13 +325,15 @@ class TestDualBoundaryMethodsGeneral(test_ocb.TestOCBoundaryMethodsGeneral):
         return
 
 
-class TestDualBoundaryMethodsLocation(unittest.TestCase):
+class TestDualBoundaryMethodsLocation(cc.TestLogWarnings):
     """Test the DualBoundary location methods."""
 
     def setUp(self):
         """Initialize the test environment."""
-        self.test_dir = path.join(path.dirname(ocbpy.__file__),
-                                  "tests", "test_data")
+        # Set the logging attributes
+        super().setUp()
+
+        # Set the local attributes
         self.set_default = {"ocb_instrument": "dmsp-ssj",
                             "eab_instrument": "dmsp-ssj",
                             "max_delta": 60}
@@ -408,21 +379,14 @@ class TestDualBoundaryMethodsLocation(unittest.TestCase):
                            -1: [15.785, 15.785, 5.10033853, 5.12896403,
                                 66.00490331, 68.25074784, 68.91414059]}
         self.out = []
-
-        # Set the logging parameters
-        self.lwarn = ""
-        self.lout = ""
-        self.log_capture = StringIO()
-        ocbpy.logger.addHandler(logging.StreamHandler(self.log_capture))
-        ocbpy.logger.setLevel(logging.WARNING)
-
         return
 
     def tearDown(self):
         """Clean up the test environment."""
-        del self.test_dir, self.set_default, self.dual, self.mlt, self.lat
-        del self.out, self.bounds, self.lwarn, self.lout, self.log_capture
-        del self.bad_mag, self.bad_norm
+        super().tearDown()
+
+        del self.set_default, self.dual, self.mlt, self.lat
+        del self.out, self.bounds, self.bad_mag, self.bad_norm
         return
 
     def update_default_kwargs(self, hemisphere=1):
@@ -451,7 +415,7 @@ class TestDualBoundaryMethodsLocation(unittest.TestCase):
                 fkey = '_'.join([bname, 'filename'])
                 if self.set_default[ikey] == 'dmsp-ssj':
                     self.set_default[fkey] = path.join(
-                        self.test_dir, 'dmsp-ssj_{:s}_out.{:s}'.format(
+                        cc.test_dir, 'dmsp-ssj_{:s}_out.{:s}'.format(
                             hemi_name[hemisphere], bname))
 
         return
@@ -651,12 +615,11 @@ class TestDualBoundaryMethodsLocation(unittest.TestCase):
 
         # Get the output
         self.out = self.dual.normal_coord(*self.bad_mag)
-        self.lout = self.log_capture.getvalue()
 
         # Evaluate the output
+        self.eval_logging_message()
         self.assertTrue(numpy.isnan(self.out[0]))
         self.assertAlmostEqual(self.out[1], self.bad_norm[1])
-        self.assertRegex(self.lout, self.lwarn)
 
         return
 
@@ -673,18 +636,16 @@ class TestDualBoundaryMethodsLocation(unittest.TestCase):
         # Get the output
         self.out = self.dual.revert_coord(*self.bad_norm, is_ocb=False,
                                           aacgm_mlt=self.bad_mag[1])
-        self.lout = self.log_capture.getvalue()
 
         # Evaluate the output
+        self.eval_logging_message()
         self.assertTrue(numpy.isnan(self.out[0]))
         self.assertAlmostEqual(self.out[1], self.bad_mag[1])
-        self.assertRegex(self.lout, self.lwarn)
 
         return
 
     def test_coord_method_float_nan(self):
         """Test the coord method calculations with NaN float input."""
-
         ind = 0
         self.rcorr = numpy.nan
 
@@ -1111,15 +1072,13 @@ class TestDualBoundaryFailure(unittest.TestCase):
 
     def setUp(self):
         """Set up the test environment."""
-        test_dir = path.join(path.dirname(ocbpy.__file__),
-                             "tests", "test_data")
         self.set_default = {"ocb_instrument": "dmsp-ssj",
                             "eab_instrument": "dmsp-ssj",
                             "hemisphere": 1,
                             "ocb_filename": path.join(
-                                test_dir, 'dmsp-ssj_north_out.ocb'),
+                                cc.test_dir, 'dmsp-ssj_north_out.ocb'),
                             "eab_filename": path.join(
-                                test_dir, 'dmsp-ssj_north_out.eab')}
+                                cc.test_dir, 'dmsp-ssj_north_out.eab')}
         self.dual = None
 
     def tearDown(self):
