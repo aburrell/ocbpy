@@ -3,9 +3,9 @@ Changelog
 
 Summary of all changes made since the first stable release
 
-0.4.0 (XX-XX-2024)
+0.4.0 (06-07-2024)
 ------------------
-* DEP: Deprecated functions that depend on ssj_auroral_boundary_package
+* DEP: Deprecated functions that depend on ssj_auroral_boundary package
 * DEP: Removed classes and kwargs deprecated in v0.3.0
 * MAINT: Cycled supported Python versions
 * MAINT: Added a pyproject.toml file and removed setup.py

@@ -5,7 +5,7 @@
 [![Test Status](https://github.com/aburrell/ocbpy/actions/workflows/main.yml/badge.svg)](https://github.com/aburrell/ocbpy/actions/workflows/main.yml)
 [![Coverage Status](https://coveralls.io/repos/github/aburrell/ocbpy/badge.svg)](https://coveralls.io/github/aburrell/ocbpy)
 
-<h1> <img width="128" height="128" src="/docs/figures/ocbpy_logo.gif" alt="Planet with auroral oval and two pythons representing closed and open magnetic field lines" title="OCBpy Logo" style="float:left;">
+<h1> <img width="128" height="128" src="https://raw.githubusercontent.com/aburrell/ocbpy/main/docs/figures/ocbpy_logo.gif" alt="Planet with auroral oval and two pythons representing closed and open magnetic field lines" title="OCBpy Logo" style="float:left;">
 Overview </h1>
 
 OCBpy is a Python module that converts between AACGM coordinates and a magnetic
