@@ -29,7 +29,7 @@ jobs:
       run: pip install .[test]
 
     - name: Install extra dependencies
-      if: ${{ matrix.install-extras != "none" }}
+      if: ne(${{ matrix.install-extras }}, "base")
       run: pip install .[${{ matrix.install-extras }}]
 
     - name: Test PEP8 compliance
