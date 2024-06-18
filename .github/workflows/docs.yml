@@ -28,10 +28,11 @@ jobs:
     - name: Set CDF Lib environment variable
       run: echo "CDF_LIB=$HOME/lib" >> $GITHUB_ENV
 
-    - name: Install dependencies
+    - name: Install doc and optional dependencies
       run: |
         pip install .[doc]
-        bash requirements.extra 2
+        pip install .[dmsp_ssj]
+	pip install .[pysat_instruments]
 
     - name: Check documentation build
       run: sphinx-build -E -b html docs dist/docs
