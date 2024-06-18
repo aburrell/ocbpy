@@ -32,7 +32,7 @@ jobs:
       run: |
         pip install .[doc]
         pip install .[dmsp_ssj]
-	pip install .[pysat_instruments]
+        pip install .[pysat_instruments]
 
     - name: Check documentation build
       run: sphinx-build -E -b html docs dist/docs
