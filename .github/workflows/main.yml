@@ -14,9 +14,9 @@ jobs:
       matrix:
         os: ["ubuntu-latest", "macos-latest", "windows-latest"]
         python-version: ["3.9", "3.10", "3.11", "3.12"]
-        install-extras: [0, 1]  # TODO(#129): update to replace extra flag
+        install-extras: ["base", "pysat_instruments", "dmsp_ssj"]
 
-    name: Python ${{ matrix.python-version }} on ${{ matrix.os }} with extras ${{ matrix.install-extras }}
+    name: Python ${{ matrix.python-version }} on ${{ matrix.os }} with ${{ matrix.install-extras }}
     runs-on: ${{ matrix.os }}
     steps:
     - uses: actions/checkout@v4
@@ -25,23 +25,12 @@ jobs:
       with:
         python-version: ${{ matrix.python-version }}
 
-    - name: Set CDF Lib environment variable
-      if: ${{ matrix.install-extras == 2 }}
-      run: echo "CDF_LIB=$HOME/lib" >> $GITHUB_ENV
+    - name: Install standard and test dependencies
+      run: pip install .[test]
 
-    - name: Install standard and test dependencies, then ocbpy for SSJ
-      if: ${{ matrix.install-extras == 2 }}
-      env:
-        CDF_LIB: $HOME/lib
-      run: |
-        pip install .[test]
-        bash requirements.extra ${{ matrix.install-extras }}
-
-    - name: Install standard and test dependencies, then ocbpy without SSJ
-      if: ${{ matrix.install-extras != 2 }}
-      run: |
-        pip install .[test]
-        bash requirements.extra ${{ matrix.install-extras }}
+    - name: Install extra dependencies
+      if: ${{ matrix.install-extras != "none" }}
+      run: pip install .[${{ matrix.install-extras }}]
 
     - name: Test PEP8 compliance
       run: flake8 . --count --show-source --statistics
