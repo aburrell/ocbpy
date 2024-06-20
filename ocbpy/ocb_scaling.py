@@ -18,7 +18,6 @@ References
 
 import aacgmv2
 import numpy as np
-import warnings
 
 import ocbpy
 from ocbpy import ocb_time
@@ -69,9 +68,6 @@ class VectorData(object):
         Function for scaling AACGM magnitude with arguements: [measurement
         value, mesurement AACGM latitude (degrees), mesurement OCB latitude
         (degrees)] (default=None)
-    **kwargs : dict
-        Accepts deprecated parameters: `aacgm_lat`, `aacgm_mlt`, `aacgm_n`,
-        `aacgm_e`, `aacgm_z`, and `aacgm_mag`.
 
     Attributes
     ----------
@@ -96,9 +92,6 @@ class VectorData(object):
     pole_angle : float or array-like
         Angle at vector location appended by AACGM and OCB poles in degrees
         (default=np.nan)
-    aacgm_naz : float or array-like
-        AACGM north azimuth of data vector in degrees; deprecated
-        (default=np.nan)
     ocb_aacgm_lat : float or array-like
         AACGM latitude of OCB pole in degrees (default=np.nan)
     ocb_aacgm_mlt : float or array-like
@@ -108,21 +101,13 @@ class VectorData(object):
     -----
     May only handle one data type, so scale_func cannot be an array
 
-    Warnings
-    --------
-    DeprecationWarning
-        Several kwargs/attributes and method have been changed to reflect new
-        allowed input types (data in geodetic or geographic coordinates).
-        Support for the old parameters and methods will be removed in
-        version 0.4.1+.
-
     """
 
     def __init__(self, dat_ind, ocb_ind, lat, lt, height=350.0,
                  loc_coord='magnetic', ocb_lat=np.nan, ocb_mlt=np.nan,
                  r_corr=np.nan, vect_n=0.0, vect_e=0.0, vect_z=0.0,
                  vect_mag=np.nan, vect_coord='magnetic', dat_name=None,
-                 dat_units=None, scale_func=None, **kwargs):
+                 dat_units=None, scale_func=None):
 
         # Assign the vector data name and units
         self.dat_name = dat_name
@@ -141,42 +126,7 @@ class VectorData(object):
         self.height = height
         self.loc_coord = loc_coord.lower()
         self.vect_coord = vect_coord.lower()
-
-        # Check for deprecated values
-        set_mag = True
-        if len(kwargs.keys()) > 0:
-            used_dep = list()
-            dep_pairs = {'aacgm_n': 'vect_n', 'aacgm_e': 'vect_e',
-                         'aacgm_lat': 'lat', 'aacgm_mlt': 'lt',
-                         'aacgm_z': 'vect_z', 'aacgm_mag': 'vect_mag'}
-            for dep_key in dep_pairs.keys():
-                if dep_key in kwargs.keys():
-                    # Save the deprecated kwarg to raise a single warning later
-                    used_dep.append(dep_key)
-
-                    # Update the new attribute
-                    setattr(self, dep_pairs[dep_key], kwargs[dep_key])
-
-                    if dep_key == 'aacgm_mag':
-                        set_mag = False
-
-            # Raise a warning
-            if len(used_dep) < len(kwargs.keys()):
-                ocbpy.logger.warning('unknown kwargs, ignored: {:}'.format(
-                    [key for key in kwargs.keys() if key not in used_dep]))
-            else:
-                new_kwargs = [dep_pairs[dep_key] for dep_key in used_dep]
-                warnings.warn("".join(['kwargs have been replaced with new ',
-                                       'names that reflect their new scope. ',
-                                       'Old kwargs will be removed in version ',
-                                       '0.4.1+. Old kwargs used: ',
-                                       repr(used_dep), '; replace with: ',
-                                       repr(new_kwargs)]),
-                              DeprecationWarning, stacklevel=2)
-
-        if set_mag:
-            # Set the magnitude if the deprecated kwarg was not supplied
-            self.vect_mag = vect_mag
+        self.vect_mag = vect_mag
 
         # Test the coordinate systems for valid options
         self._test_coords()
@@ -339,52 +289,9 @@ class VectorData(object):
         if type_str.find('int') < 0 and type_str.find('float') < 0:
             out_val = value
 
-        # TODO(#133): remove after old attributes are deprecated
-        dep_pairs = {'aacgm_n': 'vect_n', 'aacgm_e': 'vect_e',
-                     'aacgm_lat': 'lat', 'aacgm_mlt': 'lt',
-                     'aacgm_z': 'vect_z', 'aacgm_mag': 'vect_mag'}
-        if name in dep_pairs.keys():
-            warnings.warn("".join([name, ' has been replaced with ',
-                                   dep_pairs[name], '. Old attribute will be ',
-                                   'removed in version 0.4.1+.']),
-                          DeprecationWarning, stacklevel=2)
-            name = dep_pairs[name]
-
         # Use Object to avoid recursion
         super(VectorData, self).__setattr__(name, out_val)
         return
-
-    # TODO(#133): remove after old attributes are deprecated
-    def __getattribute__(self, name, **kwargs):
-        """Get attributes, allowing access to deprecated names.
-
-        Parameters
-        ----------
-        name : str
-            Attribute name to be accessed from VectorData
-
-        Returns
-        -------
-        value : any
-            Value assigned to the attribute
-
-        """
-        # Define the deprecated attributes that are not properties
-        dep_pairs = {'aacgm_n': 'vect_n', 'aacgm_e': 'vect_e',
-                     'aacgm_z': 'vect_z'}
-        if name in dep_pairs.keys():
-            warnings.warn("".join([name, ' has been replaced with ',
-                                   dep_pairs[name], '. Old attribute will be ',
-                                   'removed in version 0.4.1+.']),
-                          DeprecationWarning, stacklevel=2)
-            name = dep_pairs[name]
-        elif name == "aacgm_naz":
-            warnings.warn('`aacgm_naz` will be removed in version 0.4.1+.',
-                          DeprecationWarning, stacklevel=2)
-
-        # Use Object to avoid recursion
-        value = super(VectorData, self).__getattribute__(name)
-        return value
 
     def _ocb_attr_setter(self, ocb_name, ocb_val):
         """Set OCB attributes.
@@ -574,15 +481,6 @@ class VectorData(object):
         return
 
     @property
-    def aacgm_mag(self):
-        """Deprecated magnitude of the vector(s)."""
-        # TODO(#133): remove after old attributes are deprecated
-        warnings.warn("".join(['`aacgm_mag` has been replaced with `vect_mag`,',
-                               ' and will be removed in version 0.4.1+.']),
-                      DeprecationWarning, stacklevel=2)
-        return self.vect_mag
-
-    @property
     def dat_ind(self):
         """Data index(es)."""
         return self._dat_ind
@@ -690,15 +588,6 @@ class VectorData(object):
         return
 
     @property
-    def aacgm_lat(self):
-        """Deprecated magnitude of the vector(s)."""
-        # TODO(#133): remove after old attributes are deprecated
-        warnings.warn("".join(['`aacgm_lat` has been replaced with `lat`, and ',
-                               'will be removed in version 0.4.1+.']),
-                      DeprecationWarning, stacklevel=2)
-        return self.lat
-
-    @property
     def lt(self):
         """Vector local time in hours."""
         return self._lt
@@ -708,15 +597,6 @@ class VectorData(object):
         # Set the vector LT value and ensure the shape is correct
         self._dat_attr_setter('_lt', lt)
         return
-
-    @property
-    def aacgm_mlt(self):
-        """Deprecated magnitude of the vector(s)."""
-        # TODO(#133): remove after old attributes are deprecated
-        warnings.warn("".join(['`aacgm_mlt` has been replaced with `lt`, and ',
-                               'will be removed in version 0.4.1+.']),
-                      DeprecationWarning, stacklevel=2)
-        return self.lt
 
     @property
     def height(self):
@@ -731,8 +611,6 @@ class VectorData(object):
 
     def clear_data(self):
         """Clear or initialize the output data attributes."""
-        warnings.simplefilter("ignore")
-
         # Assign the OCB vector default values and location
         self.ocb_n = np.full(shape=self.vshape, fill_value=np.nan)
         self.ocb_e = np.full(shape=self.vshape, fill_value=np.nan)
@@ -743,12 +621,9 @@ class VectorData(object):
         self.ocb_quad = np.zeros(shape=self.vshape)
         self.vec_quad = np.zeros(shape=self.vshape)
         self.pole_angle = np.full(shape=self.vshape, fill_value=np.nan)
-        # TODO(#133): remove `aacgm_naz`
-        self.aacgm_naz = np.full(shape=self.vshape, fill_value=np.nan)
         self.ocb_aacgm_lat = np.full(shape=self.vshape, fill_value=np.nan)
         self.ocb_aacgm_mlt = np.full(shape=self.vshape, fill_value=np.nan)
 
-        warnings.resetwarnings()
         return
 
     def set_ocb(self, ocb, scale_func=None, trace_method='ALLOWTRACE'):
@@ -902,12 +777,8 @@ class VectorData(object):
         -----
         Requires `lat`, `lt`, `ocb_aacgm_mlt`, `ocb_aacgm_lat`, and
         `pole_angle`. Updates `ocb_n`, `ocb_e`, `ocb_z`, and `ocb_mag`.
-        Temporarily updates `aacgm_naz`, which has been deprecated and will
-        be removed in version 0.4.1+.
 
         """
-        warnings.simplefilter("ignore")
-
         # Test input
         if np.all(np.isnan(self.lat)) or np.all(np.isnan(self.lt)):
             raise ValueError("Vector locations required")
@@ -923,17 +794,6 @@ class VectorData(object):
             self.lt, self.lat, self.vect_n, self.vect_e, self.vect_z,
             self.vec_quad, self.ocb_aacgm_mlt, self.ocb_aacgm_lat,
             self.pole_angle, self.ocb_quad)
-
-        # TODO(#133): remove `aacgm_naz`
-        vmag = np.sqrt(self.vect_n**2 + self.vect_e**2)
-        if len(vmag.shape) == 0:
-            self.aacgm_naz = np.degrees(np.arccos(self.vect_n / vmag))
-        else:
-            zero_mask = ((self.vect_n == 0.0) & (self.vect_e == 0.0))
-            ns_mask = ((self.pole_angle == 0.0) | (self.pole_angle == 180.0))
-            norm_mask = ~(zero_mask + ns_mask)
-            self.aacgm_naz[norm_mask] = np.degrees(np.arccos(
-                self.vect_n[norm_mask] / vmag[norm_mask]))
 
         # Scale the outputs, if desired
         if self.scale_func is not None:
@@ -958,102 +818,7 @@ class VectorData(object):
         # Calculate the scaled OCB vector magnitude
         self.ocb_mag = np.sqrt(self.ocb_n**2 + self.ocb_e**2 + self.ocb_z**2)
 
-        warnings.resetwarnings()
         return
-
-    def calc_ocb_polar_angle(self):
-        """Calculate the OCB north azimuth angle.
-
-        Returns
-        -------
-        ocb_naz : float or array-like
-            Angle between measurement vector and OCB pole in degrees
-
-        Raises
-        ------
-        ValueError
-            If the required input is undefined
-
-        Notes
-        -----
-        Requires `ocb_quad`, `vec_quad`, `aacgm_naz`, and `pole_angle`
-
-        """
-        # TODO(#133): deprecation warning, method is no longer needed here
-        warnings.warn("".join(["`calc_ocb_polar_angle` method deprecated, and",
-                               " will be removed in version 0.4.1+. Instead, ",
-                               "use `ocbpy.vectors.calc_dest_polar_angle`."]),
-                      DeprecationWarning, stacklevel=2)
-
-        # Test input
-        warnings.simplefilter("ignore")
-        if np.all(np.isnan(self.aacgm_naz)):
-            raise ValueError("AACGM North polar angle undefined")
-
-        if np.all(np.isnan(self.pole_angle)):
-            raise ValueError("Vector angle undefined")
-
-        # Calcuate the North azimuth angle for the OCB pole
-        ocb_naz = vectors.calc_dest_polar_angle(
-            self.ocb_quad, self.vec_quad, self.aacgm_naz, self.pole_angle)
-
-        warnings.resetwarnings()
-        return ocb_naz
-
-    def calc_ocb_vec_sign(self, north=False, east=False, quads=None):
-        """Calculate the sign of the North and East components.
-
-        Parameters
-        ----------
-        north : bool
-            Get the sign of the north component(s) (default=False)
-        east : bool
-            Get the sign of the east component(s) (default=False)
-        quads : dict or NoneType
-            Dictionary of boolean values or arrays of boolean values for OCB
-            and Vector quadrants. (default=None)
-
-        Returns
-        -------
-        vsigns : dict
-            Dictionary with keys 'north' and 'east' containing the desired
-            signs
-
-        Raises
-        ------
-        ValueError
-            If the required input is undefined
-
-        Notes
-        -----
-        Requires `ocb_quad`, `vec_quad`, `aacgm_naz`, and `pole_angle`.
-        Method is deprecated and will be removed in version 0.4.1+.
-
-        """
-        # TODO(#133): deprecation warning, method is no longer needed here
-        warnings.warn("".join(["`calc_ocb_vec_sign` method deprecated, and",
-                               " will be removed in version 0.4.1+. Instead, ",
-                               "use `ocbpy.vectors.calc_dest_vec_sign`."]),
-                      DeprecationWarning, stacklevel=2)
-
-        # Test input
-        warnings.simplefilter("ignore")
-        if not np.any([north, east]):
-            raise ValueError("must set at least one direction")
-
-        if np.all(np.isnan(self.aacgm_naz)):
-            raise ValueError("AACGM polar angle undefined")
-
-        if np.all(np.isnan(self.pole_angle)):
-            raise ValueError("Vector angle undefined")
-
-        # Calcualte the sign of the North and East vector components
-        vsigns = vectors.calc_dest_vec_sign(
-            self.ocb_quad, self.vec_quad, self.aacgm_naz, self.pole_angle,
-            north=north, east=east, quads=quads)
-
-        warnings.resetwarnings()
-        return vsigns
 
     def calc_vec_pole_angle(self):
         """Calc the angle between the AACGM pole, data, and the OCB pole.
