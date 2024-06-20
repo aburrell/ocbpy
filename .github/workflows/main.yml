@@ -29,8 +29,14 @@ jobs:
       run: pip install .[test]
 
     - name: Install extra dependencies
-      if: ne(${{ matrix.install-extras }}, "base")
+      if: ${{ !startsWith(matrix.install-extras, 'base') }}
       run: pip install .[${{ matrix.install-extras }}]
+
+    - name: Set up pysat
+      if: startsWith(matrix.install-extras, 'pysat')
+      run: |
+        mkdir pysatData
+        python -c "import pysat; pysat.params['data_dirs'] = 'pysatData'"
 
     - name: Test PEP8 compliance
       run: flake8 . --count --show-source --statistics
