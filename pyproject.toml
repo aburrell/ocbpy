@@ -55,7 +55,7 @@ classifiers = [
 
 [project.optional-dependencies]
 pysat_instruments = [ "pysat>=3.0.1" ]
-dmsp_ssj = [ "zenodo_get" ]
+dmsp_ssj = [ "zenodo-get" ]
 doc = [
     "numpydoc",
     "pyproject_parser",
