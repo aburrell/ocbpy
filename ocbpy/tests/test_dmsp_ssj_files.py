@@ -496,6 +496,6 @@ class TestSSJFailure(unittest.TestCase):
         """ Test ssj_auroral_boundary import failure"""
 
         with self.assertRaisesRegex(ImportError,
-                                    'unable to load the DMSP SSJ module'):
+                                    'unable to load `zenodo_get` module'):
             from ocbpy.boundaries import dmsp_ssj_files  # NOQA F401
         return
