@@ -55,10 +55,7 @@ classifiers = [
 
 [project.optional-dependencies]
 pysat_instruments = [ "pysat>=3.0.1" ]
-dmsp_ssj = [
-    "ssj_auroral_boundaries",
-    "zenodo_get",
-]
+dmsp_ssj = [ "zenodo-get" ]
 doc = [
     "numpydoc",
     "pyproject_parser",
