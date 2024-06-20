@@ -444,18 +444,16 @@ class TestSSJFetchFormat(unittest.TestCase):
             fname = sum([comp_row for comp_row in nsat.values()])
 
             # See how many files of each temporary type were downloaded
-            temp_out = glob(os.path.join(self.test_dir, "dmsp-f*.cdf"))
+            temp_out = glob(os.path.join(self.test_dir, "fom*zip"))
             test_out = glob(os.path.join(self.test_dir, "dmsp-f*.csv"))
-
-            self.assertEqual(len(temp_out), len(test_out),
-                             msg="number of CDF and CSV files unequal")
+            self.assertEqual(len(temp_out), 1, msg="{:d} zip archieves".format(
+                len(temp_out)))
+            self.assertGreater(len(test_out), 0, msg="no CSV files downloaded")
 
             # Test that the files downloaded match the requested satellites
-            self.assertEqual(fname, len(temp_out))
+            self.assertEqual(fname, len(test_out))
             for fout in nsat.keys():
                 fname = "f{:02d}".format(fout)
-                self.assertEqual(sum([1 if fname in comp_row else 0
-                                      for comp_row in temp_out]), 1)
                 self.assertEqual(sum([1 if fname in comp_row else 0
                                       for comp_row in test_out]), 1)
 
