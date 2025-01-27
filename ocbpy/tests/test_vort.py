@@ -57,33 +57,6 @@ class TestVortLogWarnings(cc.TestLogWarnings):
         self.eval_logging_message()
         return
 
-    def test_vort_unexpected_line(self):
-        """Testing vorticity catch for file loading."""
-
-        # Initalize the vorticity run with different test files
-        for val in [(u'unexpected line encountered when number of entries', 1),
-                    (u'unexpected line encountered for a data block', -1)]:
-            with self.subTest(val=val):
-                # Initalize the warning
-                self.lwarn = val[0]
-
-                # Create the bad file
-                with open(self.temp_output, 'w') as fout:
-                    with open(self.test_file, 'r') as fin:
-                        data = fin.readlines()
-                    data.pop(val[1])
-                    fout.write(''.join(data))
-
-                # Load the bad file
-                data = ocb_ivort.load_vorticity_ascii_data(self.temp_output)
-
-                # Test logging error message
-                self.eval_logging_message()
-
-                # Test the data output
-                self.assertIsNone(data)
-        return
-
 
 class TestVort2AsciiMethods(unittest.TestCase):
     """Test the vorticity instrument ASCII functions."""
@@ -118,6 +91,26 @@ class TestVort2AsciiMethods(unittest.TestCase):
         del self.test_file, self.temp_output, self.test_ocb, self.test_eq_file
         del self.test_output_north, self.test_output_south, self.test_eab
         del self.test_empty, self.test_output_dual, self.test_unscaled_north
+        return
+
+    def test_vort_unexpected_line(self):
+        """Testing vorticity catch for file loading."""
+
+        # Initalize the vorticity run with different test files
+        for val in [(u'unexpected line encountered when number of entries', 1),
+                    (u'unexpected line encountered for a data block', -1)]:
+            with self.subTest(val=val):
+                # Create the bad file
+                with open(self.temp_output, 'w') as fout:
+                    with open(self.test_file, 'r') as fin:
+                        data = fin.readlines()
+                    data.pop(val[1])
+                    fout.write(''.join(data))
+
+                # Load the bad file
+                with self.assertRaisesRegex(IOError, val[0]):
+                    ocb_ivort.load_vorticity_ascii_data(self.temp_output)
+
         return
 
     def test_vort2ascii_ocb(self):

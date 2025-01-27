@@ -7,6 +7,9 @@ Summary of all changes made since the first stable release
 ------------------
 * DEP: Removed deprecated functions that depend on ssj_auroral_boundary package
 * DEP: Removed deprecated methods, attributes, and kwargs in VectorData
+* DOC: Added data reference for SuperDARN vorticity data
+* BUG: Fixed `load_vorticity_ascii_data` to correctly cycle through files
+* BUG: Fixed EAB index pairing issue in `DualBoundary` class
 * BUG: Fixed `zenodo-get` import in pyproject.toml
 * TST: Updated GitHub Actions yamls
 

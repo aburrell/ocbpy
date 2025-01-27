@@ -265,6 +265,17 @@ class TestDualBoundaryMethodsGeneral(test_ocb.TestOCBoundaryMethodsGeneral):
                 self.assertEqual(self.ocb.eab.rec_ind, self.ocb.eab_ind[i])
         return
 
+    def test_assign_rec_ind_max_default(self):
+        """Test to see that `rec_ind` is only good values."""
+
+        # Initialize the object
+        self.ocb = self.test_class(**self.set_default)
+
+        # Ensure the sub-class indices are also above the allowed range
+        self.assertLess(self.ocb.ocb_ind[-1], self.ocb.ocb.records)
+        self.assertLess(self.ocb.eab_ind[-1], self.ocb.eab.records)
+        return
+
     def test_assign_rec_ind_max(self):
         """Test to see that setting `rec_ind` above the max is consistent."""
 
@@ -319,9 +330,18 @@ class TestDualBoundaryMethodsGeneral(test_ocb.TestOCBoundaryMethodsGeneral):
                 if method.find('eq') >= 0:
                     self.assertEqual(self.ocb.ocb.rec_ind, ocb_ind)
                     self.assertEqual(self.ocb.eab.rec_ind, eab_ind)
+                elif method == 'max':
+                    self.assertListEqual(list(self.ocb.eab_ind), [])
+                    self.assertListEqual(list(self.ocb.ocb_ind), [])
                 else:
-                    self.assertGreater(self.ocb.eab.rec_ind, eab_ind)
-                    self.assertGreater(self.ocb.ocb.rec_ind, ocb_ind)
+                    self.assertGreater(
+                        self.ocb.eab.rec_ind, eab_ind,
+                        msg="Unexpected EAB record from list: {:} {:}".format(
+                            self.ocb.eab.phi_cent, self.ocb.ocb_ind))
+                    self.assertGreater(
+                        self.ocb.ocb.rec_ind, ocb_ind,
+                        msg="Unexpected OCB record from list: {:}".format(
+                            self.ocb.ocb_ind))
         return
 
 
