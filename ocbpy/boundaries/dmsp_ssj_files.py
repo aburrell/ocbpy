@@ -72,7 +72,7 @@ def fetch_ssj_boundary_files(stime=None, etime=None, out_dir=None,
     Raises
     ------
     ValueError
-        If an unknown satellite ID is provided.
+        If an unknown satellite ID, DOI, or output directory is provided.
     IOError
         If unable to donwload the target archive and identify the zip file
     ImportError
