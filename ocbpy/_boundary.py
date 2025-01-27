@@ -1281,7 +1281,8 @@ class DualBoundary(object):
                 max_tol=self.max_delta, **eab_kwargs)
 
             # Save the paired data
-            if iocb is not None and iocb < len(good_ocb):
+            if iocb is not None and iocb < len(
+                    good_ocb) and self.eab.rec_ind < self.eab.records:
                 self.dtime.append(self.ocb.dtime[good_ocb[iocb]])
                 self.ocb_ind.append(good_ocb[iocb])
                 self.eab_ind.append(self.eab.rec_ind)
@@ -1289,7 +1290,8 @@ class DualBoundary(object):
                 iocb = None
 
             # Cycle to the next good EAB index
-            self.eab.get_next_good_ocb_ind(**eab_kwargs)
+            if self.eab.rec_ind < self.eab.records:
+                self.eab.get_next_good_ocb_ind(**eab_kwargs)
 
         # Re-cast the class attributes as arrays
         self.dtime = np.asarray(self.dtime)
