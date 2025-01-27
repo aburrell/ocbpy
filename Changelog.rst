@@ -12,6 +12,7 @@ Summary of all changes made since the first stable release
 * BUG: Fixed EAB index pairing issue in `DualBoundary` class
 * BUG: Fixed `zenodo-get` import in pyproject.toml
 * TST: Updated GitHub Actions yamls
+* MAINT: Cycled Python and pysat version support
 
 0.4.0 (06-07-2024)
 ------------------
