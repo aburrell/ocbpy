@@ -10,7 +10,6 @@
 
 import numpy as np
 from os import path
-from packaging import version
 import unittest
 
 import ocbpy
@@ -267,16 +266,7 @@ class PysatBase(TestPysatUtils):
 
         self.test_inst = pysat.Instrument(inst_module=self.test_module,
                                           **self.pysat_kw)
-
-        # Reduce pysat warnings
-        # TODO(#130) remove version checking by updating minimum supported pysat
-        load_kwargs = {'date': self.ocb.dtime[self.rec_ind]}
-        if version.Version(pysat.__version__) > version.Version(
-                '3.0.1') and version.Version(
-                    pysat.__version__) < version.Version('3.2.0'):
-            load_kwargs['use_header'] = True
-
-        self.test_inst.load(**load_kwargs)
+        self.test_inst.load(date=self.ocb.dtime[self.rec_ind])
         return
 
     def set_new_keys(self, exclude_r_corr=True):
@@ -815,11 +805,7 @@ class TestPysatMethodsXarray(TestPysatMethods):
         super().setUp()
 
         # Update the method defaults
-        # TODO(#130) remove version checking by updating minimum supported pysat
-        if version.Version(pysat.__version__) < version.Version('3.1.0'):
-            self.test_module = pysat.instruments.pysat_testing2d_xarray
-        else:
-            self.test_module = pysat.instruments.pysat_ndtesting
+        self.test_module = pysat.instruments.pysat_ndtesting
 
         return
 
@@ -1201,11 +1187,7 @@ class TestPysatCustMethodsXarray(TestPysatCustMethods):
         super().setUp()
 
         # Update the class defaults
-        # TODO(#130) remove version checking by updating minimum supported pysat
-        if version.Version(pysat.__version__) < version.Version('3.1.0'):
-            self.test_module = pysat.instruments.pysat_testing2d_xarray
-        else:
-            self.test_module = pysat.instruments.pysat_ndtesting
+        self.test_module = pysat.instruments.pysat_ndtesting
         return
 
 
