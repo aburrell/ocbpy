@@ -45,20 +45,18 @@ These routines may be used as a guide to write routines for other datasets.
 
 # Python versions
 
-This module currently supports Python version 3.9 - 3.12.
+This module currently supports Python version 3.10 - 3.13.
 
 # Dependencies
 
 The listed dependecies were tested with the following versions:
   * numpy
   * aacgmv2
-  * pysat (3.0.1+)
-  * ssj_auroral_boundary (deprecated)
+  * pysat (3.2.1+)
   * zenodo_get
 
 Testing is performed using the python module, unittest.  To limit dependency
-issues, the pysat, ssj_auroral_boundary, and zenodo_get dependencies are
-optional.
+issues, the pysat and zenodo_get dependencies are optional.
 
 # Installation
 
