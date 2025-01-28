@@ -18,206 +18,6 @@ import ocbpy
 import ocbpy.tests.class_common as cc
 
 
-# TODO(#133): delete after deprecated elements are removed
-class TestOCBScalingDepWarning(unittest.TestCase):
-    """Unit tests for Deprecation Warnings in the VectorData class."""
-
-    def setUp(self):
-        """Initialize the OCBoundary and VectorData objects."""
-
-        self.dep_attrs = {'aacgm_lat': 'lat', 'aacgm_mlt': 'lt',
-                          'aacgm_n': 'vect_n', 'aacgm_e': 'vect_e',
-                          'aacgm_z': 'vect_z', 'aacgm_mag': 'vect_mag'}
-        self.vdata_args = [0, 27, 80.0, 5.5]
-        self.vdata_kwargs = {'vect_n': 1.0, 'vect_e': 0.0, 'vect_z': 0.0,
-                             'vect_mag': 1.0}
-        self.warn_msg = ''
-        return
-
-    def tearDown(self):
-        """Tear down the test environment."""
-        del self.dep_attrs, self.vdata_args, self.vdata_kwargs, self.warn_msg
-        return
-
-    def test_init_dep_attr(self):
-        """Test the set up of the VectorData object with a deprecated attr."""
-
-        # Cycle through the deprecated inputs
-        for attr in self.dep_attrs.keys():
-            # Set the input
-            kwargs = {key: self.vdata_kwargs[key]
-                      for key in self.vdata_kwargs.keys()
-                      if key != self.dep_attrs[attr]}
-
-            if self.dep_attrs[attr] in self.vdata_kwargs.keys():
-                kwargs[attr] = self.vdata_kwargs[self.dep_attrs[attr]]
-            else:
-                kwargs[attr] = self.vdata_args[-1] if attr.find(
-                    'lt') > 0 else self.vdata_args[-2]
-
-            # Set the warning message
-            self.warn_msg = attr
-
-            with self.subTest(kwargs=kwargs):
-                # Capture and evaluate the warning message
-                with self.assertWarnsRegex(DeprecationWarning, self.warn_msg):
-                    ocbpy.ocb_scaling.VectorData(*self.vdata_args, **kwargs)
-        return
-
-    def test_init_dep_attrs(self):
-        """Test the set up of the VectorData object with deprecated attrs."""
-
-        # Set the deprecated inputs
-        for attr in self.dep_attrs:
-            if self.dep_attrs[attr] in self.vdata_kwargs.keys():
-                self.vdata_kwargs[attr] = self.vdata_kwargs[
-                    self.dep_attrs[attr]]
-                del self.vdata_kwargs[self.dep_attrs[attr]]
-            else:
-                self.vdata_kwargs[attr] = self.vdata_args[-1] if attr.find(
-                    'lt') > 0 else self.vdata_args[-2]
-
-        # Set the warning message
-        self.warn_msg = 'Old kwargs will be removed in version 0.4.1+.'
-
-        # Capture and evaluate the warning message
-        with self.assertWarnsRegex(DeprecationWarning, self.warn_msg):
-            ocbpy.ocb_scaling.VectorData(*self.vdata_args, **self.vdata_kwargs)
-        return
-
-    def test_get_dep_attr(self):
-        """Test the retrieval of deprecated attributes from VectorData."""
-        # Set the vector data
-        vdata = ocbpy.ocb_scaling.VectorData(*self.vdata_args,
-                                             **self.vdata_kwargs)
-
-        # Set the warning message
-        self.warn_msg = "has been replaced"
-
-        # Cycle through the deprecated attributes
-        for attr in self.dep_attrs.keys():
-            with self.subTest(dep_attr=attr):
-                # Capture and evaluate the warning message
-                with self.assertWarnsRegex(DeprecationWarning, self.warn_msg):
-                    getattr(vdata, attr)
-        return
-
-    def test_set_dep_attr(self):
-        """Test setting deprecated attributes from VectorData."""
-        # Set the warning message
-        self.warn_msg = "has been replaced"
-
-        # Cycle through the deprecated attributes
-        for attr in self.dep_attrs.keys():
-            # Set the vector data object
-            vdata = ocbpy.ocb_scaling.VectorData(*self.vdata_args,
-                                                 **self.vdata_kwargs)
-
-            # Get the initial value for the object
-            comp_val = getattr(vdata, self.dep_attrs[attr])
-
-            with self.subTest(dep_attr=attr):
-                # Capture and evaluate the warning message
-                with self.assertWarnsRegex(DeprecationWarning, self.warn_msg):
-                    setattr(vdata, attr, comp_val + 1.0)
-
-                self.assertEqual(getattr(vdata, self.dep_attrs[attr]),
-                                 comp_val + 1.0, msg="{:} not updated".format(
-                                     self.dep_attrs[attr]))
-        return
-
-    def test_get_aacgm_naz(self):
-        """Test retrieval of deprecated `aacgm_naz` from VectorData."""
-        # Set the warning message
-        self.warn_msg = "will be removed in version 0.4.1+."
-
-        # Set the vector data object
-        vdata = ocbpy.ocb_scaling.VectorData(*self.vdata_args,
-                                             **self.vdata_kwargs)
-
-        # Capture and evaluate the warning message
-        with self.assertWarnsRegex(DeprecationWarning, self.warn_msg):
-            self.assertTrue(numpy.isnan(vdata.aacgm_naz))
-
-        return
-
-    def test_dep_aacgm_mag(self):
-        """Test VectorData property `aacgm_mag` is deprecated."""
-        # Set the vector data
-        vdata = ocbpy.ocb_scaling.VectorData(*self.vdata_args,
-                                             **self.vdata_kwargs)
-        # Set the warning message
-        self.warn_msg = "has been replaced with `vect_mag`, and will be removed"
-
-        # Capture and evaluate the warning message
-        with self.assertWarnsRegex(DeprecationWarning, self.warn_msg):
-            self.assertEqual(vdata.aacgm_mag, vdata.vect_mag)
-        return
-
-    def test_dep_aacgm_lat(self):
-        """Test VectorData property `aacgm_lat` is deprecated."""
-        # Set the vector data
-        vdata = ocbpy.ocb_scaling.VectorData(*self.vdata_args,
-                                             **self.vdata_kwargs)
-        # Set the warning message
-        self.warn_msg = "has been replaced with `lat`, and will be removed"
-
-        # Capture and evaluate the warning message
-        with self.assertWarnsRegex(DeprecationWarning, self.warn_msg):
-            self.assertEqual(vdata.aacgm_lat, vdata.lat)
-        return
-
-    def test_dep_aacgm_mlt(self):
-        """Test VectorData property `aacgm_mlt` is deprecated."""
-        # Set the vector data
-        vdata = ocbpy.ocb_scaling.VectorData(*self.vdata_args,
-                                             **self.vdata_kwargs)
-        # Set the warning message
-        self.warn_msg = "has been replaced with `lt`, and will be removed"
-
-        # Capture and evaluate the warning message
-        with self.assertWarnsRegex(DeprecationWarning, self.warn_msg):
-            self.assertEqual(vdata.aacgm_mlt, vdata.lt)
-        return
-
-    def test_dep_calc_ocb_polar_angle(self):
-        """Test VectorData method `calc_ocb_polar_angle` is deprecated."""
-        # Set the vector data
-        vdata = ocbpy.ocb_scaling.VectorData(*self.vdata_args,
-                                             **self.vdata_kwargs)
-        vdata.ocb_quad = 1
-        vdata.vec_quad = 1
-        vdata.aacgm_naz = 5.0
-        vdata.pole_angle = 3.0
-
-        # Set the warning message
-        self.warn_msg = "Instead, use `ocbpy.vectors.calc_dest_polar_angle`"
-
-        # Capture and evaluate the warning message
-        with self.assertWarnsRegex(DeprecationWarning, self.warn_msg):
-            self.assertEqual(vdata.calc_ocb_polar_angle(), 2.0)
-        return
-
-    def test_dep_calc_ocb_vec_sign(self):
-        """Test VectorData method `calc_ocb_vec_sign` is deprecated."""
-        # Set the vector data
-        vdata = ocbpy.ocb_scaling.VectorData(*self.vdata_args,
-                                             **self.vdata_kwargs)
-        vdata.ocb_quad = 1
-        vdata.vec_quad = 1
-        vdata.aacgm_naz = 5.0
-        vdata.pole_angle = 3.0
-
-        # Set the warning message
-        self.warn_msg = "Instead, use `ocbpy.vectors.calc_dest_vec_sign`"
-
-        # Capture and evaluate the warning message
-        with self.assertWarnsRegex(DeprecationWarning, self.warn_msg):
-            self.assertDictEqual(vdata.calc_ocb_vec_sign(north=True, east=True),
-                                 {'north': 1, 'east': 1})
-        return
-
-
 class TestOCBScalingLogFailure(cc.TestLogWarnings):
     """Unit tests for logging messages in ocb_scaling module."""
 
@@ -265,21 +65,6 @@ class TestOCBScalingLogFailure(cc.TestLogWarnings):
         self.vdata = ocbpy.ocb_scaling.VectorData(0, self.ocb.rec_ind,
                                                   75.0, 22.0,
                                                   vect_mag=100.0,
-                                                  dat_name="Test",
-                                                  dat_units="$m s^{-1}$")
-
-        # Test logging error message for the bad initialization
-        self.eval_logging_message()
-        return
-
-    def test_unknown_kwargs(self):
-        """Test warning raised with unknown kwargs."""
-        self.lwarn = u"unknown kwargs, ignored:"
-
-        # Initalize the VectorData class with deprecated and unknown kwargs
-        self.vdata = ocbpy.ocb_scaling.VectorData(0, self.ocb.rec_ind,
-                                                  75.0, 22.0, aacgm_n=1.0,
-                                                  vect_fun=100.0,
                                                   dat_name="Test",
                                                   dat_units="$m s^{-1}$")
 
@@ -422,7 +207,7 @@ class TestOCBScalingMethods(unittest.TestCase):
 
         # Evaluate values are NaN
         self.ocb_attrs = ['ocb_n', 'ocb_e', 'ocb_z', 'ocb_mag', 'pole_angle',
-                          'aacgm_naz', 'ocb_aacgm_lat', 'ocb_aacgm_mlt']
+                          'ocb_aacgm_lat', 'ocb_aacgm_mlt']
         for attr in self.ocb_attrs:
             with self.subTest(attr=attr):
                 val = getattr(self.vdata, attr)
@@ -456,56 +241,6 @@ class TestOCBScalingMethods(unittest.TestCase):
 
         self.zdata.calc_vec_pole_angle()
         self.assertAlmostEqual(self.zdata.pole_angle, 91.72024697182087)
-        return
-
-    def test_calc_polar_angle_ocb_south_night(self):
-        """Test `calc_polar_angle` with the OCB pole in a south/night quad."""
-        # Set a useful vector locaiton and intialise with current boundary
-        self.vdata.lt = 0.0
-        self.vdata.vect_n = -10.0
-        self.vdata.vect_e = -10.0
-        self.vdata.set_ocb(self.ocb)
-
-        # Change the location of the boundary center
-        self.vdata.ocb_aacgm_mlt = 1.0
-        self.vdata.ocb_aacgm_lat = self.vdata.lat - 2.0
-
-        # Update the quandrants
-        self.vdata.calc_vec_pole_angle()
-        self.vdata.define_quadrants()
-
-        # Get the polar angle
-        self.assertAlmostEqual(self.vdata.calc_ocb_polar_angle(), 116.52904962)
-        return
-
-    def test_calc_polar_angle_ocb_south_day(self):
-        """Test `calc_polar_angle` with the OCB pole in a south/day quad."""
-        # Set a useful vector locaiton and intialise with current boundary
-        self.vdata.lt = 0.0
-        self.vdata.set_ocb(self.ocb)
-
-        # Change the location of the boundary center
-        self.vdata.ocb_aacgm_mlt = 1.0
-        self.vdata.ocb_aacgm_lat = self.vdata.lat - 2.0
-
-        # Update the quandrants
-        self.vdata.calc_vec_pole_angle()
-        self.vdata.define_quadrants()
-
-        # Get the polar angle
-        self.assertAlmostEqual(self.vdata.calc_ocb_polar_angle(), 48.500352141)
-        return
-
-    def test_big_pole_angle_mlt_west(self):
-        """Test `calc_ocb_polar_angle` with a neg MLT, W vect, and big angle."""
-        # Get the original angle
-        self.vdata.lt = -22.0
-        self.vdata.vect_e *= -1.0
-        self.vdata.set_ocb(self.ocb)
-
-        # Increase the pole angle enough to require an adjustment
-        self.vdata.pole_angle += 90.0
-        self.assertAlmostEqual(self.vdata.calc_ocb_polar_angle(), 159.83429474)
         return
 
     def test_calc_vec_pole_angle_acute(self):
@@ -665,29 +400,6 @@ class TestOCBScalingMethods(unittest.TestCase):
         self.vdata.scale_vector()
         return
 
-    def test_calc_ocb_vec_sign(self):
-        """Test the calculation of the OCB vector signs."""
-
-        # Set the initial values
-        self.vdata.ocb_aacgm_mlt = self.ocb.phi_cent[self.vdata.ocb_ind] / 15.0
-        self.vdata.ocb_aacgm_lat = 90.0 - self.ocb.r_cent[self.vdata.ocb_ind]
-        (self.vdata.ocb_lat, self.vdata.ocb_mlt,
-         self.vdata.r_corr) = self.ocb.normal_coord(self.vdata.lat,
-                                                    self.vdata.lt)
-        self.vdata.calc_vec_pole_angle()
-        self.vdata.define_quadrants()
-
-        vmag = numpy.sqrt(self.vdata.vect_n**2 + self.vdata.vect_e**2)
-        self.vdata.aacgm_naz = numpy.degrees(numpy.arccos(
-            self.vdata.vect_n / vmag))
-
-        # Calculate the vector data signs
-        vsigns = self.vdata.calc_ocb_vec_sign(north=True, east=True)
-        self.assertTrue(vsigns['north'])
-        self.assertTrue(vsigns['east'])
-
-        return
-
     def test_scale_vec(self):
         """Test the calculation of the OCB vector signs."""
 
@@ -699,10 +411,6 @@ class TestOCBScalingMethods(unittest.TestCase):
                                                     self.vdata.lt)
         self.vdata.calc_vec_pole_angle()
         self.vdata.define_quadrants()
-
-        vmag = numpy.sqrt(self.vdata.vect_n**2 + self.vdata.vect_e**2)
-        self.vdata.aacgm_naz = numpy.degrees(numpy.arccos(
-            self.vdata.vect_n / vmag))
 
         # Scale the data vector
         self.vdata.scale_vector()
@@ -1208,31 +916,6 @@ class TestDualScalingMethods(TestOCBScalingMethods):
                 self.assertTrue(numpy.isfinite(val).all())
         return
 
-    def test_calc_ocb_vec_sign(self):
-        """Test the calculation of the OCB vector signs."""
-
-        # Set the initial values
-        self.vdata.ocb_aacgm_mlt = self.ocb.ocb.phi_cent[
-            self.vdata.ocb_ind] / 15.0
-        self.vdata.ocb_aacgm_lat = 90.0 - self.ocb.ocb.r_cent[
-            self.vdata.ocb_ind]
-        (self.vdata.ocb_lat, self.vdata.ocb_mlt, _,
-         self.vdata.r_corr) = self.ocb.normal_coord(self.vdata.lat,
-                                                    self.vdata.lt)
-        self.vdata.calc_vec_pole_angle()
-        self.vdata.define_quadrants()
-
-        vmag = numpy.sqrt(self.vdata.vect_n**2 + self.vdata.vect_e**2)
-        self.vdata.aacgm_naz = numpy.degrees(numpy.arccos(
-            self.vdata.vect_n / vmag))
-
-        # Calculate the vector data signs
-        vsigns = self.vdata.calc_ocb_vec_sign(north=True, east=True)
-        self.assertTrue(vsigns['north'])
-        self.assertTrue(vsigns['east'])
-
-        return
-
     def test_scale_vec(self):
         """Test the calculation of the OCB vector signs."""
 
@@ -1246,10 +929,6 @@ class TestDualScalingMethods(TestOCBScalingMethods):
                                                     self.vdata.lt)
         self.vdata.calc_vec_pole_angle()
         self.vdata.define_quadrants()
-
-        vmag = numpy.sqrt(self.vdata.vect_n**2 + self.vdata.vect_e**2)
-        self.vdata.aacgm_naz = numpy.degrees(numpy.arccos(
-            self.vdata.vect_n / vmag))
 
         # Scale the data vector
         self.vdata.scale_vector()
@@ -1416,93 +1095,6 @@ class TestVectorDataRaises(unittest.TestCase):
         with self.assertRaisesRegex(
                 ValueError, "vector angle in poles-vector triangle required"):
             self.vdata.scale_vector()
-        return
-
-    def test_bad_ocb_quad(self):
-        """Test failure when OCB quadrant is wrong."""
-        self.vdata.set_ocb(self.ocb, None)
-        self.vdata.ocb_quad = -1
-
-        with self.assertRaisesRegex(
-                ValueError, "destination coordinate pole quadrant is "):
-            self.vdata.calc_ocb_polar_angle()
-        return
-
-    def test_bad_vec_quad(self):
-        """Test failure when vector quadrant is wrong."""
-        self.vdata.set_ocb(self.ocb, scale_func=None)
-        self.vdata.vec_quad = -1
-
-        with self.assertRaisesRegex(ValueError,
-                                    "data vector quadrant is undefined"):
-            self.vdata.calc_ocb_polar_angle()
-        return
-
-    def test_bad_quad_polar_angle(self):
-        """Test failure when quadrant polar angle is bad."""
-        self.vdata.set_ocb(self.ocb, None)
-        self.vdata.aacgm_naz = numpy.nan
-
-        with self.assertRaisesRegex(ValueError,
-                                    "AACGM North polar angle undefined"):
-            self.vdata.calc_ocb_polar_angle()
-        return
-
-    def test_bad_quad_vector_angle(self):
-        """Test failure when quandrant vector angle is bad."""
-        self.vdata.set_ocb(self.ocb, None)
-        self.vdata.pole_angle = numpy.nan
-
-        with self.assertRaisesRegex(ValueError, "Vector angle undefined"):
-            self.vdata.calc_ocb_polar_angle()
-        return
-
-    def test_bad_calc_vec_sign_direction(self):
-        """Test calc_vec_sign failure when no direction is provided."""
-        self.vdata.set_ocb(self.ocb, None)
-
-        with self.assertRaisesRegex(ValueError,
-                                    "must set at least one direction"):
-            self.vdata.calc_ocb_vec_sign()
-        return
-
-    def test_bad_calc_sign_ocb_quad(self):
-        """Test calc_vec_sign failure with bad OCB quadrant."""
-        self.vdata.set_ocb(self.ocb, None)
-        self.vdata.ocb_quad = -1
-
-        with self.assertRaisesRegex(
-                ValueError, "destination coordinate pole quadrant is"):
-            self.vdata.calc_ocb_vec_sign(north=True)
-        return
-
-    def test_bad_calc_sign_vec_quad(self):
-        """Test calc_vec_sign failure with bad vector quadrant."""
-        self.vdata.set_ocb(self.ocb, None)
-        self.vdata.vec_quad = -1
-
-        with self.assertRaisesRegex(ValueError,
-                                    "data vector quadrant is undefined"):
-            self.vdata.calc_ocb_vec_sign(north=True)
-        return
-
-    def test_bad_calc_sign_polar_angle(self):
-        """Test calc_vec_sign failure with bad polar angle."""
-        self.vdata.set_ocb(self.ocb, None)
-        self.vdata.aacgm_naz = numpy.nan
-
-        with self.assertRaisesRegex(ValueError,
-                                    "AACGM polar angle undefined"):
-            self.vdata.calc_ocb_vec_sign(north=True)
-        return
-
-    def test_bad_calc_sign_pole_angle(self):
-        """Test calc_vec_sign failure with bad pole angle."""
-        self.vdata.set_ocb(self.ocb, None)
-        self.vdata.pole_angle = numpy.nan
-
-        with self.assertRaisesRegex(ValueError, "Vector angle undefined"):
-            self.vdata.calc_ocb_vec_sign(north=True)
         return
 
     def test_bad_define_quadrants_pole_mlt(self):

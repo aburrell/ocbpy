@@ -86,10 +86,9 @@ also includes fits to the R1 and R2 peaks, for those interested.
 DMSP SSJ Boundaries
 -------------------
 
-The DMSP SSJ boundaries are retrieved using
-`ssj_auroral_boundary <https://github.com/lkilcommons/ssj_auroral_boundary>`_.
-Please follow the citation guidelines on their page.  The general reference
-for the DMSP SSJ boundary data set is provided below.
+The archived DMSP SSJ boundaries are retrieved using
+`zenodo_get <https://github.com/dvolgyes/zenodo_get>`_.  The citations for the
+boundary method and data set are provided below.
 
 * **SSJ Auroral Boundaries**: Kilcommons, L. M., R. J. Redmon, and D. J. Knipp
   (2017), A new DMSP magnetometer and auroral boundary data set and estimates

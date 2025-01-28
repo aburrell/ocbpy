@@ -29,7 +29,6 @@ from io import StringIO
 import numpy as np
 import os
 import sys
-import warnings
 import zipfile
 
 import aacgmv2
@@ -37,236 +36,10 @@ import aacgmv2
 import ocbpy
 
 try:
-    from spacepy import pycdf
-    import ssj_auroral_boundary as ssj
-    err = ''
-except ImportError as ierr:
-    ssj = None
-    err = ''.join(['unable to load the DMSP SSJ module; ssj_auroral_boundary ',
-                   'is available at: ',
-                   'https://github.com/lkilcommons/ssj_auroral_boundary\n',
-                   str(ierr)])
-
-try:
     import zenodo_get
 except ImportError as ierr:
-    zenodo_get = None
-    err = ''.join([err, '\nunable to load `zenodo_get` module; avalable ',
-                   'from PyPi.\n', str(ierr)])
-
-if ssj is None and zenodo_get is None:
-    raise ImportError(err)
-
-
-def fetch_ssj_files(stime, etime, out_dir=None, sat_nums=None):
-    """Download DMSP SSJ files and place them in a specified directory.
-
-    Parameters
-    ----------
-    stime : dt.datetime
-        Start time
-    etime : dt.datetime
-        End time
-    out_dir : str or NoneType
-        Output directory or None to download to ocbpy boundary directory
-        (default=None)
-    sat_nums : list or NoneType
-        Satellite numbers or None for all satellites (default=None)
-
-    Returns
-    -------
-    out_files : list
-        List of filenames corresponding to downloaded files
-
-    Raises
-    ------
-    ValueError
-        If an unknown satellite ID is provided.
-    ProxyError
-        If the URL provided for the NOAA database is no longer available
-
-    Notes
-    -----
-    If a file already exists, the routine will add the file to the output list
-    without downloading it again.
-
-    Warnings
-    --------
-    DeprecationWarning
-        ssj_auroral_boundaries package is no longer supported; use
-        `fetch_ssj_boundary_files`
-
-    Raises
-    ------
-    ImportError
-        If called and ssj_auroral_boundaries is not available
-
-    See Also
-    ---------
-    requests.exceptions.ProxyError
-
-    """
-    warnings.warn("".join(["ssj_auroral_boundaries package is no longer ",
-                           "supported; use `fetch_ssj_boundary_files` to ",
-                           "access the boundary Zenodo archive. This function",
-                           " will be removed in version 0.4.1+."]),
-                  DeprecationWarning, stacklevel=2)
-
-    if ssj is None:
-        raise ImportError(
-            'depends on uninstalled package ssj_auroral_boundaries')
-
-    # Get and test the output directory
-    if out_dir is None:
-        out_dir = ocbpy.boundaries.files.get_boundary_directory()
-
-    if not os.path.isdir(out_dir):
-        raise ValueError("can't find the output directory")
-
-    # SSJ5 was carried on F16 onwards. F19 was short lived, F20 was not
-    # launched. Ref: https://space.skyrocket.de/doc_sdat/dmsp-5d3.htm
-    sat_launch = {16: dt.datetime(2003, 10, 18),
-                  17: dt.datetime(2006, 11, 4),
-                  18: dt.datetime(2009, 10, 18)}
-    sat_reentry = {16: dt.datetime(3000, 1, 1),
-                   17: dt.datetime(3000, 1, 1),
-                   18: dt.datetime(3000, 1, 1)}
-
-    # Ensure the input parameters are appropriate
-    if sat_nums is None:
-        sat_nums = list(sat_launch.keys())
-
-    if not np.all([snum in list(sat_launch.keys()) for snum in sat_nums]):
-        raise ValueError("".join(["unknown satellite ID in ",
-                                  "{:} use {:}".format(sat_nums,
-                                                       sat_launch.keys())]))
-
-    # Initialize the output
-    out_files = list()
-
-    # Cycle through the satellite IDs, downloading each day's file
-    for snum in sat_nums:
-        ctime = stime if stime >= sat_launch[snum] else sat_launch[snum]
-        ltime = etime if etime <= sat_reentry[snum] else sat_reentry[snum]
-
-        while ctime < ltime:
-            # Construct the remote and local filenames
-            remote, fname = ssj.files.cdf_url_and_filename(snum, ctime.year,
-                                                           ctime.month,
-                                                           ctime.day)
-            local = os.path.join(out_dir, fname)
-
-            # Download the remote file if it doesn't exist locally
-            if os.path.isfile(local):
-                out_files.append(local)
-            else:
-                try:
-                    ssj.files.download_cdf_from_noaa(remote, local)
-                    out_files.append(local)
-                except RuntimeError as rerr:
-                    ocbpy.logger.info(rerr)
-
-            # Cycle by one day
-            ctime += dt.timedelta(days=1)
-
-    # Return list of available files for these satellites and times
-    return out_files
-
-
-def create_ssj_boundary_files(cdf_files, out_dir=None,
-                              out_cols=['glat', 'glon'],
-                              make_plots=False, plot_dir=None):
-    """Create SSJ boundary files for a list of DMSP SSJ daily satellite files.
-
-    Parameters
-    ----------
-    cdf_files : array-like
-        List of daily satellite files
-    out_dir : str or NoneType
-        Output directory for the boundary files or None to use the ocbpy
-        boundary directory (default=None)
-    out_cols : list
-        List of output columns.  Permitted are CDF file variable names or any
-        of mlat, mlt, glat, glon, diff_flux (default=['glat', 'glon'])
-    make_plots : bool
-        Make plots for the boundary passes (default=False)
-    plot_dir : str or NoneType
-        If plots are made, this is their output directory.  If None, will be
-        set to the same value as out_dir.  (default=None)
-
-    Returns
-    -------
-    out_files : list
-        List of output .csv boundary files
-
-    Raises
-    ------
-    ValueError
-        If incorrect input is provided
-    ImportError
-        If called and ssj_auroral_boundaries is not available
-
-    Warnings
-    --------
-    DeprecationWarning
-        ssj_auroral_boundaries package is no longer supported; use
-        `fetch_ssj_boundary_files`
-
-    """
-    warnings.warn("".join(["ssj_auroral_boundaries package is no longer ",
-                           "supported; use `fetch_ssj_boundary_files` to ",
-                           "access the boundary Zenodo archive. This function",
-                           " will be removed in version 0.4.1+."]),
-                  DeprecationWarning, stacklevel=2)
-
-    if ssj is None:
-        raise ImportError(
-            'depends on uninstalled package ssj_auroral_boundaries')
-
-    # Test the directory inputs
-    if out_dir is None:
-        out_dir = ocbpy.boundaries.files.get_boundary_directory()
-
-    if not os.path.isdir(out_dir):
-        raise ValueError("unknown output directory: {:}".format(out_dir))
-
-    if plot_dir is None:
-        plot_dir = out_dir
-
-    if make_plots and not os.path.isdir(plot_dir):
-        raise ValueError("unknown plot directory: {:}".format(plot_dir))
-
-    # Error catch for input being a filename
-    cdf_files = np.asarray(cdf_files)
-    if len(cdf_files.shape) == 0:
-        cdf_files = np.asarray([cdf_files])
-
-    # Geographic lat and lon are currently provided through the CDF column name
-    if 'glat' in out_cols:
-        out_cols[out_cols.index('glat')] = 'SC_GEOCENTRIC_LAT'
-    if 'glon' in out_cols:
-        out_cols[out_cols.index('glon')] = 'SC_GEOCENTRIC_LON'
-
-    # Cycle through all the CDF files, creating the desired CSV files
-    out_files = list()
-    for cdffn in np.asarray(cdf_files):
-        if os.path.isfile(cdffn):
-            try:
-                with np.errstate(invalid='ignore', divide='ignore',
-                                 over='ignore', under='ignore'):
-                    absd = ssj.absatday.absatday(cdffn, csvdir=out_dir,
-                                                 imgdir=plot_dir,
-                                                 make_plot=make_plots,
-                                                 csvvars=out_cols)
-                    out_files.append(absd.csv.csvfn)
-            except pycdf.CDFError as cerr:
-                ocbpy.logger.warning("{:}".format(cerr))
-            except Warning as war:
-                ocbpy.logger.warning("{:}".format(war))
-        else:
-            ocbpy.logger.warning("bad input file {:}".format(cdffn))
-
-    return out_files
+    raise ImportError(''.join(['unable to load `zenodo_get` module; avalable ',
+                               'from PyPi.\n', str(ierr)]))
 
 
 def fetch_ssj_boundary_files(stime=None, etime=None, out_dir=None,
@@ -299,7 +72,7 @@ def fetch_ssj_boundary_files(stime=None, etime=None, out_dir=None,
     Raises
     ------
     ValueError
-        If an unknown satellite ID is provided.
+        If an unknown satellite ID, DOI, or output directory is provided.
     IOError
         If unable to donwload the target archive and identify the zip file
     ImportError
@@ -311,9 +84,6 @@ def fetch_ssj_boundary_files(stime=None, etime=None, out_dir=None,
     without downloading it again.
 
     """
-    if zenodo_get is None:
-        raise ImportError('depends on uninstalled package zenodo_get')
-
     # Test the requested satellite outputs. SSJ5 was carried on F16 onwards.
     # F19 was short lived, F20 was not launched. Ref:
     # https://space.skyrocket.de/doc_sdat/dmsp-5d3.htm
@@ -425,7 +195,6 @@ def evaluate_dmsp_boundary_file(fname, stime, etime, sat_nums):
         True if the satellite has the desired ID and time, False otherwise
 
     """
-
     # Initialize the output
     good_file = False
 
@@ -509,7 +278,6 @@ def format_ssj_boundary_files(csv_files, ref_alt=830.0,
     aacgmv2
 
     """
-
     # Error catch for input being a filename
     csv_files = np.asarray(csv_files)
     if len(csv_files.shape) == 0:
@@ -665,15 +433,15 @@ def format_ssj_boundary_files(csv_files, ref_alt=830.0,
 
 def fetch_format_ssj_boundary_files(stime, etime, out_dir=None, rm_temp=True,
                                     ref_alt=830.0,
-                                    method='GEOCENTRIC|ALLOWTRACE', **kwargs):
+                                    method='GEOCENTRIC|ALLOWTRACE'):
     """Download DMSP SSJ data and create boundary files for each hemisphere.
 
     Parameters
     ----------
     stime : dt.datetime or NoneType
-        Start time or NoneType to fetch all (`use_dep` cannot be True)
+        Start time or NoneType to fetch all
     etime : dt.datetime
-        End time or NoneType to fetch all (`use_dep` cannot be True)
+        End time or NoneType to fetch all
     out_dir : str or NoneType
         Output directory or None to download to ocbpy boundary directory
         (default=None)
@@ -684,10 +452,6 @@ def fetch_format_ssj_boundary_files(stime, etime, out_dir=None, rm_temp=True,
     method : str
         AACGMV2 method, may use 'TRACE', 'ALLOWTRACE', 'BADIDEA', 'GEOCENTRIC'
         [2]_ (default='GEOCENTRIC|ALLOWTRACE')
-    **kwargs : dict
-        Allows inclusing of the `use_dep` kwarg, which if True will use the
-        deprecated package `ssj_auroral_boundaries` instead of the archived
-        boundary files.
 
     Returns
     -------
@@ -696,63 +460,22 @@ def fetch_format_ssj_boundary_files(stime, etime, out_dir=None, rm_temp=True,
 
     Raises
     ------
-    ProxyError
-        If the URL provided for the NOAA database is no longer available when
-        using `use_dep=True`
-
-    Warnings
-    --------
-    DeprecationWarning
-        ssj_auroral_boundaries package is no longer supported; use
-        `fetch_ssj_boundary_files`
+    ValueError
+        If the DMSP SSJ files could not be downloaded
 
     See Also
     --------
     aacgmv2, requests.exceptions.ProxyError
 
     """
-
-    # Allow use of deprecated functions
-    use_dep = False
-    if 'use_dep' in kwargs.keys():
-        use_dep = kwargs['use_dep']
-
-        warnings.warn("".join(["ssj_auroral_boundaries package is no longer ",
-                               "supported. Temporary support of `use_dep` ",
-                               "kwarg to access deprecated routines will be "
-                               "removed in version 0.4.1+."]),
-                      DeprecationWarning, stacklevel=2)
-
-    if use_dep:
-        # Fetch the DMSP SSJ files for all available DMSP satellites
-        dmsp_files = fetch_ssj_files(stime, etime, out_dir=out_dir)
-
-        if len(dmsp_files) == 0:
-            raise ValueError("".join(["unable to download any DMSP SSJ files ",
-                                      "between {:} and {:}".format(stime,
-                                                                   etime)]))
-
-        # Create CSV files with geographic coordinates for the boundaries
-        csv_files = create_ssj_boundary_files(dmsp_files, out_dir=out_dir)
-
-        # Remove the DMSP files, as their data has been processed
-        if rm_temp:
-            for tmp_file in dmsp_files:
-                os.remove(tmp_file)
-
-        # Set the potential error string
-        estr = "unable to download and process the SSJ files {:}".format(
-            dmsp_files)
-    else:
-        # Fetch the DMSP SSJ boundary files from the Zenodo archive
-        csv_files = fetch_ssj_boundary_files(stime, etime, out_dir=out_dir,
-                                             rm_temp=rm_temp)
-        estr = "unable to download the SSJ files from {:} to {:}".format(stime,
-                                                                         etime)
+    # Fetch the DMSP SSJ boundary files from the Zenodo archive
+    csv_files = fetch_ssj_boundary_files(stime, etime, out_dir=out_dir,
+                                         rm_temp=rm_temp)
 
     # Test to see if there are any DMSP processed files
     if len(csv_files) == 0:
-        raise ValueError(estr)
+        raise ValueError("".join(["unable to download the SSJ files from ",
+                                  "{:} to {:}".format(stime, etime)]))
 
     # Create the boundary files
     bound_files = format_ssj_boundary_files(csv_files, ref_alt=ref_alt,
