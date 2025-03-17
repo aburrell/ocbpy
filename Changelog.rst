@@ -3,6 +3,10 @@ Changelog
 
 Summary of all changes made since the first stable release
 
+0.6.0 (XX-XX-2025)
+------------------
+* ENH: Updated the AMPERE boundaries to include 2022-2024, inclusive
+
 0.5.0 (01-28-2025)
 ------------------
 * DEP: Removed deprecated functions that depend on ssj_auroral_boundary package
