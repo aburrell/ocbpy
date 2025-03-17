@@ -48,11 +48,14 @@ J_MAG  : Largest positive-to-negative changed in the summed currents (micro amps
 
 There are certain ranges for J_MAG that shouldn't be trusted.  This limitation
 is explained in Milan et al. (2015), doi:10.1002/2015JA021680.  This range is
-the default in OCBoundary.get_next_good_ocb_ind.  When using these boundaries,
-remember to cite Milan et al. (2015) and acknowledge the AMPERE team and the use
-of AMPERE data when using these fits.  If the OCB correction was applied, also
-remember to cite Burrell at al. (2019).  AMPERE data rules of the road and
-other information can be found at http://ampere.jhuapl.edu/
+the default in OCBoundary.get_next_good_ocb_ind.
+
+These boundaries were obtained from Milan (2023).  When using these boundaries,
+remember to cite that data source, Milan et al. (2015), and acknowledge the
+AMPERE team and the use of AMPERE data when using these fits.  If the OCB
+correction was applied, also remember to cite Burrell at al. (2019).  AMPERE
+data rules of the road and other information can be found at
+http://ampere.jhuapl.edu/
 
 Files
 -----
