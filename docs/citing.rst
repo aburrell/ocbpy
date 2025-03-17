@@ -20,9 +20,9 @@ OCBpy
    
     @Misc{ocbpy,
           author = {Burrell, A. G. and Chisham, G. and Reistad, J. P.},
-	  title  = {aburrell/ocbpy: Version 0.3.0},
-  	  year   = {2022},
-	  date   = {2022-10-21},
+	  title  = {aburrell/ocbpy: Version 0.5.0},
+  	  year   = {2025},
+	  date   = {2025-01-28},
 	  doi    = {10.5281/zenodo.1179230},
 	  url    = {https://github.com/aburrell/ocbpy},
 	  }
