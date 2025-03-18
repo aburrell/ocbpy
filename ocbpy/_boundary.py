@@ -197,10 +197,11 @@ class OCBoundary(object):
     def __repr__(self):
         """Provide an evaluatable representation of the OCBoundary object."""
         class_name = repr(self.__class__).split("'")[1]
+        isempty = True if self.dtime is None or len(self.dtime) == 0 else False
 
         # Get the start and end times
-        stime = None if self.dtime is None else self.dtime[0]
-        etime = None if self.dtime is None else self.dtime[-1]
+        stime = None if isempty else self.dtime[0]
+        etime = None if isempty else self.dtime[-1]
 
         # Format the function representations
         if self.rfunc is None:
