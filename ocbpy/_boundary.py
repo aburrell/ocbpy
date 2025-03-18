@@ -1983,9 +1983,9 @@ class DualBoundary(object):
                             if xarray_style:
                                 comp_dat = data[dkey][1] == sub_data[dkey][1]
                             else:
-                                comp_dat = [np.all(data[dkey][i] == sdat)
-                                            for i, sdat in enumerate(
-                                                    sub_data[dkey])]
+                                comp_dat = [
+                                    np.all(data[dkey][i] == sdat)
+                                    for i, sdat in enumerate(sub_data[dkey])]
 
                             if not np.all(comp_dat):
                                 raise ValueError(''.join([
