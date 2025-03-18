@@ -58,7 +58,7 @@ pysat_instruments = [ "pysat>=3.2.1" ]
 dmsp_ssj = [ "zenodo-get" ]
 doc = [
     "numpydoc",
-    "pyproject_parser",
+    "pyproject-parser",
     "pysat>=3.2.1",
     "sphinx>=1.3",
     "sphinx-rtd-theme",
