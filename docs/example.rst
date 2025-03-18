@@ -14,3 +14,4 @@ convert between AACGM and OCB coordinates, and more.
    examples/ex_general.rst
    examples/ex_vector.rst
    examples/ex_pysat_eab.rst
+   examples/ex_save_boundaries.rst
