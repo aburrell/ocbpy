@@ -52,5 +52,5 @@ You can create a netCDF file with this data using :py:mod:`xarray`.
    import xarray as xr
 
    dual_data, dual_info = dual.to_dict(xarray_style=True)
-   dual_dataset = xr.Dataset(dual_data, attr=dual_info)
+   dual_dataset = xr.Dataset(dual_data, attrs=dual_info)
    dual_dataset.to_netcdf('/path/to/dual_boundary.nc')
