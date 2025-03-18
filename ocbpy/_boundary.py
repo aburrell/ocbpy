@@ -113,6 +113,8 @@ class OCBoundary(object):
         Convert the position of a measurement in OCB into AACGM co-ordinates.
     get_aacgm_boundary_lat
         Calculate the OCB latitude in AACGM coordinates at specified MLTs.
+    to_dict
+        Provide the data in this class as a pair of dictionaries.
 
     Raises
     ------
@@ -869,6 +871,75 @@ class OCBoundary(object):
 
         return
 
+    def to_dict(self, xarray_style=False):
+        """Convert the boundary data into a pair of dictionaries.
+
+        Parameters
+        ----------
+        xarray_style : bool
+            If True, dict values will be a tuple with a tuple of dimensions as
+            first item and data as the second item (default=False)
+
+        Returns
+        -------
+        data : dict
+            Output with class data attributes as keys
+        info : dict
+            Output with class informational attributes as keys
+
+        Raises
+        ------
+        ValueError
+            If output type is inconsistent with class data
+
+        """
+        # Initialize the output
+        data = dict()
+        info = dict()
+
+        # Set the class informational attributes and attributes to exclude
+        bnd_info = ['instrument', 'filename', 'min_fom', 'max_fom',
+                    'hemisphere', 'boundary_lat']
+        exc_attr = ['records', 'rec_ind', 'rfunc', 'rfunc_kwargs']
+
+        # Determine whether or not 2D attributes are present and in the correct
+        # format (xarray only)
+        if xarray_style and hasattr(self, 'aacgm_boundary_mlt'):
+            uniq_mlt = np.unique(self.aacgm_boundary_mlt)
+
+            if not np.all(uniq_mlt == self.aacgm_boundary_mlt[0]):
+                raise ValueError(''.join(['Boundary MLT must be uniquely ',
+                                          'defined for xarray output']))
+
+        # Cycle through all class attributes
+        for attr in self.__dict__.keys():
+            if attr in bnd_info:
+                # This is an informative attribute
+                info[attr] = getattr(self, attr)
+            elif attr not in exc_attr and not callable(getattr(self, attr)):
+                # This is a data attribute
+                if xarray_style:
+                    # If output to convert from a dict to xarray Dataset is
+                    # desired, we need to specify the dimensions and the data
+                    if attr.find('aacgm_boundary_') == 0:
+                        if attr == 'aacgm_boundary_mlt':
+                            val = (('aacgm_boundary_mlt'), uniq_mlt)
+                        else:
+                            val = (('dtime', 'aacgm_boundary_mlt'),
+                                   np.array(getattr(self, attr)))
+                    else:
+                        val = (('dtime'), getattr(self, attr))
+                else:
+                    # If we just want the data as a dict, no conversions are
+                    # needed
+                    val = getattr(self, attr)
+
+                # Assign the correctly styled value to the data dict
+                data[attr] = val
+
+        # Return the desired dicts
+        return data, info
+
 
 class EABoundary(OCBoundary):
     """Object containing equatorward auroral boundary (EAB) data.
@@ -1073,6 +1144,8 @@ class DualBoundary(object):
         Calculate the EAB and OCB latitude in AACGM coordinates.
     calc_r
         Calculate the scaled and unscaled radius at a normalised co-ordinates.
+    to_dict
+        Provide the data in this class as a pair of dictionaries.
 
     Raises
     ------
