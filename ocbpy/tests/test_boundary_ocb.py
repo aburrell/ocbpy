@@ -197,11 +197,52 @@ class TestOCBoundaryMethodsGeneral(unittest.TestCase):
                                                   "test_north_ocb"),
                             "instrument": "image"}
         self.ocb = None
+        self.data = None
+        self.info = None
         return
 
     def tearDown(self):
         """Clean up the test environment."""
         del self.set_empty, self.set_default, self.ocb, self.test_class
+        del self.data, self.info
+        return
+
+    def eval_dict(self, isxarray=False, sel_ind=None):
+        """Evaluate the dictionary output.
+
+        Parameters
+        ----------
+        isxarray : bool
+            True if xarray-compatible output is expected (default=False)
+        sel_ind : list or NoneType
+            Subset of data to output, or None for all (default=None)
+
+        """
+        # Evaluate the informational data
+        self.assertEqual(len(self.info.keys()), 6)
+
+        for ikey in self.info.keys():
+            self.assertEqual(self.info[ikey], getattr(self.ocb, ikey))
+
+        # Evaluate the data values
+        self.assertGreaterEqual(len(self.data.keys()), 5)
+
+        for dkey in self.data.keys():
+            if isxarray:
+                self.assertIsInstance(self.data[dkey], tuple)
+                self.assertTrue(len(self.data[dkey][0]),
+                                len(self.data[dkey][1].shape))
+            elif sel_ind is None:
+                self.assertTrue(numpy.all(self.data[dkey]
+                                          == getattr(self.ocb, dkey)))
+            else:
+                # Test that the output is the expected length
+                self.assertEqual(len(sel_ind), len(self.data[dkey]))
+
+                # Test the correct values were selected
+                for i, ind in enumerate(sel_ind):
+                    self.assertEqual(self.data[dkey][i],
+                                     getattr(self.ocb, dkey)[ind])
         return
 
     def test_repr_string(self):
@@ -239,6 +280,13 @@ class TestOCBoundaryMethodsGeneral(unittest.TestCase):
     def test_repr_eval(self):
         """Test __repr__ method's ability to reproduce a class."""
         self.ocb = self.test_class(**self.set_default)
+        test_ocb = eval(repr(self.ocb))
+        self.assertEqual(repr(self.ocb), repr(test_ocb))
+        return
+
+    def test_repr_empty(self):
+        """Test __repr__ method's ability to reproduce an empty object."""
+        self.ocb = self.test_class(**self.set_empty)
         test_ocb = eval(repr(self.ocb))
         self.assertEqual(repr(self.ocb), repr(test_ocb))
         return
@@ -336,6 +384,78 @@ class TestOCBoundaryMethodsGeneral(unittest.TestCase):
                     self.assertEqual(self.ocb.rec_ind, comp_ind)
                 else:
                     self.assertGreater(self.ocb.rec_ind, comp_ind)
+        return
+
+    def test_to_dict(self):
+        """Test that class data can be converted to dicts."""
+        self.ocb = self.test_class(**self.set_default)
+
+        # Cycle through both output styles
+        for isxarray in [True, False]:
+            # Cycle through data subsets
+            for sel_ind in [None, [0, 2, 4]]:
+                with self.subTest(xarray_style=isxarray, sel_ind=sel_ind):
+                    # Test with base parameters
+                    self.data, self.info = self.ocb.to_dict(
+                        xarray_style=isxarray, sel_inds=sel_ind)
+                    self.eval_dict(isxarray=isxarray, sel_ind=sel_ind)
+        return
+
+    def test_to_dict_with_uniform_aacgm_boundaries(self):
+        """Test that class data can be converted to dicts with extra data."""
+        self.ocb = self.test_class(**self.set_default)
+        self.ocb.get_aacgm_boundary_lat([0.5, 12.0])
+
+        # Cycle through both output styles
+        for isxarray in [True, False]:
+            with self.subTest(xarray_style=isxarray):
+                # Test with extra parameters
+                self.data, self.info = self.ocb.to_dict(xarray_style=isxarray)
+                self.eval_dict(isxarray=isxarray)
+        return
+
+    def test_to_dict_with_varied_aacgm_boundaries(self):
+        """Test that class data with some extra can be converted to dicts."""
+        self.ocb = self.test_class(**self.set_default)
+        self.ocb.get_aacgm_boundary_lat([0.5, 12.0], rec_ind=[0])
+
+        # Test with extra, varied parameters
+        self.data, self.info = self.ocb.to_dict(xarray_style=False)
+        self.eval_dict(isxarray=False)
+        return
+
+    def test_to_dict_with_varied_aacgm_boundaries_xarray(self):
+        """Test failure to create xarray-style dict with some extra data."""
+        self.ocb = self.test_class(**self.set_default)
+        self.ocb.get_aacgm_boundary_lat([0.5, 12.0], rec_ind=[0])
+
+        with self.assertRaisesRegex(ValueError,
+                                    "Boundary MLT must be uniquely defined"):
+            self.ocb.to_dict(xarray_style=True)
+        return
+
+    def test_to_dict_with_varied_sel_aacgm_boundaries_xarray(self):
+        """Test creation of xarray-style dict with some extra, selected data."""
+        self.ocb = self.test_class(**self.set_default)
+        sel_inds = [0, 2]
+        self.ocb.get_aacgm_boundary_lat([0.5, 12.0], rec_ind=sel_inds)
+
+        # Run for xarray, but only selecting the good, extra data
+        self.data, self.info = self.ocb.to_dict(xarray_style=True,
+                                                sel_inds=sel_inds)
+        self.eval_dict(isxarray=True, sel_ind=sel_inds)
+        return
+
+    def test_to_dict_empty(self):
+        """Test that empty class data can be converted to dicts."""
+        self.ocb = self.test_class(**self.set_empty)
+
+        # Cycle through both output styles
+        for isxarray in [True, False]:
+            with self.subTest(xarray_style=isxarray):
+                # Test with empty parameters
+                self.data, self.info = self.ocb.to_dict(xarray_style=isxarray)
+                self.eval_dict(isxarray=isxarray)
         return
 
 

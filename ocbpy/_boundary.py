@@ -113,6 +113,8 @@ class OCBoundary(object):
         Convert the position of a measurement in OCB into AACGM co-ordinates.
     get_aacgm_boundary_lat
         Calculate the OCB latitude in AACGM coordinates at specified MLTs.
+    to_dict
+        Provide the data in this class as a pair of dictionaries.
 
     Raises
     ------
@@ -195,10 +197,11 @@ class OCBoundary(object):
     def __repr__(self):
         """Provide an evaluatable representation of the OCBoundary object."""
         class_name = repr(self.__class__).split("'")[1]
+        isempty = True if self.dtime is None or len(self.dtime) == 0 else False
 
         # Get the start and end times
-        stime = None if self.dtime is None else self.dtime[0]
-        etime = None if self.dtime is None else self.dtime[-1]
+        stime = None if isempty else self.dtime[0]
+        etime = None if isempty else self.dtime[-1]
 
         # Format the function representations
         if self.rfunc is None:
@@ -869,6 +872,92 @@ class OCBoundary(object):
 
         return
 
+    def to_dict(self, xarray_style=False, sel_inds=None):
+        """Convert the boundary data into a pair of dictionaries.
+
+        Parameters
+        ----------
+        xarray_style : bool
+            If True, dict values will be a tuple with a tuple of dimensions as
+            first item and data as the second item (default=False)
+        sel_inds : list or NoneType
+            Output a subset of the data to the dictionaries if not None
+            (default=None)
+
+        Returns
+        -------
+        data : dict
+            Output with class data attributes as keys
+        info : dict
+            Output with class informational attributes as keys
+
+        Raises
+        ------
+        ValueError
+            If output type is inconsistent with class data
+
+        """
+        # Initialize the output
+        data = dict()
+        info = dict()
+
+        if sel_inds is None:
+            sel_inds = np.arange(0, self.records, 1)
+
+        # Set the class informational attributes and attributes to exclude
+        bnd_info = ['instrument', 'filename', 'min_fom', 'max_fom',
+                    'hemisphere', 'boundary_lat']
+        exc_attr = ['records', 'rec_ind', 'rfunc', 'rfunc_kwargs']
+
+        # Determine whether or not 2D attributes are present and in the correct
+        # format (xarray only)
+        if xarray_style and hasattr(self, 'aacgm_boundary_mlt'):
+            sel_mlt = [self.aacgm_boundary_mlt[i] for i in sel_inds]
+            try:
+                uniq_mlt = np.unique(sel_mlt)
+            except (ValueError, TypeError):
+                raise ValueError(''.join(['Boundary MLT must be uniquely ',
+                                          'defined for xarray output']))
+
+            # Catch MLT differences with the right shape and wrong values
+            if not np.all(uniq_mlt == sel_mlt[0]):
+                raise ValueError(''.join(['Boundary MLT must be uniquely ',
+                                          'defined for xarray output']))
+
+        # Cycle through all class attributes
+        for attr in self.__dict__.keys():
+            if attr in bnd_info:
+                # This is an informative attribute
+                info[attr] = getattr(self, attr)
+            elif attr not in exc_attr and not callable(getattr(self, attr)):
+                # This is a data attribute
+                if xarray_style:
+                    # If output to convert from a dict to xarray Dataset is
+                    # desired, we need to specify the dimensions and the data
+                    if attr.find('aacgm_boundary_') == 0:
+                        if attr == 'aacgm_boundary_mlt':
+                            val = (('aacgm_boundary_mlt'), uniq_mlt)
+                        else:
+                            val = (('dtime', 'aacgm_boundary_mlt'),
+                                   np.array([getattr(self, attr)[i]
+                                             for i in sel_inds]))
+                    else:
+                        val = (('dtime'), getattr(self, attr)[sel_inds])
+                else:
+                    # If we just want the data as a dict, no conversions are
+                    # needed
+                    try:
+                        val = getattr(self, attr)[sel_inds]
+                    except (ValueError, TypeError):
+                        # Necessary if a sub-set of boundary coords are defined
+                        val = [getattr(self, attr)[sind] for sind in sel_inds]
+
+                # Assign the correctly styled value to the data dict
+                data[attr] = val
+
+        # Return the desired dicts
+        return data, info
+
 
 class EABoundary(OCBoundary):
     """Object containing equatorward auroral boundary (EAB) data.
@@ -1073,6 +1162,8 @@ class DualBoundary(object):
         Calculate the EAB and OCB latitude in AACGM coordinates.
     calc_r
         Calculate the scaled and unscaled radius at a normalised co-ordinates.
+    to_dict
+        Provide the data in this class as a pair of dictionaries.
 
     Raises
     ------
@@ -1826,3 +1917,92 @@ class DualBoundary(object):
             return scaled_r[0], unscaled_r[0]
         else:
             return scaled_r, unscaled_r
+
+    def to_dict(self, xarray_style=False, sel_inds=None):
+        """Convert the boundary data into a pair of dictionaries.
+
+        Parameters
+        ----------
+        xarray_style : bool
+            If True, dict values will be a tuple with a tuple of dimensions as
+            first item and data as the second item (default=False)
+        sel_inds : list or NoneType
+            Output a subset of the paired data to the dictionaries if not None
+            (default=None)
+
+        Returns
+        -------
+        data : dict
+            Output with class data attributes as keys
+        info : dict
+            Output with class informational attributes as keys
+
+        Raises
+        ------
+        ValueError
+            If output type is inconsistent with class data
+
+        """
+        # Initialize the output
+        data = dict()
+        info = dict()
+
+        if sel_inds is None:
+            sel_inds = np.arange(0, self.records, 1)
+
+        # Set the class informational and sub-class attributes
+        bnd_info = ['hemisphere', 'max_delta']
+        sub_class = ['ocb', 'eab']
+
+        # Cycle through all class attributes
+        for attr in self.__dict__.keys():
+            if attr in bnd_info:
+                # This is an informative attribute
+                info[attr] = getattr(self, attr)
+            elif attr in sub_class:
+                # Get the dicts from the sub-class for the paired, selected data
+                if len(sel_inds) == 0:
+                    sub_inds = None
+                else:
+                    sub_inds = getattr(self, "_".join([attr, "ind"]))[sel_inds]
+                sub_data, sub_info = getattr(self, attr).to_dict(
+                    xarray_style=xarray_style, sel_inds=sub_inds)
+
+                # Assign the sub-class information to the info dict
+                for ikey in sub_info:
+                    if ikey not in bnd_info:
+                        skey = "_".join([attr, ikey])
+                        info[skey] = sub_info[ikey]
+
+                # Assign the paired, selected values to the data dict
+                for dkey in sub_data:
+                    if dkey == 'aacgm_boundary_mlt':
+                        if dkey not in data.keys():
+                            data[dkey] = sub_data[dkey]
+                        else:
+                            if xarray_style:
+                                comp_dat = data[dkey][1] == sub_data[dkey][1]
+                            else:
+                                comp_dat = [
+                                    np.all(data[dkey][i] == sdat)
+                                    for i, sdat in enumerate(sub_data[dkey])]
+
+                            if not np.all(comp_dat):
+                                raise ValueError(''.join([
+                                    'Boundary MLT must be uniquely defined ',
+                                    ' for xarray output']))
+                    elif dkey == 'dtime':
+                        # Get the time from the DualBoundary class
+                        if dkey not in data.keys():
+                            if xarray_style:
+                                data[dkey] = ((dkey),
+                                              getattr(self, dkey)[sel_inds])
+                            else:
+                                data[dkey] = getattr(self, dkey)[sel_inds]
+                    else:
+                        # Reform the name and assign the paired, selected data
+                        skey = "_".join([attr, dkey])
+                        data[skey] = sub_data[dkey]
+
+        # Return the desired dicts
+        return data, info
