@@ -60,7 +60,8 @@ def get_boundary_files(bound='ocb'):
              "si13": dt.datetime(2000, 5, 3),
              "wic": dt.datetime(2000, 5, 4),
              "image": dt.datetime(2000, 5, 3),
-             "dmsp-ssj": dt.datetime(2010, 1, 1)}
+             "dmsp-ssj": dt.datetime(2010, 1, 1),
+             "polar": dt.datetime(1997, 1, 1)}
     etime = {"amp": dt.datetime(2022, 1, 1),
              "si12": dt.datetime(2002, 11, 1),
              "si13": dt.datetime(2002, 11, 1),
@@ -68,7 +69,8 @@ def get_boundary_files(bound='ocb'):
              "image": dt.datetime(2002, 11, 1),
              "dmsp-ssj": dt.datetime.today().replace(hour=0, minute=0,
                                                      second=0, microsecond=0)
-             + dt.timedelta(days=1)}
+             + dt.timedelta(days=1),
+             "polar": dt.datetime(1998, 6, 28)}
 
     # List all of the files in the OCBpy boundary directory
     boundary_dir = get_boundary_directory()
@@ -117,10 +119,10 @@ def get_default_file(stime, etime, hemisphere, instrument='', bound='ocb'):
     instrument : str
         Instrument that provides the data.  This will override the starting
         and ending times.  Accepts 'ampere', 'amp', 'image', 'si12', 'si13',
-        'wic', 'dmsp-ssj', and '' (to accept instrument defaults based on time
-        range).  Will also accept the instrument name for any instrument whose
-        boundary file follows the naming convention
-        INST_HEMI_YYYYMMDD_YYYYMMDD_*.BBB, where:
+        'wic', 'dmsp-ssj', 'polar', 'polar-lbhl', 'polar-lbhs', and '' (to
+        accept instrument defaults based on time range).  Will also accept the
+        instrument name for any instrument whose boundary file follows the
+        naming convention INST_HEMI_YYYYMMDD_YYYYMMDD_*.BBB, where:
         INST     = instrument name
         HEMI     = north or south
         YYYYMMDD = starting and ending year, month, day
@@ -136,7 +138,7 @@ def get_default_file(stime, etime, hemisphere, instrument='', bound='ocb'):
         Default filename with full path defined or None if no file was
         available for the specified input constraints
     instrument : str
-        Instrument for the default file (either 'ampere', 'image', or
+        Instrument for the default file (either 'ampere', 'image', 'polar', or
         'dmsp-ssj')
 
     """
@@ -148,7 +150,8 @@ def get_default_file(stime, etime, hemisphere, instrument='', bound='ocb'):
     # Determine the list of acceptable instruments
     long_to_short = {"ampere": ["amp"],
                      "image": ["image", "si12", "si13", "wic"],
-                     "dmsp-ssj": ["dmsp-ssj"]}
+                     "dmsp-ssj": ["dmsp-ssj"],
+                     "polar": ["polar", "polar-lbhl", "polar-lbhs"]}
     if len(instrument) == 0:
         inst = list(itertools.chain.from_iterable(long_to_short.values()))
     elif instrument in long_to_short.keys():
@@ -170,7 +173,8 @@ def get_default_file(stime, etime, hemisphere, instrument='', bound='ocb'):
 
     # Get the default file and instrument (returning at most one)
     short_to_long = {"amp": "ampere", "si12": "image", "si13": "image",
-                     "wic": "image"}
+                     "wic": "image", "polar-lbhl": "polar",
+                     "polar-lbhs": "polar"}
     if len(good_files) == 0:
         estr = "".join(["no boundary file available for ", ", ".join(inst),
                         " northern" if hemisphere == 1 else " southern",
@@ -187,7 +191,8 @@ def get_default_file(stime, etime, hemisphere, instrument='', bound='ocb'):
             instrument = boundary_files[good_files[0]]['instrument']
     else:
         # Rate files by instrument
-        default_inst = ['image', 'amp', 'si13', 'si12', 'wic', 'dmsp-ssj']
+        default_inst = ['image', 'amp', 'polar', 'si13', 'si12', 'wic',
+                        'dmsp-ssj']
         ordered_files = {default_inst.index(boundary_files[bb]['instrument']):
                          bb for bb in good_files}
         bfile = ordered_files[min(ordered_files.keys())]

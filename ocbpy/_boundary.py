@@ -39,9 +39,10 @@ class OCBoundary(object):
         If NoneType, no file is loaded.  If 'default',
         `ocbpy.boundaries.files.get_default_file` is called. (default='default')
     instrument : str
-        Instrument providing the OCBoundaries.  Requires 'image', 'ampere', or
-        'dmsp-ssj' if a file is provided.  If using filename='default', also
-        accepts 'amp', 'si12', 'si13', 'wic', and ''.  (default='')
+        Instrument providing the OCBoundaries.  Requires 'image', 'ampere',
+        'polar', or 'dmsp-ssj' if a file is provided.  If using
+        filename='default', also accepts 'amp', 'si12', 'si13', 'wic',
+        'polar-lbhl', 'polar-lbhs', and ''.  (default='')
     hemisphere : int
         Integer (+/- 1) denoting northern/southern hemisphere (default=1)
     boundary_lat : float
@@ -314,6 +315,11 @@ class OCBoundary(object):
             ocb_cols = "sc date time r x y fom x_1 y_1 x_2 y_2"
             datetime_fmt = "%Y-%m-%d %H:%M:%S"
             self.min_fom = 3.0  # From Burrell et al. (2019)
+        elif self.instrument == "polar":
+            hlines = 0
+            ocb_cols = "date time num_sectors phi_cent r_cent r r_err fom"
+            datetime_fmt = "%Y-%m-%d %H:%M:%S"
+            self.max_fom = 0.9  # From Burrell et al. (2023)
         else:
             hlines = 0
             ocb_cols = ""
@@ -854,7 +860,7 @@ class OCBoundary(object):
 
         """
 
-        if self.instrument in ["image", "dmsp-ssj"]:
+        if self.instrument in ["image", "dmsp-ssj", "polar"]:
             self.rfunc = np.full(shape=self.records,
                                  fill_value=ocbcor.circular)
         elif self.instrument == "ampere":
@@ -876,9 +882,10 @@ class EABoundary(OCBoundary):
         time.  If NoneType, no file is loaded.  If 'default',
         `ocbpy.boundaries.files.get_default_file` is called. (default='default')
     instrument : str
-        Instrument providing the EABoundaries.  Requires 'image' or 'dmsp-ssj'
-        if a file is provided.  If using filename='default', also accepts
-        'si12', 'si13', 'wic', and ''.  (default='')
+        Instrument providing the OCBoundaries.  Requires 'image', 'ampere',
+        'polar', or 'dmsp-ssj' if a file is provided.  If using
+        filename='default', also accepts 'amp', 'si12', 'si13', 'wic',
+        'polar-lbhl', 'polar-lbhs', and ''.  (default='')
     hemisphere : int
         Integer (+/- 1) denoting northern/southern hemisphere (default=1)
     boundary_lat : float
@@ -955,7 +962,8 @@ class EABoundary(OCBoundary):
 
         """
 
-        if input_instrument in ["", "default", "image", "dmsp-ssj", "ampere"]:
+        if input_instrument in ["", "default", "image", "dmsp-ssj", "ampere",
+                                "polar"]:
             self.rfunc = ocbcor.circular
         elif not hasattr(input_instrument, "lower"):
             # Allow an empty class object to be initialised
@@ -981,13 +989,15 @@ class DualBoundary(object):
         by time.  If NoneType, no file is loaded.  If 'default',
         `ocbpy.boundaries.files.get_default_file` is called. (default='default')
     eab_instrument : str
-        Instrument providing the EABoundaries.  Requires 'image', 'ampere', or
-        'dmsp-ssj' if a file is provided.  If using filename='default', also
-        accepts 'si12', 'si13', 'wic', and ''.  (default='')
+        Instrument providing the OCBoundaries.  Requires 'image', 'ampere',
+        'polar', or 'dmsp-ssj' if a file is provided.  If using
+        filename='default', also accepts 'amp', 'si12', 'si13', 'wic',
+        'polar-lbhl', 'polar-lbhs', and ''.  (default='')
     ocb_instrument : str
-        Instrument providing the OCBoundaries.  Requires 'image', 'ampere', or
-        'dmsp-ssj' if a file is provided.  If using filename='default', also
-        accepts 'si12', 'si13', 'wic', and ''.  (default='')
+        Instrument providing the OCBoundaries.  Requires 'image', 'ampere',
+        'polar', or 'dmsp-ssj' if a file is provided.  If using
+        filename='default', also accepts 'amp', 'si12', 'si13', 'wic',
+        'polar-lbhl', 'polar-lbhs', and ''.  (default='')
     hemisphere : int
         Integer (+/- 1) denoting northern/southern hemisphere (default=1)
     eab_lat : float
