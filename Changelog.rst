@@ -7,6 +7,8 @@ Summary of all changes made since the first stable release
 ------------------
 * ENH: Updated the AMPERE boundaries to include 2022-2024, inclusive
 * ENH: Added `to_dict` method to the boundary class objects
+* ENH: Added Starkov (1994) auroral model
+* ENH: Adapted boundary classes to accept model boundaries
 
 0.5.0 (01-28-2025)
 ------------------
