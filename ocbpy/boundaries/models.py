@@ -32,8 +32,8 @@ def starkov_auroral_boundary(mlt, al=-1, bnd='ocb'):
     Returns
     -------
     bnd_lat : float or array-like
-        Location of the boundary in corrected geomagnetic coordinates for
-        the specified magnetic local times.
+        Location of the boundary in degrees away from the pole in corrected
+        geomagnetic coordinates for the specified magnetic local times.
 
     References
     ----------
@@ -52,9 +52,9 @@ def starkov_auroral_boundary(mlt, al=-1, bnd='ocb'):
     alpha3 = starkov_coefficient_values(al, "alpha3", bnd)
 
     # Calculate the angular inputs in radians
-    rad1 = (mlt + alpha1) * np.pi / 12.0
-    rad2 = (2.0 * mlt + alpha2) * np.pi / 12.0
-    rad3 = (3.0 * mlt + alpha3) * np.pi / 12.0
+    rad1 = np.radians(15.0 * (mlt + alpha1))
+    rad2 = np.radians(15.0 * (2.0 * mlt + alpha2))
+    rad3 = np.radians(15.0 * (3.0 * mlt + alpha3))
 
     # Calculate the boundary location in degrees latitude
     bnd_lat = A0 + A1 * np.cos(rad1) + A2 * np.cos(rad2) + A3 * np.cos(rad3)
@@ -110,7 +110,7 @@ def starkov_coefficient_values(al, coeff_name, bnd):
                               'diffuse': [8.61, -5.34, -1.36, 0.76]}}
 
     # Calculate the desired coefficient
-    log_al = np.log(abs(al))
+    log_al = np.log10(abs(al))
     coeff = coeff_terms[coeff_name][bnd][0] + coeff_terms[coeff_name][bnd][
         1] * log_al + coeff_terms[coeff_name][bnd][2] * (
             log_al**2) + coeff_terms[coeff_name][bnd][3] * (log_al**3)
