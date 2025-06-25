@@ -56,7 +56,7 @@ class OCBoundary(object):
         First time to load data or beginning of file.  If specifying time, be
         sure to start before the time of the data to allow the best match within
         the allowable time tolerance to be found. If running a model (e.g.,
-        `instrument='starkov'`, provide an array of datetime values
+        `instrument='model'`, provide an array of datetime values
         corresponding to the required driving index(es). (default=None)
     etime : dt.datetime or NoneType
         Last time to load data or ending of file.  If specifying time, be sure
@@ -198,6 +198,8 @@ class OCBoundary(object):
                           datetime_fmt=datetime_fmt, stime=stime, etime=etime)
             else:
                 self.load(stime=stime, etime=etime)
+        elif self.instrument == "model":
+            self.load(stime=stime)
 
         return
 
@@ -249,10 +251,14 @@ class OCBoundary(object):
 
         class_name = repr(self.__class__).split("'")[1].split(".")[-1]
 
-        if self.filename is None:
+        if self.filename is None and self.instrument != "model":
             out = "No {:s} file specified\n".format(class_name)
         else:
-            out = "{:s} file: {:s}\n".format(class_name, self.filename)
+            if self.filename is not None:
+                out = "{:s} file: {:s}\n".format(class_name, self.filename)
+            else:
+                out = "{:s}\n".format(class_name)
+
             out = "{:s}Source instrument: ".format(out)
             out = "{:s}{:s}\n".format(out, self.instrument.upper())
             out = "{:s}Boundary reference latitude: ".format(out)
@@ -267,9 +273,11 @@ class OCBoundary(object):
 
                 if self.records == 1:
                     irep = [0]
+                    imid = -1
                 else:
                     irep = np.unique(
                         np.arange(0, self.records, 1)[[0, 1, -2, -1]])
+                    imid = 1
 
                 head = "YYYY-MM-DD HH:MM:SS Phi_Centre R_Centre R"
                 out = "{:s}{:s}\n{:-<77s}\n".format(out, head, "")
@@ -278,6 +286,8 @@ class OCBoundary(object):
                                                   self.phi_cent[i])
                     out = "{:s} {:.2f} {:.2f}\n".format(out, self.r_cent[i],
                                                         self.r[i])
+                    if i == imid:
+                        out = "".join([out, "...\n"])
 
                 # Determine which scaling functions are used
                 if self.rfunc is not None:
@@ -288,12 +298,21 @@ class OCBoundary(object):
                                        for ff in self.rfunc]))
 
                     for ff in fnames:
-                        kw = list(set([self.rfunc_kwargs[i].__str__()
-                                       for i, rf in enumerate(self.rfunc)
-                                       if rf.__name__ == ff.split(".")[-1]]))
+                        kw = [self.rfunc_kwargs[i].__str__()
+                              for i, rf in enumerate(self.rfunc)
+                              if rf.__name__ == ff.split(".")[-1]]
 
-                        for kk in kw:
-                            out = "{:s}{:s}(**{:s})\n".format(out, ff, kk)
+                        ikw = list(irep)
+                        kmid = imid
+                        if len(kw) < len(ikw):
+                            ikw = [kind for kind in range(len(kw))]
+                            if len(ikw) <= 1:
+                                kmid = -1
+
+                        for k in ikw:
+                            out = "{:s}{:s}(**{:s})\n".format(out, ff, kw[k])
+                            if k == kmid:
+                                out = "".join([out, "...\n"])
 
         return out
 
@@ -1070,31 +1089,36 @@ class EABoundary(OCBoundary):
     instrument : str
         Instrument providing the EABoundaries.  Requires 'image' or 'dmsp-ssj'
         if a file is provided.  If using filename='default', also accepts
-        'si12', 'si13', 'wic', and ''.  (default='')
+        'si12', 'si13', 'wic', 'model', and ''.  (default='')
     hemisphere : int
         Integer (+/- 1) denoting northern/southern hemisphere (default=1)
     boundary_lat : float
         Typical EABoundary latitude in AACGM coordinates.  Hemisphere will
         give this boundary the desired sign.  (default=64.0)
-    stime : dt.datetime or NoneType
+    stime : dt.datetime, array-like, or NoneType
         First time to load data or beginning of file.  If specifying time, be
         sure to start before the time of the data to allow the best match within
-        the allowable time tolerance to be found. (default=None)
+        the allowable time tolerance to be found. If running a model (e.g.,
+        `instrument='model'`, provide an array of datetime values
+        corresponding to the required driving index(es). (default=None)
     etime : dt.datetime or NoneType
         Last time to load data or ending of file.  If specifying time, be sure
         to end after the last data point you wish to match to, to ensure the
         best match within the allowable time tolerance is made. (default=None)
     rfunc : numpy.ndarray, function, or NoneType
-        EAB radius correction function. If None, will use the instrument
-        default. Function must have AACGM MLT (in hours) as argument input.
-        To allow the boundary shape to change with univeral time, each temporal
-        instance may have a different function (array input). If a single
-        function is provided, will recast as an array that specifies this
-        function for all times. (default=None)
+        EAB radius correction or model function (if `instrument` is 'model').
+        If None, will use the instrument default. Function must have AACGM MLT
+        (in hours) as argument input. To allow the boundary shape to change
+        with univeral time, each temporal instance may have a different
+        function (array input). If a single function is provided, will recast
+        as an array that specifies this function for all times. (default=None)
     rfunc_kwargs : numpy.ndarray, dict, or NoneType
-        Optional keyword arguements for `rfunc`. If None is specified,
-        uses function defaults.  If dict is specified, recasts as an array
-        of this dict for all times.  Array must be an array of dicts.
+        Optional keyword arguments for `rfunc`. If None is specified,
+        uses function defaults.  If dict is specified and `instrument` is
+        'model', any array-like values are expected to be the same length as
+        `dtime` and will be recast as an array of dicts with single values.
+        Otherwise, dict inputs are recasts as an array of this dict for all
+        times.  Array must be an array of dicts the same length as `dtime`.
         (default=None)
 
     See Also
@@ -1120,7 +1144,7 @@ class EABoundary(OCBoundary):
             self.rfunc = None
 
         if(hasattr(filename, "lower") and hasattr(instrument, "lower")
-           and filename.lower() == "default"):
+           and filename.lower() == "default" and instrument != "model"):
             filename, instrument = get_default_file(stime, etime, hemisphere,
                                                     instrument, bound='eab')
 
@@ -1175,11 +1199,11 @@ class DualBoundary(object):
     eab_instrument : str
         Instrument providing the EABoundaries.  Requires 'image', 'ampere', or
         'dmsp-ssj' if a file is provided.  If using filename='default', also
-        accepts 'si12', 'si13', 'wic', and ''.  (default='')
+        accepts 'si12', 'si13', 'wic', 'model', and ''.  (default='')
     ocb_instrument : str
         Instrument providing the OCBoundaries.  Requires 'image', 'ampere', or
         'dmsp-ssj' if a file is provided.  If using filename='default', also
-        accepts 'si12', 'si13', 'wic', and ''.  (default='')
+        accepts 'si12', 'si13', 'wic', 'model', and ''.  (default='')
     hemisphere : int
         Integer (+/- 1) denoting northern/southern hemisphere (default=1)
     eab_lat : float
@@ -1188,37 +1212,45 @@ class DualBoundary(object):
     ocb_lat : float
         Typical OCBoundary latitude in AACGM coordinates.  Hemisphere will
         give this boundary the desired sign.  (default=74.0)
-    stime : dt.datetime or NoneType
+    stime : dt.datetime, array-like, or NoneType
         First time to load data or beginning of file.  If specifying time, be
         sure to start before the time of the data to allow the best match within
-        the allowable time tolerance to be found. (default=None)
+        the allowable time tolerance to be found. If running a model (e.g.,
+        `instrument='model'`, provide an array of datetime values
+        corresponding to the required driving index(es). (default=None)
     etime : dt.datetime or NoneType
         Last time to load data or ending of file.  If specifying time, be sure
         to end after the last data point you wish to match to, to ensure the
         best match within the allowable time tolerance is made. (default=None)
     eab_rfunc : numpy.ndarray, function, or NoneType
-        EAB radius correction function. If None, will use the instrument
-        default. Function must have AACGM MLT (in hours) as argument input.
-        To allow the boundary shape to change with univeral time, each temporal
-        instance may have a different function (array input). If a single
-        function is provided, will recast as an array that specifies this
-        function for all times. (default=None)
+        EAB radius correction or model function (if `instrument` is 'model').
+        If None, will use the instrument default. Function must have AACGM MLT
+        (in hours) as argument input. To allow the boundary shape to change
+        with univeral time, each temporal instance may have a different
+        function (array input). If a single function is provided, will recast
+        as an array that specifies this function for all times. (default=None)
     eab_rfunc_kwargs : numpy.ndarray, dict, or NoneType
-        Optional keyword arguements for `eab_rfunc`. If None is specified,
-        uses function defaults.  If dict is specified, recasts as an array
-        of this dict for all times.  Array must be an array of dicts.
+        Optional keyword arguments for `eab_rfunc`. If None is specified,
+        uses function defaults.  If dict is specified and `instrument` is
+        'model', any array-like values are expected to be the same length as
+        `dtime` and will be recast as an array of dicts with single values.
+        Otherwise, dict inputs are recasts as an array of this dict for all
+        times.  Array must be an array of dicts the same length as `dtime`.
         (default=None)
     ocb_rfunc : numpy.ndarray, function, or NoneType
-        OCB radius correction function. If None, will use the instrument
-        default. Function must have AACGM MLT (in hours) as argument input.
-        To allow the boundary shape to change with univeral time, each temporal
-        instance may have a different function (array input). If a single
-        function is provided, will recast as an array that specifies this
-        function for all times. (default=None)
+        OCB radius correction or model function (if `instrument` is 'model').
+        If None, will use the instrument default. Function must have AACGM MLT
+        (in hours) as argument input. To allow the boundary shape to change
+        with univeral time, each temporal instance may have a different function
+        (array input). If a single function is provided, will recast as an array
+        that specifies this function for all times. (default=None)
     ocb_rfunc_kwargs : numpy.ndarray, dict, or NoneType
         Optional keyword arguements for `ocb_rfunc`. If None is specified,
-        uses function defaults.  If dict is specified, recasts as an array
-        of this dict for all times.  Array must be an array of dicts.
+        uses function defaults.  If dict is specified and `instrument` is
+        'model', any array-like values are expected to be the same length as
+        `dtime` and will be recast as an array of dicts with single values.
+        Otherwise, dict inputs are recasts as an array of this dict for all
+        times.  Array must be an array of dicts the same length as `dtime`.
         (default=None)
     eab : ocbpy.EABoundary or NoneType
         Equatorward auroral boundary data object or None to initialize here
