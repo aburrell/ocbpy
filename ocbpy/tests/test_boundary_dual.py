@@ -8,12 +8,14 @@
 # -----------------------------------------------------------------------------
 """Tests the boundary DualBoundary class."""
 
+import datetime
 import numpy
 from os import path
 import sys
 import unittest
 
 import ocbpy
+from ocbpy.boundaries import models
 import ocbpy.tests.class_common as cc
 import ocbpy.tests.test_boundary_ocb as test_ocb
 
@@ -79,14 +81,16 @@ class TestDualBoundaryInstruments(test_ocb.TestOCBoundaryInstruments):
                                      "r_err", "fom"],
                            "ampere": ["date", "time", "x", "y", "fom"],
                            "dmsp-ssj": ["date", "time", "sc", "x", "y", "fom",
-                                        "x_1", "x_2", "y_1", "y_2"]}
+                                        "x_1", "x_2", "y_1", "y_2"],
+                           "model": ["fom", "rfunc_kwargs", "rfunc"]}
         self.not_attrs = {"image": ["date", "time", "x", "y", "x_1", "x_2",
                                     "y_1", "y_2", "sc"],
                           "ampere": ["year", "soy", "x_1", "y_1", "x_2",
                                      "y_2", "sc", "num_sectors", "a",
                                      "r_err"],
                           "dmsp-ssj": ["year", "soy", "num_sectors", "a",
-                                       "r_err"]}
+                                       "r_err"],
+                          "model": ["date", "time", "year", "soy", "x", "y"]}
         self.inst_init = [{"eab_instrument": "dmsp-ssj", "hemisphere": 1,
                            "eab_filename": path.join(cc.test_dir,
                                                      "dmsp-ssj_north_out.eab"),
@@ -104,7 +108,17 @@ class TestDualBoundaryInstruments(test_ocb.TestOCBoundaryInstruments):
                                                      "dmsp-ssj_south_out.eab"),
                            "ocb_instrument": "ampere",
                            "ocb_filename": path.join(cc.test_dir,
-                                                     "test_south_ocb")}]
+                                                     "test_south_ocb")},
+                          {"ocb_instrument": "model", "hemisphere": 1,
+                           "eab_instrument": "model",
+                           "ocb_rfunc": models.starkov_auroral_boundary,
+                           "eab_rfunc": models.starkov_auroral_boundary,
+                           "stime": [datetime.datetime(2001, 1, 1, i)
+                                     for i in range(3)],
+                           "ocb_rfunc_kwargs": {"al": [-50, -100, -300],
+                                                "bnd": "ocb"},
+                           "eab_rfunc_kwargs": {"al": [-50, -100, -300],
+                                                "bnd": "diffuse"}}]
         return
 
 
