@@ -113,12 +113,13 @@ def fetch_ssj_boundary_files(stime=None, etime=None, out_dir=None,
     sys.stdout = zenodo_io
     sys.stderr = zenodo_io
 
-    zenodo_checksum = os.path.join(out_dir, 'md5sums.txt')
     # TODO(#151): remove the old (second) way of calling zenodo_get
     if hasattr(zenodo_get, "download"):
-        zenodo_get.download(doi=doi, output_dir=out_dir, md5=True)
+        zenodo_get.download(doi=doi, output_dir=out_dir)
+        zenodo_checksum = None
     else:
         zenodo_get.zenodo_get([doi, '-o', out_dir])
+        zenodo_checksum = os.path.join(out_dir, 'md5sums.txt')
 
     # Parse the output and retrieve files from the zip archive
     sys.stdout = sys.__stdout__
@@ -128,11 +129,11 @@ def fetch_ssj_boundary_files(stime=None, etime=None, out_dir=None,
 
     if zen_msg.find('Checksum is correct') < 0 and zen_msg.find(
             'already downloaded correctly') < 0:
-        raise IOError('Bad checksum, see: {:s}\n{:s}'.format(zenodo_checksum,
-                                                             zen_msg))
+        raise IOError('Bad checksum: {:s}'.format(zen_msg))
 
     # Remove the checksum file if the download problem wasn't found there
-    os.remove(zenodo_checksum)
+    if zenodo_checksum is not None:
+        os.remove(zenodo_checksum)
 
     # Get the archive name from the output
     try:
