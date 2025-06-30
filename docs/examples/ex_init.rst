@@ -126,7 +126,7 @@ location of the desired boundary in degrees latitude away from the pole must
 be provided through the :py:attr:`rfunc` keyword. This function should have
 magnetic local time (MLT) as the input argument; any subsequent inputs should be
 keyword arguments.  Second, the user must provide an array or list of input
-times for boundary calculations through the :py:var:`stime` keyword argument.
+times for boundary calculations through the :py:attr:`stime` keyword argument.
 Model inputs other than MLT are then provided through the :py:attr:`rfunc_kwarg`
 keyword.
 
