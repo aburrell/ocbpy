@@ -32,3 +32,4 @@ respectively.
 Boundary Models Module
 ----------------------
 .. automodule:: ocbpy.boundaries.models
+    :members:
