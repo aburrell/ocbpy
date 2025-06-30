@@ -99,3 +99,16 @@ boundary method and data set are provided below.
   Defense Meteorology Satellite Program (DMSP) Electron Precipitation (SSJ)
   Auroral Boundaries, 2010-2014 (Version 1.0.0) [Data set]. Zenodo.
   http://doi.org/10.5281/zenodo.3373812
+
+
+.. _cite-starkov:
+
+Starkov Model
+-------------
+
+The Starkov mathematical auroral boundary model is described in the following
+article. If you use this model please cite both it and your AL data source
+when publishing your work.
+
+* Starkov, G. V. (1994) Mathematical model of the auroral boundaries,
+  Geomagnetism and Aeronomy, English Translation, 34(3), 331-336.
