@@ -59,6 +59,13 @@ def starkov_auroral_boundary(mlt, al=-1, bnd='ocb'):
     # Calculate the boundary location in degrees latitude
     bnd_lat = A0 + A1 * np.cos(rad1) + A2 * np.cos(rad2) + A3 * np.cos(rad3)
 
+    # Ensure all co-latitudes are positive or zero
+    if np.asarray(bnd_lat).shape == ():
+        if bnd_lat < 0:
+            bnd_lat = 0.0
+    else:
+        bnd_lat[bnd_lat < 0] = 0.0
+
     return bnd_lat
 
 
