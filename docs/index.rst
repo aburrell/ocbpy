@@ -15,6 +15,7 @@ process and provides examples for usage.
    overview.rst
    citing.rst
    ocb_datasets.rst
+   ocb_models.rst
    ocb_gridding.rst
    ocb_boundary_correction.rst
    supported_datasets.rst
