@@ -14,6 +14,7 @@ from os import path
 import unittest
 
 import ocbpy
+from ocbpy.boundaries import models
 import ocbpy.tests.class_common as cc
 
 
@@ -126,14 +127,16 @@ class TestOCBoundaryInstruments(unittest.TestCase):
                                      "r_err", "fom"],
                            "ampere": ["date", "time", "x", "y", "fom"],
                            "dmsp-ssj": ["date", "time", "sc", "x", "y", "fom",
-                                        "x_1", "x_2", "y_1", "y_2"]}
+                                        "x_1", "x_2", "y_1", "y_2"],
+                           "model": ["fom", "rfunc_kwargs", "rfunc"]}
         self.not_attrs = {"image": ["date", "time", "x", "y", "x_1", "x_2",
                                     "y_1", "y_2", "sc"],
                           "ampere": ["year", "soy", "x_1", "y_1", "x_2",
                                      "y_2", "sc", "num_sectors", "a",
                                      "r_err"],
                           "dmsp-ssj": ["year", "soy", "num_sectors", "a",
-                                       "r_err"]}
+                                       "r_err"],
+                          "model": ["date", "time", "year", "soy", "x", "y"]}
         self.inst_init = [{"instrument": "image", "hemisphere": 1,
                            "filename": path.join(cc.test_dir,
                                                  "test_north_ocb")},
@@ -145,7 +148,13 @@ class TestOCBoundaryInstruments(unittest.TestCase):
                                                  "dmsp-ssj_south_out.ocb")},
                           {"instrument": "ampere", "hemisphere": -1,
                            "filename": path.join(cc.test_dir,
-                                                 "test_south_ocb")}]
+                                                 "test_south_ocb")},
+                          {"instrument": "model", "hemisphere": 1,
+                           "rfunc": models.starkov_auroral_boundary,
+                           "stime": [datetime.datetime(2001, 1, 1, i)
+                                     for i in range(3)],
+                           "rfunc_kwargs": {"al": [-50, -100, -300],
+                                            "bnd": "ocb"}}]
         self.ocb = None
         return
 

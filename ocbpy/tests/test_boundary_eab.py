@@ -8,10 +8,12 @@
 # -----------------------------------------------------------------------------
 """Tests the boundary EABoundary class."""
 
+import datetime
 import numpy
 from os import path
 
 import ocbpy
+from ocbpy.boundaries import models
 import ocbpy.tests.class_common as cc
 import ocbpy.tests.test_boundary_ocb as test_ocb
 
@@ -43,11 +45,13 @@ class TestEABoundaryInstruments(test_ocb.TestOCBoundaryInstruments):
         self.inst_attrs = {"image": ["year", "soy", "num_sectors", "a",
                                      "r_err", "fom"],
                            "dmsp-ssj": ["date", "time", "sc", "x", "y", "fom",
-                                        "x_1", "x_2", "y_1", "y_2"]}
+                                        "x_1", "x_2", "y_1", "y_2"],
+                           "model": ["fom", "rfunc_kwargs", "rfunc"]}
         self.not_attrs = {"image": ["date", "time", "x", "y", "x_1", "x_2",
                                     "y_1", "y_2", "sc"],
                           "dmsp-ssj": ["year", "soy", "num_sectors", "a",
-                                       "r_err"]}
+                                       "r_err"],
+                          "model": ["date", "time", "year", "soy", "x", "y"]}
         self.inst_init = [{"instrument": "image", "hemisphere": 1,
                            "filename": path.join(cc.test_dir,
                                                  "test_north_ocb")},
@@ -56,7 +60,13 @@ class TestEABoundaryInstruments(test_ocb.TestOCBoundaryInstruments):
                                                  "dmsp-ssj_north_out.eab")},
                           {"instrument": "dmsp-ssj", "hemisphere": -1,
                            "filename": path.join(cc.test_dir,
-                                                 "dmsp-ssj_south_out.eab")}]
+                                                 "dmsp-ssj_south_out.eab")},
+                          {"instrument": "model", "hemisphere": 1,
+                           "rfunc": models.starkov_auroral_boundary,
+                           "stime": [datetime.datetime(2001, 1, 1, i)
+                                     for i in range(3)],
+                           "rfunc_kwargs": {"al": [-50, -100, -300],
+                                            "bnd": "eab"}}]
         return
 
 
