@@ -271,13 +271,14 @@ class OCBoundary(object):
                                                          self.dtime[0])
                 out = "{:s} to {:}\n\n".format(out, self.dtime[-1])
 
+                imid = -1
                 if self.records == 1:
                     irep = [0]
-                    imid = -1
                 else:
                     irep = np.unique(
                         np.arange(0, self.records, 1)[[0, 1, -2, -1]])
-                    imid = 1
+                    if self.records > 4:
+                        imid = 1
 
                 head = "YYYY-MM-DD HH:MM:SS Phi_Centre R_Centre R"
                 out = "{:s}{:s}\n{:-<77s}\n".format(out, head, "")
