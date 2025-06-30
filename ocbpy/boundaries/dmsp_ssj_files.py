@@ -114,7 +114,7 @@ def fetch_ssj_boundary_files(stime=None, etime=None, out_dir=None,
     sys.stderr = zenodo_io
 
     zenodo_checksum = os.path.join(out_dir, 'md5sums.txt')
-    # TODO(#151): remove the old (second) way of calling zenodo_get 
+    # TODO(#151): remove the old (second) way of calling zenodo_get
     if hasattr(zenodo_get, "download"):
         zenodo_get.download(doi=doi, output_dir=out_dir, md5=True)
     else:
