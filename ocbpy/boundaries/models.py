@@ -37,8 +37,7 @@ def starkov_auroral_boundary(mlt, al=-1, bnd='ocb'):
 
     References
     ----------
-    .. [8] Starkov, G. V. (1994) Mathematical model of the auroral boundaries,
-    Geomagnetism and Aeronomy, English Translation, 34(3), 331-336.
+    [8]_
 
     """
 
@@ -89,8 +88,7 @@ def starkov_coefficient_values(al, coeff_name, bnd):
 
     References
     ----------
-    .. [8] Starkov, G. V. (1994) Mathematical model of the auroral boundaries,
-    Geomagnetism and Aeronomy, English Translation, 34(3), 331-336.
+    [8]_
 
     """
     # Define the model coefficients for each type of boundary
