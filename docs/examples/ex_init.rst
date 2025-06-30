@@ -8,6 +8,8 @@ for most functions and examples, is the Open-Closed field line Boundary class,
 :py:class:`~ocbpy._boundary.OCBoundary`.
 
 
+.. _exinit-ocb:
+
 Initialise an OCBoundary object
 -------------------------------
 Start a python or iPython session, and begin by importing ocbpy, numpy,
@@ -41,12 +43,15 @@ the default IMAGE FUV file and will take a few minutes to load.
    -----------------------------------------------------------------------------
    2000-05-04 03:03:20 4.64 2.70 21.00
    2000-05-04 03:07:15 147.24 2.63 7.09
+   ...
    2002-10-31 20:03:16 207.11 5.94 22.86
    2002-10-31 20:05:16 335.47 6.76 11.97
 
    Uses scaling function(s):
    ocbpy.ocb_correction.circular(**{})
 
+
+.. _exinit-other:
 
 Other Boundary classes
 ----------------------
@@ -83,6 +88,7 @@ classes.
    -----------------------------------------------------------------------------
    2000-05-05 11:35:27 111.80 2.34 25.12
    2000-05-05 11:37:23 296.23 1.42 26.57
+   ...
    2000-05-07 21:50:20 220.84 7.50 16.89
    2000-05-07 23:32:14 141.27 10.33 18.32
 
@@ -99,9 +105,63 @@ classes.
    -----------------------------------------------------------------------------
    2000-05-05 11:19:52 218.54 9.44 11.48
    2000-05-05 11:35:27 304.51 8.69 15.69
+   ...
    2000-05-07 23:24:14 199.84 10.91 12.69
    2000-05-07 23:32:14 141.53 9.24 13.03
    
 
    Uses scaling function(s):
    ocbpy.ocb_correction.circular(**{})
+
+
+.. _exinit-model:
+
+Initialising with a Model
+-------------------------
+
+Any of these boundary classes may be initialized with a modelled specification
+of the appropriate boundary or boundaries, instead of measurements. This
+requires two major changes. First, a boundary model function that specifies the
+location of the desired boundary in degrees latitude away from the pole must
+be provided through the :py:attr:`rfunc` keyword. This function should have
+magnetic local time (MLT) as the input argument; any subsequent inputs should be
+keyword arguments.  Second, the user must provide an array or list of input
+times for boundary calculations through the :py:var:`stime` keyword argument.
+Model inputs other than MLT are then provided through the :py:attr:`rfunc_kwarg`
+keyword.
+
+
+::
+
+
+   # Set the hourly AL values for an active period
+   stime = [dt.datetime(2000, 1, 4, 4 + i) for i in range(5)]
+   al_list = [-36, -87, -104, -166, -326]
+
+   # Initalize the class for the desired period
+   starkov = ocbpy.OCBoundary(
+       instrument='model', stime=stime,
+       rfunc=ocbpy.boundaries.models.starkov_auroral_boundary,
+       rfunc_kwargs={'al': al_list, 'bnd': 'ocb'})
+   print(starkov)
+
+   OCBoundary
+   Source instrument: MODEL
+   Boundary reference latitude: 74.0 degrees
+
+   5 records from 2000-01-04 04:00:00 to 2000-01-04 08:00:00
+
+   YYYY-MM-DD HH:MM:SS Phi_Centre R_Centre R
+   -----------------------------------------------------------------------------
+   2000-01-04 04:00:00 0.00 0.00 0.00
+   2000-01-04 05:00:00 0.00 0.00 0.00
+   ...
+   2000-01-04 07:00:00 0.00 0.00 0.00
+   2000-01-04 08:00:00 0.00 0.00 0.00
+
+   Uses boundary function(s):
+   ocbpy.boundaries.models.starkov_auroral_boundary(**{'al': -36, 'bnd': 'ocb'})
+   ocbpy.boundaries.models.starkov_auroral_boundary(**{'al': -87, 'bnd': 'ocb'})
+   ...
+   ocbpy.boundaries.models.starkov_auroral_boundary(**{'al': -166, 'bnd': 'ocb'})
+   ocbpy.boundaries.models.starkov_auroral_boundary(**{'al': -326, 'bnd': 'ocb'})
