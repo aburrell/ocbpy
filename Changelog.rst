@@ -3,7 +3,7 @@ Changelog
 
 Summary of all changes made since the first stable release
 
-0.6.0 (XX-XX-2025)
+0.6.0 (07-07-2025)
 ------------------
 * ENH: Updated the AMPERE boundaries to include 2022-2024, inclusive
 * ENH: Added `to_dict` method to the boundary class objects
