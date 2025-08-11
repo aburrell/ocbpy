@@ -10,6 +10,7 @@
 
 from ocbpy import logger
 from ocbpy.boundaries import files  # noqa F401
+from ocbpy.boundaries import models  # noqa F401
 
 try:
     from ocbpy.boundaries import dmsp_ssj_files  # noqa F401

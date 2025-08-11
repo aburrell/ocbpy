@@ -3,6 +3,14 @@ Changelog
 
 Summary of all changes made since the first stable release
 
+0.6.0 (07-07-2025)
+------------------
+* ENH: Updated the AMPERE boundaries to include 2022-2024, inclusive
+* ENH: Added `to_dict` method to the boundary class objects
+* ENH: Added Starkov (1994) auroral model
+* ENH: Adapted boundary classes to accept model boundaries
+* BUG: Supported newest version of zenodo_get, which underwent breaking changes
+
 0.5.0 (01-28-2025)
 ------------------
 * DEP: Removed deprecated functions that depend on ssj_auroral_boundary package

@@ -20,11 +20,11 @@ OCBpy
    
     @Misc{ocbpy,
           author = {Burrell, A. G. and Chisham, G. and Reistad, J. P.},
-	  title  = {aburrell/ocbpy: Version 0.3.0},
-  	  year   = {2022},
-	  date   = {2022-10-21},
+	  title  = {aburrell/ocbpy: Version 0.5.0},
+  	  year   = {2025},
+	  date   = {2025-01-28},
 	  doi    = {10.5281/zenodo.1179230},
-	  url    = {http://doi.org/10.5281/zenodo.1179230},
+	  url    = {https://github.com/aburrell/ocbpy},
 	  }
 
 This package was first described in the python in heliophysics over article,
@@ -75,8 +75,8 @@ also includes fits to the R1 and R2 peaks, for those interested.
   Birkeland currents determined by the Active Magnetosphere and Planetary
   Electrodynamics Response Experiment, J. Geophys. Res. Space Physics, 120,
   doi:10.1002/2015JA021680
-* **FAC**: Milan, Stephen (2023): AMPERE R1/R2 FAC radii v2. University of
-  Leicester. Dataset. https://doi.org/10.25392/leicester.data.22241338.v1
+* **FAC**: Milan, Stephen (2023). AMPERE R1/R2 FAC radii v2. University of
+  Leicester. Dataset. https://doi.org/10.25392/leicester.data.22241338.v3
 * **OCB**: Burrell, A. G., et al. (2020): AMPERE Polar Cap Boundaries,
   Ann. Geophys., 38, 481-490, http://doi.org/10.5194/angeo-38-481-2020
 
@@ -99,3 +99,16 @@ boundary method and data set are provided below.
   Defense Meteorology Satellite Program (DMSP) Electron Precipitation (SSJ)
   Auroral Boundaries, 2010-2014 (Version 1.0.0) [Data set]. Zenodo.
   http://doi.org/10.5281/zenodo.3373812
+
+
+.. _cite-starkov:
+
+Starkov Model
+-------------
+
+The Starkov mathematical auroral boundary model is described in the following
+article. If you use this model please cite both it and your AL data source
+when publishing your work.
+
+* Starkov, G. V. (1994) Mathematical model of the auroral boundaries,
+  Geomagnetism and Aeronomy, English Translation, 34(3), 331-336.
