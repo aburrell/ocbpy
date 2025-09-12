@@ -237,6 +237,8 @@ def gussenhoven_colatitudes(kp, mlt_inds=None, closest=False):
     mlt_keys = np.array(list(offset.keys()))
     if mlt_inds is None:
         mlt_inds = mlt_keys
+    else:
+        mlt_inds = np.asarray(mlt_inds)
 
     # Initialize the output
     colats = np.full(shape=mlt_inds.shape, fill_value=np.nan)
