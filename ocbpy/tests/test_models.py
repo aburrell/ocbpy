@@ -109,7 +109,7 @@ class TestGussenhovelModel(unittest.TestCase):
         self.colat = {0: [23.9, 24.9, 22.3, 22.2, 21.8, 21.1, 20.7, 20.5, 20.4,
                           19.9, 20.6, 19.1, 18.4, 18.9, 18.8, 19.6, 20.6, 21.4,
                           22.1, 22.2],
-                      9: [41.81, 38.85, 35.62, 39.03, 38.9 , 38.29, 37.53,
+                      9: [41.81, 38.85, 35.62, 39.03, 38.90, 38.29, 37.53,
                           35.53, 33.09, 31.15, 28.16, 26.39, 29.92, 30.69,
                           34.46, 36.07, 37.61, 38.14, 38.12, 40.83]}
         return
@@ -263,7 +263,6 @@ class TestGussenhovelModel(unittest.TestCase):
                             msg="failed at {:} MLT with j={:}".format(imlt, j))
                         j += 1
         return
-
 
 
 class TestFits(unittest.TestCase):

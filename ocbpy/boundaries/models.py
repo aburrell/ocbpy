@@ -162,7 +162,7 @@ def gussenhoven_equatorward_auroral_boundary(mlt, kp=0, model='circle'):
 
     """
     closest = True if model.lower() == 'closest' else False
-    
+
     # If desired, calculate the integer hour
     if model.lower() in ['binned', 'closest']:
         imlt = np.floor(mlt).astype(int)
@@ -182,7 +182,7 @@ def gussenhoven_equatorward_auroral_boundary(mlt, kp=0, model='circle'):
     elif model.lower() == "circle":
         # Fit a circle to the boundaries at this Kp
         phi_cent, r_cent, radius, _ = circle_fit(mlts, colats)
-        
+
         # Calculate the circle location at the desired MLTs. Use the positive
         # solution of the quadratic equation, as radius >= r_cent
         theta = ocb_time.hr2rad(mlt) - phi_cent
