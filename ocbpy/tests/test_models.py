@@ -286,9 +286,9 @@ class TestFits(unittest.TestCase):
             self.mlt, self.rvals)
 
         # Test the output.  The anglular offset can be any value with a
-        # radial offset of zero.  It should be constrained within 0-2pi
-        self.assertGreaterEqual(phi_cent, 0.0)
-        self.assertLessEqual(phi_cent, 2.0 * np.pi)
+        # radial offset of zero.  It should be constrained within +/-pi
+        self.assertGreaterEqual(phi_cent, -np.pi)
+        self.assertLessEqual(phi_cent, np.pi)
         self.assertAlmostEqual(r_cent, 0.0)
         self.assertAlmostEqual(radius, 1.0)
         self.assertAlmostEqual(r_err, 0.0)
