@@ -27,6 +27,19 @@ in the code here using the boundary keyworkds: 'ocb', 'eab', and 'diffuse',
 respectively.
 
 
+.. _bound-model-guss:
+
+Gussenhoven
+-----------
+
+The Gussenhoven 1983 model (see :ref:`cite-guss`) uses a mathematical
+formulation based on DMSP data and the Kp index. They specify a single boundary:
+the equatorward edge of the diffuse aurora. As this model defines the boundary
+using separate linear fits for different MLT bins, the results may be returned
+at the binned times ('binned'), at the nearest binned time ('closest'), or at
+the requested times using a circle fit to all of binned times ('circle').
+
+
 .. _bound-model-module:
 
 Boundary Models Module
