@@ -32,7 +32,7 @@ be calculated for a set of MLTs using the
 
 This provides the AACGMV2 magnetic latitude for the entire range of MLT at the
 specified AL values. We can plot these boundaries, using the formatting function
-previously defined in Example :ref:`format-polar-axes`.
+previously defined in :ref:`set_up_polar_plot <format-polar-axes>`.
 
 ::
 

@@ -3,6 +3,10 @@ Changelog
 
 Summary of all changes made since the first stable release
 
+0.7.0 (XX-XX-2025)
+------------------
+* ENH: Added the Gussenhoven (1983) model for the EAB
+
 0.6.0 (07-07-2025)
 ------------------
 * ENH: Updated the AMPERE boundaries to include 2022-2024, inclusive

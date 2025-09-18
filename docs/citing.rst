@@ -112,3 +112,17 @@ when publishing your work.
 
 * Starkov, G. V. (1994) Mathematical model of the auroral boundaries,
   Geomagnetism and Aeronomy, English Translation, 34(3), 331-336.
+
+
+.. _cite-guss:
+
+Gussenhoven Model
+-----------------
+
+The Gussenhoven mathematical diffuse auroral boundary model is described in the
+following article. If you use this model please cite both it and your Kp data
+source when publishing your work.
+
+* Gussenhoven, M. S. et al. (1983) Systematics of the Equatorward Diffuse
+  Auroral Boundary, J. Geophys. Res, 88(A7), 5692-5708.
+
