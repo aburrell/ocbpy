@@ -13,13 +13,12 @@ need the
 `ssj_auroral_boundary <https://github.com/lkilcommons/ssj_auroral_boundary>`__
 package, but now we preferentially support using the
 `zendodo_get <https://github.com/dvolgyes/zenodo_get>`__ package to obtain the
-boundary files from their
-`archive <https://zenodo.org/record/3373812>`__. Once installed,
-you can download DMSP SSJ data and obtain a boundary file for a specified time
-period (or all available times) using :py:mod:`ocbpy.boundaries.dmsp_ssj_files`.
-For this example, we'll use a single day. You can download the files into any
-directory, but this example will put them in the same directory as the other
-boundary files.
+boundary files from their archive at the website: zenodo.org/record/3373812.
+Once installed, you can download DMSP SSJ data and obtain a boundary file for a
+specified time period (or all available times) using
+:py:mod:`ocbpy.boundaries.dmsp_ssj_files`. For this example, we'll use a single
+day. You can download the files into any directory, but this example will put
+them in the same directory as the other boundary files.
 
 ::
    

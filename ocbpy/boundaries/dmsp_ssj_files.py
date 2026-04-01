@@ -20,7 +20,7 @@ References
 
 .. [7] Kilcommons, L., Redmon, R., & Knipp, D. (2019). Defense Meteorology
    Satellite Program (DMSP) Electron Precipitation (SSJ) Auroral Boundaries,
-   2010-2014 (1.0.0) [Data set]. Zenodo. https://doi.org/10.5281/zenodo.3373812
+   2010-2014 (1.0.0) [Data set]. Zenodo. doi:10.5281/zenodo.3373812
 
 """
 
