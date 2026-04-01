@@ -113,13 +113,8 @@ def fetch_ssj_boundary_files(stime=None, etime=None, out_dir=None,
     sys.stdout = zenodo_io
     sys.stderr = zenodo_io
 
-    # TODO(#151): remove the old (second) way of calling zenodo_get
-    if hasattr(zenodo_get, "download"):
-        zenodo_get.download(doi=doi, output_dir=out_dir)
-        zenodo_checksum = None
-    else:
-        zenodo_get.zenodo_get([doi, '-o', out_dir])
-        zenodo_checksum = os.path.join(out_dir, 'md5sums.txt')
+    zenodo_get.download(doi=doi, output_dir=out_dir)
+    zenodo_checksum = None
 
     # Parse the output and retrieve files from the zip archive
     sys.stdout = sys.__stdout__
