@@ -434,19 +434,19 @@ def fix_range(values, min_val, max_val, val_range=None):
 
     # Fix the values, allowing for deviations that are multiples of the
     # value range.  Also propagate NaNs
-    ibad = (np.greater_equal(fixed_vals, max_val, where=~np.isnan(fixed_vals))
-            & ~np.isnan(fixed_vals))
+    ibad = np.greater_equal(fixed_vals, max_val, where=~np.isnan(fixed_vals),
+                            out=None) & ~np.isnan(fixed_vals)
     while np.any(ibad):
         fixed_vals[ibad] -= val_range
         ibad = (np.greater_equal(fixed_vals, max_val,
-                                 where=~np.isnan(fixed_vals))
+                                 where=~np.isnan(fixed_vals), out=None)
                 & ~np.isnan(fixed_vals))
 
-    ibad = (np.less(fixed_vals, min_val, where=~np.isnan(fixed_vals))
+    ibad = (np.less(fixed_vals, min_val, where=~np.isnan(fixed_vals), out=None)
             & ~np.isnan(fixed_vals))
     while np.any(ibad):
         fixed_vals[ibad] += val_range
-        ibad = (np.less(fixed_vals, min_val, where=~np.isnan(fixed_vals))
-                & ~np.isnan(fixed_vals))
+        ibad = np.less(fixed_vals, min_val, where=~np.isnan(fixed_vals),
+                       out=None) & ~np.isnan(fixed_vals)
 
     return fixed_vals

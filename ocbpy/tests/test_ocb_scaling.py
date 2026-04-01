@@ -540,10 +540,10 @@ class TestOCBScalingMethods(unittest.TestCase):
 
                 # Evaluate the output
                 self.assertAlmostEqual(
-                    float(self.vdata.lat), mag_out[coord][0], places=4,
+                    self.vdata.lat.item(), mag_out[coord][0], places=4,
                     msg="unexpected magnetic latitude")
                 self.assertAlmostEqual(
-                    float(self.vdata.lt), mag_out[coord][1], places=4,
+                    self.vdata.lt.item(), mag_out[coord][1], places=4,
                     msg="unexpected MLT")
                 self.assertRegex(self.vdata.loc_coord, "magnetic")
 
@@ -552,9 +552,9 @@ class TestOCBScalingMethods(unittest.TestCase):
                                              coord=coord)
 
                 # Evaluate the output; note the loss of precision
-                self.assertAlmostEqual(float(self.vdata.lat), 75.0, places=1,
+                self.assertAlmostEqual(self.vdata.lat.item(), 75.0, places=1,
                                        msg="unexpected geographic latitude")
-                self.assertAlmostEqual(float(self.vdata.lt), 22.0, places=1,
+                self.assertAlmostEqual(self.vdata.lt.item(), 22.0, places=1,
                                        msg="unexpected SLT")
                 self.assertRegex(self.vdata.loc_coord, coord)
         return
@@ -722,15 +722,15 @@ class TestOCBScalingMethods(unittest.TestCase):
 
                     # Evaluate the output
                     self.assertAlmostEqual(
-                        float(self.vdata.vect_n),
+                        self.vdata.vect_n.item(),
                         mag_out[coord][loc_coord]['vect_n'],
                         places=4, msg="unexpected north component")
                     self.assertAlmostEqual(
-                        float(self.vdata.vect_e),
+                        self.vdata.vect_e.item(),
                         mag_out[coord][loc_coord]['vect_e'],
                         places=4, msg="unexpected east component")
                     self.assertAlmostEqual(
-                        float(self.vdata.vect_z),
+                        self.vdata.vect_z.item(),
                         mag_out[coord][loc_coord]['vect_z'],
                         places=4, msg="unexpected vertical component")
                     self.assertRegex(self.vdata.vect_coord, "magnetic")
@@ -738,10 +738,10 @@ class TestOCBScalingMethods(unittest.TestCase):
 
                     if loc_coord in mag_out.keys():
                         self.assertAlmostEqual(
-                            float(self.vdata.lat), mag_out[loc_coord]['lat'],
+                            self.vdata.lat.item(), mag_out[loc_coord]['lat'],
                             places=4, msg="unexpected magnetic latitude")
                         self.assertAlmostEqual(
-                            float(self.vdata.lt), mag_out[loc_coord]['lt'],
+                            self.vdata.lt.item(), mag_out[loc_coord]['lt'],
                             places=4, msg="unexpected MLT")
         return
 
