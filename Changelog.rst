@@ -9,6 +9,7 @@ Summary of all changes made since the first stable release
 * DEP: Removed support for older versions of `zenodo_get`
 * MAINT: Added support for Python 3.14
 * MAINT: Updated GitHub CI actions
+* MAINT: Updated numpy usage
 
 0.6.0 (07-07-2025)
 ------------------
