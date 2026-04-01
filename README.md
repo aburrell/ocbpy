@@ -45,7 +45,7 @@ These routines may be used as a guide to write routines for other datasets.
 
 # Python versions
 
-This module currently supports Python version 3.10 - 3.13.
+This module currently supports Python version 3.10 - 3.14.
 
 # Dependencies
 
@@ -53,7 +53,7 @@ The listed dependecies were tested with the following versions:
   * numpy
   * aacgmv2
   * pysat (3.2.1+)
-  * zenodo_get
+  * zenodo_get (2.0.0+)
 
 Testing is performed using the python module, unittest.  To limit dependency
 issues, the pysat and zenodo_get dependencies are optional.
