@@ -6,6 +6,9 @@ Summary of all changes made since the first stable release
 0.7.0 (XX-XX-2025)
 ------------------
 * ENH: Added the Gussenhoven (1983) model for the EAB
+* DEP: Removed support for older versions of `zenodo_get`
+* MAINT: Added support for Python 3.14
+* MAINT: Updated GitHub CI actions
 
 0.6.0 (07-07-2025)
 ------------------
