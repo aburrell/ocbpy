@@ -494,7 +494,7 @@ def add_ocb_to_data(pysat_inst, mlat_name='', mlt_name='', height_name='',
                         vname = vector_names[eattr][ikey]
                         if vname in pysat_inst.variables:
                             if time_mask is None:
-                                vector_init[ikey] = pysat_inst[vname].iloc[iout]
+                                vector_init[ikey] = pysat_inst[vname][iout]
                             else:
                                 vector_init[ikey] = reshape_pad_mask_flatten(
                                     pysat_inst[vname], time_mask)
@@ -529,7 +529,7 @@ def add_ocb_to_data(pysat_inst, mlat_name='', mlt_name='', height_name='',
                 for eattr in scale_names:
                     oattr = "{:s}_{:s}".format(eattr, bname)
                     if time_mask is None:
-                        evar = pysat_inst[eattr].iloc[iout]
+                        evar = pysat_inst[eattr][iout]
                     else:
                         evar = reshape_pad_mask_flatten(pysat_inst[eattr],
                                                         time_mask)
