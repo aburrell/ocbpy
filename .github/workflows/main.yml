@@ -40,7 +40,6 @@ jobs:
 
     - name: Install AACGMV2 RC
       run: |
-        pip uninstall aacgmv2
         pip install --no-deps --pre -i https://test.pypi.org/simple/ --extra-index-url https://pypi.org/simple/ aacgmv2
         python -c "import aacgmv2; print(aacgmv2.__version__)"
 
