@@ -40,7 +40,7 @@ jobs:
 
     - name: Install AACGMV2 RC
       run: |
-        pip install --no-deps --pre -i https://test.pypi.org/simple/ --extra-index-url https://pypi.org/simple/ aacgmv2
+        pip install pip install -i https://test.pypi.org/simple/ aacgmv2==2.7.1rc1
         python -c "import aacgmv2; print(aacgmv2.__version__)"
 
     - name: Test PEP8 compliance
