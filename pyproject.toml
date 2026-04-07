@@ -12,7 +12,7 @@ maintainers = [
 ]
 requires-python = ">=3.10"
 dependencies = [
-    "aacgmv2",
+    "aacgmv2>=2.7.1",
     "numpy",
 ]
 readme = "README.md"
