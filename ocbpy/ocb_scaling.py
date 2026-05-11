@@ -473,7 +473,7 @@ class VectorData(object):
             self._vect_mag = vect_sqrt
         else:
             if np.any(np.greater(abs(vect_mag - vect_sqrt), 1.0e-3,
-                                 where=~np.isnan(vect_mag))):
+                                 where=~np.isnan(vect_mag), out=None)):
                 ocbpy.logger.warning("".join([
                     "inconsistent vector components with a maximum difference ",
                     "of {:} > 1.0e-3".format(abs(vect_mag - vect_sqrt).max())]))
@@ -1221,7 +1221,7 @@ def archav(hav):
     alpha = np.full(shape=hav.shape, fill_value=np.nan)
 
     # If the number is positive, calculate the angle
-    norm_mask = (np.greater_equal(hav, 1.0e-16, where=~np.isnan(hav))
+    norm_mask = (np.greater_equal(hav, 1.0e-16, where=~np.isnan(hav), out=None)
                  & ~np.isnan(hav))
     if np.any(norm_mask):
         if hav.shape == ():
@@ -1231,7 +1231,7 @@ def archav(hav):
 
     #  The number is small enough that machine precision may have changed
     # the sign, but it's a single-precission zero
-    small_mask = (np.less(abs(hav), 1.0e-16, where=~np.isnan(hav))
+    small_mask = (np.less(abs(hav), 1.0e-16, where=~np.isnan(hav), out=None)
                   & ~np.isnan(hav))
     if np.any(small_mask):
         if hav.shape == ():

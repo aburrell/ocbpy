@@ -98,10 +98,10 @@ def calc_vec_pole_angle(data_lt, data_lat, pole_lt, pole_lat):
     else:
         flat_mask = (((del_long == 0) | (abs(del_long) == np.pi))
                      & np.greater(abs(data_lat), abs(pole_lat),
-                                  where=~np.isnan(del_long)))
+                                  where=~np.isnan(del_long), out=None))
         zero_mask = (((del_long == 0) | (abs(del_long) == np.pi))
                      & np.less_equal(abs(data_lat), abs(pole_lat),
-                                     where=~np.isnan(del_long)))
+                                     where=~np.isnan(del_long), out=None))
 
         pole_angle[flat_mask] = 180.0
         pole_angle[zero_mask] = 0.0
@@ -176,39 +176,43 @@ def define_pole_quadrants(data_lt, pole_lt, pole_angle):
     pole_quad = np.zeros(shape=np.asarray(del_lt).shape)
 
     # Determine which differences need to be
-    neg_mask = np.less(del_lt, 0.0, where=~np.isnan(del_lt)) & ~np.isnan(del_lt)
+    neg_mask = np.less(del_lt, 0.0, where=~np.isnan(del_lt),
+                       out=None) & ~np.isnan(del_lt)
     while np.any(neg_mask):
         if len(del_lt.shape) == 0:
             del_lt += 24.0
-            neg_mask = np.less(del_lt, 0.0)  # Has one finite value
+            neg_mask = np.less(del_lt, 0.0, out=None)  # Has one finite value
         else:
             del_lt[neg_mask] += 24.0
-            neg_mask = np.less(del_lt, 0.0,
+            neg_mask = np.less(del_lt, 0.0, out=None,
                                where=~np.isnan(del_lt)) & ~np.isnan(del_lt)
 
-    large_mask = np.greater_equal(abs(del_lt), 24.0,
+    large_mask = np.greater_equal(abs(del_lt), 24.0, out=None,
                                   where=~np.isnan(del_lt)) & ~np.isnan(del_lt)
     while np.any(large_mask):
         if len(del_lt.shape) == 0:
             del_lt -= 24.0 * np.sign(del_lt)
-            large_mask = np.greater_equal(abs(del_lt), 24.0)  # One finite value
+            # One finite value
+            large_mask = np.greater_equal(abs(del_lt), 24.0, out=None)
         else:
             del_lt[large_mask] -= 24.0 * np.sign(del_lt[large_mask])
-            large_mask = np.greater_equal(abs(del_lt), 24.0,
+            large_mask = np.greater_equal(abs(del_lt), 24.0, out=None,
                                           where=~np.isnan(del_lt)) & ~np.isnan(
                                               del_lt)
 
     # Find the quadrant in which the OCB pole lies
     nan_mask = ~np.isnan(pole_angle) & ~np.isnan(del_lt)
-    quad1_mask = np.less(pole_angle, 90.0, where=nan_mask) & np.less(
-        del_lt, 12.0, where=nan_mask) & nan_mask
-    quad2_mask = np.less(pole_angle, 90.0, where=nan_mask) & np.greater_equal(
-        del_lt, 12.0, where=nan_mask) & nan_mask
+    quad1_mask = np.less(pole_angle, 90.0, where=nan_mask, out=None) & np.less(
+        del_lt, 12.0, where=nan_mask, out=None) & nan_mask
+    quad2_mask = np.less(
+        pole_angle, 90.0, where=nan_mask, out=None) & np.greater_equal(
+            del_lt, 12.0, where=nan_mask, out=None) & nan_mask
     quad3_mask = np.greater_equal(
-        pole_angle, 90.0, where=nan_mask) & np.greater_equal(
-            del_lt, 12.0, where=nan_mask) & nan_mask
-    quad4_mask = np.greater_equal(pole_angle, 90.0, where=nan_mask) & np.less(
-        del_lt, 12.0, where=nan_mask) & nan_mask
+        pole_angle, 90.0, where=nan_mask, out=None) & np.greater_equal(
+            del_lt, 12.0, where=nan_mask, out=None) & nan_mask
+    quad4_mask = np.greater_equal(
+        pole_angle, 90.0, where=nan_mask, out=None) & np.less(
+            del_lt, 12.0, where=nan_mask, out=None) & nan_mask
 
     if len(pole_quad.shape) == 0:
         if np.all(quad1_mask):
@@ -255,14 +259,16 @@ def define_vect_quadrants(vect_n, vect_e):
     # Get the masks for non-fill values in each quadrant
     nan_mask = ~np.isnan(vect_n) & ~np.isnan(vect_e)
     quad1_mask = np.greater_equal(
-        vect_n, 0.0, where=nan_mask) & np.greater_equal(
-            vect_e, 0.0, where=nan_mask) & nan_mask
-    quad2_mask = np.greater_equal(vect_n, 0.0, where=nan_mask) & np.less(
-        vect_e, 0.0, where=nan_mask) & nan_mask
-    quad3_mask = np.less(vect_n, 0.0, where=nan_mask) & np.less(
-        vect_e, 0.0, where=nan_mask) & nan_mask
-    quad4_mask = np.less(vect_n, 0.0, where=nan_mask) & np.greater_equal(
-        vect_e, 0.0, where=nan_mask) & nan_mask
+        vect_n, 0.0, where=nan_mask, out=None) & np.greater_equal(
+            vect_e, 0.0, where=nan_mask, out=None) & nan_mask
+    quad2_mask = np.greater_equal(
+        vect_n, 0.0, where=nan_mask, out=None) & np.less(
+            vect_e, 0.0, where=nan_mask, out=None) & nan_mask
+    quad3_mask = np.less(vect_n, 0.0, where=nan_mask, out=None) & np.less(
+        vect_e, 0.0, where=nan_mask, out=None) & nan_mask
+    quad4_mask = np.less(
+        vect_n, 0.0, where=nan_mask, out=None) & np.greater_equal(
+            vect_e, 0.0, where=nan_mask, out=None) & nan_mask
 
     # Initialize the output
     vect_quad = np.zeros(shape=nan_mask.shape)
@@ -466,13 +472,14 @@ def calc_dest_vec_sign(pole_quad, vect_quad, base_naz_angle, pole_angle,
 
         pmask = (quads[1][1] | quads[2][2] | quads[3][3] | quads[4][4]
                  | ((quads[1][4] | quads[2][3]) & np.less_equal(
-                     base_naz_angle, pole_plus, where=nan_mask))
+                     base_naz_angle, pole_plus, where=nan_mask, out=None))
                  | ((quads[1][2] | quads[2][1]) & np.less_equal(
-                     base_naz_angle, minus_pole, where=nan_mask))
+                     base_naz_angle, minus_pole, where=nan_mask, out=None))
                  | ((quads[3][4] | quads[4][3]) & np.greater_equal(
-                     base_naz_angle, 180.0 - pole_minus, where=nan_mask))
+                     base_naz_angle, 180.0 - pole_minus, where=nan_mask,
+                     out=None))
                  | ((quads[3][2] | quads[4][1]) & np.greater_equal(
-                     base_naz_angle, pole_minus, where=nan_mask)))
+                     base_naz_angle, pole_minus, where=nan_mask, out=None)))
 
         if np.any(pmask):
             if len(vsigns["north"].shape) == 0:
@@ -491,13 +498,13 @@ def calc_dest_vec_sign(pole_quad, vect_quad, base_naz_angle, pole_angle,
 
         pmask = (quads[1][4] | quads[2][1] | quads[3][2] | quads[4][3]
                  | ((quads[1][1] | quads[4][4]) & np.greater_equal(
-                     base_naz_angle, pole_angle, where=nan_mask))
+                     base_naz_angle, pole_angle, where=nan_mask, out=None))
                  | ((quads[3][1] | quads[2][4]) & np.less_equal(
-                     base_naz_angle, minus_pole, where=nan_mask))
+                     base_naz_angle, minus_pole, where=nan_mask, out=None))
                  | ((quads[4][2] | quads[1][3]) & np.greater_equal(
-                     base_naz_angle, minus_pole, where=nan_mask))
+                     base_naz_angle, minus_pole, where=nan_mask, out=None))
                  | ((quads[2][2] | quads[3][3]) & np.less_equal(
-                     base_naz_angle, pole_angle, where=nan_mask)))
+                     base_naz_angle, pole_angle, where=nan_mask, out=None)))
 
         if np.any(pmask):
             if len(vsigns["east"].shape) == 0:
@@ -618,7 +625,8 @@ def adjust_vector(vect_lt, vect_lat, vect_n, vect_e, vect_z, vect_quad,
         # Determine if the measurement is on or between the poles. This does
         # not affect the vertical direction
         sign_mask = (pole_angle == 0.0) & np.greater_equal(
-            vect_lat, pole_lat, where=~np.isnan(vect_lat)) & ~np.isnan(vect_lat)
+            vect_lat, pole_lat, where=~np.isnan(vect_lat),
+            out=None) & ~np.isnan(vect_lat)
 
         if np.any(sign_mask):
             if len(out_shape) == 0:

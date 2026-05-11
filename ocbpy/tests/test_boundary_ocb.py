@@ -590,11 +590,11 @@ class TestOCBoundaryMethodsNorth(cc.TestLogWarnings):
         self.out = self.ocb.normal_coord(self.lat, self.mlt)
 
         self.assertTrue(numpy.all(numpy.less(abs(self.out[0] - self.ocb_lat),
-                                             1.0e-7,
+                                             1.0e-7, out=None,
                                              where=~numpy.isnan(self.out[0]))
                                   | numpy.isnan(self.out[0])))
         self.assertTrue(numpy.all(numpy.less(abs(self.out[1] - self.ocb_mlt),
-                                             1.0e-7,
+                                             1.0e-7, out=None,
                                              where=(~numpy.isnan(self.out[1])))
                                   | numpy.isnan(self.out[1])))
         self.assertTrue(numpy.where(numpy.isnan(self.out[0]))
@@ -679,11 +679,11 @@ class TestOCBoundaryMethodsNorth(cc.TestLogWarnings):
                                          self.r_corr)
 
         self.assertTrue(numpy.all(numpy.less(abs(self.out[0] - self.lat),
-                                             1.0e-7,
+                                             1.0e-7, out=None,
                                              where=~numpy.isnan(self.out[0]))
                                   | (numpy.isnan(self.out[0]))))
         self.assertTrue(numpy.all(numpy.less(abs(self.out[1] - self.mlt),
-                                             1.0e-7,
+                                             1.0e-7, out=None,
                                              where=(~numpy.isnan(self.out[1])
                                                     & (self.lat < 90.0)))
                                   | numpy.isnan(self.out[0])
@@ -984,10 +984,10 @@ class TestOCBoundaryMethodsSouth(unittest.TestCase):
         self.out = self.ocb.normal_coord(self.lat, self.mlt)
 
         self.assertTrue(numpy.all(numpy.less(abs(self.out[0] - self.ocb_lat),
-                                             1.0e-7,
+                                             1.0e-7, out=None,
                                              where=~numpy.isnan(self.out[0]))))
         self.assertTrue(numpy.all(numpy.less(abs(self.out[1] - self.ocb_mlt),
-                                             1.0e-7,
+                                             1.0e-7, out=None,
                                              where=~numpy.isnan(self.out[1]))))
         self.assertTrue(numpy.all(numpy.where(numpy.isnan(self.out[0]))[0]
                                   == numpy.where(numpy.isnan(self.ocb_lat))[0]))
@@ -1041,11 +1041,11 @@ class TestOCBoundaryMethodsSouth(unittest.TestCase):
                                          self.r_corr)
 
         self.assertTrue(numpy.all(numpy.less(abs(self.out[0] - self.lat),
-                                             1.0e-7,
+                                             1.0e-7, out=None,
                                              where=~numpy.isnan(self.out[0]))
                                   | numpy.isnan(self.out[0])))
         self.assertTrue(numpy.all(numpy.less(abs(self.out[1] - self.mlt),
-                                             1.0e-7,
+                                             1.0e-7, out=None,
                                              where=(~numpy.isnan(self.out[1])
                                                     & (self.lat > -90.0)))
                                   | numpy.isnan(self.out[0])

@@ -20,7 +20,7 @@ References
 
 .. [7] Kilcommons, L., Redmon, R., & Knipp, D. (2019). Defense Meteorology
    Satellite Program (DMSP) Electron Precipitation (SSJ) Auroral Boundaries,
-   2010-2014 (1.0.0) [Data set]. Zenodo. https://doi.org/10.5281/zenodo.3373812
+   2010-2014 (1.0.0) [Data set]. Zenodo. doi:10.5281/zenodo.3373812
 
 """
 
@@ -113,13 +113,8 @@ def fetch_ssj_boundary_files(stime=None, etime=None, out_dir=None,
     sys.stdout = zenodo_io
     sys.stderr = zenodo_io
 
-    # TODO(#151): remove the old (second) way of calling zenodo_get
-    if hasattr(zenodo_get, "download"):
-        zenodo_get.download(doi=doi, output_dir=out_dir)
-        zenodo_checksum = None
-    else:
-        zenodo_get.zenodo_get([doi, '-o', out_dir])
-        zenodo_checksum = os.path.join(out_dir, 'md5sums.txt')
+    zenodo_get.download(doi=doi, output_dir=out_dir)
+    zenodo_checksum = None
 
     # Parse the output and retrieve files from the zip archive
     sys.stdout = sys.__stdout__

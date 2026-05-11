@@ -98,7 +98,7 @@ boundary method and data set are provided below.
 * **SSJ Auroral Boundaries (2010-2014)**: Kilcommons, L., et al. (2019).
   Defense Meteorology Satellite Program (DMSP) Electron Precipitation (SSJ)
   Auroral Boundaries, 2010-2014 (Version 1.0.0) [Data set]. Zenodo.
-  http://doi.org/10.5281/zenodo.3373812
+  doi:10.5281/zenodo.3373812
 
 
 .. _cite-starkov:
