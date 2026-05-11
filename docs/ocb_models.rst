@@ -40,6 +40,19 @@ at the binned times ('binned'), at the nearest binned time ('closest'), or at
 the requested times using a circle fit to all of binned times ('circle').
 
 
+.. _bound-model-champ:
+
+CH-Aurora-2014
+--------------
+
+The CH-Aurora-2014 model (see :ref:`cite-xiong`) uses a mathematical
+formulation based on CHAMP field-aligned current (FAC) data and a delayed
+time-history of the Newell Coupling Function. They specify both auroral
+boundaries in each hemisphere.  Although this model may be driven entirely by
+the Newell Coupling Function, the authors recommend adjusting the model output
+with CHAMP measurements of the FAC boundaries.
+
+
 .. _bound-model-module:
 
 Boundary Models Module

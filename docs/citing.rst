@@ -126,3 +126,23 @@ source when publishing your work.
 * Gussenhoven, M. S. et al. (1983) Systematics of the Equatorward Diffuse
   Auroral Boundary, J. Geophys. Res, 88(A7), 5692-5708.
 
+
+.. _cite-xiong:
+
+CH-Aurora-2014 Model
+--------------------
+
+The CH-Aurora-2014 auroral boundary model provides either a mathematical
+description of the poleward and equatorward auroral boundaries in each
+hemisphere or an assimilated location based on FAC observations of the auroral
+boundaries in that hemisphere.  The data that may be used to adjust the model
+are described in the first article below, while the model itself is described in
+the second article. If you use this model please cite both it and your Newell
+Couping Function data source when publishing your work.
+
+* Xiong, C., et al. (2014) Determining the boundaries of the auroral oval from
+  CHAMP field-aligned current signatures - Part 1, Ann. Geophys., 32,
+  pp 609-622, doi:10.5194/angeo-32-609-2014.
+* Xiong, C. and H. Luhr (2014) An empirical model of the auroral oval derived
+  from CHAMP field-aligned current signatures - Part 2, Ann. Geophys., 32,
+  pp 623-631, doi:10.5194/angeo-32-623-2014
