@@ -25,10 +25,9 @@ References
 """
 
 import datetime as dt
-from io import StringIO
+import hashlib
 import numpy as np
 import os
-import sys
 import zipfile
 
 import aacgmv2
@@ -108,45 +107,42 @@ def fetch_ssj_boundary_files(stime=None, etime=None, out_dir=None,
     if not os.path.isdir(out_dir):
         raise ValueError("can't find the output directory")
 
-    # Download the zenodo archive, capturing the output
-    zenodo_io = StringIO()
-    sys.stdout = zenodo_io
-    sys.stderr = zenodo_io
-
+    # Download the zenodo archive
     zenodo_get.download(doi=doi, output_dir=out_dir)
-    zenodo_checksum = None
 
-    # Parse the output and retrieve files from the zip archive
-    sys.stdout = sys.__stdout__
-    sys.stderr = sys.__stderr__
-    zen_msg = zenodo_io.getvalue()
-    zen_split = zen_msg.split()
+    # Get the checksum file (does not download)
+    zenodo_get.download(doi=doi, output_dir=out_dir, md5=True)
+    zenodo_checksum = os.path.join(out_dir, "md5sums.txt")
 
-    if zen_msg.find('Checksum is correct') < 0 and zen_msg.find(
-            'already downloaded correctly') < 0:
-        raise IOError('Bad checksum: {:s}'.format(zen_msg))
+    # Verify the checksum and retrieve the zip archive name
+    if os.path.isfile(zenodo_checksum):
+        with open(zenodo_checksum, 'r') as zcheck:
+            csum, zip_name = zcheck.read().split()
 
-    # Remove the checksum file if the download problem wasn't found there
+            # Set the archive name
+            archive_name = os.path.join(out_dir, zip_name)
+
+            if not os.path.isfile(archive_name):
+                raise IOError(
+                    'error downloading archive to output dir: {:}'.format(
+                        archive_name))
+
+            # Get the archive checkshum
+            with open(os.path.join(out_dir, archive_name), 'rb') as afile:
+                asum = hashlib.md5(afile.read()).hexdigest()
+
+        zen_msg = "Checksum is correct" if asum == csum else "Corrupted data"
+    else:
+        zen_msg = "Checksum file not created"
+
+    # Remove the checksum file
     if zenodo_checksum is not None:
         os.remove(zenodo_checksum)
 
-    # Get the archive name from the output
-    try:
-        link_ind = zen_split.index('Link:') + 1
-
-        # If the archive is already available, message may differ
-        zip_name = os.path.split(zen_split[link_ind])
-        while zip_name[-1].find(".zip") <= 0:
-            zip_name = os.path.split(zip_name[0])
-
-        # Set the archive name
-        archive_name = os.path.join(out_dir, zip_name[-1])
-    except (ValueError, IndexError):
-        raise IOError('unable to identify zenodo archive: {:}'.format(zen_msg))
-
-    if not os.path.isfile(archive_name):
-        raise IOError('error downloading archive to output dir: {:}'.format(
-            archive_name))
+    # Evaluate checksum output
+    if zen_msg.find('Checksum is correct') < 0 and zen_msg.find(
+            'already downloaded correctly') < 0:
+        raise IOError('Bad checksum: {:s}'.format(zen_msg))
 
     # Access the zip archive
     with zipfile.ZipFile(archive_name, 'r') as zref:

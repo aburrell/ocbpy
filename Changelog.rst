@@ -8,7 +8,8 @@ Summary of all changes made since the first stable release
 * ENH: Added the Gussenhoven (1983) model for the EAB
 * ENH: Added the CH-Aurora-2014 model for the OCB and EAB
 * ENH: Added an AI usage policy (no AI use allowed)
-* DEP: Removed support for older versions of `zenodo_get`
+* DEP: Removed support for older versions of `zenodo_get`, updated download
+  checks to account for breaking changes made in the newer versions
 * MAINT: Added support for Python 3.14
 * MAINT: Updated GitHub CI actions
 * MAINT: Updated numpy usage
