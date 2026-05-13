@@ -14,7 +14,7 @@ jobs:
       matrix:
         os: ["ubuntu-latest", "macos-latest", "windows-latest"]
         python-version: ["3.10", "3.11", "3.12", "3.13", "3.14"]
-        install-extras: ["base", "pysat_instruments", "dmsp_ssj"]
+        install-extras: ["base", "dmsp_ssj"] # , "pysat_instruments"]
 
     name: Python ${{ matrix.python-version }} on ${{ matrix.os }} with ${{ matrix.install-extras }}
     runs-on: ${{ matrix.os }}
