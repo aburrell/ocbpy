@@ -4,7 +4,7 @@ build-backend = "setuptools.build_meta"
 
 [project]
 name = "ocbpy"
-version = "0.6.0"
+version = "0.7.0"
 license = {file = "LICENSE"}
 description = 'Convert between magnetic/geodetic and adaptive, polar boundary coordinates'
 maintainers = [
