@@ -38,6 +38,7 @@ import ocbpy
 - [ ] Make sure you are merging into the ``develop`` (not ``main``) branch
 - [ ] My commits are formatted appropriately (following the SciPy/NumPy style) 
 - [ ] My code follows the style guidelines of this project
+- [ ] I assert that I have not used AI in the development of this pull request
 - [ ] I have performed a self-review of my own code
 - [ ] I have commented my code, particularly in hard-to-understand areas
 - [ ] I have made corresponding changes to the documentation
