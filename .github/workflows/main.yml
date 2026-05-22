@@ -19,7 +19,7 @@ jobs:
           # Pysat test for only pysat-passing Python version
           - python-version: "3.10"
             os: "ubuntu-latest"
-            install-extras: "pysat-instrument"
+            install-extras: "pysat_instruments"
 
     name: Python ${{ matrix.python-version }} on ${{ matrix.os }} with ${{ matrix.install-extras }}
     runs-on: ${{ matrix.os }}
