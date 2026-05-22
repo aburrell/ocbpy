@@ -3,7 +3,7 @@ Changelog
 
 Summary of all changes made since the first stable release
 
-0.7.0 (XX-XX-2025)
+0.7.0 (05-29-2026)
 ------------------
 * ENH: Added the Gussenhoven (1983) model for the EAB
 * ENH: Added the CH-Aurora-2014 model for the OCB and EAB
