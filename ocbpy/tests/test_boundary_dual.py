@@ -586,7 +586,7 @@ class TestDualBoundaryMethodsLocation(cc.TestLogWarnings):
                              len(numpy.isnan(rlat)))
             if not numpy.isnan(rlat).all():
                 self.assertTrue(
-                    numpy.less(abs(self.out[0] - rlat), tol,
+                    numpy.less(abs(self.out[0] - rlat), tol, out=None,
                                where=~numpy.isnan(rlat)).all(),
                     msg="unequal {:s}: {:} != {:}".format(lat_str, self.out[0],
                                                           rlat))
@@ -594,7 +594,7 @@ class TestDualBoundaryMethodsLocation(cc.TestLogWarnings):
                              len(numpy.isnan(rmlt)))
             if not numpy.isnan(rmlt).all():
                 self.assertTrue(
-                    numpy.less(abs(self.out[1] - rmlt), tol,
+                    numpy.less(abs(self.out[1] - rmlt), tol, out=None,
                                where=~numpy.isnan(rmlt)).all(),
                     msg="unequal {:s}: {:} != {:}".format(mlt_str, self.out[1],
                                                           rmlt))
@@ -605,7 +605,8 @@ class TestDualBoundaryMethodsLocation(cc.TestLogWarnings):
                 if not numpy.isnan(self.out[2]).all():
                     self.assertTrue(
                         numpy.less(abs(self.out[2] - self.olat[hemisphere]),
-                                   tol, where=~numpy.isnan(self.out[2])).all(),
+                                   tol, where=~numpy.isnan(self.out[2]),
+                                   out=None).all(),
                         msg="unequal OCB latitude: {:} != {:}".format(
                             self.out[2], self.olat[hemisphere]))
 
@@ -615,7 +616,8 @@ class TestDualBoundaryMethodsLocation(cc.TestLogWarnings):
                 else:
                     self.assertTrue(
                         numpy.less(abs(self.out[3] - self.rcorr), tol,
-                                   where=~numpy.isnan(self.out[3])).all(),
+                                   where=~numpy.isnan(self.out[3]),
+                                   out=None).all(),
                         msg="unequal radial correction: {:} != {:}".format(
                             self.out[3], self.rcorr))
         else:
@@ -1119,7 +1121,7 @@ class TestDualBoundaryMethodsLocation(cc.TestLogWarnings):
 
                 # Ensure the expected values and fill values are returned
                 self.assertTrue(
-                    numpy.less(abs(abound - self.bounds[i]), 1e-7,
+                    numpy.less(abs(abound - self.bounds[i]), 1e-7, out=None,
                                where=~numpy.isnan(abound)).all(),
                     msg="unexpected boundary: {:} != {:}".format(
                         abound, self.bounds[i]))

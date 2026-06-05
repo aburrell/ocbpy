@@ -9,14 +9,23 @@ References
 ----------
 .. [8] Starkov, G. V. (1994) Mathematical model of the auroral boundaries,
    Geomagnetism and Aeronomy, English Translation, 34(3), 331-336.
+.. [9] Gussenhoven, M. S. et al. (1983) Systematics of the Equatorward Diffuse
+   Auroral Boundary, J. Geophys. Res, 88(A7), 5692-5708.
+.. [10] Umbach and Jones (2003) A Few Methods for Fitting Circles to Data,
+   IEEE Transactions on Instruments and Measurements, 52(6), pp 1881-1885
+.. [11] Xiong and Luhr (2014) An empirical model of the auroral oval derived
+   from CHAMP field-aligned current signatures - Part 2, Ann. Geophys., 32,
+   pp 623-631, doi:10.5194/angeo-32-623-2014
 
 """
 
 import numpy as np
 
+from ocbpy import ocb_time
+
 
 def starkov_auroral_boundary(mlt, al=-1, bnd='ocb'):
-    """Calculate the location of the auroral boundaries.
+    """Calculate the location of the Starkov auroral boundaries.
 
     Parameters
     ----------
@@ -121,3 +130,450 @@ def starkov_coefficient_values(al, coeff_name, bnd):
             log_al**2) + coeff_terms[coeff_name][bnd][3] * (log_al**3)
 
     return coeff
+
+
+def gussenhoven_equatorward_auroral_boundary(mlt, kp=0, model='circle'):
+    """Calculate the location of the diffuse EAB.
+
+    Parameters
+    ----------
+    mlt : float or array-like
+        Magnetic local time in hours
+    kp : float or int
+        Decimal Kp geomagnetic index, ranges from 0 to 9 with "+" translating
+        to plus one third and "-" translating to minus one third (default=0)
+    model : str
+        Model flavour, with 'binned' using the value from the available hourly
+        solutions or NaN if that hour is absent, 'closest' to use the closest
+        hourly bin, or 'circle' to use the value of the circle fit to the
+        available hourly solutions (default='circle')
+
+    Returns
+    -------
+    bnd_lat : float or array-like
+        Location of the boundary in degrees away from the pole in corrected
+        geomagnetic coordinates for the specified magnetic local times.
+
+    Raises
+    ------
+    ValueError
+        If an unknown model method is requested.
+
+    References
+    ----------
+    [9]_
+
+    """
+    closest = True if model.lower() == 'closest' else False
+
+    # If desired, calculate the integer hour
+    if model.lower() in ['binned', 'closest']:
+        imlt = np.floor(mlt).astype(int)
+
+        if imlt.shape == ():
+            imlt = np.array([imlt])
+    else:
+        imlt = None
+
+    # Get the desired latitude boundaries
+    colats, mlts = gussenhoven_colatitudes(kp, mlt_inds=imlt, closest=closest)
+
+    # If desired, fit the co-latitude boundaries and return the locations
+    # at the exact MLT values
+    if model.lower() in ['binned', 'closest']:
+        bnd_lat = colats
+    elif model.lower() == "circle":
+        # Fit a circle to the boundaries at this Kp
+        phi_cent, r_cent, radius, _ = circle_fit(mlts, colats)
+
+        # Calculate the circle location at the desired MLTs. Use the positive
+        # solution of the quadratic equation, as radius >= r_cent
+        theta = ocb_time.hr2rad(mlt) - phi_cent
+        bnd_lat = r_cent * np.cos(theta) + np.sqrt(
+            radius**2 - r_cent**2 * (np.sin(theta))**2)
+    else:
+        raise ValueError('unknown model method: {:}'.format(model))
+
+    return bnd_lat
+
+
+def gussenhoven_colatitudes(kp, mlt_inds=None, closest=False):
+    """Calculate the Gussenhoven EAB model co-latitude values.
+
+    Parameters
+    ----------
+    kp : float or int
+        Decimal Kp geomagnetic index, ranges from 0 to 9 with "+" translating
+        to plus one third and "-" translating to minus one third
+    mlt_inds : array-like or NoneType
+        MLT hourly bins at which boundary locations will be returned or None
+        to return all available values (default=None)
+    closest : bool
+        If False, will return NaN for the request for an MLT value that does not
+        exist. If True, will find the closest binned value and return that
+        instead (default=False)
+
+    Returns
+    -------
+    colats : array-like
+        Co-latitude values in degrees away from the pole for the requested
+        MLT bins
+    mlts : array-like
+        MLT bin values for each co-latitude
+
+    References
+    ----------
+    [9]_
+
+    """
+    # Set the function values for each MLT bin
+    offset = {0: 66.1, 1: 65.1, 4: 67.7, 5: 67.8, 6: 68.2, 7: 68.9, 8: 69.3,
+              9: 69.5, 10: 69.6, 11: 70.1, 12: 69.4, 15: 70.9, 16: 71.6,
+              17: 71.1, 18: 71.2, 19: 70.4, 20: 69.4, 21: 68.6, 22: 67.9,
+              23: 67.8}
+    slope = {0: -1.99, 1: -1.55, 4: -1.48, 5: -1.87, 6: -1.90, 7: -1.91,
+             8: -1.87, 9: -1.67, 10: -1.41, 11: -1.25, 12: -0.84, 15: -0.81,
+             16: -1.28, 17: -1.31, 18: -1.74, 19: -1.83, 20: -1.89, 21: -1.86,
+             22: -1.78, 23: -2.07}
+
+    # Ensure the MLT indices are set
+    mlt_keys = np.array(list(offset.keys()))
+    if mlt_inds is None:
+        mlt_inds = mlt_keys
+    else:
+        mlt_inds = np.asarray(mlt_inds)
+
+    # Initialize the output
+    colats = np.full(shape=mlt_inds.shape, fill_value=np.nan)
+    mlts = np.asarray(mlt_inds)
+
+    # Cycle through each MLT index
+    for i, imlt in enumerate(mlt_inds):
+        if imlt in mlt_keys:
+            # Set the calculation key
+            colat_key = imlt
+        elif closest:
+            # Find the closest time with a boundary solution
+            iclose = abs(imlt - mlt_keys).argmin()
+            colat_key = mlt_keys[iclose]
+            mlts[i] = colat_key
+        else:
+            colat_key = None
+
+        if colat_key is not None:
+            # Find the closest co-latitude solution
+            colat = 90 - (offset[colat_key] + slope[colat_key] * kp)
+
+            # Ensure there are no values outside of the allowed range
+            if colat < 0.0:
+                colat = 0.0
+            elif colat > 90.0:
+                colat = 90.0
+
+            # Save the output
+            colats[i] = colat
+
+    return colats, mlts
+
+
+def circle_fit(mlt, colat):
+    """Fit a circle to boundary estimates.
+
+    Parameters
+    ----------
+    mlt : array-like
+        Array of MLT values in hours for the boundary locations
+    colat : array-like
+        Array of magnetic co-latitude values in degrees denoting the boundary
+        locations, paired to the `mlt` inputs
+
+    Returns
+    -------
+    phi_cent : float
+        MLT location of the circle centers in radians
+    r_cent : float
+        Co-latitude of the circle center in degrees
+    radius : float
+        Radius of the circle in degrees latitude
+    r_err : float
+        RMS error of the fit
+
+    Raises
+    ------
+    ValueError
+        If the inputs are the wrong shape
+
+    References
+    ----------
+    Section D in [10]_
+
+    """
+    # Ensure the arrays are of equal length
+    phi = ocb_time.hr2rad(np.asarray(mlt))
+    colat = np.asarray(colat)
+
+    if phi.shape != colat.shape:
+        raise ValueError("input MLT and MLat arrays must be the same shape")
+
+    if len(phi.shape) != 1:
+        raise ValueError('routine only supports 1D arrays')
+
+    # Get the cartesian values of the boundary points.  Define the x-axis to
+    # lie along 0 MLT and the y-axis to lie along 6 MLT, with the origin at the
+    # magnetic pole.
+    x_bound = colat * np.cos(phi)
+    y_bound = colat * np.sin(phi)
+
+    # Apply the circle fitting algorithm, a modified least-squares method,
+    # from Umbach and Jones section D
+    sum_x = np.sum(x_bound)
+    sum_y = np.sum(y_bound)
+    sum_x2 = np.sum(x_bound**2)
+    sum_y2 = np.sum(y_bound**2)
+    sum_xy = np.sum((x_bound * y_bound))
+    sum_xy2 = np.sum(x_bound * (y_bound**2))
+    sum_yx2 = np.sum(y_bound * (x_bound**2))
+    sum_x3 = np.sum(x_bound * x_bound * x_bound)
+    sum_y3 = np.sum(y_bound * y_bound * y_bound)
+
+    fit_a = (colat.shape[0] * sum_x2) - sum_x**2
+    fit_b = (colat.shape[0] * sum_xy) - (sum_x * sum_y)
+    fit_c = (colat.shape[0] * sum_y2) - sum_y**2
+    fit_d = 0.5 * ((colat.shape[0] * sum_xy2) - (sum_x * sum_y2)
+                   + (colat.shape[0] * sum_x3) - (sum_x * sum_x2))
+    fit_e = 0.5 * ((colat.shape[0] * sum_yx2) - (sum_y * sum_x2)
+                   + (colat.shape[0] * sum_y3) - (sum_y * sum_y2))
+
+    # Determine the centre of the fitted circle in Cartesian coordinates
+    circle_denom = (fit_a * fit_c) - fit_b**2
+    major_a = ((fit_d * fit_c) - (fit_b * fit_e)) / circle_denom
+    minor_b = ((fit_a * fit_e) - (fit_b * fit_d)) / circle_denom
+
+    # Convert the circle centre to co-latitude in degrees
+    r_cent = np.sqrt(major_a**2 + minor_b**2)
+    phi_cent = np.arctan2(minor_b, major_a)
+
+    # Determine the radius of the fitted circle
+    rad_bound = np.sqrt((x_bound - major_a)**2 + (y_bound - minor_b)**2)
+    radius = rad_bound.mean()
+
+    # Calculate the error of the radius
+    r_err = np.sqrt(np.mean((rad_bound - radius)**2))
+
+    return phi_cent, r_cent, radius, r_err
+
+
+def ch_aurora_2014_boundary(mlt, em=0, bnd='ocb', hemi=1, obs_colat=None,
+                            obs_mlt=None):
+    """Calculate the location of the CH-Aurora-2014 auroral boundaries.
+
+    Parameters
+    ----------
+    mlt : float or array-like
+        Magnetic local time in hours
+    em : float or int
+        The time-integrated Newell Coupling Function, as described in Equation 2
+        of [11]_ (default=0)
+    bnd : str
+        Boundary to calculate, expects one of 'ocb' or 'eab' (default='ocb')
+    hemi : int
+        Sign denoting the hemisphere, 1 for North and -1 for South (default=1)
+    obs_colat : array-like
+        CHAMP, or other, boundary observation co-latitudes (default=None)
+    obs_mlt : array-like
+        MLT of the observed boundary locations (default=None)
+
+    Returns
+    -------
+    bnd_lat : float or array-like
+        Location of the boundary in degrees away from the pole in apex
+        geomagnetic coordinates for the specified magnetic local times.
+
+    References
+    ----------
+    [11]_
+
+    """
+    # Calculate each parameter for the desired IMF conditions; all are in
+    # degrees except for phi0, which is in radians.
+    semix, semiy, x0, y0, phi0 = ch_aurora_2014_coefficient_values(em, bnd,
+                                                                   hemi)
+
+    # If observations are supplied, ensure their MLT are included in the calc
+    calc_mlt = np.array(mlt)
+    iobs = 0
+    if obs_mlt is not None:
+        obs_mlt_array = np.array(obs_mlt)
+
+        if calc_mlt.ndim == 0:
+            iobs = 1
+            if obs_mlt_array.ndim == 0:
+                calc_mlt = np.array([mlt, obs_mlt])
+            else:
+                calc_mlt = list(obs_mlt)
+                calc_mlt.insert(0, mlt)
+                calc_mlt = np.array(calc_mlt)
+        else:
+            calc_mlt = list(mlt)
+            iobs = len(mlt)
+            if obs_mlt_array.ndim == 0:
+                calc_mlt.append(obs_mlt)
+            else:
+                calc_mlt.extend(list(obs_mlt))
+            calc_mlt = np.array(calc_mlt)
+
+    # Calculate the angular MLT
+    ang_lt = ocb_time.hr2rad(calc_mlt)
+
+    # First round of calculations with phi == ang_lt
+    bnd_lat = ch_aurora_2014_radius(ang_lt, semix, semiy, x0, y0, phi0)
+
+    # Now calculate the angular time from the radius
+    xprime = bnd_lat * np.cos(ang_lt + phi0) + x0
+    yprime = bnd_lat * np.sin(ang_lt + phi0) + y0
+    ang_prime = np.arctan2(yprime, xprime)
+
+    # Recalculate the radius using the new local times
+    bnd_lat = ch_aurora_2014_radius(ang_prime, semix, semiy, x0, y0, phi0)
+
+    # If desired, modify the boundary locations based on observations
+    if iobs > 0:
+        # Get the model values for the observation times
+        mod_colat = bnd_lat[iobs:]
+        del_lat = np.nanmean(obs_colat - mod_colat)
+
+        # Insert the adjustment
+        bnd_lat = ch_aurora_2014_radius(ang_lt, semix, semiy, x0, y0, phi0,
+                                        del_lat)
+
+        # Now calculate the angular time from the radius
+        xprime = bnd_lat * np.cos(ang_lt + phi0) + x0
+        yprime = bnd_lat * np.sin(ang_lt + phi0) + y0
+        ang_prime = np.arctan2(yprime, xprime)
+
+        # Recalculate the radius using the new local times
+        bnd_lat = ch_aurora_2014_radius(ang_prime, semix, semiy, x0, y0, phi0,
+                                        del_lat)
+
+        # Downselect the output to include only the desired MLT
+        bnd_lat = bnd_lat[:iobs]
+
+    # Ensure the output co-latitude is a float if the input MLT is a float
+    if calc_mlt.ndim == 0:
+        if bnd_lat.ndim == 0:
+            bnd_lat = float(bnd_lat)
+        else:
+            bnd_lat = float(bnd_lat[0])
+
+    return bnd_lat
+
+
+def ch_aurora_2014_coefficient_values(em, bnd, hemi):
+    """Retrive the CH-Aurora-2014 auroral boundary coefficients.
+
+    Parameters
+    ----------
+    em : float or int
+        The time-integrated Newell Coupling Function, as described in Equation 2
+        of [11]_ (default=0)
+    bnd : str
+        Boundary to calculate, expects one of 'ocb' or 'eab'
+    hemi : int
+        Sign denoting the hemisphere, 1 for North and -1 for South
+
+    Returns
+    -------
+    semix : float
+        Semi-axis along the x-plane
+    semiy : float
+        Semi-axis along the y-plane
+    x0 : float
+        x-coordinate of the ellipse center
+    y0 : float
+        y-coordinate of the ellipse center
+    phi0 : float
+        Orientation angle of the ellipse
+
+    References
+    ----------
+    Tables 2 and 3 in [11]_
+
+    """
+    # Set the ellipse parameters from Tables 2 and 3 from Xiong and Luhr.
+    # The list includes the p0, p1, and p2 parameters in that order, all
+    # provided in degrees
+    semix_param = {'eab': {1: [18.861, 0.95470, -0.023836],
+                           -1: [18.559, 0.81597, -0.013209]},
+                   'ocb': {1: [12.813, 0.26173, -5.9729e-4],
+                           -1: [13.251, 0.28870, -3.0559e-4]}}
+    semiy_param = {'eab': {1: [20.562, 1.1504, -0.029566],
+                           -1: [19.549, 0.10752, -0.024605]},
+                   'ocb': {1: [9.5486, 0.96759, -0.029556],
+                           -1: [11.605, 0.82006, -0.024073]}}
+    x0_param = {'eab': {1: [4.1263, 0.027827, 0.0],
+                        -1: [3.6946, 0.044667, 0.0]},
+                'ocb': {1: [4.5175, -0.025310, 0.0],
+                        -1: [4.2526, -0.021674, 0.0]}}
+    y0_param = {'eab': {1: [-0.32637, -0.028855, 1.6569e-3],
+                        -1: [-0.60436, -0.011623, 6.5985e-4]},
+                'ocb': {1: [-0.39316, -0.15732, 5.613e-3],
+                        -1: [-1.1330, -0.024479, 7.0729e-4]}}
+    phi0_param = {'eab': {1: [-3.1555, 0.31147, 0.0],
+                          -1: [-8.8836, -0.10934, 0.0]},
+                  'ocb': {1: [-8.5358, 1.2831, 0.0],
+                          -1: [3.7050, -1.5508, 0.0]}}
+
+    # Calculate each parameter for the desired IMF conditions
+    semix = semix_param[bnd][hemi][0] + semix_param[bnd][hemi][
+        1] * em + semix_param[bnd][hemi][2] * em * em
+    semiy = semiy_param[bnd][hemi][0] + semiy_param[bnd][hemi][
+        1] * em + semiy_param[bnd][hemi][2] * em * em
+    x0 = x0_param[bnd][hemi][0] + x0_param[bnd][hemi][1] * em + x0_param[bnd][
+        hemi][2] * em * em
+    y0 = y0_param[bnd][hemi][0] + y0_param[bnd][hemi][1] * em + y0_param[bnd][
+        hemi][2] * em * em
+    phi0 = np.radians(phi0_param[bnd][hemi][0] + phi0_param[bnd][hemi][1] * em
+                      + phi0_param[bnd][hemi][2] * em * em)
+
+    return semix, semiy, x0, y0, phi0
+
+
+def ch_aurora_2014_radius(ang_lt, semix, semiy, x0, y0, phi0, del_rad=0.0):
+    """Calculate the CH-Aurora-2014 ellipse radii at the desired times.
+
+    Parameters
+    ----------
+    ang_lt : float or array-like
+        Angular measure of MLT in radians
+    semix : float
+        Semi-axis along the x-plane in degrees
+    semiy : float
+        Semi-axis along the y-plane in degrees
+    x0 : float
+        x-coordinate of the ellipse center in degrees
+    y0 : float
+        y-coordinate of the ellipse center in degrees
+    phi0 : float
+        Orientation angle of the ellipse in radians
+    del_rad : float
+        Assimilative adjustment to the radius in degrees
+
+    Returns
+    -------
+    rad : float or array-like
+        Radius of the ellipse at the desired MLT in degrees
+
+    References
+    ----------
+    Equations 3 and 4 in [11]_
+
+    """
+    # Calculate the radius from the centre of the ellipse
+    r0 = del_rad + semix * semiy / np.sqrt((semix * np.sin(ang_lt + phi0))**2
+                                           + (semiy * np.cos(ang_lt + phi0))**2)
+
+    # Adjust to provide the radius from the magnetic pole
+    rad = np.sqrt((r0 * np.cos(ang_lt + phi0) + x0)**2
+                  + (r0 * np.sin(ang_lt + phi0) + y0)**2)
+
+    return rad

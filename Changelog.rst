@@ -3,6 +3,17 @@ Changelog
 
 Summary of all changes made since the first stable release
 
+0.7.0 (06-05-2026)
+------------------
+* ENH: Added the Gussenhoven (1983) model for the EAB
+* ENH: Added the CH-Aurora-2014 model for the OCB and EAB
+* ENH: Added an AI usage policy (no AI use allowed)
+* DEP: Removed support for older versions of `zenodo_get`, updated download
+  checks to account for breaking changes made in the newer versions
+* MAINT: Added support for Python 3.14
+* MAINT: Updated GitHub CI actions
+* MAINT: Updated numpy usage
+
 0.6.0 (07-07-2025)
 ------------------
 * ENH: Updated the AMPERE boundaries to include 2022-2024, inclusive

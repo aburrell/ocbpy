@@ -98,7 +98,7 @@ boundary method and data set are provided below.
 * **SSJ Auroral Boundaries (2010-2014)**: Kilcommons, L., et al. (2019).
   Defense Meteorology Satellite Program (DMSP) Electron Precipitation (SSJ)
   Auroral Boundaries, 2010-2014 (Version 1.0.0) [Data set]. Zenodo.
-  http://doi.org/10.5281/zenodo.3373812
+  doi:10.5281/zenodo.3373812
 
 
 .. _cite-starkov:
@@ -112,3 +112,37 @@ when publishing your work.
 
 * Starkov, G. V. (1994) Mathematical model of the auroral boundaries,
   Geomagnetism and Aeronomy, English Translation, 34(3), 331-336.
+
+
+.. _cite-guss:
+
+Gussenhoven Model
+-----------------
+
+The Gussenhoven mathematical diffuse auroral boundary model is described in the
+following article. If you use this model please cite both it and your Kp data
+source when publishing your work.
+
+* Gussenhoven, M. S. et al. (1983) Systematics of the Equatorward Diffuse
+  Auroral Boundary, J. Geophys. Res, 88(A7), 5692-5708.
+
+
+.. _cite-xiong:
+
+CH-Aurora-2014 Model
+--------------------
+
+The CH-Aurora-2014 auroral boundary model provides either a mathematical
+description of the poleward and equatorward auroral boundaries in each
+hemisphere or an assimilated location based on FAC observations of the auroral
+boundaries in that hemisphere.  The data that may be used to adjust the model
+are described in the first article below, while the model itself is described in
+the second article. If you use this model please cite both it and your Newell
+Couping Function data source when publishing your work.
+
+* Xiong, C., et al. (2014) Determining the boundaries of the auroral oval from
+  CHAMP field-aligned current signatures - Part 1, Ann. Geophys., 32,
+  pp 609-622, doi:10.5194/angeo-32-609-2014.
+* Xiong, C. and H. Luhr (2014) An empirical model of the auroral oval derived
+  from CHAMP field-aligned current signatures - Part 2, Ann. Geophys., 32,
+  pp 623-631, doi:10.5194/angeo-32-623-2014

@@ -13,15 +13,20 @@ jobs:
       fail-fast: false
       matrix:
         os: ["ubuntu-latest", "macos-latest", "windows-latest"]
-        python-version: ["3.10", "3.11", "3.12", "3.13"]
-        install-extras: ["base", "pysat_instruments", "dmsp_ssj"]
+        python-version: ["3.10", "3.11", "3.12", "3.13", "3.14"]
+        install-extras: ["base", "dmsp_ssj"]
+        include:
+          # Pysat test for only pysat-passing Python version
+          - python-version: "3.10"
+            os: "ubuntu-latest"
+            install-extras: "pysat_instruments"
 
     name: Python ${{ matrix.python-version }} on ${{ matrix.os }} with ${{ matrix.install-extras }}
     runs-on: ${{ matrix.os }}
     steps:
-    - uses: actions/checkout@v4
+    - uses: actions/checkout@v6
     - name: Set up Python ${{ matrix.python-version }}
-      uses: actions/setup-python@v5
+      uses: actions/setup-python@v6
       with:
         python-version: ${{ matrix.python-version }}
 
@@ -50,33 +55,13 @@ jobs:
         coverage report
         coverage xml --rcfile=pyproject.toml
 
-    - name: Install and run Coveralls Reporter(Linux)
-      if: startsWith(matrix.os, 'ubuntu')
-      env:
-        COVERALLS_REPO_TOKEN: ${{ secrets.COVERALLS_REPO_TOKEN }}
-        COVERALLS_PARALLEL: true
-      run: |
-        curl -sL https://coveralls.io/coveralls-linux.tar.gz | tar -xz
-        ./coveralls report -f coverage.xml --parallel --repo-token=${{ secrets.COVERALLS_REPO_TOKEN }} --build-number ${{ github.run_number }}
-
-    - name: Install and run Coveralls Reporter (Windows)
-      if: startsWith(matrix.os, 'windows')
-      env:
-        COVERALLS_REPO_TOKEN: ${{ secrets.COVERALLS_REPO_TOKEN }}
-        COVERALLS_PARALLEL: true
-      run: |
-        curl -L https://github.com/coverallsapp/coverage-reporter/releases/latest/download/coveralls-windows.exe -o coveralls.exe
-        ./coveralls.exe report -f coverage.xml --parallel --repo-token=${{ secrets.COVERALLS_REPO_TOKEN }} --build-number ${{ github.run_number }}
-
-    - name: Report  and run Coveralls (macOS)
-      if: startsWith(matrix.os, 'macos')
-      env:
-        COVERALLS_REPO_TOKEN: ${{ secrets.COVERALLS_REPO_TOKEN }}
-        COVERALLS_PARALLEL: true
-      run: |
-        brew tap coverallsapp/coveralls --quiet
-        brew install coveralls --quiet
-        coveralls report -f coverage.xml --parallel --repo-token=${{ secrets.COVERALLS_REPO_TOKEN }} --build-number ${{ github.run_number }}
+    - name: Coveralls Parallel
+      uses: coverallsapp/github-action@v2
+      with:
+        flag-name: run=${{ join(matrix.*, '-') }}
+        parallel: true
+        format: cobertura
+        debug: true
 
   finish:
     name: Finish Coverage Analysis
@@ -84,9 +69,7 @@ jobs:
     runs-on: "ubuntu-latest"
     steps:
       - name: Coveralls Finished
-        env:
-          COVERALLS_REPO_TOKEN: ${{ secrets.COVERALLS_REPO_TOKEN }}
-          COVERALLS_PARALLEL: true
-        run: |
-          curl -sL https://coveralls.io/coveralls-linux.tar.gz | tar -xz
-          ./coveralls done --build-number ${{ github.run_number }}
+        uses: coverallsapp/github-action@v2
+        with:
+          parallel-finished: true
+          carryforward: "all"

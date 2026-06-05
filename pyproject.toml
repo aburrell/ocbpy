@@ -4,7 +4,7 @@ build-backend = "setuptools.build_meta"
 
 [project]
 name = "ocbpy"
-version = "0.6.0"
+version = "0.7.0"
 license = {file = "LICENSE"}
 description = 'Convert between magnetic/geodetic and adaptive, polar boundary coordinates'
 maintainers = [
@@ -12,7 +12,7 @@ maintainers = [
 ]
 requires-python = ">=3.10"
 dependencies = [
-    "aacgmv2",
+    "aacgmv2>=2.7.1",
     "numpy",
 ]
 readme = "README.md"
@@ -46,6 +46,7 @@ classifiers = [
     "Programming Language :: Python :: 3.11",
     "Programming Language :: Python :: 3.12",
     "Programming Language :: Python :: 3.13",
+    "Programming Language :: Python :: 3.14",
     'Operating System :: Unix',
     'Operating System :: POSIX',
     'Operating System :: POSIX :: Linux',
@@ -55,14 +56,14 @@ classifiers = [
 
 [project.optional-dependencies]
 pysat_instruments = [ "pysat>=3.2.1" ]
-dmsp_ssj = [ "zenodo-get" ]
+dmsp_ssj = [ "zenodo-get>=2.0.0" ]
 doc = [
     "numpydoc",
     "pyproject-parser",
     "pysat>=3.2.1",
     "sphinx>=1.3",
     "sphinx-rtd-theme",
-    "zenodo-get",
+    "zenodo-get>=2.0.0",
 ]
 test = [
      "coverage[toml]",
