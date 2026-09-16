@@ -46,13 +46,15 @@ AMPERE
 
 OCB data sets can also be obtained from AMPERE (Active Magnetosphere and
 Planetary Electrodynamics Response Experiment) R1/R2 Field-Aligned Current (FAC)
-boundary data.  This data is provided for both hemispheres between 2010-2021,
-inclusive. Because there is an offset between the R1/R2 FAC boundary and the
-OCB, a correction is required.  This correction can be implemented using the
-routines in :py:mod:`ocbpy.ocb_correction`.
+boundary data.  This data may be obtained for both hemispheres between
+2010-2024, inclusive, using the downloading and formatting functions in
+:py:mod:`ocbpy.boundaries.ampere_r1r2_files`. Because there is an offset
+between the R1/R2 FAC boundary and the OCB, a correction is required.  This
+correction can be implemented using the routines in
+:py:mod:`ocbpy.ocb_correction`.
 
-In the most recent version
-(`V2 <https://figshare.le.ac.uk/articles/dataset/AMPERE_R1_R2_FAC_radii_v2/22241338/1>`_)
+In the most recent
+`version <https://figshare.le.ac.uk/articles/dataset/AMPERE_R1_R2_FAC_radii_v2/22241338>`_
 of these AMPERE boundary fits, which uses the newly-processed AMPERE data, a fit
 for the Heppner-Maynard Boundary (HMB) were also made available. The HMB has
 been shown to be related to the equatorward boundary of the auroral oval near
