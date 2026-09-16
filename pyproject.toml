@@ -55,8 +55,11 @@ classifiers = [
 ]
 
 [project.optional-dependencies]
-pysat_instruments = [ "pysat>=3.2.1" ]
+all = [ "ocbpy[ampere, dmsp_ssj, pysat_instruments]" ]
+ampere = [ "pyfigshare" ]
 dmsp_ssj = [ "zenodo-get>=2.0.0" ]
+downloads = [ "ocbpy[ampere, dmsp_ssj]" ]
+pysat_instruments = [ "pysat>=3.2.1" ]
 doc = [
     "numpydoc",
     "pyproject-parser",
