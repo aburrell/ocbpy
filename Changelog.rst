@@ -3,6 +3,13 @@ Changelog
 
 Summary of all changes made since the first stable release
 
+1.0.0 (XX-XX-2026)
+------------------
+* ENH: Added option to download and format AMPERE files
+* ENH: Added optional dependencies for AMPERE downloads, as well as all
+  downloads and all optional dependencies
+* DEP: Removed stored AMPERE files
+
 0.7.0 (06-05-2026)
 ------------------
 * ENH: Added the Gussenhoven (1983) model for the EAB
