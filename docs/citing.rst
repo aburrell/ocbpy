@@ -76,7 +76,7 @@ also includes fits to the R1 and R2 peaks, for those interested.
   Electrodynamics Response Experiment, J. Geophys. Res. Space Physics, 120,
   doi:10.1002/2015JA021680
 * **FAC**: Milan, Stephen (2023). AMPERE R1/R2 FAC radii v2. University of
-  Leicester. Dataset. https://doi.org/10.25392/leicester.data.22241338.v3
+  Leicester. Dataset. https://doi.org/10.25392/leicester.data.22241338
 * **OCB**: Burrell, A. G., et al. (2020): AMPERE Polar Cap Boundaries,
   Ann. Geophys., 38, 481-490, http://doi.org/10.5194/angeo-38-481-2020
 
