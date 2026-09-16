@@ -16,3 +16,8 @@ try:
     from ocbpy.boundaries import dmsp_ssj_files  # noqa F401
 except ImportError as ierr:
     logger.warning(ierr)
+
+try:
+    from ocbpy.boundaries import ampere_r1r2_files  # noqa F401
+except ImportError as ierr:
+    logger.warning(ierr)
