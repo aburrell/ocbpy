@@ -290,12 +290,6 @@ def fetch_format_ampere_boundary_files(out_dir=None, file_id=None, ocb_bnd='rb',
     figshare_files = fetch_ampere_boundary_files(out_dir=out_dir,
                                                  file_id=file_id)
 
-    # Test to see if there are any DMSP processed files
-    if len(figshare_files) == 0:
-        raise ValueError("".join(["unable to download the AMPERE files using ",
-                                  "{:s} file ID".format("no" if file_id is None
-                                                        else repr(file_id))]))
-
     # Create the boundary files
     bound_files = format_ampere_boundary_files(figshare_files, out_dir=out_dir,
                                                ocb_bnd=ocb_bnd, eab_bnd=eab_bnd)
