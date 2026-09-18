@@ -54,7 +54,7 @@ def fetch_ampere_boundary_files(out_dir=None, figshare_id=22241338,
     ValueError
         If an unknown output directory is provided.
     IOError
-        If unable to donwload all the targeted files
+        If unable to download all the targeted files
     ImportError
         If called and pyfigshare is not available
     HTTPError
