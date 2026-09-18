@@ -283,7 +283,7 @@ class TestFilesMethods(unittest.TestCase):
         temp_file = os.path.join(files.get_boundary_directory(), self.fname)
         os.system("cp {:s} {:s}".format(os.path.join(cc.test_dir, self.fname),
                                         temp_file))
-        
+
         # Set the southern hemisphere defaults
         self.hemi = -1
         self.long_to_short[''] = 'amp'
