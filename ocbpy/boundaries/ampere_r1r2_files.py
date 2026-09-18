@@ -124,6 +124,9 @@ def format_ampere_boundary_files(figshare_files, out_dir=None, ocb_bnd='rb',
     ValueError
         If an unknown OCB or EAB proxy boundary is supplied, no good files
         are provided, or the output directory does not exist
+    KeyError
+        If the hemisphere is not the last string separated by underscores in the
+        filename
 
     Notes
     -----
@@ -176,16 +179,16 @@ def format_ampere_boundary_files(figshare_files, out_dir=None, ocb_bnd='rb',
     if len(figshare_files.shape) == 0:
         figshare_files = np.asarray([figshare_files])
 
-    # Remove any bad files
-    good_files = list()
+    # Remove any bad files and identify hemispheres
+    good_files = {'north': list(), 'south': list()}
     for i, infile in enumerate(figshare_files):
         if not os.path.isfile(infile):
             ocbpy.logger.warning("bad input file: {:}".format(infile))
         else:
-            good_files.append(i)
-    figshare_files = figshare_files[good_files]
+            # Append to the good list for each hemisphere
+            good_files[infile.split("_")[-1][:5]].append(infile)
 
-    if len(figshare_files) == 0:
+    if len(good_files['north']) == 0 and len(good_files['south']) == 0:
         raise ValueError("empty list of input files")
 
     # Set the hemisphere suffix and boundary prefix
@@ -201,46 +204,44 @@ def format_ampere_boundary_files(figshare_files, out_dir=None, ocb_bnd='rb',
     bound_files = {hh: {bb: "".join([outfile_prefix, hemi_prefix[hh], "_radii",
                                      bound_suffix[bb]])
                         for bb in bound_suffix.keys()}
-                   for hh in hemi_prefix.keys()}
-    fpout = {hh: {bb: None for bb in bound_suffix.keys()}
-             for hh in hemi_prefix.keys()}
+                   for hh in hemi_prefix.keys()
+                   if len(good_files[hemi_prefix[hh]]) > 0}
 
-    with open(bound_files[1][ocb_bnd], 'w') as fpout[1][ocb_bnd], \
-         open(bound_files[-1][ocb_bnd], 'w') as fpout[-1][ocb_bnd], \
-         open(bound_files[1][eab_bnd], 'w') as fpout[1][eab_bnd], \
-         open(bound_files[-1][eab_bnd], 'w') as fpout[-1][eab_bnd]:
-        # Cycle through all the figshare files, outputing appropriate data into
-        # the desired boundary and hemisphere file
-        for infile in figshare_files:
-            # Get the hemisphere from the file name
-            hemi = 1 if '_north.' in infile.lower() else -1
+    for hh in bound_files.keys():
+        # Initalize the output file pointers and open files for this hemisphere
+        fpout = {bb: None for bb in bound_files[hh].keys()}
 
-            # Determine the number of comment lines
-            skiprows = 0
-            with open(infile, 'r') as fpin:
-                head_line = fpin.readline()
-                while head_line.find("%") == 0:
-                    skiprows += 1
+        with open(bound_files[hh][ocb_bnd], 'w') as fpout[ocb_bnd], \
+             open(bound_files[hh][eab_bnd], 'w') as fpout[eab_bnd]:
+            # Cycle through all the figshare files, outputing appropriate data
+            # into the desired boundary and hemisphere file
+            for infile in good_files[hemi_prefix[hh]]:
+                # Determine the number of comment lines
+                skiprows = 0
+                with open(infile, 'r') as fpin:
                     head_line = fpin.readline()
+                    while head_line.find("%") == 0:
+                        skiprows += 1
+                        head_line = fpin.readline()
 
-            # Load the file data
-            data = np.loadtxt(infile, skiprows=skiprows, dtype='str')
-            if len(data.shape) != 2 or data.shape[1] != 9:
-                bad_files.append(infile)
-            else:
-                # Select the desired data
-                ocb_dat = data[:, [date_ind, time_ind, ocb_bnds[ocb_bnd],
-                                   x0_ind, y0_ind, fom_ind]]
-                eab_dat = data[:, [date_ind, time_ind, ocb_bnds[ocb_bnd],
-                                   x0_ind, y0_ind, fom_ind]]
+                # Load the file data
+                data = np.loadtxt(infile, skiprows=skiprows, dtype='str')
+                if len(data.shape) != 2 or data.shape[1] != 9:
+                    bad_files.append(infile)
+                else:
+                    # Select the desired data
+                    ocb_dat = data[:, [date_ind, time_ind, ocb_bnds[ocb_bnd],
+                                       x0_ind, y0_ind, fom_ind]]
+                    eab_dat = data[:, [date_ind, time_ind, ocb_bnds[ocb_bnd],
+                                       x0_ind, y0_ind, fom_ind]]
 
-                # Format the desired data
-                ocb_line = "\n".join([" ".join(dat) for dat in ocb_dat])
-                eab_line = "\n".join([" ".join(dat) for dat in eab_dat])
+                    # Format the desired data
+                    ocb_line = "\n".join([" ".join(dat) for dat in ocb_dat])
+                    eab_line = "\n".join([" ".join(dat) for dat in eab_dat])
 
-                # Writing the output to the correct file
-                fpout[hemi][ocb_bnd].write("{:s}\n".format(ocb_line))
-                fpout[hemi][eab_bnd].write("{:s}\n".format(eab_line))
+                    # Writing the output to the correct file
+                    fpout[ocb_bnd].write("{:s}\n".format(ocb_line))
+                    fpout[eab_bnd].write("{:s}\n".format(eab_line))
 
     # If some input files were not processed, inform the user
     if len(bad_files) > 0:
