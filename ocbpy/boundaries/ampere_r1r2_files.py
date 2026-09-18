@@ -45,8 +45,9 @@ def fetch_ampere_boundary_files(out_dir=None, figshare_id=22241338,
 
     Returns
     -------
-    out_files : list
-        List of filenames corresponding to downloaded boundary files
+    out_files : array-like
+        List of filenames corresponding to downloaded boundary files that have
+        been sorted
 
     Raises
     ------
@@ -82,7 +83,8 @@ def fetch_ampere_boundary_files(out_dir=None, figshare_id=22241338,
     # Get the list of downloaded files from the logging info
     out_lines = log_out.getvalue()
     out_files = [os.path.join(out_dir, out_line.split(' - ')[1])
-                 for out_line in out_lines.split('\n')]
+                 for out_line in out_lines.split('\n')
+                 if out_line.find('download_article') > 0]
 
     # Verify the files exist
     check_files = np.array([os.path.isfile(out_file) for out_file in out_files])
@@ -91,8 +93,8 @@ def fetch_ampere_boundary_files(out_dir=None, figshare_id=22241338,
             "{:d}/{:d} files not downloaded, check log output:\n{:s}".format(
                 np.sum(~check_files), check_files.shape[0], out_lines))
 
-    # Return list of available files for these satellites and times
-    return out_files
+    # Return array of available files for these satellites and times
+    return np.sort(out_files)
 
 
 def format_ampere_boundary_files(figshare_files, out_dir=None, ocb_bnd='rb',
@@ -102,7 +104,8 @@ def format_ampere_boundary_files(figshare_files, out_dir=None, ocb_bnd='rb',
     Parameters
     ----------
     figshare_files : list
-        List of AMPERE R1/R2 boundary files with directory structure
+        List of AMPERE R1/R2 boundary files with directory structure that have
+        been sorted by time
     out_dir : str or NoneType
         Output directory for formated AMPERE boundary files or None to use
         default ocbpy boundary directory (default=None)
