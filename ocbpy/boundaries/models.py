@@ -598,6 +598,10 @@ def troyer_equatorward_auroral_boundary(mlt, hp=0):
         Location of the boundary in degrees away from the pole in
         magnetic coordinates for the specified magnetic local times.
 
+    Notes
+    -----
+    Uses the 50th percentile in this formulation.
+    
     References
     ----------
     [13]_
