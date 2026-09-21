@@ -158,6 +158,6 @@ northern hemisphere DMSP SSJ particle precipitation boundaries between 1986-2014
 and the Hp30 or Kp. If you use this model please cite both it and and your Hp30
 or Kp data source when publishing your work.
 
-* Troyer, et al. (2025) A Probabalistick Kp and Hp Driven Auroral Boundary
+* Troyer, et al. (2025) A Probabalistic Kp and Hp Driven Auroral Boundary
   Model Using 28 Years of DMSP Data, JGR Space Physics, 130, e2024JA033497,
   doi:10.1029/2024JA033497

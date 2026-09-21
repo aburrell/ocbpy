@@ -16,7 +16,7 @@ References
 .. [11] Xiong and Luhr (2014) An empirical model of the auroral oval derived
    from CHAMP field-aligned current signatures - Part 2, Ann. Geophys., 32,
    pp 623-631, doi:10.5194/angeo-32-623-2014
-.. [13] Troyer, et al. (2025) A Probabalistick Kp and Hp Driven Auroral Boundary
+.. [13] Troyer, et al. (2025) A Probabalistic Kp and Hp Driven Auroral Boundary
    Model Using 28 Years of DMSP Data, JGR Space Physics, 130, e2024JA033497,
    doi:10.1029/2024JA033497
 
@@ -601,7 +601,7 @@ def troyer_equatorward_auroral_boundary(mlt, hp=0):
     Notes
     -----
     Uses the 50th percentile in this formulation.
-    
+
     References
     ----------
     [13]_
