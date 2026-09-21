@@ -1,0 +1,58 @@
+% Circle fits to the boundary between region 1 and 2 field-aligned currents measured by the
+% Active Magnetosphere and Planetary Electrodynamics Response Experiment (AMPERE).
+%
+% V2.0 - uploaded March 2023 - Steve Milan, University of Leicester.
+%
+% Data format: each record has the format
+%
+% 20100101 00:00 12 14 15 16  2 -5 0.09
+% yyyymmdd hh:mm r1 rb r2 re x0 y0 q.qq
+%
+% year, month, day, hour, min, R1 radius, R1/2 boundary radius, R2 radius, HMB radius,
+% circle centre (x0,y0), peak-to-peak R1/R2 FAC density. r1, rb, r2, re, x0, and y0 have
+% units of degrees of latitude (111.111 km), q is measured in micro-Amps / m^2.
+% (x0,y0) are measured along the dawn-dusk and noon-midnight meridians of the magnetic
+% local time / magnetic latitude coordinate system, with positive values towards dawn
+% and noon.
+%
+% Fitting technique originally described in Milan et al. (2015):
+% 
+% Milan, S.E., J.A. Carter, H. Korth, and B.J. Anderson, Principal Component Analysis of
+% Birkeland currents determined by the Active Magnetosphere and Planetary Electrodynamics
+% Response Experiment, J. Geophys. Res. Space Physics, 120, doi: 10.1002/2015JA021680, 2015.
+%
+% References to the AMPERE technique can be found in Milan et al. (2015).  We gratefully
+% acknowledge the use of AMPERE data provided by JHU/APL, PIs Brian Anderson / Sarah Vines.
+% This analysis uses the newly-processed AMPERE data.
+%
+% Brief description of fitting technique:
+% Centres (x0,y0) are selected, with x0 = -2, -1, 0, 1, 2 and y0 = -5, -4, -3, -2, -1, 0.
+% For each centre, circles are constructed with radii r = 5, 6, 7, ..., 35.  The average
+% current density is found at 48 equally-spaced points around each circle, where currents
+% in the dusk sector (12/24 MLT) are multiplied by -1.  The R1/R2 FAC system produces a
+% positive/negative bipolar signature with increasing r.  The largest peak-to-peak bipolar
+% signature is chosen as the best fit to the boundary between the R1/R2 FAC systems.
+% The radius r of the zero-crossing of the bipolar signature and the corresponding (x0,y0)
+% are recorded, along with the radii of the positive and negative peaks (r1 and r2), and
+% the radius of the equatorward boundary of the R2 system, re, which is similar to the HMB
+% boundary in SuperDARN map-potential fits.  Also recorded is the peak-to-peak value of the
+% bipolar signature, q.  q can be used as a measure of the quality of fit: more intense
+% FACs will lead to a clearer R1/R2 system, and a more certain fit. For statistical
+% analyses, a quality threshold of q > 0.15 is found to yield good results, though this can
+% be varied depending on requirements.
+%
+% Use of these data:
+% Please cite Milan et al. (2015) and acknowledge the AMPERE team and the use of AMPERE
+% data when using these fits.  AMPERE data rules of the road and other information can be
+% found at http://ampere.jhuapl.edu/.
+%
+20100101 00:00  7 10 11 13 -2 -1 0.11
+20100101 00:02  7 10 11 12 -2 -1 0.12
+20100101 00:04 14 16 19 21  2 -3 0.13
+20100101 00:06 13 15 17 18  0 -3 0.12
+20100101 00:08 11 13 15 17 -2 -5 0.11
+20100101 00:10 13 15 17 18  0 -4 0.11
+20100101 00:12 14 15 18 20  1 -4 0.12
+20100101 00:14 10 12 14 14 -2 -5 0.11
+20100101 00:16  9 11 13 15 -2 -2 0.11
+20100101 00:18  8 10 11 12  0 -5 0.14

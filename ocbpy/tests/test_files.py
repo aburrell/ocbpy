@@ -32,7 +32,9 @@ class TestDMSPFileMethods(cc.TestLogWarnings):
                            os.path.join(files.get_boundary_directory(),
                                         "unknown_north_20090101_20100101.ocb"),
                            os.path.join(files.get_boundary_directory(),
-                                        "unknown_north_out.ocb")]
+                                        "unknown_north_out.ocb"),
+                           os.path.join(files.get_boundary_directory(),
+                                        "amp_north_radii.ocb")]
         self.comp_dict = {"instrument": "dmsp-ssj", "hemisphere": 1,
                           "stime": dt.datetime(2010, 12, 31),
                           "etime": dt.datetime(2011, 1, 1)}
@@ -112,9 +114,10 @@ class TestDMSPFileMethods(cc.TestLogWarnings):
 
     def test_get_default_from_many_options(self):
         """Test get_default_file with good ranges with other files present."""
-        # Copy over one temporary file to the boundary directory
+        # Copy over DMSP and AMPERE temporary files to the boundary directory
         os.system("cp {:s} {:s}".format(self.test_dmsp, self.temp_files[0]))
-        self.tfile = os.path.basename(self.temp_files[0])
+        os.system("cp {:s} {:s}".format(self.test_dmsp, self.temp_files[-1]))
+        self.tfile = os.path.basename(self.temp_files[-1])
 
         # Get the default file and instrument
         self.out = files.get_default_file(self.comp_dict['stime'],
@@ -122,7 +125,7 @@ class TestDMSPFileMethods(cc.TestLogWarnings):
                                           self.comp_dict['hemisphere'])
 
         # Evaluate the output
-        self.assertRegex(self.out[0], 'amp_north_radii.ocb')
+        self.assertRegex(self.out[0], self.tfile)
         self.assertRegex(self.out[1], 'ampere')
         return
 
@@ -133,11 +136,7 @@ class TestFilesMethods(unittest.TestCase):
     def setUp(self):
         """Initialize the test class."""
         self.out = None
-        self.comp_dict = {'ocb': {'amp_north_radii.ocb':
-                                  {'instrument': 'amp', 'hemisphere': 1,
-                                   'stime': dt.datetime(2010, 1, 1, 0, 0),
-                                   'etime': dt.datetime(2022, 1, 1, 0, 0)},
-                                  'wic_north_circle.ocb':
+        self.comp_dict = {'ocb': {'wic_north_circle.ocb':
                                   {'instrument': 'wic', 'hemisphere': 1,
                                    'stime': dt.datetime(2000, 5, 4, 0, 0),
                                    'etime': dt.datetime(2002, 11, 1, 0, 0)},
@@ -152,11 +151,7 @@ class TestFilesMethods(unittest.TestCase):
                                   'image_north_circle.ocb':
                                   {'instrument': 'image', 'hemisphere': 1,
                                    'stime': dt.datetime(2000, 5, 3, 0, 0),
-                                   'etime': dt.datetime(2002, 11, 1, 0, 0)},
-                                  'amp_south_radii.ocb':
-                                  {'instrument': 'amp', 'hemisphere': -1,
-                                   'stime': dt.datetime(2010, 1, 1, 0, 0),
-                                   'etime': dt.datetime(2022, 1, 1, 0, 0)}},
+                                   'etime': dt.datetime(2002, 11, 1, 0, 0)}},
                           'eab': {'wic_north_circle.eab':
                                   {'instrument': 'wic', 'hemisphere': 1,
                                    'stime': dt.datetime(2000, 5, 4, 0, 0),
@@ -172,15 +167,7 @@ class TestFilesMethods(unittest.TestCase):
                                   'si12_north_circle.eab':
                                   {'instrument': 'si12', 'hemisphere': 1,
                                    'stime': dt.datetime(2000, 5, 4, 0, 0),
-                                   'etime': dt.datetime(2002, 11, 1, 0, 0)},
-                                  'amp_north_radii.eab':
-                                  {'instrument': 'amp', 'hemisphere': 1,
-                                   'stime': dt.datetime(2010, 1, 1, 0, 0),
-                                   'etime': dt.datetime(2022, 1, 1, 0, 0)},
-                                  'amp_south_radii.eab':
-                                  {'instrument': 'amp', 'hemisphere': -1,
-                                   'stime': dt.datetime(2010, 1, 1, 0, 0),
-                                   'etime': dt.datetime(2022, 1, 1, 0, 0)}}}
+                                   'etime': dt.datetime(2002, 11, 1, 0, 0)}}}
 
         self.short_to_long = {"amp": "ampere", "si12": "image",
                               "si13": "image", "wic": "image", "": "image"}
@@ -261,13 +248,15 @@ class TestFilesMethods(unittest.TestCase):
                                                   instrument=ii)
 
                 if ii in self.long_to_short.keys():
-                    if self.long_to_short[ii] is None:
+                    if self.long_to_short[ii] in [None, 'amp']:
                         # This is necessary because setUp does not run
                         # between subTests
                         self.fname = None
                     else:
                         self.fname = "{:s}_north".format(
                             self.long_to_short[ii])
+                elif ii == 'amp':
+                    self.fname = None
                 else:
                     self.fname = "{:s}_north".format(ii)
 
@@ -278,13 +267,23 @@ class TestFilesMethods(unittest.TestCase):
 
                 if self.fname is None:
                     self.assertIsNone(self.out[0])
+                elif self.out[0] is None:
+                    raise AssertionError(
+                        'returned NoneType, but expected {:}'.format(
+                            self.fname))
                 else:
                     self.assertRegex(self.out[0], self.fname)
-                self.assertRegex(self.out[1], iname)
+                self.assertRegex(iname, self.out[1])
         return
 
     def test_get_default_file_none_south_all(self):
         """Test get_default_file with no range, southern hemisphere."""
+        # Copy the southern AMPERE file into the boundaries directory
+        self.fname = "amp_south_radii.ocb"
+        temp_file = os.path.join(files.get_boundary_directory(), self.fname)
+        os.system("cp {:s} {:s}".format(os.path.join(cc.test_dir, self.fname),
+                                        temp_file))
+
         # Set the southern hemisphere defaults
         self.hemi = -1
         self.long_to_short[''] = 'amp'
@@ -317,6 +316,9 @@ class TestFilesMethods(unittest.TestCase):
                 else:
                     self.assertRegex(self.out[0], self.fname)
                 self.assertRegex(self.out[1], iname)
+
+        # Remove the copied file
+        os.remove(temp_file)
         return
 
     def test_get_default_good_file_times(self):
@@ -324,8 +326,7 @@ class TestFilesMethods(unittest.TestCase):
         # Cycle through all possible instrument names
         for bound in self.comp_dict.keys():
             if bound == 'ocb':
-                default_files = ['amp_north_radii.ocb',
-                                 'image_north_circle.ocb']
+                default_files = ['image_north_circle.ocb']
             else:
                 default_files = ['image_north_circle.eab']
 
