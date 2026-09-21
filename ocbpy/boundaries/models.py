@@ -168,13 +168,15 @@ def gussenhoven_equatorward_auroral_boundary(mlt, kp=0, model='circle'):
 
     """
     closest = True if model.lower() == 'closest' else False
+    float_out = False
 
     # If desired, calculate the integer hour
     if model.lower() in ['binned', 'closest']:
         imlt = np.floor(mlt).astype(int)
 
-        if imlt.shape == ():
+        if len(imlt.shape) == 0:
             imlt = np.array([imlt])
+            float_out = True
     else:
         imlt = None
 
@@ -184,7 +186,7 @@ def gussenhoven_equatorward_auroral_boundary(mlt, kp=0, model='circle'):
     # If desired, fit the co-latitude boundaries and return the locations
     # at the exact MLT values
     if model.lower() in ['binned', 'closest']:
-        bnd_lat = colats
+        bnd_lat = float(colats) if float_out else colats
     elif model.lower() == "circle":
         # Fit a circle to the boundaries at this Kp
         phi_cent, r_cent, radius, _ = circle_fit(mlts, colats)
