@@ -54,6 +54,7 @@ The listed dependecies were tested with the following versions:
   * aacgmv2
   * pysat (3.2.1+)
   * zenodo_get (2.0.0+)
+  * pyfigshare
 
 Testing is performed using the python module, unittest.  To limit dependency
 issues, the pysat and zenodo_get dependencies are optional.
