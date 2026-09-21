@@ -5,6 +5,7 @@ Summary of all changes made since the first stable release
 
 1.0.0 (XX-XX-2026)
 ------------------
+* ENH: Added the Troyer 2025 model for the EAB
 * ENH: Added option to download and format AMPERE files
 * ENH: Added optional dependencies for AMPERE downloads, as well as all
   downloads and all optional dependencies
