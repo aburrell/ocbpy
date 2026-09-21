@@ -63,6 +63,11 @@ based on DMSP SSJ particle precipitation boundaries between 1986-2014 and the
 Hp30 or Kp to describe the EAB.  This model was built using only northern
 hemisphere data, but may be applied to the southern hemisphere with caution.
 
+The original model has a probabalistic formulation, which is designed to support
+forecasts or ensemble modelling. As recommended by the authors, the 50th
+percentile for the probability is implemented within :py:mod:`ocbpy` as the
+most probable location for the EAB at a given geomagnetic activity level.
+
 
 .. _bound-model-module:
 
