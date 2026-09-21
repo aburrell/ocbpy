@@ -441,3 +441,50 @@ class TestCHAMPModel(unittest.TestCase):
                                    < abs(mlat[self.iobs]
                                          - self.obs_colat[bnd])))
         return
+
+
+class TestTroyerModel(unittest.TestCase):
+    """"Unit tests for the Troyer 2025 routine."""
+
+    def setUp(self):
+        """Initialize the test case by setting some values to test against."""
+        self.mlt = np.arange(0, 24, 1)
+        self.hp = [0, 12]
+        self.min_lat = [18.08533128, 32.68076359]
+        self.max_lat = [23.05466872, 44.45923641]
+        return
+
+    def tearDown(self):
+        """Clean up the test environment."""
+        del self.mlt, self.hp, self.max_lat
+        return
+
+    def test_bound_loc_array(self):
+        """Test the expected boundary location across an MLT array."""
+        # Cycle through low and high AL values
+        for ih, in_hp in enumerate(self.hp):
+            with self.subTest(hp=in_hp):
+                lat = models.troyer_equatorward_auroral_boundary(
+                    self.mlt, in_hp)
+
+                # Test the output latitude shape and values
+                self.assertTupleEqual(self.mlt.shape, lat.shape)
+                self.assertGreaterEqual(min(lat), self.min_lat[ih])
+                self.assertAlmostEqual(max(lat), self.max_lat[ih])
+
+        return
+
+    def test_bound_loc_float(self):
+        """Test the expected boundary location across an MLT value."""
+        # Cycle through low and high Hp/Kp values
+        for ih, in_hp in enumerate(self.hp):
+            with self.subTest(hp=in_hp):
+                lat = models.troyer_equatorward_auroral_boundary(
+                    self.mlt[0], in_hp)
+
+                # Test the output latitude shape and values
+                self.assertTrue(isinstance(lat, float))
+                self.assertGreaterEqual(lat, self.min_lat[ih])
+                self.assertLessEqual(lat, self.max_lat[ih])
+
+        return
