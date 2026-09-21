@@ -179,6 +179,20 @@ class TestGussenhovelModel(unittest.TestCase):
                 self.mlt, model=model)
         return
 
+    def test_gussenhoven_eab_binned_float(self):
+        """Test the EAB for a single MLT with the binned solutions."""
+        # Cycle through each Kp
+        for kp in self.colat.keys():
+            with self.subTest(kp=kp):
+                # Calculate the colatitude values with default kwargs
+                out_lat = models.gussenhoven_equatorward_auroral_boundary(
+                    self.mlt[0], kp=kp, model='binned')
+
+                # Compare the output
+                self.assertAlmostEqual(out_lat, self.colat[kp][0])
+                self.assertIsInstance(out_lat, float)
+        return
+
     def test_gussenhoven_eab_binned(self):
         """Test the EAB for MLTs with binned solutions."""
         # Cycle through each Kp
