@@ -53,6 +53,17 @@ the Newell Coupling Function, the authors recommend adjusting the model output
 with CHAMP measurements of the FAC boundaries.
 
 
+.. _bound-model-troyer:
+
+Troyer
+------
+
+The Troyer EAB model (see :ref:`cite-troyer`) uses a mathematical forumation
+based on DMSP SSJ particle precipitation boundaries between 1986-2014 and the
+Hp30 or Kp to describe the EAB.  This model was built using only northern
+hemisphere data, but may be applied to the southern hemisphere with caution.
+
+
 .. _bound-model-module:
 
 Boundary Models Module
