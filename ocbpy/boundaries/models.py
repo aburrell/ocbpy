@@ -186,7 +186,7 @@ def gussenhoven_equatorward_auroral_boundary(mlt, kp=0, model='circle'):
     # If desired, fit the co-latitude boundaries and return the locations
     # at the exact MLT values
     if model.lower() in ['binned', 'closest']:
-        bnd_lat = float(colats) if float_out else colats
+        bnd_lat = float(colats[0]) if float_out else colats
     elif model.lower() == "circle":
         # Fit a circle to the boundaries at this Kp
         phi_cent, r_cent, radius, _ = circle_fit(mlts, colats)
