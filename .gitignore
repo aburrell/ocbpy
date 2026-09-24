@@ -26,3 +26,7 @@ docs/.templates
 # DMSP SSJ files
 ocbpy/boundaries/dmsp-ssj*.???
 ocbpy/boundaries/dmsp-f*.c??
+
+# AMPERE files
+ocbpy/boundaries/AMPERE_R1R2_radii_*.txt
+ocbpy/boundaries/amp_???th_radii.??b

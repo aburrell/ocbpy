@@ -16,6 +16,9 @@ References
 .. [11] Xiong and Luhr (2014) An empirical model of the auroral oval derived
    from CHAMP field-aligned current signatures - Part 2, Ann. Geophys., 32,
    pp 623-631, doi:10.5194/angeo-32-623-2014
+.. [13] Troyer, et al. (2025) A Probabalistic Kp and Hp Driven Auroral Boundary
+   Model Using 28 Years of DMSP Data, JGR Space Physics, 130, e2024JA033497,
+   doi:10.1029/2024JA033497
 
 """
 
@@ -165,13 +168,15 @@ def gussenhoven_equatorward_auroral_boundary(mlt, kp=0, model='circle'):
 
     """
     closest = True if model.lower() == 'closest' else False
+    float_out = False
 
     # If desired, calculate the integer hour
     if model.lower() in ['binned', 'closest']:
         imlt = np.floor(mlt).astype(int)
 
-        if imlt.shape == ():
+        if len(imlt.shape) == 0:
             imlt = np.array([imlt])
+            float_out = True
     else:
         imlt = None
 
@@ -181,7 +186,7 @@ def gussenhoven_equatorward_auroral_boundary(mlt, kp=0, model='circle'):
     # If desired, fit the co-latitude boundaries and return the locations
     # at the exact MLT values
     if model.lower() in ['binned', 'closest']:
-        bnd_lat = colats
+        bnd_lat = float(colats[0]) if float_out else colats
     elif model.lower() == "circle":
         # Fit a circle to the boundaries at this Kp
         phi_cent, r_cent, radius, _ = circle_fit(mlts, colats)
@@ -577,3 +582,44 @@ def ch_aurora_2014_radius(ang_lt, semix, semiy, x0, y0, phi0, del_rad=0.0):
                   + (r0 * np.sin(ang_lt + phi0) + y0)**2)
 
     return rad
+
+
+def troyer_equatorward_auroral_boundary(mlt, hp=0):
+    """Calculate the location of the Troyer 2025 equatorial auroral boundaries.
+
+    Parameters
+    ----------
+    mlt : float or array-like
+        Magnetic local time in hours
+    hp : float or int
+        The Kp or Hp30 (default=0)
+
+    Returns
+    -------
+    bnd_lat : float or array-like
+        Location of the boundary in degrees away from the pole in
+        magnetic coordinates for the specified magnetic local times.
+
+    Notes
+    -----
+    Uses the 50th percentile in this formulation.
+
+    References
+    ----------
+    [13]_
+
+    """
+    # Define the coefficients
+    A0 = 1.5 * hp + 20.57  # Units of degrees
+    A1 = -3.45 * np.tanh(-0.34 * hp) + 2.49  # Units of degrees
+    alpha1 = 0.23 * hp - 2.25  # Units of hours
+
+    # Calculate the latitude
+    calc_mlt = np.array(mlt)
+    lat = A0 + A1 * np.cos(ocb_time.hr2rad(calc_mlt + alpha1))
+
+    # Ensure output is a float if only a single value is provided
+    if len(lat.shape) == 0:
+        lat = float(lat)
+
+    return lat

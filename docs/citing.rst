@@ -146,3 +146,18 @@ Couping Function data source when publishing your work.
 * Xiong, C. and H. Luhr (2014) An empirical model of the auroral oval derived
   from CHAMP field-aligned current signatures - Part 2, Ann. Geophys., 32,
   pp 623-631, doi:10.5194/angeo-32-623-2014
+
+
+.. _cite-troyer:
+
+Troyer Model
+------------
+
+The Troyer model specifies the EAB mathematically using a formulation based on
+northern hemisphere DMSP SSJ particle precipitation boundaries between 1986-2014
+and the Hp30 or Kp. If you use this model please cite both it and and your Hp30
+or Kp data source when publishing your work.
+
+* Troyer, et al. (2025) A Probabalistic Kp and Hp Driven Auroral Boundary
+  Model Using 28 Years of DMSP Data, JGR Space Physics, 130, e2024JA033497,
+  doi:10.1029/2024JA033497
